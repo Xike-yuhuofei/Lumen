@@ -132,13 +132,6 @@ async def lifespan(app: FastAPI):
         logger.warning(f"Failed to start EventBus: {e}")
 
     try:
-        from deeptutor.services.partners import get_partner_manager
-
-        await get_partner_manager().auto_start_partners()
-    except Exception as e:
-        logger.warning(f"Failed to auto-start partners: {e}")
-
-    try:
         from deeptutor.services.cron import get_cron_service
 
         await get_cron_service().start()
@@ -156,17 +149,11 @@ async def lifespan(app: FastAPI):
     # Migrate any v1 memory files (PROFILE.md / SUMMARY.md) into a
     # backup folder so the v2 three-layer subsystem starts clean.
     try:
-        from deeptutor.services.memory import (
-            migrate_partner_surface_if_needed,
-            migrate_v1_if_needed,
-        )
+        from deeptutor.services.memory import migrate_v1_if_needed
 
         backup = migrate_v1_if_needed()
         if backup is not None:
             logger.info("v1 memory archived to %s", backup)
-        # Rename the legacy ``tutorbot`` memory surface (footnote refs, L2
-        # doc, snapshot/trace dirs, L3 meta keys) to ``partner``.
-        migrate_partner_surface_if_needed()
     except Exception as e:
         logger.warning(f"v1 memory migration failed: {e}")
 
@@ -182,15 +169,6 @@ async def lifespan(app: FastAPI):
         await get_cron_service().stop()
     except Exception as e:
         logger.warning(f"Failed to stop cron service: {e}")
-
-    # Stop partners
-    try:
-        from deeptutor.services.partners import get_partner_manager
-
-        await get_partner_manager().stop_all(preserve_auto_start=True)
-        logger.info("Partners stopped")
-    except Exception as e:
-        logger.warning(f"Failed to stop partners: {e}")
 
     # Close MCP server connections. Each one owns an AsyncExitStack inside its
     # own task, so they must be torn down here rather than left to interpreter
@@ -326,7 +304,6 @@ from deeptutor.api.routers import (
     memory,
     notebook,
     outputs,
-    partners,
     personas,
     plugins_api,
     question,
@@ -356,9 +333,6 @@ app.include_router(outputs.router, prefix="/api/outputs", tags=["outputs"])
 from deeptutor.api.routers.auth import require_admin, require_auth  # noqa: E402
 
 _auth = [Depends(require_auth)]
-# Partner data is anchored at the admin workspace (data/partners) and shared
-# process-wide, so management is admin-gated in multi-user deployments
-# (single-user local runs are implicitly admin — no behaviour change there).
 _admin = [Depends(require_admin)]
 
 app.include_router(
@@ -461,9 +435,6 @@ app.include_router(
 )
 app.include_router(
     agent_config.router, prefix="/api/v1/agent-config", tags=["agent-config"], dependencies=_auth
-)
-app.include_router(
-    partners.router, prefix="/api/v1/partners", tags=["partners"], dependencies=_admin
 )
 app.include_router(
     attachments.router,

@@ -18,7 +18,6 @@ from .store import (
     DocOverview,
     MemoryStore,
     get_memory_store,
-    migrate_partner_surface_if_needed,
     migrate_v1_if_needed,
 )
 from .trace import TraceEvent
@@ -35,7 +34,6 @@ __all__ = [
     "is_entry_id",
     "is_trace_id",
     "memory_path_service_override",
-    "migrate_partner_surface_if_needed",
     "migrate_v1_if_needed",
     "new_entry_id",
     "new_trace_id",

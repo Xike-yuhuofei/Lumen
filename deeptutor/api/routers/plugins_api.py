@@ -293,31 +293,7 @@ async def _execute_capability_stream(
     body: CapabilityExecuteRequest,
 ) -> AsyncGenerator[str, None]:
     """Run a capability while streaming process logs, trace events, and the result."""
-    partner_id = (body.partner_id or "").strip()
-    if capability_name == "chat" and partner_id:
-        from deeptutor.api.routers.partners import (
-            ChatMessageRequest,
-            _ensure_running_partner,
-            _partner_chat_stream,
-        )
-
-        if not body.content.strip():
-            yield _sse("error", {"detail": "content is required"})
-            return
-        try:
-            await _ensure_running_partner(partner_id)
-        except HTTPException as exc:
-            yield _sse("error", {"detail": exc.detail, "status_code": exc.status_code})
-            return
-        request = ChatMessageRequest(
-            content=body.content,
-            session_id=body.session_id,
-            chat_id=body.chat_id,
-            llm_selection=body.llm_selection,
-        )
-        async for chunk in _partner_chat_stream(partner_id, request):
-            yield chunk
-        return
+    del body.partner_id
 
     from deeptutor.core.context import Attachment, UnifiedContext
     from deeptutor.runtime.orchestrator import ChatOrchestrator
