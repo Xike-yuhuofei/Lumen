@@ -86,7 +86,7 @@ class TestPromptManager:
 
         # Load some prompts
         pm.load_prompts("research", "pipeline", "en")
-        pm.load_prompts("solve", "solve_agent", "en")
+        pm.load_prompts("question", "idea_agent", "en")
 
         assert len(pm._cache) >= 2
 
@@ -99,13 +99,13 @@ class TestPromptManager:
 
         # Load prompts for multiple modules
         pm.load_prompts("research", "pipeline", "en")
-        pm.load_prompts("solve", "solve_agent", "en")
+        pm.load_prompts("question", "idea_agent", "en")
 
         # Clear only research cache
         pm.clear_cache("research")
 
-        # Solve prompts should still be cached
-        assert any("solve" in k for k in pm._cache)
+        # Question prompts should still be cached
+        assert any("question" in k for k in pm._cache)
         assert not any("research" in k for k in pm._cache)
 
     def test_get_prompt_helper(self):

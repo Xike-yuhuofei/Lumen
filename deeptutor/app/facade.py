@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-import importlib.util
 import json
 from typing import Any, AsyncIterator
 

@@ -21,7 +21,6 @@ from deeptutor.core.stream_bus import StreamBus
 from deeptutor.core.trace import merge_trace_metadata
 from deeptutor.i18n import StatusI18n
 from deeptutor.runtime.request_contracts import (
-    VisualizeRequestConfig,
     get_capability_request_schema,
     validate_visualize_request_config,
 )

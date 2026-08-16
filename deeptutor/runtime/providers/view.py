@@ -13,7 +13,6 @@ itself must still run.
 
 from __future__ import annotations
 
-import asyncio
 from dataclasses import dataclass
 import logging
 from typing import Any
