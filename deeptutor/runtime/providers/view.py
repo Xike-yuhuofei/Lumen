@@ -106,7 +106,7 @@ async def _build(
     if not shared_pool and not owned_pool and not cli_pool:
         return ProviderToolView.empty(base_registry)
 
-    # Resolve resource-derived authorisation (e.g. an attached PageIndex KB
+    # Resolve resource-derived authorisation (e.g. an attached connected KB
     # authorises that server) from provider ids to concrete tool names.
     implicit_names = {
         tool.get_definition().name

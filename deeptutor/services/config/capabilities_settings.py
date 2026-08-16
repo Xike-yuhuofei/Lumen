@@ -44,7 +44,6 @@ _AGENTS_YAML_CAPABILITY_SECTIONS: dict[str, tuple[str, ...]] = {
     "solve": ("capabilities", "solve"),
     "research": ("capabilities", "research"),
     "question": ("capabilities", "question"),
-    "co_writer": ("capabilities", "co_writer"),
     "vision_solver": ("plugins", "vision_solver"),
     "math_animator": ("plugins", "math_animator"),
 }
@@ -53,7 +52,6 @@ _SIMPLE_LLM_DEFAULTS: dict[str, dict[str, Any]] = {
     "solve": {"temperature": 0.3, "max_tokens": 8192},
     "research": {"temperature": 0.5, "max_tokens": 16834},
     "question": {"temperature": 0.7, "max_tokens": 4096},
-    "co_writer": {"temperature": 0.6, "max_tokens": 4096},
     "vision_solver": {"temperature": 0.3, "max_tokens": 12000},
     "math_animator": {"temperature": 0.2, "max_tokens": 16834},
 }

@@ -56,12 +56,8 @@ from deeptutor.services.llm import (
 )
 from deeptutor.services.llm.context_window import resolve_effective_context_window
 from deeptutor.services.prompt import get_prompt_manager
-from deeptutor.tools.builtin import PARTNER_BUILTIN_TOOL_NAMES
 
 logger = logging.getLogger(__name__)
-
-# Chat memory tools a partner turn replaces with the partner_* variants.
-_PARTNER_SUPPRESSED_TOOLS: tuple[str, ...] = ("read_memory", "write_memory")
 
 
 CHAT_EXCLUDED_TOOLS: set[str] = set()
@@ -481,7 +477,6 @@ class AgenticChatPipeline:
         ``runtime.providers``. All the pipeline owns is translating the turn's
         context into a :class:`ToolScope`.
         """
-        self._pageindex_docs = self._pageindex_doc_maps(context)
         try:
             view = await build_tool_view(
                 base_registry=self.registry,
@@ -509,8 +504,6 @@ class AgenticChatPipeline:
 
     def _tool_scope(self, context: UnifiedContext) -> ToolScope:
         """Per-turn policy inputs for the provider layer."""
-        from deeptutor.services.mcp.pageindex_server import PAGEINDEX_SERVER_NAME
-
         raw_filter = context.metadata.get("mcp_tools_filter")
         return ToolScope(
             owner_id=self._current_owner_id(),
@@ -521,33 +514,9 @@ class AgenticChatPipeline:
                 if isinstance(raw_filter, list)
                 else None
             ),
-            # Attaching a PageIndex knowledge base authorises that server:
-            # access to the KB *is* the permission, and its tools are preloaded
-            # so retrieval works without a load_tools round-trip.
-            implicit_provider_ids=(
-                frozenset({PAGEINDEX_SERVER_NAME}) if self._pageindex_docs else frozenset()
-            ),
+            implicit_provider_ids=frozenset(),
             exclusive_capability=self._exclusive_capability_active(context),
         )
-
-    def _pageindex_doc_maps(self, context: UnifiedContext) -> dict[str, dict[str, str]]:
-        """kb_name -> {file: doc_id} for bound KBs on the pageindex provider."""
-        out: dict[str, dict[str, str]] = {}
-        for kb in self._selected_kbs(context):
-            try:
-                from deeptutor.multi_user.knowledge_access import resolve_kb
-                from deeptutor.services.rag.factory import PAGEINDEX_PROVIDER
-                from deeptutor.services.rag.pipelines.pageindex.pipeline import PageIndexPipeline
-                from deeptutor.services.rag.provider_binding import resolve_bound_provider
-
-                resource = resolve_kb(kb, require_write=False)
-                base_dir = str(resource.base_dir)
-                if resolve_bound_provider(base_dir, resource.name) != PAGEINDEX_PROVIDER:
-                    continue
-                out[kb] = PageIndexPipeline(kb_base_dir=base_dir).document_map(resource.name)
-            except Exception:
-                logger.debug("pageindex doc-map resolution failed for %r", kb, exc_info=True)
-        return out
 
     def _deferred_tools_manifest(self) -> str:
         view = getattr(self, "_tool_view", None)
@@ -593,11 +562,8 @@ class AgenticChatPipeline:
             requested_tools=context.enabled_tools,
             optional_whitelist=CHAT_OPTIONAL_TOOLS,
             mount_flags=ToolMountFlags(
-                # PageIndex KBs are read via the preloaded MCP tools, not rag —
-                # a conversation with only PageIndex KBs doesn't mount rag at all.
                 # Excludes KBs owned by an exclusive capability (an Obsidian vault
-                # is read via its own tools, never rag) so a pure-vault turn still
-                # doesn't mount rag, while co-selected LlamaIndex KBs do (#650).
+                # is read via its own tools, never rag).
                 has_kb=bool(self._coexisting_rag_kbs(context)),
                 # read_source is owned by the explore_context pre-pass (it runs
                 # the investigation over attached sources), not the answer loop.
@@ -617,12 +583,6 @@ class AgenticChatPipeline:
                 if context.allowed_builtin_tools is not None
                 else None
             ),
-            # Partners get the partner_* memory/history tools force-mounted and
-            # chat's read_memory/write_memory suppressed — the split-memory model
-            # (own workspace writable, owner's memory read-only) lives in those
-            # tools, not in chat's.
-            forced=PARTNER_BUILTIN_TOOL_NAMES if is_partner else (),
-            suppressed=_PARTNER_SUPPRESSED_TOOLS if is_partner else (),
         )
         return _drop_unconfigured_generation_tools(composed)
 
@@ -1365,9 +1325,8 @@ class AgenticChatPipeline:
         return [str(kb).strip() for kb in context.knowledge_bases if str(kb).strip()]
 
     def _rag_kbs(self, context: UnifiedContext) -> list[str]:
-        """Attached KBs served by the rag tool (PageIndex KBs are read via MCP)."""
-        pageindex = getattr(self, "_pageindex_docs", None) or {}
-        return [kb for kb in self._selected_kbs(context) if kb not in pageindex]
+        """Attached KBs served by the rag tool."""
+        return self._selected_kbs(context)
 
     def _capability_owned_kbs(self, context: UnifiedContext) -> set[str]:
         """Selected KBs consumed by an active capability's own tools (not rag).
@@ -1424,7 +1383,7 @@ class AgenticChatPipeline:
                     "must be one of these names."
                 )
             )
-        return rag_note + self._kb_manifest_system_note() + self._pageindex_system_note()
+        return rag_note + self._kb_manifest_system_note()
 
     async def _prepare_kb_manifests(self, context: UnifiedContext) -> None:
         """Read the attached KBs' document inventories once per turn.
@@ -1436,9 +1395,7 @@ class AgenticChatPipeline:
         keeps the prompt byte-stable for the whole turn and makes counts
         answerable without a tool round-trip.
 
-        PageIndex KBs are excluded: ``_pageindex_system_note`` already lists
-        their documents, with the doc_ids its MCP tools need. Fails soft — a KB
-        whose files cannot be read costs the manifest, not the turn.
+        Fails soft — a KB whose files cannot be read costs the manifest, not the turn.
         """
         self._kb_manifests = []
         kbs = self._rag_kbs(context)
@@ -1471,36 +1428,6 @@ class AgenticChatPipeline:
         note = render_manifest_note(self._kb_manifests, language=self.language)
         return f"\n{note}" if note else ""
 
-    def _pageindex_system_note(self) -> str:
-        """Doc list + retrieval instructions for attached PageIndex KBs.
-
-        Populated by ``_prepare_deferred_tools`` once per turn, so the system
-        prompt stays byte-stable for the whole turn (KB cache prefix).
-        """
-        doc_maps = getattr(self, "_pageindex_docs", None) or {}
-        if not doc_maps:
-            return ""
-        lines = []
-        for kb, doc_map in sorted(doc_maps.items()):
-            listed = "; ".join(
-                f"{name} (doc_id: {doc_id})" for name, doc_id in sorted(doc_map.items())
-            )
-            lines.append(f"- {kb}: {listed or '(no indexed documents)'}")
-        docs_block = "\n".join(lines)
-        if self.language == "zh":
-            return (
-                "\n以下知识库使用托管的 PageIndex 引擎，其文档通过已加载的 "
-                "PageIndex MCP 工具阅读：先用 mcp_pageindex_get_document_structure "
-                "查看结构，再用 mcp_pageindex_get_page_content 读取相关页面。文档清单：\n"
-                f"{docs_block}"
-            )
-        return (
-            "\nThe following knowledge bases are on the hosted PageIndex engine; read "
-            "their documents with the preloaded PageIndex MCP tools: "
-            "mcp_pageindex_get_document_structure for the outline, then "
-            "mcp_pageindex_get_page_content for the relevant pages. Documents:\n"
-            f"{docs_block}"
-        )
 
     def _workspace_system_note(self, context: UnifiedContext) -> str:
         if not getattr(self, "_exec_enabled", False):

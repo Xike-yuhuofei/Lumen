@@ -2,7 +2,6 @@ import asyncio
 from collections import deque
 from collections.abc import AsyncGenerator
 import contextlib
-import importlib
 import json
 import logging
 import threading
@@ -294,26 +293,7 @@ class _TaskScopedLogHandler(logging.Handler):
 @contextlib.contextmanager
 def _capture_non_propagating_task_logs(task_id: str, manager: KnowledgeTaskStreamManager):
     """Capture library loggers that intentionally do not propagate to root."""
-    logger_names = ("lightrag", "graphrag", "graphrag_llm")
-    handlers: list[tuple[logging.Logger, _TaskScopedLogHandler]] = []
-    for logger_name in logger_names:
-        if logger_name == "lightrag":
-            with contextlib.suppress(Exception):
-                importlib.import_module("lightrag.utils")
-        source_logger = logging.getLogger(logger_name)
-        if source_logger.propagate:
-            continue
-        handler = _TaskScopedLogHandler(task_id, manager)
-        source_logger.addHandler(handler)
-        handlers.append((source_logger, handler))
-
-    try:
-        yield
-    finally:
-        for source_logger, handler in handlers:
-            if handler in source_logger.handlers:
-                source_logger.removeHandler(handler)
-            handler.close()
+    yield
 
 
 @contextlib.contextmanager

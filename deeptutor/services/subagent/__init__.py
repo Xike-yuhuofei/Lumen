@@ -24,7 +24,6 @@ from deeptutor.services.subagent.config import (
     save_subagent_settings,
     settings_from_dict,
 )
-from deeptutor.services.subagent.partner import PARTNER_BACKEND_KIND
 from deeptutor.services.subagent.registry import detect_all, get_backend, list_backend_kinds
 from deeptutor.services.subagent.types import (
     ConsultResult,
@@ -40,7 +39,6 @@ __all__ = [
     "DEFAULT_CONSULT_BUDGET",
     "CONSULT_BUDGET_MIN",
     "CONSULT_BUDGET_MAX",
-    "PARTNER_BACKEND_KIND",
     "get_consult_budget",
     "load_subagent_settings",
     "save_subagent_settings",

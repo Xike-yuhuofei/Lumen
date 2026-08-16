@@ -15,12 +15,6 @@ from deeptutor.core.tool_protocol import BaseTool, ToolDefinition, ToolParameter
 from deeptutor.knowledge.manifest import KB_FILES_DEFAULT_LIMIT, KB_FILES_MAX_LIMIT
 from deeptutor.tools.exec_tool import ExecTool
 from deeptutor.tools.media_gen_tool import ImagegenTool, VideogenTool
-from deeptutor.tools.partner_memory import (
-    PARTNER_BUILTIN_TOOL_NAMES,
-    PartnerMemorizeTool,
-    PartnerReadTool,
-    PartnerSearchTool,
-)
 from deeptutor.tools.prompting import load_prompt_hints
 
 logger = logging.getLogger(__name__)
@@ -79,9 +73,9 @@ def _rag_sources(result: dict[str, Any], *, query: str, kb_name: str) -> list[di
     """Citations for one ``rag`` call, from the retrieval's own provenance.
 
     Every pipeline normalises what it retrieved into ``result["sources"]``
-    (``{title, content, source, page, chunk_id, score}`` — see the GraphRAG and
-    LightRAG-server pipelines). Forward those so a grounded claim is traceable
-    to the chunk / entity / report behind it; without this the tool reported
+    (``{title, content, source, page, chunk_id, score}`` — see the LlamaIndex
+    pipeline). Forward those so a grounded claim is traceable to the chunk
+    behind it; without this the tool reported
     only an echo of its own query (issue #694). ``type``/``kb_name`` are kept on
     every entry so consumers that key on them still work, and an engine that
     surfaces no provenance still yields the echo rather than nothing.
@@ -1597,14 +1591,6 @@ BUILTIN_TOOL_TYPES: tuple[type[BaseTool], ...] = (
     # capability runs the turn exclusively on it when a connected agent is the
     # selected KB.
     *SUBAGENT_TOOL_TYPES,
-    # Partner-only memory + history tools. Globally registered so schemas/API
-    # stay stable, but never mounted in product chat: the partner runtime
-    # force-mounts them (and suppresses chat's read_memory/write_memory) on
-    # every partner turn. Deliberately absent from CONFIGURABLE_BUILTIN_TOOL_NAMES
-    # — they are mandatory, not owner-configurable.
-    PartnerReadTool,
-    PartnerMemorizeTool,
-    PartnerSearchTool,
 )
 
 # No tools are parked right now. When a tool's implementation is being
@@ -1676,7 +1662,6 @@ __all__ = [
     "COMING_SOON_TOOL_NAMES",
     "COMING_SOON_TOOL_TYPES",
     "CONFIGURABLE_BUILTIN_TOOL_NAMES",
-    "PARTNER_BUILTIN_TOOL_NAMES",
     "TOOL_ALIASES",
     "USER_TOGGLEABLE_TOOL_NAMES",
     "AskUserTool",
@@ -1690,9 +1675,6 @@ __all__ = [
     "VideogenTool",
     "ListNotebookTool",
     "PaperSearchToolWrapper",
-    "PartnerMemorizeTool",
-    "PartnerReadTool",
-    "PartnerSearchTool",
     "RAGTool",
     "LoadToolsTool",
     "ReadMemoryTool",

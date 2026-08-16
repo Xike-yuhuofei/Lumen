@@ -14,18 +14,8 @@ from deeptutor.knowledge.add_documents import (
 def _write_provider_version(kb_dir: Path, provider: str) -> None:
     version_dir = kb_dir / "version-1"
     version_dir.mkdir(parents=True)
-    if provider == "pageindex":
-        (version_dir / "pageindex_docs.json").write_text(
-            json.dumps({"provider": "pageindex", "docs": {"doc.pdf": {"doc_id": "doc-1"}}}),
-            encoding="utf-8",
-        )
-    elif provider == "graphrag":
-        output_dir = version_dir / "output"
-        output_dir.mkdir()
-        (output_dir / "entities.parquet").write_bytes(b"placeholder")
-    else:
-        (version_dir / "docstore.json").write_text("{}", encoding="utf-8")
-        (version_dir / "index_store.json").write_text("{}", encoding="utf-8")
+    (version_dir / "docstore.json").write_text("{}", encoding="utf-8")
+    (version_dir / "index_store.json").write_text("{}", encoding="utf-8")
     (version_dir / "meta.json").write_text(
         json.dumps(
             {
@@ -43,31 +33,31 @@ def test_document_adder_reads_provider_from_kb_config_when_metadata_missing(
 ) -> None:
     kb_dir = tmp_path / "page-kb"
     (kb_dir / "raw").mkdir(parents=True)
-    _write_provider_version(kb_dir, "pageindex")
+    _write_provider_version(kb_dir, "llamaindex")
     (tmp_path / "kb_config.json").write_text(
         json.dumps(
-            {"knowledge_bases": {"page-kb": {"path": "page-kb", "rag_provider": "pageindex"}}}
+            {"knowledge_bases": {"page-kb": {"path": "page-kb", "rag_provider": "llamaindex"}}}
         ),
         encoding="utf-8",
     )
 
     adder = DocumentAdder(kb_name="page-kb", base_dir=str(tmp_path))
 
-    assert adder.rag_provider == "pageindex"
+    assert adder.rag_provider == "llamaindex"
 
 
 def test_document_adder_preserves_explicit_bound_provider(tmp_path: Path) -> None:
     kb_dir = tmp_path / "graph-kb"
     (kb_dir / "raw").mkdir(parents=True)
-    _write_provider_version(kb_dir, "graphrag")
+    _write_provider_version(kb_dir, "llamaindex")
 
     adder = DocumentAdder(
         kb_name="graph-kb",
         base_dir=str(tmp_path),
-        rag_provider="graphrag",
+        rag_provider="llamaindex",
     )
 
-    assert adder.rag_provider == "graphrag"
+    assert adder.rag_provider == "llamaindex"
 
 
 def test_process_new_documents_returns_failures_without_marking_processed(

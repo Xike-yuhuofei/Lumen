@@ -85,23 +85,6 @@ def _admin_skill_summary() -> list[dict[str, Any]]:
     return [item.to_dict() for item in service.list_skills()]
 
 
-def _admin_partner_summary() -> list[dict[str, Any]]:
-    """The partners an admin can assign. Partners are process-wide resources
-    anchored at the admin workspace, so this lists them all (identity only — no
-    channel wiring or model selection leaks into the assignable summary)."""
-    from deeptutor.services.partners import get_partner_manager
-
-    return [
-        {
-            "partner_id": str(item.get("partner_id") or ""),
-            "name": item.get("name") or item.get("partner_id") or "",
-            "description": item.get("description") or "",
-            "emoji": item.get("emoji") or "",
-        }
-        for item in get_partner_manager().list_partners()
-    ]
-
-
 def _require_assignable_user(user_id: str) -> tuple[str, dict[str, Any]]:
     user_record = get_user_by_id(user_id)
     if user_record is None:
@@ -126,7 +109,6 @@ async def admin_resources(_: object = Depends(require_admin)) -> dict[str, Any]:
         "models": _admin_catalog_summary(),
         "knowledge_bases": _admin_kb_summary(),
         "skills": _admin_skill_summary(),
-        "partners": _admin_partner_summary(),
         "tools": tool_options["tools"],
         "mcp_tools": tool_options["mcp_tools"],
     }

@@ -26,10 +26,8 @@ from pydantic import BaseModel, Field
 from deeptutor.api.routers.auth import require_admin
 from deeptutor.knowledge.kb_types import SUBAGENT_KB_TYPE
 from deeptutor.multi_user.knowledge_access import current_kb_manager
-from deeptutor.multi_user.partner_access import assert_partner_allowed, visible_partner_cards
 from deeptutor.services.rag.linked_kb import assert_path_allowed
 from deeptutor.services.subagent import (
-    PARTNER_BACKEND_KIND,
     detect_all,
     list_backend_kinds,
     load_subagent_settings,
@@ -94,18 +92,6 @@ async def sync_backend(kind: str):
     return options.to_dict()
 
 
-@router.get("/partners")
-async def list_visible_partners():
-    """Partners the current user can connect & consult.
-
-    Returns every partner for an admin, or just the ones an admin has assigned
-    for a non-admin. The partner CRUD API (``/api/v1/partners``) stays fully
-    admin-gated; this is the read surface the connect flow and the partner list
-    page use, so a non-admin sees their assigned partners without a 403.
-    """
-    return {"partners": visible_partner_cards()}
-
-
 @router.get("/connections")
 async def list_connections():
     """List the current user's connected subagents."""
@@ -147,28 +133,12 @@ async def create_connection(payload: ConnectSubagentRequest):
 
     resolved_cwd = ""
     partner_id = ""
-    if agent_kind == PARTNER_BACKEND_KIND:
-        partner_id = (payload.partner_id or "").strip()
-        if not partner_id:
-            raise HTTPException(
-                status_code=400, detail="A partner_id is required to connect a partner."
-            )
-        # Partners are admin-managed, but an admin can assign one to a user via
-        # the grant system. An admin may connect any partner; a non-admin only a
-        # partner assigned to them (403 otherwise). The partner still runs in its
-        # own isolated scope — connecting just lets the user consult it in chat.
-        assert_partner_allowed(partner_id)
-        from deeptutor.services.partners import get_partner_manager
-
-        if not get_partner_manager().partner_exists(partner_id):
-            raise HTTPException(status_code=400, detail=f"No partner named {partner_id!r}.")
-    else:
-        raw_cwd = (payload.cwd or "").strip()
-        if raw_cwd:
-            try:
-                resolved_cwd = str(assert_path_allowed(raw_cwd))
-            except ValueError as exc:
-                raise HTTPException(status_code=400, detail=str(exc)) from exc
+    raw_cwd = (payload.cwd or "").strip()
+    if raw_cwd:
+        try:
+            resolved_cwd = str(assert_path_allowed(raw_cwd))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     try:
         manager = current_kb_manager()

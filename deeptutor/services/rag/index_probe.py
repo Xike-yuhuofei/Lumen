@@ -15,9 +15,6 @@ from typing import Any
 
 from deeptutor.services.rag.factory import (
     DEFAULT_PROVIDER,
-    GRAPHRAG_PROVIDER,
-    LIGHTRAG_PROVIDER,
-    PAGEINDEX_PROVIDER,
     normalize_provider_name,
     version_matches_provider,
 )
@@ -43,12 +40,6 @@ def inspect_provider_index(
     path = Path(storage_dir) if storage_dir is not None else None
     if path is None:
         return ProviderIndexProbe(resolved, None, False, "No storage path recorded.")
-    if resolved == PAGEINDEX_PROVIDER:
-        return _inspect_pageindex(path)
-    if resolved == GRAPHRAG_PROVIDER:
-        return _inspect_graphrag(path)
-    if resolved == LIGHTRAG_PROVIDER:
-        return _inspect_lightrag(path)
     return _inspect_llamaindex(path)
 
 
@@ -165,61 +156,7 @@ def _inspect_llamaindex(storage_dir: Path) -> ProviderIndexProbe:
     )
 
 
-def _inspect_pageindex(storage_dir: Path) -> ProviderIndexProbe:
-    from deeptutor.services.rag.pipelines.pageindex import storage
 
-    manifest = storage.read_manifest(storage_dir)
-    ids = storage.doc_ids(manifest)
-    if not ids:
-        return ProviderIndexProbe(
-            PAGEINDEX_PROVIDER,
-            str(storage_dir),
-            False,
-            "PageIndex manifest has no document ids.",
-            doc_count=0,
-        )
-    return ProviderIndexProbe(
-        PAGEINDEX_PROVIDER,
-        str(storage_dir),
-        True,
-        doc_count=len(ids),
-        diagnostics={"manifest": str(storage.manifest_path(storage_dir))},
-    )
-
-
-def _inspect_graphrag(storage_dir: Path) -> ProviderIndexProbe:
-    from deeptutor.services.rag.pipelines.graphrag import storage
-
-    out = storage.output_dir(storage_dir)
-    tables = [name for name in storage.OUTPUT_TABLES if (out / f"{name}.parquet").exists()]
-    if not storage.has_output(storage_dir):
-        return ProviderIndexProbe(
-            GRAPHRAG_PROVIDER,
-            str(storage_dir),
-            False,
-            "GraphRAG output has no core parquet tables.",
-            diagnostics={"output_tables": tables},
-        )
-    return ProviderIndexProbe(
-        GRAPHRAG_PROVIDER,
-        str(storage_dir),
-        True,
-        diagnostics={"output_tables": tables},
-    )
-
-
-def _inspect_lightrag(storage_dir: Path) -> ProviderIndexProbe:
-    from deeptutor.services.rag.pipelines.lightrag import storage
-
-    failure = storage.failure_summary(storage_dir)
-    ready = storage.has_output(storage_dir)
-    return ProviderIndexProbe(
-        LIGHTRAG_PROVIDER,
-        str(storage_dir),
-        ready,
-        failure_summary="" if ready else failure,
-        doc_count=_lightrag_doc_count(storage_dir),
-    )
 
 
 def _llamaindex_doc_count(docstore_path: Path) -> int | None:
@@ -229,26 +166,6 @@ def _llamaindex_doc_count(docstore_path: Path) -> int | None:
     data = payload.get("docstore/data")
     return len(data) if isinstance(data, dict) else None
 
-
-def _lightrag_doc_count(storage_dir: Path) -> int | None:
-    payload = _read_json(storage_dir / "kv_store_doc_status.json")
-    if not isinstance(payload, dict):
-        return None
-    count = 0
-    for item in payload.values():
-        if not isinstance(item, dict):
-            continue
-        chunks = item.get("chunks_list")
-        status = str(item.get("status") or "").lower()
-        if (isinstance(chunks, list) and chunks) or status in {
-            "processed",
-            "completed",
-            "done",
-            "success",
-            "indexed",
-        }:
-            count += 1
-    return count
 
 
 def _read_json(path: Path) -> dict[str, Any] | None:

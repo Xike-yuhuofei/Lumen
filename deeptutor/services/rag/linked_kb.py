@@ -9,12 +9,9 @@ register a pointer we must answer two questions for the user:
    "is this KB ready?" logic that lists ordinary KBs decides linkability.
 2. **Was that index built with a compatible embedding model?** A local vector /
    graph index is only queryable by the embedding model that built it. A
-   mismatch makes LlamaIndex error loudly and the graph engines fail silently,
+   mismatch makes LlamaIndex error loudly and returns empty results, so we
    so we surface a clear verdict the UI can confirm.
 
-PageIndex is deliberately not linkable: its index lives in the cloud (the local
-folder holds only a doc-id manifest), so there is nothing self-contained to
-mount.
 """
 
 from __future__ import annotations
@@ -33,15 +30,11 @@ LINK_ROOTS_ENV = "DEEPTUTOR_LINKED_FOLDER_ROOTS"
 
 from deeptutor.services.rag.factory import (
     DEFAULT_PROVIDER,
-    GRAPHRAG_PROVIDER,
-    LIGHTRAG_PROVIDER,
-    PAGEINDEX_PROVIDER,
     normalize_provider_name,
 )
 
-# Engines whose index is self-contained on disk and therefore mountable. The
-# cloud-backed PageIndex is excluded — see module docstring.
-LINKABLE_PROVIDERS = frozenset({DEFAULT_PROVIDER, GRAPHRAG_PROVIDER, LIGHTRAG_PROVIDER})
+# Engines whose index is self-contained on disk and therefore mountable.
+LINKABLE_PROVIDERS = frozenset({DEFAULT_PROVIDER})
 
 
 @dataclass
@@ -128,12 +121,6 @@ def probe_linked_folder(folder_path: str, provider: str) -> ProbeResult:
     folder = Path(folder_path).expanduser()
     result = ProbeResult(provider=provider, external_path=str(folder))
 
-    if provider == PAGEINDEX_PROVIDER:
-        result.error = (
-            "PageIndex indexes live in the cloud, not in a local folder, so they "
-            "cannot be linked. Create a PageIndex knowledge base instead."
-        )
-        return result
     if provider not in LINKABLE_PROVIDERS:
         result.error = f"Engine '{provider}' does not support linking an existing folder."
         return result

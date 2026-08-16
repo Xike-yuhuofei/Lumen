@@ -33,7 +33,7 @@ class ToolScope:
     #: ``None`` = the caller imposes no restriction.
     caller_whitelist: frozenset[str] | None = None
     #: Providers authorised by holding a *resource* rather than by a grant:
-    #: attaching a PageIndex knowledge base authorises that server. Given as
+    #: attaching a connected knowledge base authorises that server. Given as
     #: provider ids because the turn knows which resources it holds, not which
     #: tool names they expand to — the view resolves that against the live
     #: pool.

@@ -56,7 +56,7 @@ def test_register_linked_kb_rejects_name_clash(tmp_path: Path) -> None:
     manager = KnowledgeBaseManager(base_dir=str(tmp_path / "kbs"))
     manager.register_linked_kb("Dup", str(ext), "llamaindex")
     with pytest.raises(ValueError):
-        manager.register_linked_kb("Dup", str(ext), "graphrag")
+        manager.register_linked_kb("Dup", str(ext), "llamaindex")
 
 
 def test_delete_linked_kb_preserves_external_folder(tmp_path: Path) -> None:
@@ -74,7 +74,7 @@ def test_delete_linked_kb_preserves_external_folder(tmp_path: Path) -> None:
 def test_linked_entry_survives_orphan_prune(tmp_path: Path) -> None:
     ext = _external_index(tmp_path)
     manager = KnowledgeBaseManager(base_dir=str(tmp_path / "kbs"))
-    manager.register_linked_kb("Linked", str(ext), "graphrag")
+    manager.register_linked_kb("Linked", str(ext), "llamaindex")
 
     # No ``kbs/Linked`` directory exists, yet the pointer must not be pruned.
     assert "Linked" in manager.list_knowledge_bases()
@@ -83,12 +83,12 @@ def test_linked_entry_survives_orphan_prune(tmp_path: Path) -> None:
 def test_get_metadata_surfaces_external_path_and_provider(tmp_path: Path) -> None:
     ext = _external_index(tmp_path)
     manager = KnowledgeBaseManager(base_dir=str(tmp_path / "kbs"))
-    manager.register_linked_kb("Linked", str(ext), "graphrag")
+    manager.register_linked_kb("Linked", str(ext), "llamaindex")
 
     meta = manager.get_metadata("Linked")
     assert meta["type"] == "linked"
     assert Path(meta["external_path"]) == ext.resolve()
-    assert meta["rag_provider"] == "graphrag"
+    assert meta["rag_provider"] == "llamaindex"
 
 
 def test_reconcile_skips_linked_entry(tmp_path: Path) -> None:

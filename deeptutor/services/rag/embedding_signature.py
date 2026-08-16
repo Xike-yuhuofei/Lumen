@@ -40,11 +40,10 @@ def signature_from_embedding_config() -> EmbeddingSignature | None:
 def embedding_meta_fields() -> dict[str, Any]:
     """Embedding identity fields to stamp into a version's ``meta.json``.
 
-    LlamaIndex versions already record the full signature; the graph engines
-    (GraphRAG/LightRAG) use a synthetic provider signature, so they stamp these
-    extra fields at build time. The probe used when *linking* an external index
-    reads them to verify the index was built with a compatible embedding model
-    — without which graph engines fail retrieval silently on a mismatch.
+    LlamaIndex versions already record the full signature. The probe used when
+    *linking* an external index reads them to verify the index was built with a
+    compatible embedding model — without which retrieval returns empty results
+    on a mismatch.
     """
     signature = signature_from_embedding_config()
     if signature is None:
