@@ -22,6 +22,7 @@ from deeptutor.knowledge.manifest import (
 
 _READY = {"rag_provider": "llamaindex", "status": "ready"}
 
+
 def _kb(tmp_path: Path, *files: str, name: str = "Course") -> Path:
     kb_dir = tmp_path / name
     raw = kb_dir / "raw"
@@ -31,6 +32,7 @@ def _kb(tmp_path: Path, *files: str, name: str = "Course") -> Path:
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(b"x" * 2048)
     return kb_dir
+
 
 class TestDocumentCounting:
     def test_counts_documents_in_subfolders(self, tmp_path: Path) -> None:
@@ -91,6 +93,7 @@ class TestDocumentCounting:
     def test_iter_of_missing_root_is_empty(self, tmp_path: Path) -> None:
         assert list(iter_kb_documents(tmp_path / "nope")) == []
 
+
 class TestPatternFilter:
     def test_glob_matches_full_path_or_basename(self, tmp_path: Path) -> None:
         kb_dir = _kb(tmp_path, "a.pdf", "b.md", "notes/week3.md")
@@ -115,6 +118,7 @@ class TestPatternFilter:
 
         assert (manifest.total, manifest.matched) == (3, 1)
 
+
 class TestConnectedKbs:
     def test_linked_kb_enumerates_the_external_folder(self, tmp_path: Path) -> None:
         external = tmp_path / "elsewhere"
@@ -132,6 +136,7 @@ class TestConnectedKbs:
         manifest = build_manifest(name="Fresh", kb_dir=tmp_path / "Fresh", entry=_READY)
 
         assert manifest.unavailable == UNAVAILABLE_MISSING
+
 
 class TestManifestNote:
     def test_note_carries_count_names_and_the_authority_rule(self, tmp_path: Path) -> None:
@@ -175,6 +180,7 @@ class TestManifestNote:
 
     def test_no_manifests_yields_no_block(self) -> None:
         assert render_manifest_note([], language="en") == ""
+
 
 class TestManifestReport:
     def test_report_lists_documents_with_sizes(self, tmp_path: Path) -> None:

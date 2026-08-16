@@ -110,9 +110,7 @@ class TestPayloadNormalizationOnLoad:
         assert kb["rag_provider"] == "llamaindex"
         assert kb.get("needs_reindex", False) is False
 
-    def test_existing_removed_provider_collapses_and_marks_reindex(
-        self, tmp_path: Path
-    ) -> None:
+    def test_existing_removed_provider_collapses_and_marks_reindex(self, tmp_path: Path) -> None:
         config_path = tmp_path / "kb_config.json"
         _write_kb_config(
             config_path,

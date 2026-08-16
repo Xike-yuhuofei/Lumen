@@ -82,8 +82,7 @@ class TeachingKnowledgeGraph:
         """
         self.node(node_id)
         direct = [
-            edge.source
-            for edge in self.incoming(node_id, TeachingRelationType.PREREQUISITE_OF)
+            edge.source for edge in self.incoming(node_id, TeachingRelationType.PREREQUISITE_OF)
         ]
         if not recursive:
             return direct
@@ -93,10 +92,7 @@ class TeachingKnowledgeGraph:
 
         def visit(current: str) -> None:
             for parent in [
-                edge.source
-                for edge in self.incoming(
-                    current, TeachingRelationType.PREREQUISITE_OF
-                )
+                edge.source for edge in self.incoming(current, TeachingRelationType.PREREQUISITE_OF)
             ]:
                 if parent in visited:
                     continue

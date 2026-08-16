@@ -9,9 +9,7 @@ import yaml
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 AGENTS_DIR = PROJECT_ROOT / "deeptutor" / "agents"
 # Modules that live outside deeptutor/agents/ but still own prompts.
-EXTRA_PROMPT_MODULE_DIRS = (
-    PROJECT_ROOT / "deeptutor" / "book",
-)
+EXTRA_PROMPT_MODULE_DIRS = (PROJECT_ROOT / "deeptutor" / "book",)
 
 # Template placeholders are expected to be like {topic}, {knowledge_title}, etc.
 # Avoid false positives from LaTeX (\frac{1}{3}) and Mermaid (B{{Processing}}).

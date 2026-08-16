@@ -471,9 +471,7 @@ def _build_tool_options(sdk: ModuleType, tools: list[dict[str, Any]] | None) -> 
                 "content": [
                     {
                         "type": "text",
-                        "text": (
-                            "Lumen accepted this tool call and will provide its result next."
-                        ),
+                        "text": ("Lumen accepted this tool call and will provide its result next."),
                     }
                 ]
             }

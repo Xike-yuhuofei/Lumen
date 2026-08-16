@@ -251,8 +251,8 @@ PocketBase 附件同步是 best-effort，主路径始终是本地 `raw/`。
 
 ```python
 markdown: str
-blocks: list[dict] | None      # 仅 MinerU 等产出 content_list 的引擎
-asset_dir: Path | None         # images/
+blocks: list[dict] | None  # 仅 MinerU 等产出 content_list 的引擎
+asset_dir: Path | None  # images/
 source_hash, parser_signature, engine, workdir
 ```
 
@@ -431,16 +431,16 @@ defaults.provider_modes.lightrag = "mix" 已写入，但无 LightRAG KB
 
 ```python
 {
-  "query": str,
-  "answer": str,      # 与 content 互相同步
-  "content": str,
-  "sources": [        # {title, content[:200], source, page, chunk_id, score}
-  ],
-  "provider": str,    # 以绑定为准，覆盖 pipeline 自报
-  "needs_reindex": bool,  # 可选
-  "error_type": str,      # 可选
-  "warning": str,         # LlamaIndex embedding_mismatch
-  "mode": str,            # Graph/LightRAG
+    "query": str,
+    "answer": str,  # 与 content 互相同步
+    "content": str,
+    "sources": [  # {title, content[:200], source, page, chunk_id, score}
+    ],
+    "provider": str,  # 以绑定为准，覆盖 pipeline 自报
+    "needs_reindex": bool,  # 可选
+    "error_type": str,  # 可选
+    "warning": str,  # LlamaIndex embedding_mismatch
+    "mode": str,  # Graph/LightRAG
 }
 ```
 

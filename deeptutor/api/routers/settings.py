@@ -369,7 +369,7 @@ def _require_codex_oauth_actor() -> None:
     profile is (correctly) never grantable, and they could not sign in for
     themselves either (#781).
 
-"""
+    """
 
 
 def _codex_http_exception(error: CodexAuthError) -> HTTPException:

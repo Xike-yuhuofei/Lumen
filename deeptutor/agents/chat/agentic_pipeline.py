@@ -1325,7 +1325,6 @@ class AgenticChatPipeline:
         note = render_manifest_note(self._kb_manifests, language=self.language)
         return f"\n{note}" if note else ""
 
-
     def _workspace_system_note(self, context: UnifiedContext) -> str:
         if not getattr(self, "_exec_enabled", False):
             return ""

@@ -736,7 +736,6 @@ class KnowledgeBaseManager:
         self._save_config()
         return entry
 
-
     def get_knowledge_base_path(self, name: str | None = None) -> Path:
         """Get path to a knowledge base.
 

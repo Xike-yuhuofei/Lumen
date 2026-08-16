@@ -4,6 +4,7 @@ import pytest
 
 from deeptutor.api.utils.task_log_stream import KnowledgeTaskStreamManager
 
+
 @pytest.mark.asyncio
 async def test_knowledge_task_stream_emits_process_log_sse_event():
     manager = KnowledgeTaskStreamManager()
@@ -24,6 +25,7 @@ async def test_knowledge_task_stream_emits_process_log_sse_event():
     assert payload["message"] == "Indexing started"
     assert payload["context"]["task_id"] == "task-1"
 
+
 def test_completed_task_buffers_are_bounded_and_restore_terminal_event():
     manager = KnowledgeTaskStreamManager()
     manager._MAX_RETAINED_TASKS = 3
@@ -40,6 +42,7 @@ def test_completed_task_buffers_are_bounded_and_restore_terminal_event():
     manager.ensure_task("task-0")
     restored = list(manager._buffers["task-0"])
     assert restored[-1]["event"] == "complete"
+
 
 def test_task_buffer_has_approximate_byte_ceiling():
     manager = KnowledgeTaskStreamManager()

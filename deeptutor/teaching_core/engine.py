@@ -74,9 +74,7 @@ class TeachingEngine:
         )
 
         if attempts == 0:
-            explanations = graph.resources_for(
-                target_id, TeachingRelationType.EXPLAINS
-            )
+            explanations = graph.resources_for(target_id, TeachingRelationType.EXPLAINS)
             return TeachingDecision(
                 action=TeachingActionType.EXPLAIN,
                 focus_node_id=target_id,
@@ -86,9 +84,7 @@ class TeachingEngine:
             )
 
         if mastery < self.LOW_MASTERY:
-            examples = graph.resources_for(
-                target_id, TeachingRelationType.EXAMPLE_OF
-            )
+            examples = graph.resources_for(target_id, TeachingRelationType.EXAMPLE_OF)
             if examples:
                 return TeachingDecision(
                     action=TeachingActionType.SHOW_EXAMPLE,
@@ -97,9 +93,7 @@ class TeachingEngine:
                     reason="Mastery is low; use a concrete example before reassessment.",
                     trace=trace + ["policy=low_mastery_example"],
                 )
-            explanations = graph.resources_for(
-                target_id, TeachingRelationType.EXPLAINS
-            )
+            explanations = graph.resources_for(target_id, TeachingRelationType.EXPLAINS)
             return TeachingDecision(
                 action=TeachingActionType.EXPLAIN,
                 focus_node_id=target_id,
@@ -111,9 +105,7 @@ class TeachingEngine:
         return TeachingDecision(
             action=TeachingActionType.ASSESS,
             focus_node_id=target_id,
-            resource_node_ids=graph.resources_for(
-                target_id, TeachingRelationType.ASSESSES
-            ),
+            resource_node_ids=graph.resources_for(target_id, TeachingRelationType.ASSESSES),
             reason="The target is partially learned; gather evidence against the mastery gate.",
             trace=trace + ["policy=assess_toward_gate"],
         )
@@ -163,9 +155,7 @@ class TeachingEngine:
             return None
 
         misconception_id = known_misconceptions[0]
-        corrections = graph.resources_for(
-            misconception_id, TeachingRelationType.CORRECTS
-        )
+        corrections = graph.resources_for(misconception_id, TeachingRelationType.CORRECTS)
         return TeachingDecision(
             action=TeachingActionType.REMEDIATE_MISCONCEPTION,
             focus_node_id=misconception_id,

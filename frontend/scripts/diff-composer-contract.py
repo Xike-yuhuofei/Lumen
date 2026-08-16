@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import json
-import sys
 from pathlib import Path
 
 KEYS = [
@@ -35,9 +34,21 @@ KEYS = [
 ]
 
 PARTS = [
-    "messageInput", "container", "editorPart", "upper", "wrapper",
-    "placeholder", "editable", "lower", "left", "right",
-    "plus", "plugin", "model", "mic", "send",
+    "messageInput",
+    "container",
+    "editorPart",
+    "upper",
+    "wrapper",
+    "placeholder",
+    "editable",
+    "lower",
+    "left",
+    "right",
+    "plus",
+    "plugin",
+    "model",
+    "mic",
+    "send",
 ]
 
 
@@ -85,8 +96,12 @@ def compare(a_name, b_name, state="focusedEmpty"):
                 print(f"    A: {va}")
                 print(f"    B: {vb}")
                 diffs += 1
-    print(f"\ntoolbar A: {[(t.get('aria'), t.get('className'), t.get('box'), t.get('bg')) for t in sa.get('toolbarButtons', [])]}")
-    print(f"toolbar B: {[(t.get('aria'), t.get('className'), t.get('box'), t.get('bg')) for t in sb.get('toolbarButtons', [])]}")
+    print(
+        f"\ntoolbar A: {[(t.get('aria'), t.get('className'), t.get('box'), t.get('bg')) for t in sa.get('toolbarButtons', [])]}"
+    )
+    print(
+        f"toolbar B: {[(t.get('aria'), t.get('className'), t.get('box'), t.get('bg')) for t in sb.get('toolbarButtons', [])]}"
+    )
     print(f"\nDIFF COUNT: {diffs}")
 
 

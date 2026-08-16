@@ -131,8 +131,6 @@ def test_rag_providers_lists_llamaindex_only() -> None:
     assert not by_id["llamaindex"].get("modes")
 
 
-
-
 def test_supported_file_types_returns_upload_policy() -> None:
     with TestClient(_build_app()) as client:
         response = client.get("/api/v1/knowledge/supported-file-types")
@@ -205,8 +203,6 @@ def test_create_coerces_legacy_provider_to_llamaindex(monkeypatch, tmp_path: Pat
 
     assert response.status_code == 200
     assert manager.config["knowledge_bases"]["kb-legacy"]["rag_provider"] == "llamaindex"
-
-
 
 
 def test_create_rejects_invalid_files_before_registering_kb(monkeypatch, tmp_path: Path) -> None:
@@ -956,10 +952,6 @@ def test_update_config_coerces_legacy_provider_to_llamaindex() -> None:
     assert fake_service.config.get("rag_provider") == "llamaindex"
 
 
-
-
-
-
 def test_rag_providers_marks_linkable() -> None:
     with TestClient(_build_app()) as client:
         providers = client.get("/api/v1/knowledge/rag-providers").json()["providers"]
@@ -988,16 +980,6 @@ def test_probe_folder_endpoint_finds_ready_index(tmp_path: Path) -> None:
     payload = response.json()
     assert payload["ok"] is True
     assert payload["version"] == "version-1"
-
-
-
-
-
-
-
-
-
-
 
 
 def test_assert_not_connected_kb_blocks_connected_writes() -> None:

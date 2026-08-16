@@ -640,8 +640,6 @@ class RuntimeSettingsService:
             payload["allow_local_model_download"] = _coerce_bool(value, False)
         return self._normalize_mineru_engine(payload)
 
-
-
     def _apply_llamaindex_process_overrides(self, settings: dict[str, Any]) -> dict[str, Any]:
         # Only the retrieval profile had an env override historically
         # (DEEPTUTOR_RAG_RETRIEVAL_PROFILE / RAG_RETRIEVAL_PROFILE); preserve it.
@@ -675,9 +673,6 @@ class RuntimeSettingsService:
             "chunk_size": chunk_size,
             "chunk_overlap": chunk_overlap,
         }
-
-
-
 
     def _normalize_document_parsing(self, settings: dict[str, Any]) -> dict[str, Any]:
         """Normalize the full v2 structure, migrating a v1 flat file in place.
@@ -966,8 +961,6 @@ def load_mineru_settings() -> dict[str, Any]:
 
 def load_llamaindex_settings() -> dict[str, Any]:
     return get_runtime_settings_service().load_llamaindex()
-
-
 
 
 def load_document_parsing_settings() -> dict[str, Any]:

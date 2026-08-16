@@ -40,9 +40,7 @@ _VISUALIZE_STAGES = [
 class VisualizeCapability(BaseCapability):
     manifest = CapabilityManifest(
         name="visualize",
-        description=(
-            "Generate SVG, Chart.js, Mermaid, or interactive HTML visualizations."
-        ),
+        description=("Generate SVG, Chart.js, Mermaid, or interactive HTML visualizations."),
         stages=_VISUALIZE_STAGES,
         tools_used=[],
         cli_aliases=["visualize", "viz"],

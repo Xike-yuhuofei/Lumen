@@ -31,8 +31,8 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-import re
 from pathlib import Path
+import re
 from typing import Protocol, runtime_checkable
 from urllib.parse import quote
 

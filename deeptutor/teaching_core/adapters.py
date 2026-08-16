@@ -17,9 +17,7 @@ def learner_state_from_progress(progress: LearningProgress) -> LearnerState:
 
     attempts: dict[str, int] = {}
     for attempt in progress.quiz_attempts:
-        attempts[attempt.knowledge_point_id] = (
-            attempts.get(attempt.knowledge_point_id, 0) + 1
-        )
+        attempts[attempt.knowledge_point_id] = attempts.get(attempt.knowledge_point_id, 0) + 1
 
     return LearnerState(mastery=mastery, attempts=attempts)
 

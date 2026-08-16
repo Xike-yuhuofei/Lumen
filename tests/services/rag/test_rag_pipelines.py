@@ -124,10 +124,6 @@ async def test_search_aliases_answer_and_content(fake_service) -> None:
     assert result["answer"] == "only-answer"
 
 
-
-
-
-
 @pytest.mark.asyncio
 async def test_search_filters_noisy_vector_and_embedding_logs(
     fake_service,
