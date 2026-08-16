@@ -2,9 +2,8 @@
 
 The RAG service and factory have always relied on duck typing across pipelines
 (``initialize`` / ``add_documents`` / ``search`` / ``delete``). This Protocol
-makes that contract explicit so a new engine — e.g. the PageIndex cloud
-pipeline — can be type-checked against the same shape the LlamaIndex pipeline
-already satisfies. It is intentionally minimal: ``RAGService`` still probes for
+makes that contract explicit so a new engine can be type-checked against the
+same shape the LlamaIndex pipeline already satisfies. It is intentionally minimal: ``RAGService`` still probes for
 optional methods with ``hasattr`` to stay tolerant of partial implementations.
 """
 

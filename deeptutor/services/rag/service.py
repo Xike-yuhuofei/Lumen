@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
-import importlib
 import inspect
 import logging
 import os
@@ -249,24 +248,9 @@ class RAGService:
 
         @contextlib.contextmanager
         def capture_non_propagating_logs():
-            handlers: list[tuple[logging.Logger, logging.Handler]] = []
-            for logger_name in ("lightrag", "graphrag", "graphrag_llm"):
-                if logger_name == "lightrag":
-                    with contextlib.suppress(Exception):
-                        importlib.import_module("lightrag.utils")
-                source_logger = logging.getLogger(logger_name)
-                if source_logger.propagate:
-                    continue
-                handler = _NamedRawLogHandler()
-                source_logger.addHandler(handler)
-                handlers.append((source_logger, handler))
-            try:
-                yield
-            finally:
-                for source_logger, handler in handlers:
-                    if handler in source_logger.handlers:
-                        source_logger.removeHandler(handler)
-                    handler.close()
+            # Logs that do not propagate to root are already forwarded by
+            # capture_process_logs; the removed engines were the only clients.
+            yield
 
         @contextlib.contextmanager
         def capture_all_raw_logs():

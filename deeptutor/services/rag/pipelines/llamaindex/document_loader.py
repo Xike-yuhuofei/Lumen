@@ -3,9 +3,9 @@
 Parser-backed files (PDF / Office / e-book) are converted through the shared
 document-parse bridge (``deeptutor/services/parsing``), so the engine the user
 picked in Settings → Document Parsing (text-only, MinerU, Docling, markitdown,
-PyMuPDF4LLM) owns extraction. This is the same seam LightRAG and GraphRAG use;
-routing LlamaIndex through it too means the parse-engine choice is honored by
-every local retrieval engine, and image-capable engines' extracted images flow
+PyMuPDF4LLM) owns extraction. Routing LlamaIndex through it too means the
+parse-engine choice is honored by the retrieval engine, and image-capable
+engines' extracted images flow
 into the multimodal ``ImageNode`` path below.
 """
 
@@ -94,8 +94,8 @@ class LlamaIndexDocumentLoader:
 
         Returns ``(text, extracted_images)``. A parse failure (engine
         unavailable, unsupported format for the active engine, or models not
-        ready) is logged and the file is skipped — matching the sibling
-        LightRAG/GraphRAG pipelines — rather than aborting the whole batch.
+        ready) is logged and the file is skipped — rather than aborting the
+        whole batch.
         """
         from deeptutor.services.parsing import ParserError, get_parse_service
 

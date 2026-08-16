@@ -38,17 +38,11 @@ class TestNormalizeProviderName:
 
 
 class TestPipelineFactory:
-    def test_list_pipelines_includes_pageindex(self) -> None:
+    def test_list_pipelines_llamaindex_only(self) -> None:
         pipelines = list_pipelines()
         assert isinstance(pipelines, list)
-        assert {p["id"] for p in pipelines} == {
-            DEFAULT_PROVIDER,
-            "pageindex",
-            "graphrag",
-            "lightrag",
-            "lightrag-server",
-            "ima",
-        }
+        # The single RAG pipeline is LlamaIndex; removed engines leave no residue.
+        assert {p["id"] for p in pipelines} == {DEFAULT_PROVIDER}
 
     def test_get_pipeline_returns_singleton(self) -> None:
         try:
@@ -68,23 +62,19 @@ class TestPipelineFactory:
             pytest.skip(f"LlamaIndex optional dependency missing: {exc}")
         assert a is b is c
 
-    def test_get_pipeline_dispatches_known_provider(self) -> None:
-        """A real provider name builds its own pipeline (not the default)."""
-        pipe = get_pipeline("lightrag", kb_base_dir="/tmp/kb-test")
-        assert type(pipe).__name__ == "LightRagPipeline"
+    def test_get_pipeline_collapses_removed_provider(self) -> None:
+        """A removed engine name collapses to the default LlamaIndex pipeline."""
+        try:
+            pipe = get_pipeline("lightrag", kb_base_dir="/tmp/kb-test")
+        except (ValueError, ImportError) as exc:
+            pytest.skip(f"LlamaIndex optional dependency missing: {exc}")
+        assert type(pipe).__name__ == "LlamaIndexPipeline"
 
 
 class TestRAGServiceClassHelpers:
-    def test_list_providers_includes_pageindex(self) -> None:
+    def test_list_providers_llamaindex_only(self) -> None:
         providers = RAGService.list_providers()
-        assert {p["id"] for p in providers} == {
-            DEFAULT_PROVIDER,
-            "pageindex",
-            "graphrag",
-            "lightrag",
-            "lightrag-server",
-            "ima",
-        }
+        assert {p["id"] for p in providers} == {DEFAULT_PROVIDER}
 
     def test_has_provider_default_true(self) -> None:
         assert RAGService.has_provider(DEFAULT_PROVIDER) is True

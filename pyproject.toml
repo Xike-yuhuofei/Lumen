@@ -12,7 +12,6 @@ description = "Lumen — an agent-native intelligent learning companion with mul
 # Capped below 3.14 on purpose (issue #664): on 3.14 pip can't find wheels for
 # some compiled base deps (e.g. faiss-cpu) and silently backtracks into a
 # doomed source build that dies with "subprocess-exited-with-error". The heavy
-# RAG extras (graphrag, rag-lightrag) already carry a `python_version < '3.14'`
 # marker for the same reason; capping here makes pip refuse 3.14 with a
 # readable "Requires a different Python" message instead of a build failure.
 requires-python = ">=3.11,<3.14"
@@ -56,7 +55,7 @@ dependencies = [
     "openpyxl>=3.1.0",
     "python-pptx>=1.0.0",
     "pypdf>=4.0.0",
-    "pdfplumber>=0.11.0,<0.11.8",  # 0.11.8+ pins pdfminer.six==20251230, conflicts with mineru (via raganything)
+    "pdfplumber>=0.11.0,<0.11.8",  # 0.11.8+ pins pdfminer.six==20251230, conflicts with mineru
     "reportlab>=4.0.0",
     "defusedxml>=0.7.1",
     "fastapi>=0.100.0",
@@ -103,7 +102,7 @@ cli = [
     "openpyxl>=3.1.0",
     "python-pptx>=1.0.0",
     "pypdf>=4.0.0",
-    "pdfplumber>=0.11.0,<0.11.8",  # 0.11.8+ pins pdfminer.six==20251230, conflicts with mineru (via raganything)
+    "pdfplumber>=0.11.0,<0.11.8",  # 0.11.8+ pins pdfminer.six==20251230, conflicts with mineru
     "reportlab>=4.0.0",
     "defusedxml>=0.7.1",
 ]
@@ -208,25 +207,7 @@ matrix-e2e = [
 # System prerequisites (installed outside pip): LaTeX, pkg-config, cairo, cmake, ffmpeg.
 math-animator = ["manim>=0.19.0"]
 
-# GraphRAG knowledge-base engine (microsoft/graphrag). Optional, heavy
-# (LiteLLM + lancedb + graspologic) and kept out of `all` so it stays a
-# deliberate opt-in. The pipeline imports lazily and the adapter targets the
-# 3.x API (see services/rag/pipelines/graphrag/engine.py). Every graphrag 3.x
-# release is capped at python <3.14; the `python_version` marker mirrors that
-# so on 3.14+ the extra resolves to a no-op instead of an unsatisfiable hard
-# dep — otherwise pip backtracks deeptutor to the last extra-free version
-# (1.4.5) and silently downgrades. Floor is 3.0.1 (3.0.0/3.0.3 were yanked).
-graphrag = ["graphrag>=3.0.1,<4.0.0; python_version < '3.14'"]
 
-# LightRAG knowledge-base engine (HKUDS/LightRAG) with multimodal parsing via
-# RAG-Anything (HKUDS/RAG-Anything). Optional, heavy (pulls MinerU transitively —
-# see the pdfplumber pin above). The pipeline imports lazily and the adapter is
-# isolated in services/rag/pipelines/lightrag/engine.py. raganything pulls
-# `mineru[core]`, which is capped at python <3.14, so this carries the same
-# `python_version` marker as graphrag to avoid a silent backtrack/downgrade on
-# 3.14+. Floor is 1.0.1 (no 1.0.0 was ever published) with a <2.0.0 ceiling so
-# a future API-breaking 2.x isn't pulled in silently.
-rag-lightrag = ["raganything>=1.0.1,<2.0.0; python_version < '3.14'"]
 
 # Dev/test tooling. Mirrors requirements/dev.txt.
 dev = [

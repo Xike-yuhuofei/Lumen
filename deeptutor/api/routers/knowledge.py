@@ -54,9 +54,6 @@ from deeptutor.services.config import PROJECT_ROOT, load_config_with_main
 from deeptutor.services.file_io import atomic_write_json
 from deeptutor.services.rag.factory import (
     DEFAULT_PROVIDER,
-    GRAPHRAG_PROVIDER,
-    LIGHTRAG_PROVIDER,
-    PAGEINDEX_PROVIDER,
     normalize_provider_name,
     provider_uses_embedding_versions,
 )
@@ -85,7 +82,6 @@ router = APIRouter()
 BYTES_PER_GB = 1024**3
 BYTES_PER_MB = 1024**2
 
-
 def format_bytes_human_readable(size_bytes: int) -> str:
     """Format bytes into human-readable string (GB, MB, or bytes)."""
     if size_bytes >= BYTES_PER_GB:
@@ -95,20 +91,17 @@ def format_bytes_human_readable(size_bytes: int) -> str:
     else:
         return f"{size_bytes} bytes"
 
-
 _kb_base_dir = PROJECT_ROOT / "data" / "knowledge_bases"
 DEFAULT_KB_ALIASES = {"", "default", "current", "selected", "默认", "默认知识库", "当前知识库"}
 
 # Lazy initialization
 kb_manager = None
 
-
 def get_kb_manager():
     """Get KnowledgeBaseManager instance (lazy init)"""
     if kb_manager is not None:
         return kb_manager
     return current_kb_manager()
-
 
 def _overridden_kb_manager() -> KnowledgeBaseManager | None:
     """Return the legacy/test manager when the route-level getter is patched.
@@ -123,13 +116,11 @@ def _overridden_kb_manager() -> KnowledgeBaseManager | None:
         return manager
     return None
 
-
 def _current_kb_base_dir() -> Path:
     manager = _overridden_kb_manager()
     if manager is not None:
         return Path(manager.base_dir)
     return current_kb_base_dir()
-
 
 def _writable_kb(kb_name: str) -> tuple[KnowledgeBaseManager, str, Path]:
     manager = _overridden_kb_manager()
@@ -138,7 +129,6 @@ def _writable_kb(kb_name: str) -> tuple[KnowledgeBaseManager, str, Path]:
         return manager, resolved_name, Path(manager.base_dir)
     resource = assert_writable(kb_name)
     return manager_for_resource(resource), resource.name, resource.base_dir
-
 
 class KnowledgeBaseInfo(BaseModel):
     id: str | None = None
@@ -155,12 +145,10 @@ class KnowledgeBaseInfo(BaseModel):
     provenance_label: str | None = None
     available: bool = True
 
-
 class LinkFolderRequest(BaseModel):
     """Request model for linking a local folder to a KB."""
 
     folder_path: str
-
 
 class LinkedFolderInfo(BaseModel):
     """Response model for linked folder information."""
@@ -170,14 +158,12 @@ class LinkedFolderInfo(BaseModel):
     added_at: str
     file_count: int
 
-
 class SupportedFileTypesInfo(BaseModel):
     """Upload constraints exposed to the web client."""
 
     extensions: list[str]
     accept: str
     max_file_size_bytes: int
-
 
 IMAGE_ACCEPT_MIME_TYPES = {
     ".bmp": "image/bmp",
@@ -190,12 +176,10 @@ IMAGE_ACCEPT_MIME_TYPES = {
     ".webp": "image/webp",
 }
 
-
 def _build_unique_task_id(task_type: str, task_key_prefix: str) -> str:
     task_manager = TaskIDManager.get_instance()
     task_key = f"{task_key_prefix}_{datetime.now().isoformat()}_{uuid4().hex[:8]}"
     return task_manager.generate_task_id(task_type, task_key)
-
 
 def _mark_kb_queued_for_processing(
     manager: KnowledgeBaseManager,
@@ -224,7 +208,6 @@ def _mark_kb_queued_for_processing(
             "timestamp": datetime.now().isoformat(),
         },
     )
-
 
 def _save_zip_archive(
     file: UploadFile,
@@ -287,18 +270,15 @@ def _save_zip_archive(
         if tmp_path is not None:
             tmp_path.unlink(missing_ok=True)
 
-
 # Folder organization is purely a human-facing layout: folders are real
 # subdirectories under ``raw/`` (no manifest, no retrieval effect). These
 # helpers keep user-supplied relative paths safe before they touch the FS.
 _BAD_PATH_CHARS = re.compile(r'[\\:*?"<>|\x00-\x1f]')
 
-
 def _sanitize_path_segment(segment: str) -> str:
     """Sanitize a single folder/file path segment for safe FS use."""
     cleaned = _BAD_PATH_CHARS.sub("", segment).strip().strip(".")
     return cleaned[:128]
-
 
 def _sanitize_rel_subdir(rel_path: str | None) -> str:
     """Return a safe POSIX relative subdir (folders only, no traversal).
@@ -320,7 +300,6 @@ def _sanitize_rel_subdir(rel_path: str | None) -> str:
             parts.append(safe)
     return "/".join(parts)
 
-
 def _safe_join_raw(raw_dir: Path, rel_path: str) -> Path:
     """Resolve ``rel_path`` under ``raw_dir``, rejecting traversal."""
     target = (raw_dir / rel_path).resolve()
@@ -329,7 +308,6 @@ def _safe_join_raw(raw_dir: Path, rel_path: str) -> Path:
     except ValueError as exc:
         raise HTTPException(status_code=403, detail="Access denied") from exc
     return target
-
 
 def _save_uploaded_files(
     files: list[UploadFile],
@@ -456,7 +434,6 @@ def _save_uploaded_files(
 
     return uploaded_files, uploaded_file_paths
 
-
 async def _save_uploaded_files_off_loop(
     files: list[UploadFile],
     target_dir: Path,
@@ -484,7 +461,6 @@ async def _save_uploaded_files_off_loop(
         rel_paths=rel_paths,
     )
 
-
 def _get_upload_file_size(file: UploadFile) -> int | None:
     """Best-effort byte size detection without consuming the uploaded stream."""
     try:
@@ -495,7 +471,6 @@ def _get_upload_file_size(file: UploadFile) -> int | None:
         return size
     except Exception:
         return None
-
 
 def _validate_upload_batch(
     files: list[UploadFile],
@@ -550,7 +525,6 @@ def _validate_upload_batch(
 
     return validated
 
-
 def _upload_file_to_pb(kb_name: str, filename: str, file_path: Path) -> None:
     """Upload a single file to the PocketBase knowledge_bases record."""
     try:
@@ -573,7 +547,6 @@ def _upload_file_to_pb(kb_name: str, filename: str, file_path: Path) -> None:
     except Exception as exc:
         logger.debug(f"_upload_file_to_pb failed: {exc}")
 
-
 def _task_log(task_id: str, message: str, level: str = "info") -> None:
     manager = get_task_stream_manager()
     manager.ensure_task(task_id)
@@ -585,87 +558,16 @@ def _task_log(task_id: str, message: str, level: str = "info") -> None:
     else:
         logger.info(f"[{task_id}] {message}")
 
-
 def _validate_registered_provider(raw_provider: str | None) -> str:
     """Resolve a requested provider to a known engine.
 
     Empty / legacy / unknown strings coerce to the default (so a stale config or
     a removed engine never selects a missing pipeline). Returning the real,
     canonical provider is what makes the per-KB lock meaningful: the upload route
-    compares the requested provider against the KB's bound provider, so asking to
-    add to a ``pageindex`` KB with ``llamaindex`` (or vice versa) is rejected.
+    compares the requested provider against the KB's bound provider, so adding to
+    a KB whose bound engine differs from the requested one is rejected.
     """
     return normalize_provider_name(raw_provider)
-
-
-def _assert_provider_ready(provider: str) -> None:
-    """Block creating/using a KB whose engine isn't ready.
-
-    PageIndex needs an API key; GraphRAG needs the optional package installed.
-    """
-    if provider == PAGEINDEX_PROVIDER:
-        from deeptutor.services.rag.pipelines.pageindex.config import is_pageindex_configured
-
-        if not is_pageindex_configured():
-            raise HTTPException(
-                status_code=400,
-                detail=(
-                    "PageIndex API key is not configured. Add it under "
-                    "Knowledge → RAG pipeline settings before creating a PageIndex "
-                    "knowledge base."
-                ),
-            )
-
-    if provider == GRAPHRAG_PROVIDER:
-        from deeptutor.services.rag.pipelines.graphrag.config import is_graphrag_available
-
-        if not is_graphrag_available():
-            raise HTTPException(
-                status_code=400,
-                detail=(
-                    "GraphRAG is not installed. Run "
-                    "`pip install 'deeptutor[graphrag]'` on the server before "
-                    "creating a GraphRAG knowledge base."
-                ),
-            )
-
-    if provider == LIGHTRAG_PROVIDER:
-        from deeptutor.services.rag.pipelines.lightrag.config import is_lightrag_available
-
-        if not is_lightrag_available():
-            raise HTTPException(
-                status_code=400,
-                detail=(
-                    "LightRAG is not installed. Run "
-                    "`pip install 'deeptutor[rag-lightrag]'` on the server before "
-                    "creating a LightRAG knowledge base."
-                ),
-            )
-
-
-def _enforce_provider_formats(provider: str, files: list[UploadFile]) -> None:
-    """Reject files PageIndex's document endpoint does not accept, up front."""
-    if provider != PAGEINDEX_PROVIDER:
-        return
-    from deeptutor.services.rag.pipelines.pageindex.pipeline import SUPPORTED_EXTENSIONS
-
-    unsupported = [
-        f.filename
-        for f in files
-        if f.filename
-        and not f.filename.lower().endswith(".zip")
-        and Path(f.filename).suffix.lower() not in SUPPORTED_EXTENSIONS
-    ]
-    if unsupported:
-        supported = ", ".join(sorted(SUPPORTED_EXTENSIONS))
-        raise HTTPException(
-            status_code=400,
-            detail=(
-                f"PageIndex knowledge bases accept: {supported}. "
-                f"Unsupported: {', '.join(unsupported[:5])}."
-            ),
-        )
-
 
 def _resolve_registered_kb_name(manager: KnowledgeBaseManager, kb_name: str | None) -> str:
     """Resolve route-level default aliases to the configured default KB."""
@@ -682,14 +584,12 @@ def _resolve_registered_kb_name(manager: KnowledgeBaseManager, kb_name: str | No
 
     raise HTTPException(status_code=404, detail=f"Knowledge base '{requested}' not found")
 
-
 def _load_kb_entry_or_404(manager: KnowledgeBaseManager, kb_name: str) -> dict:
     manager.config = manager._load_config()
     kb_entry = manager.config.get("knowledge_bases", {}).get(kb_name)
     if kb_entry is None:
         raise HTTPException(status_code=404, detail=f"Knowledge base '{kb_name}' not found")
     return kb_entry
-
 
 def _assert_not_connected_kb(kb_name: str, kb_entry: dict) -> None:
     """Block writes to connected KBs (Obsidian vaults, linked indexes).
@@ -706,7 +606,6 @@ def _assert_not_connected_kb(kb_name: str, kb_entry: dict) -> None:
             ),
         )
 
-
 def _assert_kb_writable_or_409(kb_name: str, kb_entry: dict) -> None:
     _assert_not_connected_kb(kb_name, kb_entry)
     if bool(kb_entry.get("needs_reindex", False)):
@@ -717,7 +616,6 @@ def _assert_kb_writable_or_409(kb_name: str, kb_entry: dict) -> None:
                 "before accepting incremental uploads."
             ),
         )
-
 
 def _matching_index_is_valid(kb_name: str, matching_version: dict | None) -> bool:
     """Return whether a matching active index can safely satisfy retrieval."""
@@ -746,7 +644,6 @@ def _matching_index_is_valid(kb_name: str, matching_version: dict | None) -> boo
             exc,
         )
         return False
-
 
 async def run_initialization_task(initializer: KnowledgeBaseInitializer, task_id: str):
     """Background task for knowledge base initialization"""
@@ -837,7 +734,6 @@ async def run_initialization_task(initializer: KnowledgeBaseInitializer, task_id
                     ProgressStage.ERROR, f"Initialization failed: {error_msg}", error=error_msg
                 )
             task_stream_manager.emit_failed(task_id, error_msg, details=trace)
-
 
 async def run_upload_processing_task(
     kb_name: str,
@@ -988,7 +884,6 @@ async def run_upload_processing_task(
             )
             task_stream_manager.emit_failed(task_id, error_msg, details=trace)
 
-
 @router.get("/health")
 async def health_check():
     """Health check endpoint"""
@@ -1006,7 +901,6 @@ async def health_check():
         }
     except Exception as e:
         return {"status": "error", "error": str(e), "traceback": traceback.format_exc()}
-
 
 @router.get("/rag-providers")
 async def get_rag_providers():
@@ -1031,12 +925,10 @@ async def get_rag_providers():
         logger.error(f"Error getting RAG providers: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 class ProviderModeUpdate(BaseModel):
     """Set an engine's global default retrieval mode (from its engine card)."""
 
     mode: str
-
 
 @router.put("/rag-providers/{provider}/mode")
 async def set_rag_provider_mode(provider: str, payload: ProviderModeUpdate):
@@ -1063,71 +955,6 @@ async def set_rag_provider_mode(provider: str, payload: ProviderModeUpdate):
     get_kb_config_service().set_provider_mode(provider, mode)
     return {"provider": provider, "mode": mode}
 
-
-class PageIndexConfigUpdate(BaseModel):
-    # Tri-state api_key: omit/None keeps the stored key, "" clears it, any other
-    # value replaces it — so the masked UI never round-trips the real secret.
-    api_key: str | None = None
-    api_base_url: str | None = None
-
-
-def _pageindex_config_payload() -> dict:
-    """PageIndex pipeline settings for the UI, with the API key redacted."""
-    from deeptutor.services.config import get_runtime_settings_service
-
-    settings = get_runtime_settings_service().load_pageindex()
-    return {
-        "api_base_url": settings.get("api_base_url") or "",
-        "api_key_set": bool(settings.get("api_key")),
-        "configured": bool(settings.get("api_key")),
-    }
-
-
-@router.get("/rag-pipelines/pageindex/config")
-async def get_pageindex_pipeline_config():
-    """Read the PageIndex credential state (key redacted to a boolean)."""
-    try:
-        return _pageindex_config_payload()
-    except Exception as e:
-        logger.error(f"Error reading PageIndex config: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.put("/rag-pipelines/pageindex/config")
-async def update_pageindex_pipeline_config(payload: PageIndexConfigUpdate):
-    """Persist the PageIndex API key / base URL for this user's account."""
-    try:
-        from deeptutor.services.config import get_runtime_settings_service
-        from deeptutor.services.rag.pipelines.pageindex.config import DEFAULT_API_BASE_URL
-
-        service = get_runtime_settings_service()
-        current = service.load_pageindex(include_process_overrides=False)
-
-        api_key = current.get("api_key", "")
-        if payload.api_key is not None:
-            api_key = payload.api_key.strip()
-
-        api_base_url = current.get("api_base_url") or DEFAULT_API_BASE_URL
-        if payload.api_base_url is not None and payload.api_base_url.strip():
-            api_base_url = payload.api_base_url.strip()
-
-        service.save_pageindex({"api_key": api_key, "api_base_url": api_base_url})
-
-        # The built-in pageindex MCP server derives its URL/Bearer header from
-        # these settings — resync connections so key changes apply immediately.
-        try:
-            from deeptutor.services.mcp import get_mcp_manager
-
-            await get_mcp_manager().reload()
-        except Exception:
-            logger.warning("MCP reload after PageIndex config change failed", exc_info=True)
-
-        return _pageindex_config_payload()
-    except Exception as e:
-        logger.error(f"Error updating PageIndex config: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
 class LlamaIndexConfigUpdate(BaseModel):
     """Partial update for the LlamaIndex engine knobs (omitted fields kept)."""
 
@@ -1150,7 +977,6 @@ async def get_llamaindex_pipeline_config():
         logger.error(f"Error reading LlamaIndex config: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.put("/rag-pipelines/llamaindex/config")
 async def update_llamaindex_pipeline_config(payload: LlamaIndexConfigUpdate):
     """Persist the LlamaIndex engine knobs.
@@ -1170,76 +996,6 @@ async def update_llamaindex_pipeline_config(payload: LlamaIndexConfigUpdate):
         logger.error(f"Error updating LlamaIndex config: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
-class GraphRagConfigUpdate(BaseModel):
-    """Partial update for GraphRAG query knobs (omitted fields kept)."""
-
-    response_type: str | None = None
-    community_level: int | None = None
-    dynamic_community_selection: bool | None = None
-
-
-@router.get("/rag-pipelines/graphrag/config")
-async def get_graphrag_pipeline_config():
-    """Read GraphRAG's query knobs (response style, community granularity)."""
-    try:
-        from deeptutor.services.config import get_runtime_settings_service
-
-        return get_runtime_settings_service().load_graphrag()
-    except Exception as e:
-        logger.error(f"Error reading GraphRAG config: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.put("/rag-pipelines/graphrag/config")
-async def update_graphrag_pipeline_config(payload: GraphRagConfigUpdate):
-    """Persist GraphRAG's query knobs. Takes effect on the next query."""
-    try:
-        from deeptutor.services.config import get_runtime_settings_service
-
-        service = get_runtime_settings_service()
-        current = service.load_graphrag()
-        updates = payload.model_dump(exclude_none=True)
-        return service.save_graphrag({**current, **updates})
-    except Exception as e:
-        logger.error(f"Error updating GraphRAG config: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-class LightRagConfigUpdate(BaseModel):
-    """Partial update for LightRAG query knobs (omitted fields kept)."""
-
-    top_k: int | None = None
-    response_type: str | None = None
-
-
-@router.get("/rag-pipelines/lightrag/config")
-async def get_lightrag_pipeline_config():
-    """Read LightRAG's query knobs (top_k, response style)."""
-    try:
-        from deeptutor.services.config import get_runtime_settings_service
-
-        return get_runtime_settings_service().load_lightrag()
-    except Exception as e:
-        logger.error(f"Error reading LightRAG config: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.put("/rag-pipelines/lightrag/config")
-async def update_lightrag_pipeline_config(payload: LightRagConfigUpdate):
-    """Persist LightRAG's query knobs. Takes effect on the next query."""
-    try:
-        from deeptutor.services.config import get_runtime_settings_service
-
-        service = get_runtime_settings_service()
-        current = service.load_lightrag()
-        updates = payload.model_dump(exclude_none=True)
-        return service.save_lightrag({**current, **updates})
-    except Exception as e:
-        logger.error(f"Error updating LightRAG config: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
 @router.get("/rag-pipelines/{provider}/preflight")
 async def get_rag_pipeline_preflight(provider: str):
     """Check whether ``provider`` can run in the current environment.
@@ -1255,12 +1011,10 @@ async def get_rag_pipeline_preflight(provider: str):
         logger.error(f"Error running preflight for '{provider}': {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 # Model kinds an engine page is allowed to read/switch. ``vision`` is not a
 # catalog service (it rides on the active chat model), so it is intentionally
 # excluded here.
 _ENGINE_MODEL_KINDS = ("llm", "embedding")
-
 
 def _model_options_payload(kinds: list[str]) -> dict:
     """Secret-free model options per kind for the engine page picker.
@@ -1302,7 +1056,6 @@ def _model_options_payload(kinds: list[str]) -> dict:
         }
     return out
 
-
 @router.get("/rag-pipelines/model-options")
 async def get_rag_model_options(kinds: str = "llm,embedding"):
     """List configured models (secret-free) for the requested model kinds."""
@@ -1315,14 +1068,12 @@ async def get_rag_model_options(kinds: str = "llm,embedding"):
         logger.error(f"Error reading model options: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 class ActiveModelUpdate(BaseModel):
     """Switch the globally-active model for a kind (llm / embedding)."""
 
     kind: str
     profile_id: str
     model_id: str
-
 
 @router.put("/rag-pipelines/active-model")
 async def set_rag_active_model(payload: ActiveModelUpdate):
@@ -1361,7 +1112,6 @@ async def set_rag_active_model(payload: ActiveModelUpdate):
         logger.error(f"Error setting active model: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.get("/supported-file-types", response_model=SupportedFileTypesInfo)
 async def get_supported_file_types():
     """Return the current upload policy so the web client stays in sync."""
@@ -1377,7 +1127,6 @@ async def get_supported_file_types():
         max_file_size_bytes=DocumentValidator.MAX_FILE_SIZE,
     )
 
-
 @router.get("/configs")
 async def get_all_kb_configs():
     """Get all knowledge base configurations from centralized config file."""
@@ -1389,7 +1138,6 @@ async def get_all_kb_configs():
     except Exception as e:
         logger.error(f"Error getting KB configs: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @router.get("/{kb_name}/config")
 async def get_kb_config(kb_name: str):
@@ -1403,7 +1151,6 @@ async def get_kb_config(kb_name: str):
     except Exception as e:
         logger.error(f"Error getting config for KB '{kb_name}': {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @router.put("/{kb_name}/config")
 async def update_kb_config(kb_name: str, config: dict):
@@ -1454,7 +1201,6 @@ async def update_kb_config(kb_name: str, config: dict):
         logger.error(f"Error updating config for KB '{kb_name}': {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.post("/configs/sync")
 async def sync_configs_from_metadata():
     """Sync all KB configurations from their metadata.json files to centralized config."""
@@ -1468,7 +1214,6 @@ async def sync_configs_from_metadata():
         logger.error(f"Error syncing configs: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.get("/default")
 async def get_default_kb():
     """Get the default knowledge base."""
@@ -1479,7 +1224,6 @@ async def get_default_kb():
     except Exception as e:
         logger.error(f"Error getting default KB: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @router.put("/default/{kb_name}")
 async def set_default_kb(kb_name: str):
@@ -1499,11 +1243,9 @@ async def set_default_kb(kb_name: str):
         logger.error(f"Error setting default KB: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 class ConnectObsidianRequest(BaseModel):
     name: str
     vault_path: str
-
 
 @router.post("/connect-obsidian")
 async def connect_obsidian_vault(payload: ConnectObsidianRequest):
@@ -1531,17 +1273,14 @@ async def connect_obsidian_vault(payload: ConnectObsidianRequest):
         logger.error(f"Error connecting Obsidian vault: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 class ProbeFolderRequest(BaseModel):
     folder_path: str
     rag_provider: str = DEFAULT_PROVIDER
-
 
 class ConnectFolderRequest(BaseModel):
     name: str
     folder_path: str
     rag_provider: str = DEFAULT_PROVIDER
-
 
 @router.post("/probe-folder")
 async def probe_linked_folder_route(payload: ProbeFolderRequest):
@@ -1560,7 +1299,6 @@ async def probe_linked_folder_route(payload: ProbeFolderRequest):
         raise HTTPException(status_code=400, detail=str(e))
     result = probe_linked_folder(str(folder), payload.rag_provider)
     return result.to_dict()
-
 
 @router.post("/connect-folder")
 async def connect_linked_folder_route(payload: ConnectFolderRequest):
@@ -1611,166 +1349,6 @@ async def connect_linked_folder_route(payload: ConnectFolderRequest):
         "rag_provider": entry["rag_provider"],
         "warnings": result.warnings,
     }
-
-
-class ProbeLightRagServerRequest(BaseModel):
-    server_url: str
-    api_key: str = ""
-
-
-class ConnectLightRagServerRequest(BaseModel):
-    name: str
-    server_url: str
-    api_key: str = ""
-    search_mode: str = ""
-
-
-@router.post("/probe-lightrag-server")
-async def probe_lightrag_server_route(payload: ProbeLightRagServerRequest):
-    """Test-connect to an external LightRAG server before binding a KB to it.
-
-    Returns the verdict (reachable? is it a LightRAG server? API key accepted?)
-    so the UI can confirm before any registration happens. Creates nothing.
-    """
-    from deeptutor.services.rag.pipelines.lightrag_server.probe import probe_server
-
-    server_url = (payload.server_url or "").strip()
-    if not server_url:
-        raise HTTPException(status_code=400, detail="server_url is required.")
-    result = await probe_server(server_url, payload.api_key or "")
-    return result.to_dict()
-
-
-@router.post("/connect-lightrag-server")
-async def connect_lightrag_server_route(payload: ConnectLightRagServerRequest):
-    """Connect an external LightRAG server as a retrieval-only knowledge base.
-
-    Re-probes server-side (never trusts the client's verdict), then registers a
-    pointer (``type: lightrag_server``). Retrieval is offloaded to the server's
-    ``/query`` endpoint — no copy, no local index.
-    """
-    from deeptutor.services.rag.pipelines.lightrag_server.config import SUPPORTED_MODES
-    from deeptutor.services.rag.pipelines.lightrag_server.probe import probe_server
-
-    name = (payload.name or "").strip()
-    server_url = (payload.server_url or "").strip()
-    if not name or not server_url:
-        raise HTTPException(status_code=400, detail="Both name and server_url are required.")
-
-    result = await probe_server(server_url, payload.api_key or "")
-    if not result.ok:
-        raise HTTPException(
-            status_code=400, detail=result.error or "Could not connect to the LightRAG server."
-        )
-
-    search_mode = (payload.search_mode or "").strip().lower()
-    if search_mode and search_mode not in SUPPORTED_MODES:
-        search_mode = ""
-
-    try:
-        manager = get_kb_manager()
-        entry = manager.register_lightrag_server_kb(
-            name,
-            result.base_url,
-            api_key=payload.api_key or "",
-            search_mode=search_mode,
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error connecting LightRAG server: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-    return {
-        "status": "connected",
-        "name": name,
-        "server_url": entry["server_url"],
-        "rag_provider": entry["rag_provider"],
-    }
-
-
-class ProbeImaRequest(BaseModel):
-    client_id: str
-    api_key: str
-    knowledge_base_id: str
-
-
-class ConnectImaRequest(BaseModel):
-    name: str
-    client_id: str
-    api_key: str
-    knowledge_base_id: str
-
-
-@router.post("/probe-ima")
-async def probe_ima_route(payload: ProbeImaRequest):
-    """Test-connect to a Tencent IMA knowledge base before binding a KB to it.
-
-    Returns the verdict (credentials accepted? does the library id resolve, and
-    what is it called?) so the UI can confirm before any registration happens.
-    Creates nothing.
-    """
-    from deeptutor.services.rag.pipelines.ima.probe import probe_knowledge_base
-
-    result = await probe_knowledge_base(
-        payload.client_id,
-        payload.api_key,
-        payload.knowledge_base_id,
-    )
-    return result.to_dict()
-
-
-@router.post("/connect-ima")
-async def connect_ima_route(payload: ConnectImaRequest):
-    """Connect a Tencent IMA knowledge base as a retrieval-only knowledge base.
-
-    Re-probes server-side (never trusts the client's verdict), then registers a
-    pointer (``type: ima``). Retrieval is offloaded to IMA's ``search_knowledge``
-    OpenAPI — no copy, no local index.
-    """
-    from deeptutor.services.rag.pipelines.ima.probe import probe_knowledge_base
-
-    name = (payload.name or "").strip()
-    if not name:
-        raise HTTPException(status_code=400, detail="Knowledge base name is required.")
-
-    result = await probe_knowledge_base(
-        payload.client_id,
-        payload.api_key,
-        payload.knowledge_base_id,
-    )
-    if not result.ok:
-        raise HTTPException(
-            status_code=400,
-            detail=result.error or "Could not connect to the IMA knowledge base.",
-        )
-
-    try:
-        manager = get_kb_manager()
-        entry = manager.register_ima_kb(
-            name,
-            payload.client_id,
-            payload.api_key,
-            payload.knowledge_base_id,
-            description=result.description or "",
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error connecting IMA knowledge base: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-    return {
-        "status": "connected",
-        "name": name,
-        "knowledge_base_id": entry["knowledge_base_id"],
-        "rag_provider": entry["rag_provider"],
-    }
-
 
 @router.get("/list", response_model=list[KnowledgeBaseInfo])
 async def list_knowledge_bases():
@@ -1943,7 +1521,6 @@ async def list_knowledge_bases():
         logger.error(f"{error_msg}\n{traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Failed to list knowledge bases: {e!s}")
 
-
 @router.get("/{kb_name}")
 async def get_knowledge_base_details(kb_name: str):
     """Get detailed info for a specific KB."""
@@ -1970,7 +1547,6 @@ async def get_knowledge_base_details(kb_name: str):
         raise HTTPException(status_code=404, detail=f"Knowledge base '{kb_name}' not found")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
 
 def _resolve_kb_raw_dir(kb_name: str, *, allow_unsupported: bool = False) -> Path | None:
     """Resolve a KB's managed ``raw/`` directory without inventing one.
@@ -2003,7 +1579,6 @@ def _resolve_kb_raw_dir(kb_name: str, *, allow_unsupported: bool = False) -> Pat
     kb_path = manager.get_knowledge_base_path(resolved_name)
     return kb_path / "raw"
 
-
 def _resolve_kb_raw_file_or_404(kb_name: str, filename: str) -> Path:
     """Resolve a raw KB file while preventing traversal outside raw/."""
     raw_dir = _resolve_kb_raw_dir(kb_name)
@@ -2022,7 +1597,6 @@ def _resolve_kb_raw_file_or_404(kb_name: str, filename: str) -> Path:
         raise HTTPException(status_code=404, detail="File not found")
 
     return target
-
 
 @router.get("/{kb_name}/files")
 async def list_kb_raw_files(kb_name: str):
@@ -2064,15 +1638,12 @@ async def list_kb_raw_files(kb_name: str):
         )
     return {"files": files}
 
-
 class CreateFolderPayload(BaseModel):
     path: str
-
 
 class MoveFilePayload(BaseModel):
     source: str
     dest_folder: str = ""
-
 
 @router.post("/{kb_name}/folders")
 async def create_kb_folder(kb_name: str, payload: CreateFolderPayload):
@@ -2086,7 +1657,6 @@ async def create_kb_folder(kb_name: str, payload: CreateFolderPayload):
     target = _safe_join_raw(raw_dir, subdir)
     target.mkdir(parents=True, exist_ok=True)
     return {"status": "ok", "path": subdir}
-
 
 @router.post("/{kb_name}/files/move")
 async def move_kb_file(kb_name: str, payload: MoveFilePayload):
@@ -2124,7 +1694,6 @@ async def move_kb_file(kb_name: str, payload: MoveFilePayload):
     shutil.move(str(src), str(dest))
     return {"status": "ok", "path": dest.relative_to(raw_dir.resolve()).as_posix()}
 
-
 @router.get("/{kb_name}/file-preview-text/{filename:path}")
 async def serve_kb_raw_file_text_preview(kb_name: str, filename: str):
     """Serve extracted plain text for a raw KB document preview."""
@@ -2142,7 +1711,6 @@ async def serve_kb_raw_file_text_preview(kb_name: str, filename: str):
 
     return PlainTextResponse(text, media_type="text/plain; charset=utf-8")
 
-
 @router.get("/{kb_name}/files/{filename:path}")
 async def serve_kb_raw_file(kb_name: str, filename: str):
     """Serve a single raw document for inline preview / download.
@@ -2158,7 +1726,6 @@ async def serve_kb_raw_file(kb_name: str, filename: str):
         filename=target.name,
         content_disposition_type="inline",
     )
-
 
 @router.delete("/{kb_name}/files/{filename:path}")
 async def delete_kb_file(kb_name: str, filename: str):
@@ -2183,7 +1750,6 @@ async def delete_kb_file(kb_name: str, filename: str):
         "was_indexed": removal.was_indexed,
     }
 
-
 @router.delete("/{kb_name}")
 async def delete_knowledge_base(kb_name: str):
     """Delete a knowledge base."""
@@ -2199,7 +1765,6 @@ async def delete_knowledge_base(kb_name: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.get("/tasks/{task_id}/stream")
 async def stream_task_logs(task_id: str):
     """Stream task-specific logs for knowledge-base operations."""
@@ -2210,7 +1775,6 @@ async def stream_task_logs(task_id: str):
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
-
 
 @router.post("/{kb_name}/upload")
 async def upload_files(
@@ -2243,8 +1807,6 @@ async def upload_files(
                     "A knowledge base is locked to the engine it was created with."
                 ),
             )
-        _assert_provider_ready(kb_provider)
-        _enforce_provider_formats(kb_provider, files)
         allowed_extensions = FileTypeRouter.get_supported_extensions()
         # ``.zip`` is accepted as an upload container; its members are
         # validated against ``allowed_extensions`` during extraction and the
@@ -2289,7 +1851,6 @@ async def upload_files(
         formatted_error = format_exception_message(e)
         raise HTTPException(status_code=500, detail=formatted_error) from e
 
-
 @router.post("/create")
 async def create_knowledge_base(
     background_tasks: BackgroundTasks,
@@ -2311,8 +1872,6 @@ async def create_knowledge_base(
             raise HTTPException(status_code=400, detail=f"Knowledge base '{name}' already exists")
 
         rag_provider = _validate_registered_provider(rag_provider)
-        _assert_provider_ready(rag_provider)
-        _enforce_provider_formats(rag_provider, files)
         allowed_extensions = FileTypeRouter.get_supported_extensions()
         _validate_upload_batch(files, allowed_extensions=allowed_extensions, rel_paths=rel_paths)
 
@@ -2387,7 +1946,6 @@ async def create_knowledge_base(
         logger.debug(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 
-
 async def run_reindex_task(kb_name: str, base_dir: str, task_id: str, signature_hash: str) -> None:
     """Re-index a KB's raw documents against the currently-active embedding config.
 
@@ -2431,8 +1989,8 @@ async def run_reindex_task(kb_name: str, base_dir: str, task_id: str, signature_
             from deeptutor.services.rag.service import RAGService
 
             # provider=None → RAGService resolves the KB's DeepTutor-bound
-            # engine, so re-indexing a PageIndex/LightRAG/GraphRAG KB stays on
-            # that provider rather than forcing the default pipeline.
+            # engine, so re-indexing stays on that provider rather than forcing
+            # the default pipeline.
             rag_service = RAGService(kb_base_dir=str(base_path), provider=None)
 
             def _on_progress(batch_num: int, total_batches: int) -> None:
@@ -2528,7 +2086,6 @@ async def run_reindex_task(kb_name: str, base_dir: str, task_id: str, signature_
                 pass
             task_stream_manager.emit_failed(task_id, error_msg, details=trace)
 
-
 @router.post("/{kb_name}/reindex")
 async def reindex_knowledge_base(
     kb_name: str,
@@ -2548,7 +2105,6 @@ async def reindex_knowledge_base(
         kb_provider = _validate_registered_provider(
             kb_entry.get("rag_provider") or DEFAULT_PROVIDER
         )
-        _assert_provider_ready(kb_provider)
 
         kb_dir = kb_base_dir / kb_name
         signature_hash = kb_provider
@@ -2614,7 +2170,6 @@ async def reindex_knowledge_base(
         logger.error(f"Failed to start reindex for '{kb_name}': {e}")
         raise HTTPException(status_code=500, detail=format_exception_message(e))
 
-
 @router.post("/{kb_name}/retry")
 async def retry_knowledge_base(
     kb_name: str,
@@ -2642,7 +2197,6 @@ async def retry_knowledge_base(
         logger.error(f"Failed to retry KB '{kb_name}': {e}")
         raise HTTPException(status_code=500, detail=format_exception_message(e))
 
-
 @router.get("/{kb_name}/progress")
 async def get_progress(kb_name: str):
     """Get initialization progress for a knowledge base"""
@@ -2660,7 +2214,6 @@ async def get_progress(kb_name: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.post("/{kb_name}/progress/clear")
 async def clear_progress(kb_name: str):
     """Clear progress file for a knowledge base (useful for stuck states)"""
@@ -2673,7 +2226,6 @@ async def clear_progress(kb_name: str):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @router.websocket("/{kb_name}/progress/ws")
 async def websocket_progress(websocket: WebSocket, kb_name: str):
@@ -2820,7 +2372,6 @@ async def websocket_progress(websocket: WebSocket, kb_name: str):
             except Exception:
                 pass
 
-
 @router.post("/{kb_name}/link-folder", response_model=LinkedFolderInfo)
 async def link_folder(kb_name: str, request: LinkFolderRequest):
     """
@@ -2850,7 +2401,6 @@ async def link_folder(kb_name: str, request: LinkFolderRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.get("/{kb_name}/linked-folders", response_model=list[LinkedFolderInfo])
 async def get_linked_folders(kb_name: str):
     """Get list of linked folders for a knowledge base."""
@@ -2865,7 +2415,6 @@ async def get_linked_folders(kb_name: str):
         raise HTTPException(status_code=404, detail=f"Knowledge base '{kb_name}' not found")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @router.delete("/{kb_name}/linked-folders/{folder_id}")
 async def unlink_folder(kb_name: str, folder_id: str):
@@ -2883,7 +2432,6 @@ async def unlink_folder(kb_name: str, folder_id: str):
         raise HTTPException(status_code=404, detail=f"Knowledge base '{kb_name}' not found")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @router.post("/{kb_name}/sync-folder/{folder_id}")
 async def sync_folder(kb_name: str, folder_id: str, background_tasks: BackgroundTasks):

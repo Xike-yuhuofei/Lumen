@@ -22,7 +22,7 @@ class _FakePipeline:
         self.search_result = search_result or {
             "answer": "fake answer",
             "sources": [{"id": 1}],
-            "provider": "lightrag",  # deliberately wrong; service must overwrite
+            "provider": "raganything",  # deliberately wrong; service must overwrite
         }
 
     async def initialize(self, kb_name: str, file_paths, **kwargs) -> bool:
@@ -51,11 +51,11 @@ def fake_service(tmp_path) -> tuple[RAGService, _FakePipeline]:
     return service, pipeline
 
 
-def test_provider_argument_honored_for_known_provider(tmp_path) -> None:
-    """An explicit known provider wins (used at create time); unknown/legacy
-    strings collapse to the default engine."""
-    assert RAGService(kb_base_dir=str(tmp_path), provider="lightrag").provider == "lightrag"
+def test_provider_argument_collapses_to_default(tmp_path) -> None:
+    """An explicit unknown/legacy provider collapses to the default engine."""
+    assert RAGService(kb_base_dir=str(tmp_path), provider="llamaindex").provider == "llamaindex"
     assert RAGService(kb_base_dir=str(tmp_path), provider="raganything").provider == "llamaindex"
+    assert RAGService(kb_base_dir=str(tmp_path), provider="lightrag").provider == "llamaindex"
 
 
 @pytest.mark.asyncio
@@ -84,13 +84,13 @@ def test_ragservice_routes_provider_from_kb_config_when_metadata_missing(tmp_pat
     kb = tmp_path / "kb"
     kb.mkdir()
     (tmp_path / "kb_config.json").write_text(
-        '{"knowledge_bases": {"kb": {"rag_provider": "lightrag"}}}',
+        '{"knowledge_bases": {"kb": {"rag_provider": "llamaindex"}}}',
         encoding="utf-8",
     )
 
     service = RAGService(kb_base_dir=str(tmp_path))
 
-    assert service._resolve_provider("kb") == "lightrag"
+    assert service._resolve_provider("kb") == "llamaindex"
 
 
 def test_ragservice_prefers_authoritative_config_over_stale_metadata(tmp_path) -> None:
@@ -98,13 +98,13 @@ def test_ragservice_prefers_authoritative_config_over_stale_metadata(tmp_path) -
     kb.mkdir()
     (kb / "metadata.json").write_text('{"rag_provider": "llamaindex"}', encoding="utf-8")
     (tmp_path / "kb_config.json").write_text(
-        '{"knowledge_bases": {"kb": {"rag_provider": "lightrag"}}}',
+        '{"knowledge_bases": {"kb": {"rag_provider": "llamaindex"}}}',
         encoding="utf-8",
     )
 
     service = RAGService(kb_base_dir=str(tmp_path))
 
-    assert service._resolve_provider("kb") == "lightrag"
+    assert service._resolve_provider("kb") == "llamaindex"
 
 
 @pytest.mark.asyncio
@@ -124,105 +124,8 @@ async def test_search_aliases_answer_and_content(fake_service) -> None:
     assert result["answer"] == "only-answer"
 
 
-@pytest.mark.asyncio
-async def test_search_forwards_lightrag_native_logs_to_event_sink(
-    fake_service,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    service, pipeline = fake_service
-    lightrag_logger = logging.getLogger("lightrag")
-    original_handlers = list(lightrag_logger.handlers)
-    original_propagate = lightrag_logger.propagate
-    original_level = lightrag_logger.level
-    events: list[tuple[str, str, dict]] = []
-
-    async def event_sink(event_type: str, message: str, metadata: dict) -> None:
-        events.append((event_type, message, metadata))
-
-    async def search_with_native_log(query: str, kb_name: str, **kwargs) -> Dict[str, Any]:
-        lightrag_logger.info("Final context: 14 entities, 13 relations, 1 chunks")
-        lightrag_logger.warning("Rerank is enabled but no rerank model is configured.")
-        return {"answer": "ok", "provider": "lightrag"}
-
-    original_import_module = importlib.import_module
-
-    def fake_import_module(name: str, package: str | None = None):
-        if name == "lightrag.utils":
-            lightrag_logger.propagate = False
-            return object()
-        return original_import_module(name, package)
-
-    monkeypatch.setattr(pipeline, "search", search_with_native_log)
-    monkeypatch.setattr(rag_service_module.importlib, "import_module", fake_import_module)
-
-    try:
-        lightrag_logger.handlers = []
-        lightrag_logger.propagate = True
-        lightrag_logger.setLevel(logging.INFO)
-
-        await service.search(query="hello", kb_name="kb", event_sink=event_sink)
-        await asyncio.sleep(0)
-    finally:
-        lightrag_logger.handlers = original_handlers
-        lightrag_logger.propagate = original_propagate
-        lightrag_logger.setLevel(original_level)
-
-    raw_logs = [
-        (message, metadata) for event_type, message, metadata in events if event_type == "raw_log"
-    ]
-    assert any(
-        message == "Final context: 14 entities, 13 relations, 1 chunks"
-        and metadata.get("logger") == "lightrag"
-        and metadata.get("level") == "INFO"
-        for message, metadata in raw_logs
-    )
-    assert any(
-        message == "Rerank is enabled but no rerank model is configured."
-        and metadata.get("logger") == "lightrag"
-        and metadata.get("level") == "WARNING"
-        for message, metadata in raw_logs
-    )
 
 
-@pytest.mark.asyncio
-async def test_search_forwards_graphrag_native_logs_to_event_sink(
-    fake_service,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    service, pipeline = fake_service
-    graphrag_logger = logging.getLogger("graphrag.api.query")
-    original_handlers = list(graphrag_logger.handlers)
-    original_propagate = graphrag_logger.propagate
-    original_level = graphrag_logger.level
-    events: list[tuple[str, str, dict]] = []
-
-    async def event_sink(event_type: str, message: str, metadata: dict) -> None:
-        events.append((event_type, message, metadata))
-
-    async def search_with_native_log(query: str, kb_name: str, **kwargs) -> Dict[str, Any]:
-        graphrag_logger.info("Executing local search query: %s", query)
-        return {"answer": "ok", "provider": "graphrag"}
-
-    monkeypatch.setattr(pipeline, "search", search_with_native_log)
-
-    try:
-        graphrag_logger.handlers = []
-        graphrag_logger.propagate = True
-        graphrag_logger.setLevel(logging.INFO)
-
-        await service.search(query="hello", kb_name="kb", event_sink=event_sink)
-        await asyncio.sleep(0)
-    finally:
-        graphrag_logger.handlers = original_handlers
-        graphrag_logger.propagate = original_propagate
-        graphrag_logger.setLevel(original_level)
-
-    assert any(
-        event_type == "raw_log"
-        and message == "Executing local search query: hello"
-        and metadata.get("logger") == "graphrag.api.query"
-        for event_type, message, metadata in events
-    )
 
 
 @pytest.mark.asyncio
@@ -231,9 +134,9 @@ async def test_search_filters_noisy_vector_and_embedding_logs(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     service, pipeline = fake_service
-    lightrag_logger = logging.getLogger("lightrag")
-    original_lightrag_level = lightrag_logger.level
-    original_lightrag_propagate = lightrag_logger.propagate
+    pipe_logger = logging.getLogger("deeptutor.services.rag.pipelines.llamaindex")
+    original_pipe_level = pipe_logger.level
+    original_pipe_propagate = pipe_logger.propagate
     events: list[tuple[str, str, dict]] = []
 
     async def event_sink(event_type: str, message: str, metadata: dict) -> None:
@@ -247,22 +150,22 @@ async def test_search_filters_noisy_vector_and_embedding_logs(
         logging.getLogger("deeptutor.services.embedding.adapters.openai_compatible").info(
             "Successfully generated 1 embeddings (model: Qwen/Qwen3-Embedding-8B, dimensions: 4096)"
         )
-        logging.getLogger("lightrag").info(
+        logging.getLogger("deeptutor.services.rag.pipelines.llamaindex").info(
             "Raw search results: 14 entities, 13 relations, 0 vector chunks"
         )
-        return {"answer": "ok", "provider": "lightrag"}
+        return {"answer": "ok", "provider": "llamaindex"}
 
     monkeypatch.setattr(pipeline, "search", search_with_noisy_logs)
 
     try:
-        lightrag_logger.setLevel(logging.INFO)
-        lightrag_logger.propagate = True
+        pipe_logger.setLevel(logging.INFO)
+        pipe_logger.propagate = True
 
         await service.search(query="hello", kb_name="kb", event_sink=event_sink)
         await asyncio.sleep(0)
     finally:
-        lightrag_logger.setLevel(original_lightrag_level)
-        lightrag_logger.propagate = original_lightrag_propagate
+        pipe_logger.setLevel(original_pipe_level)
+        pipe_logger.propagate = original_pipe_propagate
 
     raw_messages = [message for event_type, message, _metadata in events if event_type == "raw_log"]
     assert "Raw search results: 14 entities, 13 relations, 0 vector chunks" in raw_messages

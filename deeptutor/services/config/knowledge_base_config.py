@@ -28,8 +28,8 @@ def _default_payload() -> dict[str, Any]:
             "rag_provider": DEFAULT_PROVIDER,
             "search_mode": "hybrid",
             # Per-engine default retrieval mode, set from the engine cards
-            # (e.g. {"lightrag": "hybrid", "graphrag": "local"}). A KB's own
-            # ``search_mode`` still wins; this is the fallback for that engine.
+            # (e.g. {"llamaindex": "hybrid"}). A KB's own ``search_mode`` still
+            # wins; this is the fallback for that engine.
             "provider_modes": {},
         },
         "knowledge_bases": {},

@@ -27,17 +27,17 @@ class TestProviderApi:
     def test_get_rag_provider_defaults_to_llamaindex(self, fresh_service) -> None:
         assert fresh_service.get_rag_provider("any-kb") == "llamaindex"
 
-    def test_set_rag_provider_preserves_known_engine(self, fresh_service) -> None:
-        fresh_service.set_rag_provider("kb-1", "lightrag")
+    def test_set_rag_provider_preserves_llamaindex(self, fresh_service) -> None:
+        fresh_service.set_rag_provider("kb-1", "llamaindex")
         cfg = fresh_service.get_kb_config("kb-1")
-        assert cfg["rag_provider"] == "lightrag"
+        assert cfg["rag_provider"] == "llamaindex"
 
     def test_set_rag_provider_coerces_unknown_to_llamaindex(self, fresh_service) -> None:
         fresh_service.set_rag_provider("kb-2", "totally-unknown")
         cfg = fresh_service.get_kb_config("kb-2")
         assert cfg["rag_provider"] == "llamaindex"
 
-    def test_get_kb_config_preserves_known_provider_field(self, fresh_service) -> None:
+    def test_get_kb_config_collapses_removed_provider_field(self, fresh_service) -> None:
         _write_kb_config(
             fresh_service.config_path,
             {
@@ -47,7 +47,8 @@ class TestProviderApi:
             },
         )
         cfg = fresh_service.get_kb_config("kb-3")
-        assert cfg["rag_provider"] == "pageindex"
+        assert cfg["rag_provider"] == "llamaindex"
+        assert cfg["needs_reindex"] is True
 
     def test_get_kb_config_coerces_removed_provider_field(self, fresh_service) -> None:
         _write_kb_config(
@@ -62,13 +63,13 @@ class TestProviderApi:
         assert cfg["rag_provider"] == "llamaindex"
 
     def test_provider_mode_roundtrip(self, fresh_service) -> None:
-        assert fresh_service.get_provider_mode("lightrag") == ""
-        fresh_service.set_provider_mode("lightrag", "mix")
-        assert fresh_service.get_provider_mode("lightrag") == "mix"
+        assert fresh_service.get_provider_mode("llamaindex") == ""
+        fresh_service.set_provider_mode("llamaindex", "hybrid")
+        assert fresh_service.get_provider_mode("llamaindex") == "hybrid"
         # Per-engine: setting one doesn't touch another.
-        fresh_service.set_provider_mode("graphrag", "drift")
-        assert fresh_service.get_provider_mode("lightrag") == "mix"
-        assert fresh_service.get_provider_mode("graphrag") == "drift"
+        fresh_service.set_provider_mode("legacy", "drift")
+        assert fresh_service.get_provider_mode("llamaindex") == "hybrid"
+        assert fresh_service.get_provider_mode("legacy") == "drift"
 
 
 class TestPayloadNormalizationOnLoad:
@@ -109,7 +110,9 @@ class TestPayloadNormalizationOnLoad:
         assert kb["rag_provider"] == "llamaindex"
         assert kb.get("needs_reindex", False) is False
 
-    def test_existing_known_nondefault_kb_is_left_alone(self, tmp_path: Path) -> None:
+    def test_existing_removed_provider_collapses_and_marks_reindex(
+        self, tmp_path: Path
+    ) -> None:
         config_path = tmp_path / "kb_config.json"
         _write_kb_config(
             config_path,
@@ -123,8 +126,8 @@ class TestPayloadNormalizationOnLoad:
 
         service = KnowledgeBaseConfigService(config_path=config_path)
         kb = service._config["knowledge_bases"]["graph-kb"]
-        assert kb["rag_provider"] == "graphrag"
-        assert kb.get("needs_reindex", False) is False
+        assert kb["rag_provider"] == "llamaindex"
+        assert kb["needs_reindex"] is True
 
     def test_legacy_storage_dir_marks_reindex(self, tmp_path: Path) -> None:
         """If the on-disk storage uses the old layout, force a reindex flag."""
@@ -179,13 +182,13 @@ class TestPersistence:
         assert on_disk["knowledge_bases"]["new-kb"]["rag_provider"] == "llamaindex"
         assert on_disk["knowledge_bases"]["new-kb"]["description"] == "x"
 
-    def test_set_kb_config_preserves_known_provider_on_save(self, tmp_path: Path) -> None:
+    def test_set_kb_config_collapses_removed_provider_on_save(self, tmp_path: Path) -> None:
         config_path = tmp_path / "kb_config.json"
         service = KnowledgeBaseConfigService(config_path=config_path)
         service.set_kb_config("new-kb", {"rag_provider": "pageindex"})
 
         on_disk = json.loads(config_path.read_text(encoding="utf-8"))
-        assert on_disk["knowledge_bases"]["new-kb"]["rag_provider"] == "pageindex"
+        assert on_disk["knowledge_bases"]["new-kb"]["rag_provider"] == "llamaindex"
 
     def test_set_kb_config_does_not_resurrect_externally_removed_kbs(self, tmp_path: Path) -> None:
         """Regression: the service used to cache ``self._config`` at construction

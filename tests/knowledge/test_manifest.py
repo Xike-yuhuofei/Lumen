@@ -14,7 +14,6 @@ from pathlib import Path
 from deeptutor.knowledge.manifest import (
     UNAVAILABLE_AGENT,
     UNAVAILABLE_MISSING,
-    UNAVAILABLE_REMOTE,
     build_manifest,
     document_root,
     iter_kb_documents,
@@ -23,7 +22,6 @@ from deeptutor.knowledge.manifest import (
 )
 
 _READY = {"rag_provider": "llamaindex", "status": "ready"}
-
 
 def _kb(tmp_path: Path, *files: str, name: str = "Course") -> Path:
     kb_dir = tmp_path / name
@@ -34,7 +32,6 @@ def _kb(tmp_path: Path, *files: str, name: str = "Course") -> Path:
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(b"x" * 2048)
     return kb_dir
-
 
 class TestDocumentCounting:
     def test_counts_documents_in_subfolders(self, tmp_path: Path) -> None:
@@ -95,7 +92,6 @@ class TestDocumentCounting:
     def test_iter_of_missing_root_is_empty(self, tmp_path: Path) -> None:
         assert list(iter_kb_documents(tmp_path / "nope")) == []
 
-
 class TestPatternFilter:
     def test_glob_matches_full_path_or_basename(self, tmp_path: Path) -> None:
         kb_dir = _kb(tmp_path, "a.pdf", "b.md", "notes/week3.md")
@@ -120,7 +116,6 @@ class TestPatternFilter:
 
         assert (manifest.total, manifest.matched) == (3, 1)
 
-
 class TestConnectedKbs:
     def test_linked_kb_enumerates_the_external_folder(self, tmp_path: Path) -> None:
         external = tmp_path / "elsewhere"
@@ -134,17 +129,6 @@ class TestConnectedKbs:
         assert manifest.total == 2
         assert document_root(tmp_path / "Linked", entry) == external
 
-    def test_remote_server_kb_is_not_reported_as_empty(self, tmp_path: Path) -> None:
-        """A hosted KB has documents we simply cannot see — "0" would be a lie."""
-        entry = {"type": "lightrag_server", "server_url": "https://example.invalid"}
-
-        manifest = build_manifest(name="Remote", kb_dir=tmp_path / "Remote", entry=entry)
-
-        assert not manifest.enumerable
-        assert manifest.unavailable == UNAVAILABLE_REMOTE
-        assert manifest.total == 0
-        assert document_root(tmp_path / "Remote", entry) is None
-
     def test_connected_agent_is_not_a_document_collection(self, tmp_path: Path) -> None:
         entry = {"type": "subagent", "agent_kind": "claude_code"}
 
@@ -156,7 +140,6 @@ class TestConnectedKbs:
         manifest = build_manifest(name="Fresh", kb_dir=tmp_path / "Fresh", entry=_READY)
 
         assert manifest.unavailable == UNAVAILABLE_MISSING
-
 
 class TestManifestNote:
     def test_note_carries_count_names_and_the_authority_rule(self, tmp_path: Path) -> None:
@@ -201,7 +184,6 @@ class TestManifestNote:
     def test_no_manifests_yields_no_block(self) -> None:
         assert render_manifest_note([], language="en") == ""
 
-
 class TestManifestReport:
     def test_report_lists_documents_with_sizes(self, tmp_path: Path) -> None:
         kb_dir = _kb(tmp_path, "a.pdf")
@@ -219,15 +201,6 @@ class TestManifestReport:
         report = render_manifest_report(manifest, language="en")
 
         assert 'No document name matches "zzz"' in report
-
-    def test_report_declares_a_remote_kb_unlistable(self, tmp_path: Path) -> None:
-        entry = {"type": "lightrag_server"}
-        manifest = build_manifest(name="Remote", kb_dir=tmp_path / "Remote", entry=entry)
-
-        report = render_manifest_report(manifest, language="en")
-
-        assert "remote server" in report
-        assert "0" not in report
 
     def test_report_of_an_empty_kb_says_so(self, tmp_path: Path) -> None:
         kb_dir = _kb(tmp_path)

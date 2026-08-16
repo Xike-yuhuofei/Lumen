@@ -203,17 +203,6 @@ DEFAULT_DOCUMENT_PARSING_SETTINGS: dict[str, Any] = {
 # tests reference ``DEFAULT_MINERU_SETTINGS``; it now denotes the engine slice.
 DEFAULT_MINERU_SETTINGS: dict[str, Any] = _DEFAULT_MINERU_ENGINE
 
-# PageIndex cloud RAG engine. A KB indexed with the ``pageindex`` provider
-# ships its documents to the hosted PageIndex service for tree building and
-# reasoning-based retrieval. Only an API key (per PageIndex account) and the
-# API base URL are needed; the same key is reused by every ``pageindex`` KB.
-# Kept in its own JSON file so the credential lives beside other per-feature
-# settings and never leaks into model/network config.
-DEFAULT_PAGEINDEX_SETTINGS: dict[str, Any] = {
-    "version": 1,
-    "api_key": "",
-    "api_base_url": "https://api.pageindex.ai",
-}
 
 # LlamaIndex local RAG engine. These are the retrieval + chunking knobs the
 # default engine exposes; they were previously hardcoded / env-only. Kept in
@@ -241,31 +230,6 @@ DEFAULT_LLAMAINDEX_SETTINGS: dict[str, Any] = {
     "bm25_top_k_multiplier": 2,
     "chunk_size": 512,
     "chunk_overlap": 50,
-}
-
-# GraphRAG retrieval knobs (microsoft/graphrag). Only query-time params that the
-# engine passes explicitly (engine.py) are exposed; indexing knobs are left to
-# GraphRAG's auto-config on purpose (the settings.yaml bridge is deliberately
-# minimal). ``response_type`` is a free-form GraphRAG answer style; the UI offers
-# presets but any string is accepted. ``community_level`` controls graph
-# traversal granularity (local/drift). ``dynamic_community_selection`` only
-# affects global search.
-DEFAULT_GRAPHRAG_SETTINGS: dict[str, Any] = {
-    "version": 1,
-    "response_type": "Multiple Paragraphs",
-    "community_level": 2,
-    "dynamic_community_selection": False,
-}
-
-# LightRAG retrieval knobs (HKUDS/LightRAG via RAG-Anything). ``top_k`` is the
-# number of entities/relations the query pulls; ``response_type`` mirrors
-# GraphRAG's. These ride into ``QueryParam`` via the engine's aquery() call;
-# wiring is defensive (an older RAG-Anything that rejects a kwarg degrades to a
-# mode-only query).
-DEFAULT_LIGHTRAG_SETTINGS: dict[str, Any] = {
-    "version": 1,
-    "top_k": 60,
-    "response_type": "Multiple Paragraphs",
 }
 
 IGNORE_PROCESS_OVERRIDES_ENV = "DEEPTUTOR_IGNORE_PROCESS_ENV_OVERRIDES"
@@ -458,21 +422,6 @@ class RuntimeSettingsService:
         _atomic_write_json(self.path_for(DOCUMENT_PARSING_SETTINGS_NAME), payload)
         return payload["engines"][DOCUMENT_PARSING_ENGINE_MINERU]
 
-    def load_pageindex(self, *, include_process_overrides: bool = True) -> dict[str, Any]:
-        payload = self._load_or_create(
-            "pageindex",
-            DEFAULT_PAGEINDEX_SETTINGS,
-            self._normalize_pageindex,
-        )
-        if include_process_overrides:
-            payload = self._apply_pageindex_process_overrides(payload)
-        return payload
-
-    def save_pageindex(self, settings: dict[str, Any]) -> dict[str, Any]:
-        payload = self._normalize_pageindex({**DEFAULT_PAGEINDEX_SETTINGS, **settings})
-        _atomic_write_json(self.path_for("pageindex"), payload)
-        return payload
-
     def load_llamaindex(self, *, include_process_overrides: bool = True) -> dict[str, Any]:
         payload = self._load_or_create(
             "llamaindex",
@@ -488,31 +437,12 @@ class RuntimeSettingsService:
         _atomic_write_json(self.path_for("llamaindex"), payload)
         return payload
 
-    def load_graphrag(self) -> dict[str, Any]:
-        return self._load_or_create("graphrag", DEFAULT_GRAPHRAG_SETTINGS, self._normalize_graphrag)
-
-    def save_graphrag(self, settings: dict[str, Any]) -> dict[str, Any]:
-        payload = self._normalize_graphrag({**DEFAULT_GRAPHRAG_SETTINGS, **settings})
-        _atomic_write_json(self.path_for("graphrag"), payload)
-        return payload
-
-    def load_lightrag(self) -> dict[str, Any]:
-        return self._load_or_create("lightrag", DEFAULT_LIGHTRAG_SETTINGS, self._normalize_lightrag)
-
-    def save_lightrag(self, settings: dict[str, Any]) -> dict[str, Any]:
-        payload = self._normalize_lightrag({**DEFAULT_LIGHTRAG_SETTINGS, **settings})
-        _atomic_write_json(self.path_for("lightrag"), payload)
-        return payload
-
     def ensure_defaults(self) -> None:
         self.load_system(include_process_overrides=False)
         self.load_auth(include_process_overrides=False)
         self.load_integrations(include_process_overrides=False)
         self.load_mineru(include_process_overrides=False)
-        self.load_pageindex(include_process_overrides=False)
         self.load_llamaindex(include_process_overrides=False)
-        self.load_graphrag()
-        self.load_lightrag()
 
     def render_environment(self) -> dict[str, str]:
         """Render non-model settings into process env names for subprocesses."""
@@ -710,21 +640,7 @@ class RuntimeSettingsService:
             payload["allow_local_model_download"] = _coerce_bool(value, False)
         return self._normalize_mineru_engine(payload)
 
-    def _apply_pageindex_process_overrides(self, settings: dict[str, Any]) -> dict[str, Any]:
-        payload = dict(settings)
-        if value := self._process_env_value("PAGEINDEX_API_KEY"):
-            payload["api_key"] = value
-        if value := self._process_env_value("PAGEINDEX_API_BASE_URL"):
-            payload["api_base_url"] = value
-        return self._normalize_pageindex(payload)
 
-    def _normalize_pageindex(self, settings: dict[str, Any]) -> dict[str, Any]:
-        return {
-            "version": 1,
-            "api_key": _string(settings.get("api_key")),
-            "api_base_url": _string(settings.get("api_base_url")).rstrip("/")
-            or "https://api.pageindex.ai",
-        }
 
     def _apply_llamaindex_process_overrides(self, settings: dict[str, Any]) -> dict[str, Any]:
         # Only the retrieval profile had an env override historically
@@ -760,28 +676,8 @@ class RuntimeSettingsService:
             "chunk_overlap": chunk_overlap,
         }
 
-    def _normalize_response_type(self, value: Any) -> str:
-        # GraphRAG/LightRAG accept any answer-style string; just trim + cap so a
-        # pathological value can't blow up a prompt.
-        text = _string(value) or "Multiple Paragraphs"
-        return text[:80]
 
-    def _normalize_graphrag(self, settings: dict[str, Any]) -> dict[str, Any]:
-        return {
-            "version": 1,
-            "response_type": self._normalize_response_type(settings.get("response_type")),
-            "community_level": _coerce_clamped_int(settings.get("community_level"), 2, 0, 5),
-            "dynamic_community_selection": _coerce_bool(
-                settings.get("dynamic_community_selection"), False
-            ),
-        }
 
-    def _normalize_lightrag(self, settings: dict[str, Any]) -> dict[str, Any]:
-        return {
-            "version": 1,
-            "top_k": _coerce_clamped_int(settings.get("top_k"), 60, 1, 200),
-            "response_type": self._normalize_response_type(settings.get("response_type")),
-        }
 
     def _normalize_document_parsing(self, settings: dict[str, Any]) -> dict[str, Any]:
         """Normalize the full v2 structure, migrating a v1 flat file in place.
@@ -1072,12 +968,6 @@ def load_llamaindex_settings() -> dict[str, Any]:
     return get_runtime_settings_service().load_llamaindex()
 
 
-def load_graphrag_settings() -> dict[str, Any]:
-    return get_runtime_settings_service().load_graphrag()
-
-
-def load_lightrag_settings() -> dict[str, Any]:
-    return get_runtime_settings_service().load_lightrag()
 
 
 def load_document_parsing_settings() -> dict[str, Any]:
@@ -1094,12 +984,9 @@ __all__ = [
     "CHAT_ATTACHMENT_MAX_TOTAL_MB_RANGE",
     "DEFAULT_AUTH_SETTINGS",
     "DEFAULT_DOCUMENT_PARSING_SETTINGS",
-    "DEFAULT_GRAPHRAG_SETTINGS",
     "DEFAULT_INTEGRATIONS_SETTINGS",
-    "DEFAULT_LIGHTRAG_SETTINGS",
     "DEFAULT_LLAMAINDEX_SETTINGS",
     "DEFAULT_MINERU_SETTINGS",
-    "DEFAULT_PAGEINDEX_SETTINGS",
     "DEFAULT_SYSTEM_SETTINGS",
     "DOCUMENT_PARSING_ENGINE_DOCLING",
     "DOCUMENT_PARSING_ENGINE_LITEPARSE",
@@ -1120,9 +1007,7 @@ __all__ = [
     "get_ws_max_size",
     "load_auth_settings",
     "load_document_parsing_settings",
-    "load_graphrag_settings",
     "load_integrations_settings",
-    "load_lightrag_settings",
     "load_llamaindex_settings",
     "load_mineru_settings",
     "load_system_settings",
