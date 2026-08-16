@@ -190,7 +190,6 @@ def get_block_registry() -> BlockGeneratorRegistry:
 def _build_default_registry() -> BlockGeneratorRegistry:
     registry = BlockGeneratorRegistry()
     # Lazy imports to avoid circular deps
-    from .animation import AnimationGenerator
     from .callout import CalloutGenerator
     from .code import CodeGenerator
     from .concept_graph import ConceptGraphGenerator
@@ -211,7 +210,6 @@ def _build_default_registry() -> BlockGeneratorRegistry:
         UserNoteGenerator,
         FigureGenerator,
         InteractiveGenerator,
-        AnimationGenerator,
         CodeGenerator,
         TimelineGenerator,
         FlashCardsGenerator,

@@ -334,7 +334,8 @@ def dependency_hints(changed_files: list[str]) -> list[str]:
     if any(path == "pyproject.toml" or path.startswith("requirements/") for path in changed_files):
         hints.append("Backend dependencies changed: consider running python -m pip install -e .")
     if any(
-        path in {
+        path
+        in {
             "frontend/package.json",
             "frontend/package-lock.json",
             "frontend/pnpm-lock.yaml",

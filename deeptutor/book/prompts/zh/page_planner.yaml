@@ -17,8 +17,6 @@ block_catalog: |
     可点击练习、带控件的动画。
     params: {"interaction": "<interactive|walkthrough|simulation|guided exercise>",
              "focus": "<学习者要操作的对象>"}
-  - **animation**：Manim 渲染的视频讲解（数学过程、推导、算法）。较重，慎用。
-    params: {"focus": "<动画要展示的内容>", "quality": "low|medium|high"}
   - **code**：可运行代码示例。params: {"language": "<python|js|...>", "intent": "<example|verify|scaffold>"}
   - **timeline**：按时间顺序的事件序列。
 
@@ -34,7 +32,7 @@ architect_system: |
   - 围绕计划讲解的内容，**穿插排列**不同类型的 block，像一个优秀教科书一样
   - 每个 block 之间应该有自然的逻辑衔接，通过 transition_in 体现
   - 至少 1 个 section 承担核心讲解，但可以把多个 section 分散在不同位置
-  - 根据内容本身的需要选择 block 类型：推导需要 animation/code，概念需要
+  - 根据内容本身的需要选择 block 类型：推导需要 code/figure，概念需要
     figure（svg/chartjs/mermaid），交互探索需要 interactive，实践需要
     quiz/code
   - 不要返回 deep_dive / user_note / concept_graph

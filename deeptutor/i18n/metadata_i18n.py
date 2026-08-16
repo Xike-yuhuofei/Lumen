@@ -19,17 +19,13 @@ _CAPABILITY_DESCRIPTIONS: dict[str, dict[str, str]] = {
         "en": "Iterative deep research that decomposes a topic and writes a report.",
         "zh": "迭代式深度研究，分解主题并生成研究报告。",
     },
-    "math_animator": {
-        "en": "Generate math animations or storyboard images with Manim.",
-        "zh": "使用 Manim 生成数学动画或分镜图。",
-    },
     "mastery_path": {
         "en": "Structured mastery-based learning with spaced repetition.",
         "zh": "结构化掌握式学习，结合间隔复习。",
     },
     "visualize": {
-        "en": "Create visual explanations such as SVG, charts, Mermaid, HTML, or Manim.",
-        "zh": "生成 SVG、图表、Mermaid、HTML 或 Manim 等可视化讲解。",
+        "en": "Create visual explanations such as SVG, charts, Mermaid, or interactive HTML.",
+        "zh": "生成 SVG、图表、Mermaid 或交互式 HTML 等可视化讲解。",
     },
 }
 
@@ -61,14 +57,6 @@ _TOOL_DESCRIPTIONS: dict[str, dict[str, str]] = {
     "web_search": {
         "en": "Search the web and return sourced results.",
         "zh": "联网搜索并返回带来源的结果。",
-    },
-    "imagegen": {
-        "en": "Generate images from a text prompt with the configured model.",
-        "zh": "用已配置的模型，根据文字描述生成图片。",
-    },
-    "videogen": {
-        "en": "Generate short videos from a text prompt with the configured model.",
-        "zh": "用已配置的模型，根据文字描述生成短视频。",
     },
 }
 

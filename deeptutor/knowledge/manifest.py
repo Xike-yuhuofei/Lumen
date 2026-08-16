@@ -35,7 +35,6 @@ from pathlib import Path
 from typing import Any
 
 from deeptutor.knowledge.kb_types import (
-    SUBAGENT_KB_TYPE,
     external_root_of,
 )
 
@@ -50,15 +49,7 @@ KB_FILES_MAX_LIMIT = 1000
 
 # Why a KB's documents cannot be listed. Reason *codes* — the data layer never
 # produces user-facing copy; the renderers localise these.
-UNAVAILABLE_AGENT = "agent"
 UNAVAILABLE_MISSING = "missing"
-
-# KB types that hold no local document set at all: their content lives behind
-# an API. Reporting them as "0 documents" would be a lie, so they are reported
-# as non-enumerable instead.
-_NON_DOCUMENT_KB_TYPES: dict[str, str] = {
-    SUBAGENT_KB_TYPE: UNAVAILABLE_AGENT,
-}
 
 
 @dataclass(frozen=True)
@@ -111,7 +102,7 @@ def iter_kb_documents(root: Path) -> Iterator[Path]:
     tree and repeated calls agree.
 
     A *document* is a non-hidden regular file. Hidden entries (``.DS_Store``,
-    ``.obsidian/``) are OS/editor bookkeeping rather than anything the user
+    dot-folders) are OS/editor bookkeeping rather than anything the user
     added, and a manifest that counts ``.DS_Store`` as a document is simply
     wrong — so they are skipped at every level. Symlinked directories are not
     followed, so a linked folder pointing into itself cannot loop.
@@ -137,15 +128,12 @@ def iter_kb_documents(root: Path) -> Iterator[Path]:
 def document_root(kb_dir: Path, entry: Mapping[str, Any]) -> Path | None:
     """Where ``entry``'s documents live on this machine, or ``None`` if nowhere.
 
-    Ordinary indexed KBs own ``<kb_dir>/raw``. A connected KB that points at a
-    real folder (``linked``, ``obsidian``) is enumerated in place. A connected
-    subagent has no local document set at all.
+    Ordinary indexed KBs own ``<kb_dir>/raw``. A linked KB that points at a real
+    folder is enumerated in place.
     """
     external = external_root_of(entry)
     if external:
         return Path(str(external)).expanduser()
-    if str(entry.get("type") or "").strip() in _NON_DOCUMENT_KB_TYPES:
-        return None
     return kb_dir / "raw"
 
 
@@ -176,8 +164,6 @@ def build_manifest(
     }
 
     root = document_root(kb_dir, record)
-    if root is None:
-        return KbManifest(**manifest_fields, unavailable=_NON_DOCUMENT_KB_TYPES[kb_type])
     if not root.is_dir():
         # An external folder that moved, or a KB whose indexing never got as far
         # as creating ``raw/``. Either way the document set is unknown, not empty.
@@ -242,14 +228,12 @@ _STATUS_LABELS: dict[str, dict[str, str]] = {
 # wording instead of each phrasing the same fact its own way.
 _UNAVAILABLE_LABELS: dict[str, dict[str, str]] = {
     "en": {
-        UNAVAILABLE_AGENT: "A connected agent, not a document collection.",
         UNAVAILABLE_MISSING: (
             "Its document folder cannot be read right now — it may still be "
             "under construction, or be an external folder that has moved."
         ),
     },
     "zh": {
-        UNAVAILABLE_AGENT: "是连接的智能体，不是文档集合。",
         UNAVAILABLE_MISSING: "当前读不到它的文档目录——可能仍在创建中，也可能是外部文件夹已移动。",
     },
 }
@@ -409,7 +393,6 @@ __all__ = [
     "KB_FILES_DEFAULT_LIMIT",
     "KB_FILES_MAX_LIMIT",
     "MANIFEST_NOTE_LIMIT",
-    "UNAVAILABLE_AGENT",
     "UNAVAILABLE_MISSING",
     "KbDocument",
     "KbManifest",

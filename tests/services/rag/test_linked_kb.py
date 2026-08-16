@@ -124,9 +124,7 @@ def test_probe_unverifiable_embedding_is_a_warning(tmp_path: Path, monkeypatch) 
     assert result.warnings
 
 
-def test_probe_legacy_provider_collapses_to_llamaindex(
-    tmp_path: Path, monkeypatch
-) -> None:
+def test_probe_legacy_provider_collapses_to_llamaindex(tmp_path: Path, monkeypatch) -> None:
     # A removed engine name collapses to the single LlamaIndex engine, so a
     # ready LlamaIndex index is found regardless of the requested provider.
     _write_llamaindex_index(tmp_path, signature=_SIG.hash())

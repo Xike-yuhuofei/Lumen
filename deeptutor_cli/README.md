@@ -27,7 +27,6 @@ deeptutor init
 
 # 可选附加组件
 pip install -e ".[partners]"       # Partners 渠道 SDK + MCP 客户端
-pip install -e ".[math-animator]"  # 数学动画（另需系统 LaTeX/ffmpeg）
 pip install -e ".[all]"            # 全部依赖（含开发工具）
 ```
 
@@ -61,15 +60,14 @@ deeptutor run <capability> <message> [options]
 | `deep_solve` | 多阶段深度解题 |
 | `deep_question` | 智能出题 |
 | `deep_research` | 多 agent 深度研究 |
-| `visualize` | 生成图表、图解、Mermaid、HTML 或 Manim 可视化 |
-| `math_animator` | 数学动画生成 |
+| `visualize` | 生成图表、图解、Mermaid 或 HTML 可视化 |
 | `mastery_path` | 掌握式学习路径与测评循环 |
 
 ### 选项
 
 | 选项 | 缩写 | 说明 |
 |------|------|------|
-| `--tool` | `-t` | 启用工具（可多次指定）：`rag`, `web_search`, `code_execution`, `reason`, `brainstorm`, `paper_search`, `geogebra_analysis`, `imagegen`, `videogen` |
+| `--tool` | `-t` | 启用工具（可多次指定）：`rag`, `web_search`, `code_execution`, `reason`, `brainstorm`, `paper_search`, `geogebra_analysis` |
 | `--kb` | | 挂载知识库 |
 | `--language` | `-l` | 回复语言（默认 `en`） |
 | `--session` | | 继续已有会话 |
@@ -103,9 +101,6 @@ deeptutor run deep_research "Transformer 最新进展" \
 
 # 可视化
 deeptutor run visualize "画出注意力机制的数据流图" --config render_mode=mermaid
-
-# 数学动画
-deeptutor run math_animator "展示正弦函数变换" --config quality=high
 
 # 掌握式学习
 deeptutor run mastery_path "带我系统掌握特征值和特征向量"

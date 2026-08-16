@@ -157,5 +157,3 @@ def test_publish_requires_version(tmp_path: Path) -> None:
     root = _write_skill(tmp_path, frontmatter="name: NoVersion")
     with pytest.raises(SkillImportError):
         publish_to_hub(root, token="tok", provider=_CapturingProvider())
-
-

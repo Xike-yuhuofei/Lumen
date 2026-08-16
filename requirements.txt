@@ -13,7 +13,6 @@
 #   pip install -e .                    # Source checkout
 #   pip install -e ".[partners]"       # Server + partner channel SDKs
 #   pip install -e ".[matrix]"         # Matrix channel for partners
-#   pip install -e ".[math-animator]"  # Manim animation engine (addon)
 #   pip install -e ".[dev]"            # Server + dev/test tools
 #   pip install -e ".[all]"            # Everything
 #

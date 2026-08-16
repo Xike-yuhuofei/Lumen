@@ -67,7 +67,6 @@ _PHASE1_TYPES = {
     BlockType.CODE,
     BlockType.FLASH_CARDS,
     BlockType.TIMELINE,
-    BlockType.ANIMATION,
 }
 
 
@@ -95,7 +94,7 @@ _TEMPLATES_V2: dict[ContentType, list[tuple[BlockType, dict[str, Any]]]] = {
     ContentType.DERIVATION: [
         (BlockType.SECTION, {"role": "setup", "target_words": 1400}),
         (
-            BlockType.ANIMATION,
+            BlockType.FIGURE,
             {"focus": "core derivation", "transition_in": "Step through the derivation visually"},
         ),
         (BlockType.SECTION, {"role": "formal_proof", "target_words": 1200}),
@@ -210,7 +209,6 @@ _ALLOWED_LLM_TYPES = {
     BlockType.FLASH_CARDS,
     BlockType.FIGURE,
     BlockType.INTERACTIVE,
-    BlockType.ANIMATION,
     BlockType.CODE,
     BlockType.TIMELINE,
 }

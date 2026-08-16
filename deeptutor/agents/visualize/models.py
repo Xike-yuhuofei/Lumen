@@ -14,8 +14,6 @@ RenderType = Literal[
     "chartjs",
     "mermaid",
     "html",
-    "manim_video",
-    "manim_image",
 ]
 
 VisualGenre = Literal[
@@ -37,8 +35,7 @@ class VisualizationAnalysis(BaseModel):
     render_type: RenderType = Field(
         description=(
             "Render output: raw SVG, a Chart.js configuration, a Mermaid "
-            "diagram, a self-contained interactive HTML page, or a Manim "
-            "animation (video) / storyboard image."
+            "diagram, or a self-contained interactive HTML page."
         ),
     )
     description: str = Field(

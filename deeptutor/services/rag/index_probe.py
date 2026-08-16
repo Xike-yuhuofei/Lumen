@@ -156,16 +156,12 @@ def _inspect_llamaindex(storage_dir: Path) -> ProviderIndexProbe:
     )
 
 
-
-
-
 def _llamaindex_doc_count(docstore_path: Path) -> int | None:
     payload = _read_json(docstore_path)
     if not isinstance(payload, dict):
         return None
     data = payload.get("docstore/data")
     return len(data) if isinstance(data, dict) else None
-
 
 
 def _read_json(path: Path) -> dict[str, Any] | None:

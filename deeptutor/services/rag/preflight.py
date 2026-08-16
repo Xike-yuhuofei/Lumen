@@ -72,9 +72,6 @@ def _llamaindex_preflight() -> dict:
     return _finalize(checks)
 
 
-
-
-
 def _finalize(checks: list[dict]) -> dict:
     ok = all(c["ok"] for c in checks if not c["optional"])
     return {"ok": ok, "checks": checks}

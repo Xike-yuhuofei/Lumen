@@ -19,6 +19,7 @@ import pytest
 from deeptutor.api.routers import settings as settings_router
 from deeptutor.multi_user.models import CurrentUser, UserScope
 
+
 class _Service:
     """Stand-in for the per-owner ``CodexOAuthService``."""
 

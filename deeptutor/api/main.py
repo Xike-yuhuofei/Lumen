@@ -170,17 +170,6 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Failed to stop cron service: {e}")
 
-    # Close MCP server connections. Each one owns an AsyncExitStack inside its
-    # own task, so they must be torn down here rather than left to interpreter
-    # exit (stdio servers would otherwise leak child processes).
-    try:
-        from deeptutor.services.mcp import get_mcp_manager
-
-        await get_mcp_manager().shutdown()
-        logger.info("MCP connections closed")
-    except Exception as e:
-        logger.warning(f"Failed to close MCP connections: {e}")
-
     # Close pooled LLM SDK clients so their keep-alive sockets and transports
     # are released deterministically instead of waiting for interpreter GC.
     try:
@@ -295,7 +284,6 @@ from deeptutor.api.routers import (
     chat,
     knowledge,
     mastery_path,
-    mcp_settings,
     memory,
     notebook,
     outputs,
@@ -304,8 +292,6 @@ from deeptutor.api.routers import (
     sessions,
     settings,
     skills,
-    space_mcp,
-    subagents,
     unified_ws,
     voice,
 )
@@ -369,27 +355,8 @@ app.include_router(
 app.include_router(
     settings.router, prefix="/api/v1/settings", tags=["settings"], dependencies=_auth
 )
-app.include_router(
-    mcp_settings.router,
-    prefix="/api/v1/settings/mcp",
-    tags=["mcp-settings"],
-    dependencies=_auth,
-)
-# Per-user MCP servers. Deliberately only ``_auth``: the router's own routes
-# resolve the owner server-side, and everything a non-admin can reach through it
-# is remote-transport-only (see the module docstring). The admin registry above
-# keeps its own ``require_admin``.
-app.include_router(
-    space_mcp.router,
-    prefix="/api/v1/space/mcp",
-    tags=["space-mcp"],
-    dependencies=_auth,
-)
 
 app.include_router(skills.router, prefix="/api/v1/skills", tags=["skills"], dependencies=_auth)
-app.include_router(
-    subagents.router, prefix="/api/v1/subagents", tags=["subagents"], dependencies=_auth
-)
 app.include_router(
     personas.router, prefix="/api/v1/personas", tags=["personas"], dependencies=_auth
 )

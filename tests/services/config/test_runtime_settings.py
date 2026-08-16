@@ -240,8 +240,6 @@ def test_startup_ensure_creates_missing_runtime_jsons_with_defaults(
         "search",
         "tts",
         "stt",
-        "imagegen",
-        "videogen",
     }
 
 

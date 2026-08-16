@@ -39,8 +39,7 @@ class CodeGeneratorAgent(BaseAgent):
         # base + general rules, plus exactly one format-specific rule block.
         # This keeps the per-call prompt dense with the rules that matter for
         # *this* format without ever paying for the union of all four.
-        # render_type here is always one of svg/chartjs/mermaid/html — manim
-        # is dispatched away in the capability layer before code generation.
+        # render_type here is always one of svg/chartjs/mermaid/html.
         system_parts = (
             self.get_prompt("system_base"),
             self.get_prompt("rules_general"),

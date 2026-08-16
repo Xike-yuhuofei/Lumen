@@ -64,7 +64,7 @@ class _FakeKBManager:
         kb_dir.mkdir(parents=True, exist_ok=True)
         return kb_dir
 
-    def register_connected_kb(self, name: str, kind: str = "obsidian") -> dict:
+    def register_connected_kb(self, name: str, kind: str = "linked") -> dict:
         if name in self.config.get("knowledge_bases", {}):
             raise ValueError(f"A knowledge base named '{name}' already exists.")
         entry = {
@@ -72,8 +72,8 @@ class _FakeKBManager:
             "type": kind,
             "status": "ready",
         }
-        if kind == "obsidian":
-            entry["vault_path"] = f"/external/{name}"
+        if kind == "linked":
+            entry["external_path"] = f"/external/{name}"
         self.config.setdefault("knowledge_bases", {})[name] = entry
         return entry
 
@@ -129,8 +129,6 @@ def test_rag_providers_lists_llamaindex_only() -> None:
     assert by_id["llamaindex"]["configured"] is True
     # A vector engine exposes no retrieval modes.
     assert not by_id["llamaindex"].get("modes")
-
-
 
 
 def test_supported_file_types_returns_upload_policy() -> None:
@@ -205,8 +203,6 @@ def test_create_coerces_legacy_provider_to_llamaindex(monkeypatch, tmp_path: Pat
 
     assert response.status_code == 200
     assert manager.config["knowledge_bases"]["kb-legacy"]["rag_provider"] == "llamaindex"
-
-
 
 
 def test_create_rejects_invalid_files_before_registering_kb(monkeypatch, tmp_path: Path) -> None:
@@ -537,7 +533,7 @@ def test_remote_kb_file_listing_is_empty_without_creating_local_storage(
     monkeypatch, tmp_path: Path
 ) -> None:
     manager = _FakeKBManager(tmp_path / "knowledge_bases")
-    manager.register_connected_kb("remote", kind="obsidian")
+    manager.register_connected_kb("remote", kind="linked")
     monkeypatch.setattr(knowledge_router_module, "get_kb_manager", lambda: manager)
 
     with TestClient(_build_app()) as client:
@@ -567,7 +563,7 @@ def test_remote_kb_rejects_local_file_operations_without_creating_storage(
     monkeypatch, tmp_path: Path, method: str, url: str, kwargs: dict
 ) -> None:
     manager = _FakeKBManager(tmp_path / "knowledge_bases")
-    manager.register_connected_kb("remote", kind="obsidian")
+    manager.register_connected_kb("remote", kind="linked")
     monkeypatch.setattr(knowledge_router_module, "get_kb_manager", lambda: manager)
 
     with TestClient(_build_app()) as client:
@@ -956,10 +952,6 @@ def test_update_config_coerces_legacy_provider_to_llamaindex() -> None:
     assert fake_service.config.get("rag_provider") == "llamaindex"
 
 
-
-
-
-
 def test_rag_providers_marks_linkable() -> None:
     with TestClient(_build_app()) as client:
         providers = client.get("/api/v1/knowledge/rag-providers").json()["providers"]
@@ -990,21 +982,11 @@ def test_probe_folder_endpoint_finds_ready_index(tmp_path: Path) -> None:
     assert payload["version"] == "version-1"
 
 
-
-
-
-
-
-
-
-
-
-
 def test_assert_not_connected_kb_blocks_connected_writes() -> None:
     from fastapi import HTTPException
 
     guard = knowledge_router_module._assert_not_connected_kb
-    for kind in ("linked", "obsidian", "subagent"):
+    for kind in ("linked",):
         with pytest.raises(HTTPException) as excinfo:
             guard("kb", {"type": kind})
         assert excinfo.value.status_code == 409

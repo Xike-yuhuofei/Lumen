@@ -50,9 +50,7 @@ class TestCronTool:
         # Another owner can't see or cancel it.
         other = run_cron_action({"action": "list", "_cron_owner": OTHER_OWNER})
         assert "No scheduled tasks" in other.text
-        steal = run_cron_action(
-            {"action": "cancel", "job_id": job_id, "_cron_owner": OTHER_OWNER}
-        )
+        steal = run_cron_action({"action": "cancel", "job_id": job_id, "_cron_owner": OTHER_OWNER})
         assert steal.ok is False
 
         cancelled = run_cron_action(
@@ -126,6 +124,7 @@ class TestCronTool:
         )
         assert outcome.ok is False
         assert "past" in outcome.text
+
 
 class TestRegistryIntegration:
     def test_cron_tool_is_builtin_and_automounted(self):

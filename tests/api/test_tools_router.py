@@ -45,8 +45,6 @@ async def test_list_builtin_tools_marks_toggleable_set(
         "paper_search",
         "reason",
         "geogebra_analysis",
-        "imagegen",
-        "videogen",
     }
 
     # Locked-on (non-toggleable, non-coming-soon) tools always report

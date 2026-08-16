@@ -15,7 +15,6 @@ import pytest
 from deeptutor.api.utils import tool_options as tool_options_mod
 from deeptutor.core.tool_protocol import BaseTool, ToolDefinition, ToolResult
 from deeptutor.runtime.registry import tool_registry as tool_registry_mod
-from deeptutor.services import mcp as mcp_mod
 
 
 class _FakeTool(BaseTool):
@@ -90,16 +89,11 @@ class _StubRegistry:
 
 @pytest.fixture
 def stub_registry(monkeypatch: pytest.MonkeyPatch):
-    """Install a deferred-tool registry and neutralise MCP startup."""
+    """Install a deferred-tool registry."""
 
     def _install(tools: list[BaseTool]) -> None:
         monkeypatch.setattr(tool_registry_mod, "get_tool_registry", lambda: _StubRegistry(tools))
 
-    class _Manager:
-        async def ensure_started(self) -> None:
-            return None
-
-    monkeypatch.setattr(mcp_mod, "get_mcp_manager", lambda: _Manager())
     return _install
 
 

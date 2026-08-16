@@ -25,7 +25,7 @@ system: |
     using earlier chapter titles only.
   - Pick a content_type that maximally fits each chapter:
       * theory     – conceptual explanation + visual aids
-      * derivation – math/formula heavy, benefits from animation
+      * derivation – math/formula heavy, benefits from worked figures
       * history    – timeline / case-study material
       * practice   – exercise-driven
       * concept    – definition / vocabulary heavy

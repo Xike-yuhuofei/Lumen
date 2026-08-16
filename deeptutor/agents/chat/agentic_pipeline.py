@@ -20,7 +20,6 @@ from deeptutor.capabilities import (
     LoopCapability,
     PromptBlock,
     active_loop_capabilities,
-    any_exclusive_capability_active,
 )
 from deeptutor.core.agentic import (
     DispatchOutcome,
@@ -62,33 +61,6 @@ logger = logging.getLogger(__name__)
 
 CHAT_EXCLUDED_TOOLS: set[str] = set()
 CHAT_OPTIONAL_TOOLS = default_optional_tools(excluded=CHAT_EXCLUDED_TOOLS)
-
-# Generation tools are user-toggleable + grant-gated, but only usable once an
-# admin has configured an active model for the service. Drop them from a turn's
-# tool list when unconfigured so the model never sees a tool that can only error.
-_GENERATION_TOOL_SERVICES: dict[str, str] = {"imagegen": "imagegen", "videogen": "videogen"}
-
-
-def _drop_unconfigured_generation_tools(tools: list[str]) -> list[str]:
-    present = [name for name in tools if name in _GENERATION_TOOL_SERVICES]
-    if not present:
-        return tools
-    try:
-        from deeptutor.services.config.model_catalog import get_model_catalog_service
-
-        service = get_model_catalog_service()
-        catalog = service.load()
-        configured = {
-            name
-            for name in present
-            if (service.get_active_model(catalog, _GENERATION_TOOL_SERVICES[name]) or {}).get(
-                "model"
-            )
-        }
-    except Exception:
-        logger.debug("generation-tool config probe failed; dropping them", exc_info=True)
-        configured = set()
-    return [name for name in tools if name not in _GENERATION_TOOL_SERVICES or name in configured]
 
 
 KB_SEED_MAX_KBS = 3
@@ -288,11 +260,10 @@ class AgenticChatPipeline:
     def effective_max_rounds(self, context: UnifiedContext) -> int:
         """Round budget for this turn, lifted to satisfy any capability minimum.
 
-        A capability that needs guaranteed loop headroom — the subagent
-        capability, which must allow its full consult budget plus a finishing
-        round — sets ``context.metadata["_min_loop_rounds"]``; the loop honours
-        the larger of that and the configured budget. A generic seam (like
-        solve's ``solve_max_replans``) so the loop stays capability-agnostic.
+        A capability that needs guaranteed loop headroom sets
+        ``context.metadata["_min_loop_rounds"]``; the loop honours the larger of
+        that and the configured budget. A generic seam (like solve's
+        ``solve_max_replans``) so the loop stays capability-agnostic.
         """
         try:
             floor = int(context.metadata.get("_min_loop_rounds") or 0)
@@ -515,7 +486,7 @@ class AgenticChatPipeline:
                 else None
             ),
             implicit_provider_ids=frozenset(),
-            exclusive_capability=self._exclusive_capability_active(context),
+            exclusive_capability=False,
         )
 
     def _deferred_tools_manifest(self) -> str:
@@ -556,19 +527,13 @@ class AgenticChatPipeline:
             return False
 
     def _compose_enabled_tools(self, context: UnifiedContext) -> list[str]:
-        is_partner = self._is_partner_turn(context)
         composed = compose_enabled_tools(
             registry=self.tool_lookup,
             requested_tools=context.enabled_tools,
             optional_whitelist=CHAT_OPTIONAL_TOOLS,
             mount_flags=ToolMountFlags(
-                # Excludes KBs owned by an exclusive capability (an Obsidian vault
-                # is read via its own tools, never rag).
-                has_kb=bool(self._coexisting_rag_kbs(context)),
-                # read_source is owned by the explore_context pre-pass (it runs
-                # the investigation over attached sources), not the answer loop.
-                # Keep it off the answer surface even when sources are present.
-                has_sources=False,
+                has_kb=bool(self._rag_kbs(context)),
+                has_sources=True,
                 has_memory=user_has_memory(),
                 has_notebooks=user_has_notebooks(),
                 has_skills=bool(context.skills_manifest),
@@ -577,27 +542,17 @@ class AgenticChatPipeline:
                 has_code=getattr(self, "_exec_enabled", False),
             ),
             capability_owned=self._capability_owned_tools(context),
-            exclusive=self._exclusive_capability_active(context),
+            exclusive=False,
             builtin_whitelist=(
                 set(context.allowed_builtin_tools)
                 if context.allowed_builtin_tools is not None
                 else None
             ),
         )
-        return _drop_unconfigured_generation_tools(composed)
+        return composed
 
     def _active_loop_capabilities(self, context: UnifiedContext) -> tuple[LoopCapability, ...]:
         return active_loop_capabilities(context)
-
-    @staticmethod
-    def _exclusive_capability_active(context: UnifiedContext) -> bool:
-        """True when a knowledge capability owns the turn (replaces the surface).
-
-        The capability's own tools replace chat's built-ins. rag scaffolding
-        (mount / KB seed / kb note) is still provided for any co-selected KBs the
-        capability does NOT own — see ``_coexisting_rag_kbs`` (issue #650).
-        """
-        return any_exclusive_capability_active(context)
 
     def _capability_owned_tools(self, context: UnifiedContext) -> tuple[str, ...]:
         """The active capabilities' own tools — added on top of chat's full surface."""
@@ -665,7 +620,7 @@ class AgenticChatPipeline:
         context: UnifiedContext,
     ) -> list[dict[str, Any]]:
         schemas = self.tool_lookup.build_openai_schemas(enabled_tools)
-        kb_choices = self._coexisting_rag_kbs(context)
+        kb_choices = self._rag_kbs(context)
         notebook_choices = self._notebook_choices()
         for schema in schemas:
             function = schema.get("function") if isinstance(schema, dict) else None
@@ -937,14 +892,6 @@ class AgenticChatPipeline:
                 kwargs["_sandbox_mounts"] = (
                     Mount(host_path=str(code_dir), sandbox_path=str(code_dir), read_only=False),
                 )
-        elif tool_name in ("imagegen", "videogen"):
-            # Generated media lands in the turn's public workspace so it
-            # surfaces as a download card via /api/outputs (same convention as
-            # exec/code_execution artifacts).
-            media_dir = task_dir / "media" if task_dir is not None else None
-            if media_dir is not None:
-                media_dir.mkdir(parents=True, exist_ok=True)
-                kwargs["_workspace_dir"] = str(media_dir)
         elif tool_name == "cron":
             # Owner routing is supplied server-side — the model never picks
             # where a scheduled task's output lands.
@@ -1032,22 +979,6 @@ class AgenticChatPipeline:
         # (``execute_tool_call``), so a long-running tool no longer has to pose
         # as a retrieval to stream its progress. What it still needs from here
         # is the call_kind the frontend renders it by.
-        if tool_name in ("imagegen", "videogen"):
-            return derive_trace_metadata(
-                tool_meta,
-                label=self._t("labels.tool_call", default="Tool call"),
-                call_kind="media_generation",
-                query=str(tool_args.get("prompt", "") or ""),
-            )
-        # consult_subagent drives a live local agent; the frontend keys its
-        # in-place transcript row off this call_kind.
-        if tool_name == "consult_subagent":
-            return derive_trace_metadata(
-                tool_meta,
-                label=self._t("labels.consult_subagent", default="Consult agent"),
-                call_kind="subagent_consult",
-                query=str(tool_args.get("question", "") or ""),
-            )
         return None
 
     # ---- KB seed ---------------------------------------------------------
@@ -1057,12 +988,7 @@ class AgenticChatPipeline:
         context: UnifiedContext,
         stream: StreamBus,
     ) -> str:
-        # Seed every selected KB except those owned by an exclusive capability
-        # (an Obsidian vault is read agentically via its own tools, not seeded).
-        # Co-selected LlamaIndex KBs are still seeded so their context reaches
-        # the model even when a vault owns the turn (issue #650).
-        owned = self._capability_owned_kbs(context)
-        kbs = [kb for kb in self._selected_kbs(context) if kb not in owned]
+        kbs = self._selected_kbs(context)
         query = (context.user_message or "").strip()
         if not kbs or not query:
             return ""
@@ -1328,31 +1254,6 @@ class AgenticChatPipeline:
         """Attached KBs served by the rag tool."""
         return self._selected_kbs(context)
 
-    def _capability_owned_kbs(self, context: UnifiedContext) -> set[str]:
-        """Selected KBs consumed by an active capability's own tools (not rag).
-
-        An exclusive knowledge capability (Obsidian) reads its vault through its
-        own tools; those KB refs must be excluded from the rag surface. Read via
-        ``getattr`` so plain capabilities without the seam are unaffected.
-        """
-        owned: set[str] = set()
-        for cap in self._active_loop_capabilities(context):
-            hook = getattr(cap, "owned_kbs", None)
-            if callable(hook):
-                owned |= set(hook(context))
-        return owned
-
-    def _coexisting_rag_kbs(self, context: UnifiedContext) -> list[str]:
-        """rag-served KBs that coexist with an exclusive knowledge capability.
-
-        When an Obsidian vault owns the turn, co-selected LlamaIndex KBs would
-        otherwise be silently dropped (issue #650). These stay reachable via
-        rag; vault KBs (which have no rag index) are excluded. Equals
-        ``_rag_kbs`` for a plain chat turn (no capability owns any KB).
-        """
-        owned = self._capability_owned_kbs(context)
-        return [kb for kb in self._rag_kbs(context) if kb not in owned]
-
     @staticmethod
     def _workspace_key(context: UnifiedContext) -> str:
         raw = str(
@@ -1368,11 +1269,7 @@ class AgenticChatPipeline:
         if not self._selected_kbs(context):
             return ""
         rag_note = ""
-        # Coexisting rag KBs only: when an Obsidian vault owns the turn, its own
-        # system block covers the vault, and this note tells the model the
-        # co-selected LlamaIndex KBs are reachable via rag (issue #650). A
-        # pure-vault turn yields no coexisting KBs, so the note stays empty.
-        rag_kbs = self._coexisting_rag_kbs(context)
+        rag_kbs = self._rag_kbs(context)
         if rag_kbs:
             joined = ", ".join(rag_kbs)
             rag_note = (
@@ -1427,7 +1324,6 @@ class AgenticChatPipeline:
             return ""
         note = render_manifest_note(self._kb_manifests, language=self.language)
         return f"\n{note}" if note else ""
-
 
     def _workspace_system_note(self, context: UnifiedContext) -> str:
         if not getattr(self, "_exec_enabled", False):

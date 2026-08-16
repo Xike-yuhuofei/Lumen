@@ -19,8 +19,6 @@ from typing import Any
 
 from deeptutor.knowledge.kb_types import (
     LINKED_KB_TYPE,
-    OBSIDIAN_KB_TYPE,
-    SUBAGENT_KB_TYPE,
     external_root_of,
     is_connected_kb,
 )
@@ -151,7 +149,7 @@ def _reconcile_embedding_flags(knowledge_bases: dict, base_dir: Path | None = No
         if not isinstance(kb_entry, dict):
             continue
 
-        # Connected KBs (Obsidian vaults, linked indexes) are pointers with no
+        # Connected KBs (linked indexes, remote servers) are pointers with no
         # embedding lifecycle we manage — compatibility is checked once at
         # connect time, never reconciled here.
         if is_connected_kb(kb_entry):
@@ -286,7 +284,7 @@ class KnowledgeBaseManager:
                     if not isinstance(kb_entry, dict):
                         continue
 
-                    # Connected KBs (Obsidian vaults, linked indexes) are
+                    # Connected KBs (linked indexes, remote servers) are
                     # pointers with no index pipeline — none of the
                     # provider/embedding normalization below applies. Leave
                     # their type/external pointer untouched.
@@ -539,7 +537,7 @@ class KnowledgeBaseManager:
         base_exists = self.base_dir.exists()
         grace_cutoff = datetime.now() - timedelta(seconds=_ORPHAN_PRUNE_GRACE_SECONDS)
         for kb_name, kb_entry in list(config_kbs.items()):
-            # Connected KBs (Obsidian vaults, linked indexes) live outside
+            # Connected KBs (linked indexes, remote servers) live outside
             # ``base_dir`` — they have no on-disk KB folder by design, so the
             # orphan prune below would wrongly delete them. Keep them
             # unconditionally.
@@ -684,40 +682,6 @@ class KnowledgeBaseManager:
 
         self._save_config()
 
-    def register_obsidian_vault(self, name: str, vault_path: str, description: str = "") -> dict:
-        """Register a connected Obsidian vault as a pointer-type KB.
-
-        Unlike a normal KB this creates no folder under ``base_dir`` and runs no
-        index pipeline: it records a ``type: obsidian`` entry pointing at the
-        user's existing vault directory, which the Obsidian capability reads
-        live. Raises ``ValueError`` on a missing/invalid path or a name clash.
-        """
-        name = (name or "").strip()
-        if not name:
-            raise ValueError("Knowledge base name is required.")
-        vault = Path(vault_path).expanduser()
-        if not vault.is_dir():
-            raise ValueError(f"Vault path is not a directory: {vault_path}")
-
-        self.config = self._load_config()
-        knowledge_bases = self.config.setdefault("knowledge_bases", {})
-        if name in knowledge_bases:
-            raise ValueError(f"A knowledge base named '{name}' already exists.")
-
-        now = datetime.now().isoformat()
-        entry = {
-            "path": name,
-            "type": OBSIDIAN_KB_TYPE,
-            "vault_path": str(vault.resolve()),
-            "description": description or f"Obsidian vault: {name}",
-            "status": "ready",
-            "created_at": now,
-            "updated_at": now,
-        }
-        knowledge_bases[name] = entry
-        self._save_config()
-        return entry
-
     def register_linked_kb(
         self,
         name: str,
@@ -729,7 +693,7 @@ class KnowledgeBaseManager:
     ) -> dict:
         """Register a pointer to a pre-built engine index as a ``linked`` KB.
 
-        Like :meth:`register_obsidian_vault` this creates no folder under
+        Like the other connected types this creates no folder under
         ``base_dir`` and runs no index pipeline: it records an
         ``external_path`` the bound ``provider`` reads in place, so retrieval
         skips indexing entirely. ``stats`` (embedding model/dim/signature, doc
@@ -772,65 +736,10 @@ class KnowledgeBaseManager:
         self._save_config()
         return entry
 
-    def register_subagent_connection(
-        self,
-        name: str,
-        agent_kind: str,
-        *,
-        cwd: str = "",
-        partner_id: str = "",
-        description: str = "",
-    ) -> dict:
-        """Register a connected subagent (local Claude Code / Codex, or a partner) as a KB.
-
-        Like the other connected types this creates no folder and runs no index:
-        it records a ``type: subagent`` pointer naming the backend (``agent_kind``)
-        and its target — an optional working directory (``cwd``) for a local CLI,
-        or the bound ``partner_id`` for the partner backend. The subagent
-        capability drives the live agent; there is nothing on disk to retrieve or
-        reconcile. Raises ``ValueError`` on a missing name/kind or a name clash.
-        """
-        name = (name or "").strip()
-        agent_kind = (agent_kind or "").strip()
-        partner_id = (partner_id or "").strip()
-        if not name:
-            raise ValueError("Connection name is required.")
-        if not agent_kind:
-            raise ValueError("agent_kind is required.")
-        resolved_cwd = ""
-        if cwd:
-            folder = Path(cwd).expanduser()
-            if not folder.is_dir():
-                raise ValueError(f"Working directory is not a directory: {cwd}")
-            resolved_cwd = str(folder.resolve())
-
-        self.config = self._load_config()
-        knowledge_bases = self.config.setdefault("knowledge_bases", {})
-        if name in knowledge_bases:
-            raise ValueError(f"A knowledge base named '{name}' already exists.")
-
-        now = datetime.now().isoformat()
-        entry = {
-            "path": name,
-            "type": SUBAGENT_KB_TYPE,
-            "agent_kind": agent_kind,
-            "cwd": resolved_cwd,
-            "partner_id": partner_id,
-            "description": description or f"Connected subagent: {name}",
-            "status": "ready",
-            "created_at": now,
-            "updated_at": now,
-        }
-        knowledge_bases[name] = entry
-        self._save_config()
-        return entry
-
-
-
     def get_knowledge_base_path(self, name: str | None = None) -> Path:
         """Get path to a knowledge base.
 
-        Connected KBs (Obsidian vaults, linked indexes) live outside
+        Connected KBs (linked indexes, remote servers) live outside
         ``base_dir`` — resolve them to their external pointer so callers that
         ask for "where is this KB's data" reach the right place.
         """
@@ -973,12 +882,7 @@ class KnowledgeBaseManager:
                 "last_indexed_action": kb_config.get("last_indexed_action"),
                 # Connected-KB fields (None for ordinary indexed KBs, dropped below).
                 "type": kb_config.get("type"),
-                "vault_path": kb_config.get("vault_path"),
                 "external_path": kb_config.get("external_path"),
-                # Subagent connection fields (None for non-subagent KBs).
-                "agent_kind": kb_config.get("agent_kind"),
-                "cwd": kb_config.get("cwd"),
-                "partner_id": kb_config.get("partner_id"),
             }
             metadata.update(self._embedding_fields(kb_config))
             # Remove None values
@@ -1116,12 +1020,8 @@ class KnowledgeBaseManager:
         # Connected-KB fields, so the UI can badge it and show the path.
         if kb_config.get("type"):
             metadata["type"] = kb_config.get("type")
-        if kb_config.get("vault_path"):
-            metadata["vault_path"] = kb_config.get("vault_path")
         if kb_config.get("external_path"):
             metadata["external_path"] = kb_config.get("external_path")
-        if kb_config.get("agent_kind"):
-            metadata["agent_kind"] = kb_config.get("agent_kind")
         metadata.update(self._embedding_fields(kb_config))
 
         # Remove None values
@@ -1235,8 +1135,8 @@ class KnowledgeBaseManager:
         kb_dir = self.base_dir / name
         dir_exists = kb_dir.exists()
 
-        # Connected KBs (Obsidian vaults, linked indexes, subagent pointers)
-        # reference the user's own external resource — or, for subagents, no
+        # Connected KBs (linked indexes, external server/IMA pointers) reference
+        # the user's own external resource — or, for the server-backed kinds, no
         # folder at all. Deleting one must only drop our pointer entry; never
         # touch what it references, and don't warn about the "missing" folder.
         connected = is_connected_kb(config_kbs.get(name, {}))

@@ -13,7 +13,6 @@ itself must still run.
 
 from __future__ import annotations
 
-import asyncio
 from dataclasses import dataclass
 import logging
 from typing import Any
@@ -95,19 +94,12 @@ async def _build(
     language: str,
     refusal_message: str,
 ) -> ProviderToolView:
-    from deeptutor.services.mcp import get_mcp_manager, load_loaded_tools
-
-    manager = get_mcp_manager()
-    await manager.ensure_started()
-
     shared_pool = list(base_registry.deferred_tools())
-    owned_pool = await _owned_tools(manager, scope)
+    owned_pool: list[BaseTool] = []
     cli_pool = _cli_app_tools(scope)
     if not shared_pool and not owned_pool and not cli_pool:
         return ProviderToolView.empty(base_registry)
 
-    # Resolve resource-derived authorisation (e.g. an attached connected KB
-    # authorises that server) from provider ids to concrete tool names.
     implicit_names = {
         tool.get_definition().name
         for tool in shared_pool
@@ -118,15 +110,8 @@ async def _build(
         scope=scope,
         user_grant=_user_grant(scope),
         implicit_names=implicit_names,
-        # Servers the caller configured themselves are authorised by ownership:
-        # the admin grant governs the deployment's shared servers, and applying
-        # it here would make self-service configuration silently useless.
         owned_names=[tool.get_definition().name for tool in owned_pool],
     )
-    # CLI apps are authorised by *app id*, not by tool name, and by a different
-    # grant field — so their decision is made in ``cli_apps.provider`` and the
-    # names it approved are widened in here. Widening an unrestricted allowlist
-    # is identity, so an administrator is unaffected.
     allowed = allowed.widen(tool.get_definition().name for tool in cli_pool)
 
     pool = tuple(
@@ -136,25 +121,17 @@ async def _build(
     )
     registry = ScopedToolRegistry(
         base=base_registry,
-        # Owner-scoped tools live only in this turn's overlay — they are never
-        # published to the process registry, so two accounts whose servers share
-        # a name cannot resolve to each other's session.
         overlay=[*owned_pool, *cli_pool],
         allowed=allowed,
         refusal_message=refusal_message,
     )
     if not pool:
-        # Nothing authorised: no manifest, no loader — but keep the scoped
-        # registry so dispatch still refuses names the model may invent.
         return ProviderToolView(registry=registry, loader=None, pool=(), manifest="")
 
     loader = DeferredToolLoader(
         registry=registry,
         session_id=scope.session_id,
-        # Resource-authorised tools are preloaded: holding the resource is the
-        # permission, so the model should not have to spend a `load_tools`
-        # round-trip before its first retrieval.
-        loaded=load_loaded_tools(scope.session_id) | implicit_names,
+        loaded=implicit_names,
         allowed=allowed.as_set(),
     )
     manifest = (
@@ -163,37 +140,6 @@ async def _build(
         else render_deferred_tools_manifest(list(pool), language=language)
     )
     return ProviderToolView(registry=registry, loader=loader, pool=pool, manifest=manifest)
-
-
-async def _owned_tools(manager: Any, scope: ToolScope) -> list[BaseTool]:
-    """Tools from servers this caller configured for themselves.
-
-    Bounded by a per-scope timeout: connecting somebody's own remote server is a
-    network round-trip on the turn's critical path, before a single stream event
-    has been emitted. A slow server must cost this turn its own tools, not the
-    whole turn's first token.
-    """
-    if scope.is_partner or not scope.owner_id:
-        # A partner has no account of its own, so it has no self-configured
-        # servers; its surface is the deployment's, filtered by its own list.
-        return []
-    try:
-        return list(
-            await asyncio.wait_for(
-                manager.ensure_scope(scope.owner_id),
-                timeout=_OWNER_SCOPE_TIMEOUT_S,
-            )
-        )
-    except asyncio.TimeoutError:
-        logger.warning(
-            "per-user MCP scope for %s did not connect in %ss; continuing without",
-            scope.owner_id,
-            _OWNER_SCOPE_TIMEOUT_S,
-        )
-        return []
-    except Exception:
-        logger.warning("per-user MCP scope for %s failed", scope.owner_id, exc_info=True)
-        return []
 
 
 def _cli_app_tools(scope: ToolScope) -> list[BaseTool]:

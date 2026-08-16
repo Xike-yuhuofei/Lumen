@@ -710,8 +710,6 @@ def serialize_referenced_transcript(
     return header + "\n\n" + "\n\n".join(lines)
 
 
-
-
 async def _load_history_session(
     store: SessionStoreProtocol,
     history_session_id: str,

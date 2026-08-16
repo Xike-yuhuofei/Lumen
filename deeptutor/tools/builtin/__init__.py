@@ -8,13 +8,10 @@ import logging
 from typing import Any
 
 from deeptutor.capabilities.mastery import MASTERY_TOOL_TYPES
-from deeptutor.capabilities.obsidian import OBSIDIAN_TOOL_TYPES
 from deeptutor.capabilities.solve import SOLVE_TOOL_TYPES
-from deeptutor.capabilities.subagent import SUBAGENT_TOOL_TYPES
 from deeptutor.core.tool_protocol import BaseTool, ToolDefinition, ToolParameter, ToolResult
 from deeptutor.knowledge.manifest import KB_FILES_DEFAULT_LIMIT, KB_FILES_MAX_LIMIT
 from deeptutor.tools.exec_tool import ExecTool
-from deeptutor.tools.media_gen_tool import ImagegenTool, VideogenTool
 from deeptutor.tools.prompting import load_prompt_hints
 
 logger = logging.getLogger(__name__)
@@ -1573,24 +1570,9 @@ BUILTIN_TOOL_TYPES: tuple[type[BaseTool], ...] = (
     GithubTool,
     AskUserTool,
     CronTool,
-    # Image → GeoGebra figure reconstruction. User-toggleable in chat; the
-    # solve loop capability force-mounts it for diagram problems.
     GeoGebraAnalysisTool,
-    # Text-to-image / text-to-video generation. User-toggleable + per-user
-    # grant-gated; the chat pipeline only mounts them when a model is configured.
-    ImagegenTool,
-    VideogenTool,
-    # Mastery Path + Solve + Obsidian tools — globally registered so schemas/API
-    # stay stable; the chat loop capabilities decide when to auto-mount them for
-    # a turn. Obsidian is a knowledge capability: when its vault is selected it
-    # runs the turn exclusively on these tools.
     *MASTERY_TOOL_TYPES,
     *SOLVE_TOOL_TYPES,
-    *OBSIDIAN_TOOL_TYPES,
-    # Subagent consult tool — globally registered; the subagent knowledge
-    # capability runs the turn exclusively on it when a connected agent is the
-    # selected KB.
-    *SUBAGENT_TOOL_TYPES,
 )
 
 # No tools are parked right now. When a tool's implementation is being
@@ -1616,8 +1598,6 @@ USER_TOGGLEABLE_TOOL_NAMES: tuple[str, ...] = (
     "paper_search",
     "reason",
     "geogebra_analysis",
-    "imagegen",
-    "videogen",
 )
 
 # Built-in tools the chat agent loop auto-mounts under context gates (a KB
@@ -1627,9 +1607,8 @@ USER_TOGGLEABLE_TOOL_NAMES: tuple[str, ...] = (
 # allowed) so an IM-facing partner can be denied e.g. memory access.
 # ``tool_composition.AUTO_MOUNTED_TOOLS`` is derived from this tuple, so the
 # two stay in lockstep; this ordering is the canonical display order for the
-# partner config UI. Capability-owned tools (mastery/solve/obsidian/subagent)
-# are intentionally absent — they are gated by capability activation, never by
-# this surface.
+# partner config UI. Capability-owned tools (mastery/solve) are intentionally
+# absent — they are gated by capability activation, never by this surface.
 CONFIGURABLE_BUILTIN_TOOL_NAMES: tuple[str, ...] = (
     "rag",
     "kb_files",
@@ -1671,8 +1650,6 @@ __all__ = [
     "GeoGebraAnalysisTool",
     "GithubTool",
     "KbFilesTool",
-    "ImagegenTool",
-    "VideogenTool",
     "ListNotebookTool",
     "PaperSearchToolWrapper",
     "RAGTool",

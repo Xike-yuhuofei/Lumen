@@ -88,18 +88,6 @@ class TestMountGate:
         )
         assert "kb_files" not in tools
 
-    def test_coexists_with_an_exclusive_knowledge_capability(self) -> None:
-        """An Obsidian vault owns the turn; co-selected KBs stay enumerable (#650)."""
-        tools = compose_enabled_tools(
-            registry=_EmptyRegistry(),
-            requested_tools=[],
-            optional_whitelist=[],
-            mount_flags=ToolMountFlags(has_kb=True),
-            capability_owned=["obsidian_read"],
-            exclusive=True,
-        )
-        assert tools == ["obsidian_read", "rag", "kb_files", "ask_user"]
-
     def test_a_partner_can_deny_it(self) -> None:
         tools = compose_enabled_tools(
             registry=_EmptyRegistry(),

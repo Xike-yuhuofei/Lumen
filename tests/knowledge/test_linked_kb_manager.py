@@ -2,7 +2,7 @@
 
 A linked KB mounts a pre-built index in place: no on-disk folder under
 ``base_dir``, read-only, and — critically — deleting it must never touch the
-user's external files. Mirrors the Obsidian pointer guarantees but for an
+user's external files. Mirrors the connected-pointer guarantees but for an
 engine-backed index queried via its bound ``rag_provider``.
 """
 

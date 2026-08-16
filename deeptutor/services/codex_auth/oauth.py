@@ -122,10 +122,7 @@ class LoopbackCallback:
 
         async def handle(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
             status = "404 Not Found"
-            body = (
-                f"{_CODEX_PAGE_TITLE}"
-                "<p>This callback path is not available.</p>"
-            )
+            body = f"{_CODEX_PAGE_TITLE}<p>This callback path is not available.</p>"
             try:
                 request = await asyncio.wait_for(reader.readuntil(b"\r\n\r\n"), timeout=2)
                 request_line = request.split(b"\r\n", 1)[0].decode("ascii")
@@ -138,10 +135,7 @@ class LoopbackCallback:
                         len(states) != 1 or not oauth_state_matches(states[0], expected_state)
                     ):
                         status = "400 Bad Request"
-                        body = (
-                            f"{_CODEX_PAGE_TITLE}"
-                            "<p>The authentication callback was invalid.</p>"
-                        )
+                        body = f"{_CODEX_PAGE_TITLE}<p>The authentication callback was invalid.</p>"
                     else:
                         callback_result = OAuthCallbackResult(
                             code=_first(query.get("code")),
@@ -153,8 +147,7 @@ class LoopbackCallback:
                         except CodexAuthError:
                             status = "409 Conflict"
                             body = (
-                                f"{_CODEX_PAGE_TITLE}"
-                                "<p>Authentication could not be received.</p>"
+                                f"{_CODEX_PAGE_TITLE}<p>Authentication could not be received.</p>"
                             )
                         else:
                             status = "200 OK"
@@ -164,10 +157,7 @@ class LoopbackCallback:
                             )
             except (ValueError, UnicodeDecodeError, asyncio.IncompleteReadError, TimeoutError):
                 status = "400 Bad Request"
-                body = (
-                    f"{_CODEX_PAGE_TITLE}"
-                    "<p>The authentication callback was invalid.</p>"
-                )
+                body = f"{_CODEX_PAGE_TITLE}<p>The authentication callback was invalid.</p>"
 
             encoded = body.encode("utf-8")
             writer.write(

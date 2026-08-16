@@ -160,11 +160,6 @@ parse = [
     "deeptutor[parse-liteparse]",
 ]
 
-# Math Animator addon (Manim). Mirrors requirements/math-animator.txt.
-# System prerequisites (installed outside pip): LaTeX, pkg-config, cairo, cmake, ffmpeg.
-math-animator = ["manim>=0.19.0"]
-
-
 
 # Dev/test tooling. Mirrors requirements/dev.txt.
 dev = [
@@ -183,9 +178,8 @@ dev = [
     "defusedxml>=0.7.1",
 ]
 
-# Everything: server + math-animator + dev tools.
+# Everything: server + dev tools.
 all = [
-    "deeptutor[math-animator]",
     "deeptutor[dev]",
 ]
 
