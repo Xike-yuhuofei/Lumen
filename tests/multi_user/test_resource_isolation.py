@@ -22,27 +22,3 @@ def test_book_session_ids_are_scoped_per_user(as_user) -> None:
     assert victim_runtime_store_db != attacker_runtime_store_db
     assert "u_victim" in str(victim_book_root)
     assert "u_attacker" in str(attacker_book_root)
-
-
-def test_partner_data_is_admin_anchored_not_user_scoped(as_user) -> None:
-    """Partners are process-wide resources anchored at the admin workspace.
-
-    Unlike the per-user resources above, the partner tree must NOT follow the
-    request user's scope: partner runtimes execute inside a synthetic partner
-    scope whose own workspace lives below ``data/partners``, so resolving the
-    base dir through the contextvar would recurse the layout. Access control
-    is enforced at the API layer instead (the /api/v1/partners router is
-    admin-gated in ``api/main.py``).
-    """
-    from deeptutor.services.partners.manager import PartnerManager
-
-    manager = PartnerManager()
-
-    with as_user("u_victim"):
-        victim_dir = manager._partners_dir
-    with as_user("u_attacker"):
-        attacker_dir = manager._partners_dir
-
-    assert victim_dir == attacker_dir
-    assert str(victim_dir).endswith("data/partners")
-    assert "u_victim" not in str(victim_dir)

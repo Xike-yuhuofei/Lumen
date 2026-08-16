@@ -56,12 +56,8 @@ from deeptutor.services.llm import (
 )
 from deeptutor.services.llm.context_window import resolve_effective_context_window
 from deeptutor.services.prompt import get_prompt_manager
-from deeptutor.tools.builtin import PARTNER_BUILTIN_TOOL_NAMES
 
 logger = logging.getLogger(__name__)
-
-# Chat memory tools a partner turn replaces with the partner_* variants.
-_PARTNER_SUPPRESSED_TOOLS: tuple[str, ...] = ("read_memory", "write_memory")
 
 
 CHAT_EXCLUDED_TOOLS: set[str] = set()
@@ -587,12 +583,6 @@ class AgenticChatPipeline:
                 if context.allowed_builtin_tools is not None
                 else None
             ),
-            # Partners get the partner_* memory/history tools force-mounted and
-            # chat's read_memory/write_memory suppressed — the split-memory model
-            # (own workspace writable, owner's memory read-only) lives in those
-            # tools, not in chat's.
-            forced=PARTNER_BUILTIN_TOOL_NAMES if is_partner else (),
-            suppressed=_PARTNER_SUPPRESSED_TOOLS if is_partner else (),
         )
         return _drop_unconfigured_generation_tools(composed)
 

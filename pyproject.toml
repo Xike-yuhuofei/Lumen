@@ -71,6 +71,8 @@ dependencies = [
     # deeptutor.runtime.memory_probe imports it lazily and falls back to /proc,
     # so a missing wheel costs the settings strip, not the app.
     "psutil>=5.9.0,<8.0.0",
+    # MCP client (core MCP service; kept after partners prune)
+    "mcp>=1.26.0,<2.0.0",
 ]
 
 [project.scripts]
@@ -131,36 +133,8 @@ server = [
     "json-repair>=0.57.0,<1.0.0",
     "croniter>=6.0.0,<7.0.0",
     "psutil>=5.9.0,<8.0.0",
-]
-
-# Partner channel SDKs + MCP client. Mirrors requirements/partners.txt.
-# Partners run on the chat agent loop, so there is no engine here — just the
-# IM platform SDKs and the MCP client used for deferred tools.
-partners = [
-    "deeptutor[server]",
+    # MCP client (core MCP service; kept after partners prune)
     "mcp>=1.26.0,<2.0.0",
-    "python-telegram-bot[socks]>=22.6,<23.0",
-    "wecom-aibot-sdk>=1.0.8,<2.0.0",
-    "lark-oapi>=1.5.0,<2.0.0",
-    "dingtalk-stream>=0.24.0,<1.0.0",
-    "slack-sdk>=3.39.0,<4.0.0",
-    "slackify-markdown>=0.2.0,<1.0.0",
-    "qq-botpy>=1.2.0,<2.0.0",
-    "python-socketio>=5.16.0,<6.0.0",
-    "msgpack>=1.1.0,<2.0.0",
-    "python-socks[asyncio]>=2.8.0,<3.0.0",
-    "socksio>=1.0.0,<2.0.0",
-    "websocket-client>=1.9.0,<2.0.0",
-    "zulip>=0.8.0,<1.0.0",
-    # slack-sdk Socket Mode + napcat need the async `websockets` lib — pin it
-    # explicitly instead of relying on dingtalk-stream/lark-oapi transitives.
-    "websockets>=12.0",
-    # napcat (OneBot v11) media downloads
-    "aiohttp>=3.10.0,<4.0.0",
-    # msteams Bot Framework token validation
-    "PyJWT[crypto]>=2.8.0,<3.0.0",
-    # weixin QR-code login
-    "qrcode>=7.4.0,<9.0.0",
 ]
 
 # Optional document-parsing engines for the shared parse layer
@@ -186,23 +160,6 @@ parse = [
     "deeptutor[parse-liteparse]",
 ]
 
-# Legacy alias kept for one release: `pip install deeptutor[tutorbot]`.
-tutorbot = ["deeptutor[partners]"]
-
-# Matrix (Element) channel for partners. Mirrors requirements/matrix.txt.
-# Default Matrix install is non-E2EE so it works without libolm/python-olm.
-matrix = [
-    "matrix-nio>=0.25.2,<1.0.0",
-    "mistune>=3.0.0,<4.0.0",
-    "nh3>=0.2.18,<1.0.0",
-]
-
-# Optional Matrix E2EE addon. Mirrors requirements/matrix-e2e.txt and requires libolm.
-matrix-e2e = [
-    "deeptutor[matrix]",
-    "matrix-nio[e2e]>=0.25.2,<1.0.0",
-]
-
 # Math Animator addon (Manim). Mirrors requirements/math-animator.txt.
 # System prerequisites (installed outside pip): LaTeX, pkg-config, cairo, cmake, ffmpeg.
 math-animator = ["manim>=0.19.0"]
@@ -226,10 +183,8 @@ dev = [
     "defusedxml>=0.7.1",
 ]
 
-# Everything: server + partners + non-E2EE matrix + math-animator + dev tools.
+# Everything: server + math-animator + dev tools.
 all = [
-    "deeptutor[partners]",
-    "deeptutor[matrix]",
     "deeptutor[math-animator]",
     "deeptutor[dev]",
 ]

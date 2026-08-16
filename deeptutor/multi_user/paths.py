@@ -173,18 +173,12 @@ def _resolve_owner() -> tuple[str, PathService]:
     "give up and assume admin" fallback fails open onto the most privileged
     account there is).
     """
-    from deeptutor.services.partners.scope import is_partner_user_id
-
     from .context import get_current_user_or_none
 
     user = get_current_user_or_none()
     if user is None:
         # No request scope: CLI runs and background jobs act as the deployment.
         return LOCAL_ADMIN_ID, PathService.get_instance()
-    if is_partner_user_id(user.id):
-        # A partner is a synthetic user, not a person: it has a workspace but no
-        # account, so an asset keyed to an account belongs to its owner.
-        return LOCAL_ADMIN_ID, get_admin_path_service()
     if user.scope.kind == "user":
         ensure_scope_workspace(user.scope)
         return user.id, get_path_service_for_scope(user.scope)

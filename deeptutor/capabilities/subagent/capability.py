@@ -164,23 +164,15 @@ def _resolve_budget(context: UnifiedContext) -> int:
 
 
 def _system_text(language: str, name: str, budget: int, kind: str = "") -> str:
-    from deeptutor.services.subagent import PARTNER_BACKEND_KIND
+    del kind
 
-    is_partner = kind == PARTNER_BACKEND_KIND
     zh = str(language or "en").lower().startswith("zh")
     if zh:
-        if is_partner:
-            framing = (
-                f"本轮你已连接到用户的伙伴「{name}」——一个有自己人格、知识库与技能的助手。你可以通过 "
-                f"`consult_subagent` 工具向它咨询，把它当作一位独立的同事来求助（例如借助它专属的知识库"
-                f"或视角来回答）。你们的往来会作为一个完整会话归档到该伙伴的历史里，它的回复过程会实时展示给用户。"
-            )
-        else:
-            framing = (
-                f"本轮你已连接到用户本机的外部智能体「{name}」。你可以通过 `consult_subagent` "
-                f"工具向它提问，把它当作一个能在用户机器上读写文件、运行命令的得力助手来委派任务"
-                f"（例如排查代码库、复现问题、运行脚本）。它的完整运行过程会实时展示给用户。"
-            )
+        framing = (
+            f"本轮你已连接到用户本机的外部智能体「{name}」。你可以通过 `consult_subagent` "
+            f"工具向它提问，把它当作一个能在用户机器上读写文件、运行命令的得力助手来委派任务"
+            f"（例如排查代码库、复现问题、运行脚本）。它的完整运行过程会实时展示给用户。"
+        )
         return (
             f"{framing}\n\n"
             f"- 本轮最多可向它提问 {budget} 次；每次结果会告诉你还剩几次。它会在本轮内记住你"
@@ -188,22 +180,12 @@ def _system_text(language: str, name: str, budget: int, kind: str = "") -> str:
             f"- 当你掌握了足够信息后，停止调用该工具，用你自己的口吻直接回答用户——"
             f"不要假借它的身份或第一人称转述它的话。"
         )
-    if is_partner:
-        framing = (
-            f"You are connected this turn to the user's partner “{name}” — a companion "
-            f"with its own persona, library and skills. Consult it with the "
-            f"`consult_subagent` tool as you would an independent colleague (e.g. for "
-            f"its dedicated knowledge or perspective). Your exchange is archived as one "
-            f"complete session in that partner's history, and its reply is shown to the "
-            f"user live."
-        )
-    else:
-        framing = (
-            f"You are connected this turn to the user's local external agent “{name}”. "
-            f"Consult it with the `consult_subagent` tool, delegating work it is better "
-            f"placed to do on the user's machine — inspecting a codebase, reproducing a "
-            f"bug, running commands. Its full run is shown to the user live."
-        )
+    framing = (
+        f"You are connected this turn to the user's local external agent “{name}”. "
+        f"Consult it with the `consult_subagent` tool, delegating work it is better "
+        f"placed to do on the user's machine — inspecting a codebase, reproducing a "
+        f"bug, running commands. Its full run is shown to the user live."
+    )
     return (
         f"{framing}\n\n"
         f"- You may consult it at most {budget} time(s) this turn; each result tells "

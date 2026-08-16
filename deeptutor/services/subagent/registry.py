@@ -18,7 +18,6 @@ from deeptutor.services.subagent.codex import CodexBackend
 from deeptutor.services.subagent.gemini import GeminiBackend
 from deeptutor.services.subagent.kimi import KimiBackend
 from deeptutor.services.subagent.opencode_family import MimoBackend, OpencodeBackend
-from deeptutor.services.subagent.partner import PartnerBackend
 from deeptutor.services.subagent.types import DetectResult
 
 _BACKENDS: dict[str, SubagentBackend] = {
@@ -30,7 +29,6 @@ _BACKENDS: dict[str, SubagentBackend] = {
         KimiBackend(),
         OpencodeBackend(),
         MimoBackend(),
-        PartnerBackend(),
     )
 }
 

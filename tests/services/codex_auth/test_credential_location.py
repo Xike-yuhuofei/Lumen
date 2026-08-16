@@ -106,21 +106,6 @@ def test_secrets_directory_is_owner_only(isolated_roots: Path, as_learner: objec
     assert stat.S_IMODE(secrets_root.parent.stat().st_mode) == stat.S_IRWXU
 
 
-def test_partner_turn_uses_its_owner_secrets_directory(isolated_roots: Path) -> None:
-    """A partner has a workspace but no account, so it borrows its owner's login."""
-    from deeptutor.multi_user.context import reset_current_user, set_current_user
-    from deeptutor.multi_user.paths import get_owner_secrets_dir
-    from deeptutor.services.partners.scope import partner_user
-
-    owner_secrets = get_owner_secrets_dir()
-    token = set_current_user(partner_user("ada"))
-    try:
-        assert service_module._codex_secrets_root() == owner_secrets
-    finally:
-        reset_current_user(token)
-    assert not owner_secrets.is_relative_to(isolated_roots / "partners")
-
-
 def test_legacy_login_is_moved_out_of_the_workspace_tree(
     isolated_roots: Path,
     as_learner: object,

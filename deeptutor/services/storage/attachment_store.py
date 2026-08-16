@@ -31,11 +31,11 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import re
 from pathlib import Path
 from typing import Protocol, runtime_checkable
 from urllib.parse import quote
 
-from deeptutor.partners.helpers import safe_filename
 from deeptutor.services.config import load_system_settings
 from deeptutor.services.path_service import get_path_service
 
@@ -45,6 +45,14 @@ logger = logging.getLogger(__name__)
 _DEFAULT_SUBPATH = ("workspace", "chat", "attachments")
 # Public route prefix served by deeptutor.api.routers.attachments
 _PUBLIC_URL_PREFIX = "/api/attachments"
+
+_UNSAFE_CHARS = re.compile(r'[<>:"/\\|?*]')
+_CONTROL_CHARS = re.compile(r"[\x00-\x1f\x7f]")
+
+
+def _safe_filename(name: str) -> str:
+    """Replace unsafe path / control characters; ``.`` / ``..`` become empty."""
+    return _CONTROL_CHARS.sub("", _UNSAFE_CHARS.sub("_", name or "")).strip().strip(".")
 
 
 def _coerce_filename(filename: str) -> str:
@@ -56,7 +64,7 @@ def _coerce_filename(filename: str) -> str:
     * Falls back to ``"file"`` if the result is empty.
     """
     base = os.path.basename(filename or "")
-    cleaned = safe_filename(base)
+    cleaned = _safe_filename(base)
     return cleaned or "file"
 
 

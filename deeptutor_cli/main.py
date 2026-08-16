@@ -18,7 +18,6 @@ from .init_cmd import register as register_init
 from .kb import register as register_kb
 from .memory import register as register_memory
 from .notebook import register as register_notebook
-from .partner import register as register_partner
 from .plugin import register as register_plugin
 from .provider_cmd import register as register_provider
 from .session_cmd import register as register_session
@@ -34,7 +33,6 @@ app = typer.Typer(
     add_completion=False,
 )
 
-partner_app = typer.Typer(help="Manage partners (IM-connected companions).")
 chat_app = typer.Typer(help="Interactive chat REPL.")
 kb_app = typer.Typer(help="Manage knowledge bases.")
 skill_app = typer.Typer(help="Manage skills and install from hubs (ClawHub, …).")
@@ -46,7 +44,6 @@ notebook_app = typer.Typer(help="Manage notebooks and imported markdown records.
 provider_app = typer.Typer(help="Manage provider OAuth login.")
 book_app = typer.Typer(help="Manage interactive Books (BookEngine).")
 
-app.add_typer(partner_app, name="partner")
 app.add_typer(chat_app, name="chat")
 app.add_typer(kb_app, name="kb")
 app.add_typer(skill_app, name="skill")
@@ -59,7 +56,6 @@ app.add_typer(notebook_app, name="notebook")
 app.add_typer(provider_app, name="provider")
 app.add_typer(book_app, name="book")
 
-register_partner(partner_app)
 register_chat(chat_app)
 register_kb(kb_app)
 register_skill(skill_app)

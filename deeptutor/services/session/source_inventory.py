@@ -631,9 +631,6 @@ def _imported_agent_label(meta: dict[str, Any], lang: str) -> str | None:
     import_meta = prefs.get("import") if isinstance(prefs, dict) else None
     source = str((import_meta or {}).get("source") or "").strip().lower()
     sid = str(meta.get("session_id") or meta.get("id") or "")
-    if source == "partner":
-        name = str(meta.get("partner_name") or "").strip()
-        return name or ("伙伴" if lang == "zh" else "a partner")
     if not source and not sid.startswith("imported_"):
         return None
     if source in _EXTERNAL_AGENT_LABELS:
@@ -713,54 +710,6 @@ def serialize_referenced_transcript(
     return header + "\n\n" + "\n\n".join(lines)
 
 
-# A referenced *partner* session: ``partner:{partner_id}:{session_key}``. The
-# session_key itself may contain ``:`` (e.g. ``web:abc``), so only the partner
-# id is split off — partner ids are colon-free slugs.
-_PARTNER_REF_PREFIX = "partner:"
-
-
-def _load_partner_session(ref: str, *, language: str = "en") -> tuple[str, str]:
-    """Resolve a ``partner:{pid}:{session_key}`` reference into transcript + title.
-
-    Partner conversations live in the admin-scoped ``PartnerSessionStore`` (one
-    JSONL per session under ``data/partners/<id>/sessions/``), not the main
-    session store — so they resolve here through the partner manager rather than
-    ``store.get_session``. Gated to admins: partner data is admin-scoped (the
-    whole partners API is admin-gated), and this read runs inside the user's
-    turn, so a non-admin must not be able to pull a partner's transcript by
-    hand-crafting a reference id. Returns ``("", "")`` on any miss.
-    """
-    rest = ref[len(_PARTNER_REF_PREFIX) :]
-    pid, _, session_key = rest.partition(":")
-    pid, session_key = pid.strip(), session_key.strip()
-    if not pid or not session_key:
-        return "", ""
-
-    from deeptutor.multi_user.context import get_current_user
-
-    if not get_current_user().is_admin:
-        return "", ""
-    try:
-        from deeptutor.services.partners import get_partner_manager
-
-        manager = get_partner_manager()
-        if not manager.partner_exists(pid):
-            return "", ""
-        messages = manager.get_history(pid, session_key=session_key, limit=400)
-        config = manager.load_config(pid)
-    except Exception:
-        logger.debug("Failed to resolve partner session %r", ref, exc_info=True)
-        return "", ""
-
-    partner_name = (getattr(config, "name", "") or pid).strip()
-    meta = {"preferences": {"import": {"source": "partner"}}, "partner_name": partner_name}
-    transcript = serialize_referenced_transcript(meta, messages, language=language)
-    if not transcript:
-        return "", ""
-    opener = next((m for m in messages if str(m.get("role")) == "user"), None)
-    first_line = str((opener or {}).get("content", "") or "").strip().splitlines()
-    title = (first_line[0][:60].strip() if first_line else "") or partner_name
-    return transcript, title
 
 
 async def _load_history_session(
@@ -775,8 +724,6 @@ async def _load_history_session(
     A ``partner:`` reference resolves through the partner store instead of the
     main session store (see :func:`_load_partner_session`).
     """
-    if history_session_id.startswith(_PARTNER_REF_PREFIX):
-        return _load_partner_session(history_session_id, language=language)
     try:
         meta = await store.get_session(history_session_id)
     except Exception:
