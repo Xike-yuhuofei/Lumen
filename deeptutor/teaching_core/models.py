@@ -25,6 +25,8 @@ class TeachingRelationType(str, Enum):
     EXPLAINS = "explains"
     EXAMPLE_OF = "example_of"
     ANALOGOUS_TO = "analogous_to"
+    PART_OF = "part_of"
+    DERIVED_FROM = "derived_from"
     CORRECTS = "corrects"
     ASSESSES = "assesses"
     SUPPORTS = "supports"
