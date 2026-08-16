@@ -56,8 +56,7 @@ async def test_extracts_model_with_source_anchors_and_evidence():
 
     parsed = ParsedDocument(
         markdown=(
-            "# Chapter\n\nFormal systems provide notation. "
-            "Self-reference builds on that notation."
+            "# Chapter\n\nFormal systems provide notation. Self-reference builds on that notation."
         ),
         source_hash="abc",
         engine="pymupdf4llm",
@@ -70,10 +69,7 @@ async def test_extracts_model_with_source_anchors_and_evidence():
     assert result.node_count == 2
     assert result.edge_count == 1
     assert result.model.edges[0].relation == TeachingRelationType.PREREQUISITE_OF
-    assert all(
-        node.source_refs[0].startswith("sample.epub#")
-        for node in result.model.nodes
-    )
+    assert all(node.source_refs[0].startswith("sample.epub#") for node in result.model.nodes)
     assert result.model.nodes[0].metadata["source_anchors"]
     assert result.model.nodes[0].metadata["evidence_quotes"]
     assert result.model.edges[0].metadata["evidence_quotes"]
@@ -207,9 +203,7 @@ def test_normalizer_merges_duplicate_nodes():
 
 
 def test_prerequisite_cycle_is_rejected():
-    anchors = {
-        "s1": SourceAnchor(source_id="book", segment_id="s1", locator="x")
-    }
+    anchors = {"s1": SourceAnchor(source_id="book", segment_id="s1", locator="x")}
     batch = ExtractionBatch(
         nodes=[
             ExtractedNode(

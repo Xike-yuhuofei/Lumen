@@ -40,6 +40,7 @@ from deeptutor.learning.models import (
     KnowledgePoint,
     KnowledgeType,
     LearningModule,
+    LearningProgress,
     PendingQuestion,
 )
 from deeptutor.learning.pending import public_pending_question
@@ -59,6 +60,7 @@ if TYPE_CHECKING:
 # Tool names the pipeline mounts together when a mastery path is active. Kept
 # here so the mount policy and the registration list can't disagree.
 MASTERY_TOOL_NAMES: tuple[str, ...] = (
+    "teaching_plan",
     "mastery_status",
     "mastery_quiz",
     "mastery_grade",
@@ -233,6 +235,87 @@ def _no_path_result() -> ToolResult:
         content="No mastery path is active on this turn; mastery tools are unavailable.",
         success=False,
     )
+
+
+class TeachingPlanTool(BaseTool):
+    """Consult the Teaching Engine for the deterministic next teaching action.
+
+    The engine owns *what happens next*; the agent only executes the action via
+    the other mastery tools. This is the deterministic decision seam described
+    in the Teaching Core implementation report.
+    """
+
+    def get_definition(self) -> ToolDefinition:
+        return ToolDefinition(
+            name="teaching_plan",
+            description=(
+                "Consult the Teaching Engine for the deterministic next teaching "
+                "action. It reads the learner's mastery path, the teaching "
+                "knowledge graph, and the learner's current state and decides "
+                "what to teach next: explain, show an example, scaffolded "
+                "practice, assess, spaced review, remediate a misconception, "
+                "resolve a pending question, or complete. Call this FIRST on "
+                "every mastery turn — the engine owns the decision, never guess "
+                "the next teaching action yourself. Then execute the returned "
+                "instruction with the indicated mastery tool."
+            ),
+            parameters=[],
+        )
+
+    async def execute(self, **kwargs: Any) -> ToolResult:
+        path_id = _resolve_path_id(kwargs)
+        if not path_id:
+            return _no_path_result()
+
+        service = _new_service()
+        progress = service.get_or_create(path_id)
+        if not any(module.knowledge_points for module in progress.modules):
+            return _json_result(
+                {
+                    "status": "no_path",
+                    "message": (
+                        "No mastery path has been built yet. Design one from the "
+                        "learner's materials and call mastery_build."
+                    ),
+                },
+                meta_key="teaching_plan",
+            )
+
+        from deeptutor.teaching_core.adapters import action_instruction
+        from deeptutor.teaching_core.teaching_service import TeachingService
+
+        teaching = TeachingService()
+        action = teaching.decide(path_id)
+        node_title = _node_title(teaching, progress, action.focus_node_id)
+        instruction = action_instruction(action, node_title=node_title)
+        return _json_result(
+            {
+                "status": "active",
+                "decision": action.to_dict(),
+                "instruction": instruction,
+                "focus": {"node_id": action.focus_node_id, "title": node_title},
+                "map": map_summary(progress),
+            },
+            meta_key="teaching_plan",
+        )
+
+
+def _node_title(
+    teaching: Any,
+    progress: LearningProgress,
+    node_id: str,
+) -> str:
+    """Resolve a human title for a teaching node id (graph, then progress)."""
+    if not node_id:
+        return ""
+    try:
+        graph = teaching.get_graph(progress.book_id)
+        if graph is not None and graph.has_node(node_id):
+            return graph.node(node_id).title
+    except Exception:
+        logger.warning("Failed to resolve teaching node title for %s", node_id, exc_info=True)
+    kp, _, _ = find_knowledge_point(progress, node_id)
+    return kp.name if kp else node_id
 
 
 class MasteryStatusTool(BaseTool):
@@ -702,6 +785,7 @@ def _parse_modules(
 
 
 MASTERY_TOOL_TYPES: tuple[type[BaseTool], ...] = (
+    TeachingPlanTool,
     MasteryStatusTool,
     MasteryQuizTool,
     MasteryGradeTool,
@@ -713,6 +797,7 @@ MASTERY_TOOL_TYPES: tuple[type[BaseTool], ...] = (
 __all__ = [
     "MASTERY_TOOL_NAMES",
     "MASTERY_TOOL_TYPES",
+    "TeachingPlanTool",
     "MasteryStatusTool",
     "MasteryQuizTool",
     "MasteryGradeTool",

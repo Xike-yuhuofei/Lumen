@@ -48,16 +48,12 @@ def validate_batch(
 ) -> None:
     node_ids = [node.id for node in batch.nodes]
     if len(node_ids) != len(set(node_ids)):
-        raise TeachingExtractionValidationError(
-            "extracted node ids must be unique within a batch"
-        )
+        raise TeachingExtractionValidationError("extracted node ids must be unique within a batch")
 
     known_nodes = set(node_ids)
     for node in batch.nodes:
         if not node.source_segment_ids:
-            raise TeachingExtractionValidationError(
-                f"node {node.id!r} has no source_segment_ids"
-            )
+            raise TeachingExtractionValidationError(f"node {node.id!r} has no source_segment_ids")
         unknown = set(node.source_segment_ids) - allowed_segment_ids
         if unknown:
             raise TeachingExtractionValidationError(

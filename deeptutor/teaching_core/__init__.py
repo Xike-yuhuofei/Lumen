@@ -14,6 +14,7 @@ from .models import (
     TeachingNodeType,
     TeachingRelationType,
 )
+from .teaching_service import TeachingService
 
 __all__ = [
     "TeachingEngine",
@@ -28,4 +29,5 @@ __all__ = [
     "LearnerState",
     "TeachingDecision",
     "learner_state_from_progress",
+    "TeachingService",
 ]
