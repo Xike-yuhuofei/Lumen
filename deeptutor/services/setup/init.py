@@ -22,7 +22,7 @@ DEFAULT_INTERFACE_SETTINGS = {
     "sidebar_description": "✨ Data Intelligence Lab @ HKU",
     "sidebar_nav_order": {
         "start": ["/", "/history", "/knowledge", "/notebook"],
-        "learnResearch": ["/question", "/solver", "/research", "/co_writer"],
+        "learnResearch": ["/question", "/solver", "/research"],
     },
 }
 
@@ -73,7 +73,6 @@ DEFAULT_AGENTS_SETTINGS = {
         "solve": {"temperature": 0.3, "max_tokens": 8192},
         "research": {"temperature": 0.5, "max_tokens": 12000},
         "question": {"temperature": 0.7, "max_tokens": 4096},
-        "co_writer": {"temperature": 0.7, "max_tokens": 4096},
         "visualize": {"temperature": 0.4, "max_tokens": 16384},
         "chat": {
             "temperature": 0.2,

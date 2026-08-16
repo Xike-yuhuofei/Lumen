@@ -75,7 +75,7 @@ def _tour_cache_file():
 
 DEFAULT_SIDEBAR_NAV_ORDER = {
     "start": ["/", "/history", "/knowledge", "/notebook"],
-    "learnResearch": ["/question", "/solver", "/research", "/co_writer"],
+    "learnResearch": ["/question", "/solver", "/research"],
 }
 
 DEFAULT_UI_SETTINGS = {
