@@ -53,11 +53,12 @@ def _write_llamaindex_index(root: Path, *, signature: str, docs: int = 0) -> Non
             (raw / f"doc{i}.md").write_text("x", encoding="utf-8")
 
 
-def test_provider_is_linkable_excludes_pageindex() -> None:
+def test_provider_is_linkable_collapses_to_default() -> None:
+    # The single local engine is linkable; removed engine names collapse to it.
     assert provider_is_linkable("llamaindex")
     assert provider_is_linkable("graphrag")
     assert provider_is_linkable("lightrag")
-    assert not provider_is_linkable("pageindex")
+    assert provider_is_linkable("pageindex")
 
 
 def test_resolve_kb_dir_points_at_external_for_linked(tmp_path: Path) -> None:
@@ -80,12 +81,6 @@ def test_resolve_kb_dir_points_at_external_for_linked(tmp_path: Path) -> None:
     assert resolve_kb_dir(str(base), "plain") == base / "plain"
     # Unknown KB falls back to the conventional layout.
     assert resolve_kb_dir(str(base), "missing") == base / "missing"
-
-
-def test_probe_rejects_pageindex(tmp_path: Path) -> None:
-    result = probe_linked_folder(str(tmp_path), "pageindex")
-    assert not result.ok
-    assert result.error and "cloud" in result.error.lower()
 
 
 def test_probe_errors_when_no_index(tmp_path: Path) -> None:
@@ -129,12 +124,16 @@ def test_probe_unverifiable_embedding_is_a_warning(tmp_path: Path, monkeypatch) 
     assert result.warnings
 
 
-def test_probe_rejects_wrong_engine(tmp_path: Path) -> None:
-    # A llamaindex-style index (docstore.json) probed as lightrag should fail:
-    # lightrag's ready-marker globs won't match, so no ready version is found.
+def test_probe_legacy_provider_collapses_to_llamaindex(
+    tmp_path: Path, monkeypatch
+) -> None:
+    # A removed engine name collapses to the single LlamaIndex engine, so a
+    # ready LlamaIndex index is found regardless of the requested provider.
     _write_llamaindex_index(tmp_path, signature=_SIG.hash())
+    monkeypatch.setattr(emb_sig, "signature_from_embedding_config", lambda: _SIG)
     result = probe_linked_folder(str(tmp_path), "lightrag")
-    assert not result.ok
+    assert result.ok
+    assert result.version == "version-1"
 
 
 def test_assert_path_allowed_default_permissive(tmp_path: Path) -> None:

@@ -46,7 +46,6 @@ from deeptutor.services.mcp.config import (
     MCPServerConfig,
     load_mcp_config,
 )
-from deeptutor.services.mcp.pageindex_server import with_builtin_servers
 
 logger = logging.getLogger(__name__)
 
@@ -270,13 +269,13 @@ class MCPConnectionManager:
         async with self._lock_for(SHARED_OWNER):
             if self._started:
                 return
-            await self._sync_to_config(with_builtin_servers(load_mcp_config()))
+            await self._sync_to_config(load_mcp_config())
             self._started = True
 
     async def reload(self) -> None:
         """Re-read the persisted config and apply the diff to live connections."""
         async with self._lock_for(SHARED_OWNER):
-            await self._sync_to_config(with_builtin_servers(load_mcp_config()))
+            await self._sync_to_config(load_mcp_config())
             self._started = True
 
     async def shutdown(self) -> None:

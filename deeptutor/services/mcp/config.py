@@ -48,7 +48,6 @@ class MCPServerConfig(BaseModel):
     tool_timeout: int = Field(default=30, ge=1, le=600)
     enabled_tools: list[str] = Field(default_factory=lambda: ["*"])
     # Blocklist applied after ``enabled_tools`` — for "everything except X"
-    # entries (used by the built-in pageindex server).
     disabled_tools: list[str] = Field(default_factory=list)
     enabled: bool = True
     # authentication

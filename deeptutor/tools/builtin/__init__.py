@@ -79,9 +79,9 @@ def _rag_sources(result: dict[str, Any], *, query: str, kb_name: str) -> list[di
     """Citations for one ``rag`` call, from the retrieval's own provenance.
 
     Every pipeline normalises what it retrieved into ``result["sources"]``
-    (``{title, content, source, page, chunk_id, score}`` — see the GraphRAG and
-    LightRAG-server pipelines). Forward those so a grounded claim is traceable
-    to the chunk / entity / report behind it; without this the tool reported
+    (``{title, content, source, page, chunk_id, score}`` — see the LlamaIndex
+    pipeline). Forward those so a grounded claim is traceable to the chunk
+    behind it; without this the tool reported
     only an echo of its own query (issue #694). ``type``/``kb_name`` are kept on
     every entry so consumers that key on them still work, and an engine that
     surfaces no provenance still yields the echo rather than nothing.

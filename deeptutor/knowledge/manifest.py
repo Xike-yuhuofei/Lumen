@@ -35,8 +35,6 @@ from pathlib import Path
 from typing import Any
 
 from deeptutor.knowledge.kb_types import (
-    IMA_KB_TYPE,
-    LIGHTRAG_SERVER_KB_TYPE,
     SUBAGENT_KB_TYPE,
     external_root_of,
 )
@@ -52,7 +50,6 @@ KB_FILES_MAX_LIMIT = 1000
 
 # Why a KB's documents cannot be listed. Reason *codes* — the data layer never
 # produces user-facing copy; the renderers localise these.
-UNAVAILABLE_REMOTE = "remote"
 UNAVAILABLE_AGENT = "agent"
 UNAVAILABLE_MISSING = "missing"
 
@@ -60,8 +57,6 @@ UNAVAILABLE_MISSING = "missing"
 # an API. Reporting them as "0 documents" would be a lie, so they are reported
 # as non-enumerable instead.
 _NON_DOCUMENT_KB_TYPES: dict[str, str] = {
-    LIGHTRAG_SERVER_KB_TYPE: UNAVAILABLE_REMOTE,
-    IMA_KB_TYPE: UNAVAILABLE_REMOTE,
     SUBAGENT_KB_TYPE: UNAVAILABLE_AGENT,
 }
 
@@ -143,8 +138,8 @@ def document_root(kb_dir: Path, entry: Mapping[str, Any]) -> Path | None:
     """Where ``entry``'s documents live on this machine, or ``None`` if nowhere.
 
     Ordinary indexed KBs own ``<kb_dir>/raw``. A connected KB that points at a
-    real folder (``linked``, ``obsidian``) is enumerated in place. A remote
-    LightRAG server and a connected subagent have no local document set at all.
+    real folder (``linked``, ``obsidian``) is enumerated in place. A connected
+    subagent has no local document set at all.
     """
     external = external_root_of(entry)
     if external:
@@ -247,7 +242,6 @@ _STATUS_LABELS: dict[str, dict[str, str]] = {
 # wording instead of each phrasing the same fact its own way.
 _UNAVAILABLE_LABELS: dict[str, dict[str, str]] = {
     "en": {
-        UNAVAILABLE_REMOTE: "Hosted on a remote server; its document list cannot be read.",
         UNAVAILABLE_AGENT: "A connected agent, not a document collection.",
         UNAVAILABLE_MISSING: (
             "Its document folder cannot be read right now — it may still be "
@@ -255,7 +249,6 @@ _UNAVAILABLE_LABELS: dict[str, dict[str, str]] = {
         ),
     },
     "zh": {
-        UNAVAILABLE_REMOTE: "由远端服务器托管，无法读取文档清单。",
         UNAVAILABLE_AGENT: "是连接的智能体，不是文档集合。",
         UNAVAILABLE_MISSING: "当前读不到它的文档目录——可能仍在创建中，也可能是外部文件夹已移动。",
     },
@@ -418,7 +411,6 @@ __all__ = [
     "MANIFEST_NOTE_LIMIT",
     "UNAVAILABLE_AGENT",
     "UNAVAILABLE_MISSING",
-    "UNAVAILABLE_REMOTE",
     "KbDocument",
     "KbManifest",
     "build_manifest",

@@ -7,7 +7,7 @@ puts it in the system prompt, where a count is answerable with no tool call at
 all (the failure mode where a weaker model never calls the tool) and where the
 prompt stays byte-stable for the whole turn.
 
-These tests pin the wiring: the note reaches the prompt, PageIndex KBs are not
+These tests pin the wiring: the note reaches the prompt, and an unreadable KB
 described twice, and an unreadable KB costs the manifest rather than the turn.
 """
 
@@ -106,22 +106,6 @@ async def test_every_attached_kb_is_described(monkeypatch: pytest.MonkeyPatch) -
 
     assert asked == ["course", "papers"]
     assert "course" in note and "papers" in note
-
-
-@pytest.mark.asyncio
-async def test_pageindex_kbs_are_not_described_twice(monkeypatch: pytest.MonkeyPatch) -> None:
-    """PageIndex's own note already lists its documents, with their doc_ids."""
-    pipeline = _pipeline(monkeypatch)
-    pipeline._pageindex_docs = {"hosted": {"paper.pdf": "doc-1"}}
-    asked = _stub_resolver(monkeypatch, {"course": _manifest("course", "a.pdf")})
-    context = UnifiedContext(
-        session_id="s1", user_message="how many?", knowledge_bases=["course", "hosted"]
-    )
-
-    await pipeline._prepare_kb_manifests(context)
-
-    assert asked == ["course"]
-    assert [manifest.name for manifest in pipeline._kb_manifests] == ["course"]
 
 
 @pytest.mark.asyncio
