@@ -11,7 +11,10 @@ class TeachingNodeType(str, Enum):
     CONCEPT = "concept"
     PRINCIPLE = "principle"
     PROCEDURE = "procedure"
+    CLAIM = "claim"
+    ARGUMENT = "argument"
     EXAMPLE = "example"
+    ANALOGY = "analogy"
     MISCONCEPTION = "misconception"
     QUESTION = "question"
     EXPLANATION = "explanation"
@@ -21,9 +24,12 @@ class TeachingRelationType(str, Enum):
     PREREQUISITE_OF = "prerequisite_of"
     EXPLAINS = "explains"
     EXAMPLE_OF = "example_of"
+    ANALOGOUS_TO = "analogous_to"
     CORRECTS = "corrects"
     ASSESSES = "assesses"
     SUPPORTS = "supports"
+    CONTRADICTS = "contradicts"
+    REQUIRES = "requires"
 
 
 class TeachingActionType(str, Enum):
