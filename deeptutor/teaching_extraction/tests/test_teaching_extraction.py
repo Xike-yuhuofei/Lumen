@@ -153,11 +153,151 @@ async def test_rejects_hallucinated_evidence_quote():
             }
         )
 
-    with pytest.raises(TeachingExtractionError, match="evidence_quote is not present"):
+    with pytest.raises(TeachingExtractionError, match="evidence_quote is not grounded"):
         await TeachingKnowledgeExtractor(complete_fn=fake_complete).extract(
             ParsedDocument(markdown="Grounded text only.", source_hash="x"),
             source_id="sample.epub",
         )
+
+
+@pytest.mark.asyncio
+async def test_accepts_evidence_quotes_spanning_markdown_artifacts():
+    """Quotes copied from blockquotes / lists / bold lines must validate once
+    Markdown structural markers are stripped (CJK whitespace-insensitive)."""
+    markdown = (
+        "# Chapter\n\n"
+        "种草的本质，是把这种模糊感受转化为：\n\n"
+        "> 原来我真正想要的是这个。\n\n"
+        "真正有效的种草必须建立在三个条件上：\n"
+        "- 产品确实解决问题；\n"
+        "- 内容真实呈现体验；\n\n"
+        "**以人为本，观察尚未被表达的真实需求。**"
+    )
+
+    async def fake_complete(*, prompt: str, system_prompt: str) -> str:
+        segment_id = prompt.split("segment_id: ", 1)[1].splitlines()[0]
+        return json.dumps(
+            {
+                "nodes": [
+                    {
+                        "id": "n1",
+                        "title": "Blockquote quote",
+                        "type": "concept",
+                        "source_segment_ids": [segment_id],
+                        "evidence_quote": "种草的本质，是把这种模糊感受转化为：原来我真正想要的是这个。",
+                        "confidence": 0.9,
+                    },
+                    {
+                        "id": "n2",
+                        "title": "List quote",
+                        "type": "concept",
+                        "source_segment_ids": [segment_id],
+                        "evidence_quote": "产品确实解决问题；内容真实呈现体验；",
+                        "confidence": 0.9,
+                    },
+                    {
+                        "id": "n3",
+                        "title": "Bold quote",
+                        "type": "concept",
+                        "source_segment_ids": [segment_id],
+                        "evidence_quote": "以人为本，观察尚未被表达的真实需求。",
+                        "confidence": 0.9,
+                    },
+                ],
+                "edges": [],
+            }
+        )
+
+    result = await TeachingKnowledgeExtractor(complete_fn=fake_complete).extract(
+        ParsedDocument(markdown=markdown, source_hash="x"),
+        source_id="sample.md",
+    )
+    assert result.node_count == 3
+    assert {node.title for node in result.model.nodes} == {
+        "Blockquote quote",
+        "List quote",
+        "Bold quote",
+    }
+
+
+@pytest.mark.asyncio
+async def test_grounds_heading_quote_with_appended_period():
+    """A quote that is actually a section heading plus a terminal period the
+    LLM appended must validate: ATX-heading markers are stripped and cosmetic
+    trailing punctuation is tolerated (CJK compact matching)."""
+    markdown = (
+        "# 《种草》：道层面的经验哲学\n\n"
+        "## 2. 需求不是被制造出来的，而是被看见、唤醒和表达出来的\n\n"
+        "很多需求原本处于模糊、潜在状态。"
+    )
+
+    async def fake_complete(*, prompt: str, system_prompt: str) -> str:
+        segment_id = prompt.split("segment_id: ", 1)[1].splitlines()[0]
+        return json.dumps(
+            {
+                "nodes": [
+                    {
+                        "id": "n1",
+                        "title": "需求是被看见而非制造的",
+                        "type": "concept",
+                        "source_segment_ids": [segment_id],
+                        "evidence_quote": "需求不是被制造出来的，而是被看见、唤醒和表达出来的。",
+                        "confidence": 0.9,
+                    }
+                ],
+                "edges": [],
+            }
+        )
+
+    result = await TeachingKnowledgeExtractor(complete_fn=fake_complete).extract(
+        ParsedDocument(markdown=markdown, source_hash="x"),
+        source_id="sample.md",
+    )
+    assert result.node_count == 1
+    node = result.model.nodes[0]
+    # the stored quote is snapped back to the verbatim source span (no period)
+    assert node.metadata["evidence_quotes"] == [
+        "需求不是被制造出来的，而是被看见、唤醒和表达出来的"
+    ]
+
+
+@pytest.mark.asyncio
+async def test_grounds_quote_with_minor_llm_drift():
+    """Small LLM drift (dropped particle / swapped conjunction) is snapped to
+    the closest verbatim source span instead of rejecting the whole batch."""
+    markdown = (
+        "# 章\n\n"
+        "真正有效的种草必须建立在三个条件上：产品确实解决问题，"
+        "内容真实呈现体验，企业与用户利益基本一致。"
+    )
+
+    async def fake_complete(*, prompt: str, system_prompt: str) -> str:
+        segment_id = prompt.split("segment_id: ", 1)[1].splitlines()[0]
+        return json.dumps(
+            {
+                "nodes": [
+                    {
+                        "id": "n1",
+                        "title": "种草三个条件",
+                        "type": "principle",
+                        "source_segment_ids": [segment_id],
+                        "evidence_quote": "种草必须建立：产品解决问题，内容呈现真实体验，利益一致",
+                        "confidence": 0.9,
+                    }
+                ],
+                "edges": [],
+            }
+        )
+
+    result = await TeachingKnowledgeExtractor(complete_fn=fake_complete).extract(
+        ParsedDocument(markdown=markdown, source_hash="x"),
+        source_id="sample.md",
+    )
+    assert result.node_count == 1
+    quote = result.model.nodes[0].metadata["evidence_quotes"][0]
+    # grounded span is verbatim from the source (all its characters appear there)
+    source_compact = markdown.replace("\n", "").replace(" ", "")
+    assert all(char in source_compact for char in quote)
 
 
 def test_normalizer_merges_duplicate_nodes():

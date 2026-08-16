@@ -90,7 +90,7 @@ class TeachingRelationType(str, Enum):
     * ``part_of``          — A is a component / part of B.
     * ``depends_on``       — A functionally depends on B.
     * ``prepares_for``     — A prepares the learner for B (softer than prerequisite).
-    * ``requires``         — A requires B to be meaningful.
+    * ``requires``         — A is required learning for B (A must be learned before B).
 
     Teaching relations:
     * ``explains``         — A is an explanation of B.
@@ -121,7 +121,7 @@ class TeachingRelationType(str, Enum):
 
     # Relations that constrain learning order (used by path/gating logic).
     ORDERING_RELATIONS: frozenset["TeachingRelationType"] = frozenset(
-        {PREREQUISITE_OF, PART_OF, DEPENDS_ON, PREPARES_FOR}
+        {PREREQUISITE_OF, REQUIRES, PART_OF, DEPENDS_ON, PREPARES_FOR}
     )
 
 

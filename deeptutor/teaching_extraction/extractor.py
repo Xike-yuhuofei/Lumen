@@ -61,7 +61,7 @@ Relation direction:
 - A assesses B: A tests mastery of B.
 - A supports B: A provides evidence or reasoning for B.
 - A contradicts B: A conflicts with B.
-- A requires B: objective/activity A requires knowledge B; use prerequisite_of for knowledge-to-knowledge ordering.
+- A requires B: A is required learning for B (A must be learned before B).
 
 Output exactly:
 {{
