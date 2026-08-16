@@ -42,6 +42,7 @@ class ExtractedNode(BaseModel):
     type: TeachingNodeType
     content: str = ""
     source_segment_ids: list[str] = Field(default_factory=list)
+    evidence_quote: str = ""
     confidence: float = 1.0
     metadata: dict[str, Any] = Field(default_factory=dict)
 
@@ -68,6 +69,7 @@ class ExtractedEdge(BaseModel):
     target: str
     relation: TeachingRelationType
     source_segment_ids: list[str] = Field(default_factory=list)
+    evidence_quote: str = ""
     confidence: float = 1.0
     metadata: dict[str, Any] = Field(default_factory=dict)
 

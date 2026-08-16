@@ -41,6 +41,7 @@ def normalize_batches(
     local_to_canonical: dict[tuple[int, str], str] = {}
     node_anchor_ids: dict[str, set[str]] = defaultdict(set)
     node_confidence: dict[str, float] = {}
+    node_evidence: dict[str, set[str]] = defaultdict(set)
 
     for batch_index, batch in enumerate(batch_list):
         for raw in batch.nodes:
@@ -61,6 +62,8 @@ def normalize_batches(
 
             local_to_canonical[(batch_index, raw.id)] = node.id
             node_anchor_ids[node.id].update(raw.source_segment_ids)
+            if raw.evidence_quote.strip():
+                node_evidence[node.id].add(raw.evidence_quote.strip())
             node_confidence[node.id] = max(
                 node_confidence.get(node.id, 0.0), raw.confidence
             )
@@ -73,10 +76,12 @@ def normalize_batches(
             **node.metadata,
             "confidence": round(node_confidence.get(node.id, 0.0), 4),
             "source_anchors": [_anchor_dict(anchors[sid]) for sid in segment_ids],
+            "evidence_quotes": sorted(node_evidence[node.id]),
         }
 
     edge_map: dict[tuple[str, str, str], TeachingEdge] = {}
     edge_anchor_ids: dict[tuple[str, str, str], set[str]] = defaultdict(set)
+    edge_evidence: dict[tuple[str, str, str], set[str]] = defaultdict(set)
 
     for batch_index, batch in enumerate(batch_list):
         for raw in batch.edges:
@@ -101,6 +106,8 @@ def normalize_batches(
                     float(edge.metadata.get("confidence", 0.0)), raw.confidence
                 )
             edge_anchor_ids[key].update(raw.source_segment_ids)
+            if raw.evidence_quote.strip():
+                edge_evidence[key].add(raw.evidence_quote.strip())
 
     edges = list(edge_map.values())
     for key, edge in edge_map.items():
@@ -109,6 +116,7 @@ def normalize_batches(
         edge.metadata["source_anchors"] = [
             _anchor_dict(anchors[sid]) for sid in segment_ids
         ]
+        edge.metadata["evidence_quotes"] = sorted(edge_evidence[key])
 
     model = TeachingKnowledgeModel(
         nodes=sorted(nodes, key=lambda node: node.id),
