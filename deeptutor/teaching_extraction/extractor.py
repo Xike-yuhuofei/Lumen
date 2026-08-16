@@ -21,11 +21,13 @@ class TeachingExtractionError(RuntimeError):
 
 
 _SYSTEM_PROMPT = """You extract a pedagogical knowledge model from source material.
-Return JSON only. Never invent facts or relationships not supported by the supplied source.
+Return JSON only. Never invent subject-matter facts or relationships not supported by the supplied source.
 Create atomic, reusable teaching nodes and pedagogically meaningful relations.
-Every node and edge must cite the supplied segment_id in source_segment_ids.
 Prefer a small number of high-value nodes over exhaustive sentence extraction.
 Use misconceptions only when the source explicitly addresses a likely or stated misunderstanding.
+Every node and edge must cite the supplied segment_id and include a short verbatim evidence_quote copied from that segment.
+Learning objectives may be pedagogical syntheses of what the source is teaching; mark metadata.inferred=true when they are not stated explicitly.
+For inferred pedagogical relations, keep confidence conservative and explain the inference in metadata.reason.
 """
 
 
@@ -34,6 +36,32 @@ def _schema_instructions(segment_id: str) -> str:
     relation_types = ", ".join(item.value for item in TeachingRelationType)
     return f"""Allowed node types: {node_types}
 Allowed relation types: {relation_types}
+
+Node semantics:
+- learning_objective: a measurable capability the learner should acquire.
+- concept: a named idea, object, term, or distinction.
+- principle: a general rule, invariant, or reusable constraint.
+- procedure: an executable method or sequence of steps.
+- claim: a proposition asserted by the source.
+- argument: reasoning offered to support or derive a claim.
+- example: a concrete instance or worked case.
+- analogy: a comparison used to transfer understanding.
+- misconception: an explicitly addressed wrong interpretation or invalid move.
+- question: a probe or assessment question.
+- explanation: an explanatory teaching resource that is not itself the target concept.
+
+Relation direction:
+- A prerequisite_of B: understanding A should come before understanding B.
+- A explains B: A is an explanatory resource for B.
+- A example_of B: A is a concrete instance of B.
+- A analogous_to B: A is used as an analogy for B.
+- A part_of B: A is a component or constituent of B.
+- A derived_from B: A follows from, is obtained from, or is justified by B.
+- A corrects B: A corrects misconception B.
+- A assesses B: A tests mastery of B.
+- A supports B: A provides evidence or reasoning for B.
+- A contradicts B: A conflicts with B.
+- A requires B: objective/activity A requires knowledge B; use prerequisite_of for knowledge-to-knowledge ordering.
 
 Output exactly:
 {{
@@ -44,7 +72,9 @@ Output exactly:
       "type": "concept",
       "content": "...",
       "source_segment_ids": ["{segment_id}"],
-      "confidence": 0.0
+      "evidence_quote": "short verbatim excerpt from the supplied source",
+      "confidence": 0.0,
+      "metadata": {{}}
     }}
   ],
   "edges": [
@@ -53,16 +83,12 @@ Output exactly:
       "target": "n2",
       "relation": "prerequisite_of",
       "source_segment_ids": ["{segment_id}"],
-      "confidence": 0.0
+      "evidence_quote": "short verbatim excerpt supporting this relation",
+      "confidence": 0.0,
+      "metadata": {{}}
     }}
   ]
 }}
-
-Relation direction is semantic:
-A prerequisite_of B means A must be understood before B.
-A explains B means A is an explanatory resource for B.
-A example_of B means A is an example of B.
-A corrects B means A corrects misconception B.
 """
 
 
@@ -128,6 +154,7 @@ class TeachingKnowledgeExtractor:
             validate_batch(
                 batch,
                 allowed_segment_ids={segment.anchor.segment_id},
+                source_segments={segment.anchor.segment_id: segment.text},
             )
             return batch
         except TeachingExtractionValidationError as exc:
