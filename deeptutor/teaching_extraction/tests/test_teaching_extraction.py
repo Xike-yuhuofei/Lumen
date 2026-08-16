@@ -16,7 +16,7 @@ from deeptutor.teaching_extraction.source_anchor import segment_parsed_document
 
 
 @pytest.mark.asyncio
-async def test_extracts_model_with_source_anchors():
+async def test_extracts_model_with_source_anchors_and_evidence():
     async def fake_complete(*, prompt: str, system_prompt: str) -> str:
         segment_id = prompt.split("segment_id: ", 1)[1].splitlines()[0]
         return json.dumps(
@@ -28,6 +28,7 @@ async def test_extracts_model_with_source_anchors():
                         "type": "concept",
                         "content": "A rule-governed symbolic system.",
                         "source_segment_ids": [segment_id],
+                        "evidence_quote": "Formal systems provide notation.",
                         "confidence": 0.96,
                     },
                     {
@@ -36,6 +37,7 @@ async def test_extracts_model_with_source_anchors():
                         "type": "concept",
                         "content": "A structure referring to itself.",
                         "source_segment_ids": [segment_id],
+                        "evidence_quote": "Self-reference builds on that notation.",
                         "confidence": 0.91,
                     },
                 ],
@@ -45,6 +47,7 @@ async def test_extracts_model_with_source_anchors():
                         "target": "n2",
                         "relation": "prerequisite_of",
                         "source_segment_ids": [segment_id],
+                        "evidence_quote": "Self-reference builds on that notation.",
                         "confidence": 0.8,
                     }
                 ],
@@ -72,6 +75,8 @@ async def test_extracts_model_with_source_anchors():
         for node in result.model.nodes
     )
     assert result.model.nodes[0].metadata["source_anchors"]
+    assert result.model.nodes[0].metadata["evidence_quotes"]
+    assert result.model.edges[0].metadata["evidence_quotes"]
 
 
 def test_markdown_segmentation_preserves_locator():
@@ -89,6 +94,23 @@ def test_markdown_segmentation_preserves_locator():
     assert segments[0].anchor.segment_id != segments[1].anchor.segment_id
 
 
+def test_markdown_segmentation_prefers_heading_boundary():
+    markdown = "# Chapter One\n\n" + "A" * 900 + "\n\n# Chapter Two\n\n" + "B" * 900
+    parsed = ParsedDocument(markdown=markdown, source_hash="hash")
+    segments = segment_parsed_document(
+        parsed,
+        source_id="book.epub",
+        max_chars=1600,
+    )
+    assert len(segments) == 2
+    assert "Chapter Two" not in segments[0].text
+    assert segments[1].text.startswith("# Chapter Two")
+    assert [segment.anchor.heading for segment in segments] == [
+        "Chapter One",
+        "Chapter Two",
+    ]
+
+
 @pytest.mark.asyncio
 async def test_rejects_hallucinated_source_anchor():
     async def fake_complete(*, prompt: str, system_prompt: str) -> str:
@@ -100,6 +122,7 @@ async def test_rejects_hallucinated_source_anchor():
                         "title": "Invented",
                         "type": "concept",
                         "source_segment_ids": ["seg_not_real"],
+                        "evidence_quote": "Grounded text",
                         "confidence": 1.0,
                     }
                 ],
@@ -110,6 +133,33 @@ async def test_rejects_hallucinated_source_anchor():
     with pytest.raises(TeachingExtractionError, match="unknown source segments"):
         await TeachingKnowledgeExtractor(complete_fn=fake_complete).extract(
             ParsedDocument(markdown="Grounded text", source_hash="x"),
+            source_id="sample.epub",
+        )
+
+
+@pytest.mark.asyncio
+async def test_rejects_hallucinated_evidence_quote():
+    async def fake_complete(*, prompt: str, system_prompt: str) -> str:
+        segment_id = prompt.split("segment_id: ", 1)[1].splitlines()[0]
+        return json.dumps(
+            {
+                "nodes": [
+                    {
+                        "id": "n1",
+                        "title": "Invented",
+                        "type": "concept",
+                        "source_segment_ids": [segment_id],
+                        "evidence_quote": "This sentence is not in the source.",
+                        "confidence": 1.0,
+                    }
+                ],
+                "edges": [],
+            }
+        )
+
+    with pytest.raises(TeachingExtractionError, match="evidence_quote is not present"):
+        await TeachingKnowledgeExtractor(complete_fn=fake_complete).extract(
+            ParsedDocument(markdown="Grounded text only.", source_hash="x"),
             source_id="sample.epub",
         )
 
@@ -126,6 +176,7 @@ def test_normalizer_merges_duplicate_nodes():
                     type=TeachingNodeType.CONCEPT,
                     content="short",
                     source_segment_ids=["s1"],
+                    evidence_quote="first evidence",
                     confidence=0.7,
                 )
             ]
@@ -138,6 +189,7 @@ def test_normalizer_merges_duplicate_nodes():
                     type=TeachingNodeType.CONCEPT,
                     content="a longer explanation",
                     source_segment_ids=["s2"],
+                    evidence_quote="second evidence",
                     confidence=0.9,
                 )
             ]
@@ -151,6 +203,7 @@ def test_normalizer_merges_duplicate_nodes():
     assert len(model.nodes) == 1
     assert model.nodes[0].content == "a longer explanation"
     assert len(model.nodes[0].source_refs) == 2
+    assert len(model.nodes[0].metadata["evidence_quotes"]) == 2
 
 
 def test_prerequisite_cycle_is_rejected():
@@ -164,12 +217,14 @@ def test_prerequisite_cycle_is_rejected():
                 title="A",
                 type=TeachingNodeType.CONCEPT,
                 source_segment_ids=["s1"],
+                evidence_quote="A",
             ),
             ExtractedNode(
                 id="b",
                 title="B",
                 type=TeachingNodeType.CONCEPT,
                 source_segment_ids=["s1"],
+                evidence_quote="B",
             ),
         ],
         edges=[
@@ -178,12 +233,14 @@ def test_prerequisite_cycle_is_rejected():
                 target="b",
                 relation=TeachingRelationType.PREREQUISITE_OF,
                 source_segment_ids=["s1"],
+                evidence_quote="A B",
             ),
             ExtractedEdge(
                 source="b",
                 target="a",
                 relation=TeachingRelationType.PREREQUISITE_OF,
                 source_segment_ids=["s1"],
+                evidence_quote="B A",
             ),
         ],
     )
