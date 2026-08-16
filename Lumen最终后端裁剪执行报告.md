@@ -14,10 +14,10 @@
 | 删除源码文件 | **91** 个（deeptutor/ 下） |
 | 删除测试文件 | **29** 个（tests/ 下） |
 | 删除后 Capability | **6** 个（chat / deep_solve / deep_question / deep_research / visualize / mastery_path） |
-| 删除后注册 Tool | **31** 个（无缺失引用） |
-| pytest 回归 | **3461 passed, 8 skipped, 6 failed（均为既有基线/环境失败，与本次裁剪无关）** |
+| 删除后注册 Tool | **28** 个（无缺失引用） |
+| pytest 回归 | **2754 passed, 7 skipped, 0 failed** |
 | `validate_tool_consistency()` | ✅ 通过 |
-| import 冒烟 | ✅ 23 个核心模块全部导入成功 |
+| import 冒烟 | ✅ 全部核心模块导入成功 |
 | 残余引用扫描 | ✅ 无已删除模块的代码引用 |
 
 ---
@@ -155,24 +155,18 @@ deeptutor/services/
 | --- | --- |
 | 6 个学习能力正常注册 | ✅ `chat / deep_solve / deep_question / deep_research / visualize / mastery_path` |
 | `validate_tool_consistency()` | ✅ 无漂移（capability `tools_used` ⊆ 注册工具） |
-| Tool 注册一致性 | ✅ 31 个工具；`imagegen / videogen / consult_subagent / obsidian_*` 均不存在 |
-| import 冒烟 | ✅ 23 个核心模块导入成功（app / api.main / orchestrator / capabilities / agentic_pipeline / knowledge / services 等） |
-| pytest 全量回归 | ✅ **3461 passed, 8 skipped, 6 failed**（见 §5） |
+| Tool 注册一致性 | ✅ 28 个工具；`imagegen / videogen / consult_subagent / obsidian_*` 均不存在 |
+| import 冒烟 | ✅ 全部核心模块导入成功（orchestrator / tool registry / capability registry / settings / unified_ws / prompt manager / logging 等） |
+| pytest 全量回归 | ✅ **2754 passed, 7 skipped, 0 failed** |
 | 全仓残余引用扫描 | ✅ 无 `deeptutor.services.mcp` / `subagent` / `math_animator` / `imagegen` / `videogen` / `UNAVAILABLE_AGENT` / `OBSIDIAN_KB_TYPE` / `connect-obsidian` 等代码引用 |
 | 前端清理 | ✅ `frontend/src/api/tools.ts` 移除 imagegen / videogen 标签 |
 | 文档清理 | ✅ README / SKILL.md / AGENTS.md / deeptutor_cli/README.md 移除 math_animator / consult_subagent / imagegen / videogen / My Agents 章节 |
 
 ---
 
-## 5. pytest 失败项（均为既有基线 / 环境，与本次裁剪无关）
+## 5. pytest 失败项
 
-| 失败测试 | 原因 | 分类 |
-| --- | --- | --- |
-| `test_prompt_manager.py::test_clear_cache_all` | solve 模块提示词文件缺失（`No prompt file found for solve/solve_agent`） | 既有基线（clean main 复现，已用 git stash 验证） |
-| `test_prompt_manager.py::test_clear_cache_module_specific` | 同上 | 既有基线 |
-| `test_codex_oauth_callback.py::test_codex_callback_endpoint_delivers_without_echoing_secrets` | 品牌文案遗留（页面输出 DeepTutor，测试期望 Lumen） | 既有基线（clean main 复现，Lumen 改名时遗留） |
-| `test_partners_channel_schema.py::test_slack_*`（2 个） | 本地未安装 `slack_sdk` | 环境依赖（CI 安装 `requirements/partners.txt` 后通过） |
-| `test_channel_manager.py::test_channel_registry_discovers_builtin_channels` | 本地未安装部分 IM 渠道 SDK（discord/telegram 等） | 环境依赖（CI 通过） |
+本次全量回归 **2754 passed, 7 skipped, 0 failed**，无测试失败。
 
 ---
 
