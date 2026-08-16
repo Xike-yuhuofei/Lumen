@@ -396,8 +396,6 @@ deeptutor chat                                          # interactive REPL
 deeptutor chat --capability deep_solve --tool rag --kb my-kb
 deeptutor run chat "Explain Fourier transform"
 deeptutor run deep_solve "Solve x^2 = 4" --tool rag --kb my-kb
-deeptutor kb create my-kb --doc textbook.pdf
-deeptutor memory show
 deeptutor config show
 ```
 
@@ -731,16 +729,8 @@ The repo ships a root [`SKILL.md`](SKILL.md) — a ~150-line handover doc that t
 | `deeptutor serve [--port PORT]` | Start only the FastAPI backend |
 | `deeptutor run <capability> <message>` | Run a single capability turn (`chat`, `deep_solve`, `deep_question`, `deep_research`, `visualize`, `math_animator`, `mastery_path`); add `--format json` for NDJSON output |
 | `deeptutor chat` | Interactive REPL with capability, tool, KB, notebook, and history controls |
-| `deeptutor partner list/create/start/stop` | Manage IM-connected partners |
-| `deeptutor kb list/info/create/add/search/set-default/delete` | Manage LlamaIndex knowledge bases |
-| `deeptutor skill search/install/list/remove/login/logout/publish/update` | Manage skills, install from hubs, and publish your own (`eduhub:<slug>` by default, see Ecosystem) |
-| `deeptutor memory show/clear` | Inspect L2/L3 memory docs or clear L1/all memory |
 | `deeptutor session list/show/open/rename/delete` | Manage shared sessions |
-| `deeptutor notebook list/create/show/add-md/replace-md/remove-record` | Manage notebooks from Markdown files |
-| `deeptutor book list/health/refresh-fingerprints` | Inspect books and refresh source fingerprints |
-| `deeptutor plugin list/info` | Inspect registered tools and capabilities |
 | `deeptutor config show` | Print configuration summary |
-| `deeptutor provider login <provider>` | Provider auth (`openai-codex` OAuth login; `github-copilot` validates an existing Copilot auth session; `codebuddy` validates CodeBuddy SDK auth and starts login when needed) |
 
 </details>
 
@@ -766,22 +756,9 @@ Lumen skills use the open **Agent-Skills** format — a folder with a `SKILL.md`
 
 [**EduHub**](https://eduhub.deeptutor.info/) is the community hub Lumen launched for sharing teaching-oriented agent skills — Socratic tutors, flashcard builders, essay feedback, exam blueprints, concept explainers, and more. It is built into Lumen, so there's nothing to configure: a bare slug or an `eduhub:` prefix resolves to it.
 
-**Find and install** — in the browser, open **Learning Space → Skills → Import from EduHub** to browse the catalog and download a skill straight into your library. From the terminal:
+**Find and install** — in the browser, open **Learning Space → Skills → Import from EduHub** to browse the catalog and download a skill straight into your library.
 
-```bash
-deeptutor skill search "socratic tutor"               # search EduHub (the default hub)
-deeptutor skill install socratic-tutor                # fetch → verify → register
-deeptutor skill install eduhub:socratic-tutor@1.2.0   # pin a hub and a version
-deeptutor skill list                                  # local skills with their hub provenance
-```
-
-**Publish your own** — package a `SKILL.md` and share it back to the community:
-
-```bash
-deeptutor skill login                                 # browser sign-in to EduHub
-deeptutor skill publish ./my-skill                    # interactive: pick a track + tags, then upload
-deeptutor skill update                                # roll back or release a new version
-```
+**Publish your own** — package a `SKILL.md` and share it back to the community through the web UI, picking a track and tags, then uploading your skill.
 
 EduHub is also a standalone, ClawHub-compatible registry, so agents that aren't Lumen (Claude Code, Codex, …) can use it directly through the `eduhub` CLI — `npx eduhub install socratic-tutor`.
 
@@ -804,12 +781,7 @@ In multi-user deployments, installing is admin-only: a new skill lands in the ad
 <details>
 <summary><b>Also compatible with ClawHub</b></summary>
 
-Because Lumen speaks the open Agent-Skills format, **[ClawHub](https://clawhub.ai/)** works as a first-class source too — it's built in alongside EduHub. Pick it with the hub prefix:
-
-```bash
-deeptutor skill search "git release notes" --hub clawhub
-deeptutor skill install clawhub:git-release-notes@1.0.1
-```
+Because Lumen speaks the open Agent-Skills format, **[ClawHub](https://clawhub.ai/)** works as a first-class source too — it's built in alongside EduHub. Pick it with the hub prefix in the web UI.
 
 Add more registries in `settings/skill_hubs.json`: a `type: "clawhub"` entry points at any compatible HTTP API (EduHub and ClawHub both speak it), `type: "command"` wraps whatever fetch CLI a registry ships, and `"default"` chooses the hub used for bare slugs. All of them feed the same import gate.
 

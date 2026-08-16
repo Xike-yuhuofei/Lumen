@@ -192,16 +192,6 @@ def test_chat_repl_survives_invalid_utf8_input(monkeypatch) -> None:
     assert "Unable to decode terminal input" in result.output
 
 
-def test_plugin_info_includes_capability_aliases_and_availability() -> None:
-    result = runner.invoke(app, ["plugin", "info", "deep_solve"])
-
-    assert result.exit_code == 0, result.output
-    payload = json.loads(result.output)
-    assert payload["name"] == "deep_solve"
-    assert payload["cli_aliases"] == ["solve"]
-    assert payload["availability"]["available"] is True
-
-
 def test_session_list_command_uses_shared_store(monkeypatch) -> None:
     async def _list_sessions(self, limit: int = 50, offset: int = 0):  # noqa: ANN001
         return [
