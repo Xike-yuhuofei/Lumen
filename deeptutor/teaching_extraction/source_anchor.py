@@ -10,6 +10,7 @@ from .schemas import SourceAnchor, SourceSegment
 
 _TEXT_KEYS = ("text", "content", "markdown", "value", "caption")
 _CHILD_KEYS = ("children", "items", "lines", "spans")
+_HEADING_RE = re.compile(r"(?m)^#{1,6}\s+(.+?)\s*$")
 
 
 def _stable_segment_id(source_id: str, source_hash: str, locator: str) -> str:
@@ -39,9 +40,36 @@ def _block_text(value: Any) -> str:
 
 
 def _heading_for_markdown(markdown: str, start: int) -> str:
+    # If this segment begins at a heading, that heading owns the segment.
+    at_start = _HEADING_RE.match(markdown, start)
+    if at_start:
+        return at_start.group(1).strip()
     prefix = markdown[:start]
-    matches = list(re.finditer(r"(?m)^#{1,6}\s+(.+?)\s*$", prefix))
+    matches = list(_HEADING_RE.finditer(prefix))
     return matches[-1].group(1).strip() if matches else ""
+
+
+def _preferred_heading_boundary(
+    markdown: str,
+    *,
+    start: int,
+    hard_end: int,
+    max_chars: int,
+) -> int | None:
+    """Prefer a semantic section boundary before a generic character cut.
+
+    A heading is used only after roughly one third of the window so tiny
+    subsections are not emitted as separate LLM calls. This keeps chapter-scale
+    material coherent while preventing one segment from crossing into the next
+    chapter/major section when Markdown headings are available.
+    """
+    lower_bound = start + max(max_chars // 3, 1)
+    if lower_bound >= hard_end:
+        return None
+    match = _HEADING_RE.search(markdown, lower_bound, hard_end)
+    if match and match.start() > start:
+        return match.start()
+    return None
 
 
 def _markdown_segments(
@@ -62,10 +90,19 @@ def _markdown_segments(
         hard_end = min(start + max_chars, length)
         end = hard_end
         if hard_end < length:
-            lower_bound = start + max(max_chars // 2, 1)
-            boundary = markdown.rfind("\n\n", lower_bound, hard_end)
-            if boundary > start:
-                end = boundary
+            heading_boundary = _preferred_heading_boundary(
+                markdown,
+                start=start,
+                hard_end=hard_end,
+                max_chars=max_chars,
+            )
+            if heading_boundary is not None:
+                end = heading_boundary
+            else:
+                lower_bound = start + max(max_chars // 2, 1)
+                boundary = markdown.rfind("\n\n", lower_bound, hard_end)
+                if boundary > start:
+                    end = boundary
         while end > start and markdown[end - 1].isspace():
             end -= 1
         if end <= start:
