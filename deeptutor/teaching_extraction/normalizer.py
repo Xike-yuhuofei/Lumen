@@ -1,10 +1,10 @@
 from __future__ import annotations
 
+from collections import defaultdict
 import hashlib
 import re
-import unicodedata
-from collections import defaultdict
 from typing import Iterable
+import unicodedata
 
 from deeptutor.teaching_core.models import (
     TeachingEdge,
@@ -64,9 +64,7 @@ def normalize_batches(
             node_anchor_ids[node.id].update(raw.source_segment_ids)
             if raw.evidence_quote.strip():
                 node_evidence[node.id].add(raw.evidence_quote.strip())
-            node_confidence[node.id] = max(
-                node_confidence.get(node.id, 0.0), raw.confidence
-            )
+            node_confidence[node.id] = max(node_confidence.get(node.id, 0.0), raw.confidence)
 
     nodes = list(canonical.values())
     for node in nodes:
@@ -113,9 +111,7 @@ def normalize_batches(
     for key, edge in edge_map.items():
         segment_ids = sorted(edge_anchor_ids[key])
         edge.metadata["source_refs"] = [anchors[sid].ref() for sid in segment_ids]
-        edge.metadata["source_anchors"] = [
-            _anchor_dict(anchors[sid]) for sid in segment_ids
-        ]
+        edge.metadata["source_anchors"] = [_anchor_dict(anchors[sid]) for sid in segment_ids]
         edge.metadata["evidence_quotes"] = sorted(edge_evidence[key])
 
     model = TeachingKnowledgeModel(

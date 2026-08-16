@@ -14,11 +14,13 @@ from deeptutor.capabilities.mastery.tools import (
     MasteryGradeTool,
     MasteryQuizTool,
     MasteryStatusTool,
+    TeachingPlanTool,
 )
 
 __all__ = [
     "MASTERY_TOOL_NAMES",
     "MASTERY_TOOL_TYPES",
+    "TeachingPlanTool",
     "MasteryStatusTool",
     "MasteryQuizTool",
     "MasteryGradeTool",
