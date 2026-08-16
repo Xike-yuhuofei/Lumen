@@ -1,56 +1,62 @@
 from deeptutor.services.provider_registry import find_by_name, find_gateway
 
 
-def test_nvidia_nim_gateway_detection_by_key_and_base() -> None:
-    spec = find_by_name("nvidia_nim")
+def test_openrouter_gateway_detection_by_key_and_base() -> None:
+    spec = find_by_name("openrouter")
 
     assert spec is not None
-    assert spec.supports_stream_options is False
-    assert find_gateway(api_key="nvapi-test-key") == spec
-    assert find_gateway(api_base="https://integrate.api.nvidia.com/v1") == spec
-
-
-def test_atlascloud_provider_aliases_and_base_detection() -> None:
-    spec = find_by_name("atlascloud")
-
-    assert spec is not None
-    assert spec.display_name == "Atlas Cloud"
-    assert spec.env_key == "ATLASCLOUD_API_KEY"
-    assert spec.backend == "openai_compat"
+    assert spec.is_gateway is True
     assert spec.mode == "gateway"
-    assert spec.default_api_base == "https://api.atlascloud.ai/v1"
-    assert find_by_name("atlas-cloud") == spec
-    assert find_by_name("atlas_cloud") == spec
-    assert find_by_name("atlas") == spec
-    assert find_gateway(api_base="https://api.atlascloud.ai/v1") == spec
+    assert spec.default_api_base == "https://openrouter.ai/api/v1"
+    assert find_gateway(api_key="sk-or-v1-abcdef") == spec
+    assert find_gateway(api_base="https://openrouter.ai/api/v1") == spec
 
 
-def test_edenai_provider_aliases_and_base_detection() -> None:
-    spec = find_by_name("edenai")
+def test_retained_core_providers_resolve() -> None:
+    for name in (
+        "custom",
+        "custom_anthropic",
+        "azure_openai",
+        "openai",
+        "anthropic",
+        "openai_codex",
+        "github_copilot",
+        "codebuddy",
+        "deepseek",
+        "gemini",
+        "dashscope",
+        "ollama",
+        "vllm",
+    ):
+        assert find_by_name(name) is not None, name
 
-    assert spec is not None
-    assert spec.display_name == "Eden AI"
-    assert spec.env_key == "EDENAI_API_KEY"
-    assert spec.backend == "openai_compat"
-    assert spec.mode == "gateway"
-    assert spec.default_api_base == "https://api.edenai.run/v3"
-    assert find_by_name("eden-ai") == spec
-    assert find_by_name("eden_ai") == spec
-    assert find_gateway(api_base="https://api.edenai.run/v3") == spec
 
+def test_pruned_providers_no_longer_resolve() -> None:
+    """Cold providers removed from the registry must not resolve or be claimed."""
+    for name in (
+        "nvidia_nim",
+        "atlascloud",
+        "edenai",
+        "novita",
+        "orcarouter",
+        "aihubmix",
+        "siliconflow",
+        "volcengine",
+        "byteplus",
+        "zhipu",
+        "moonshot",
+        "minimax",
+        "mistral",
+        "groq",
+        "qianfan",
+    ):
+        assert find_by_name(name) is None, name
 
-def test_novita_provider_aliases_and_base_detection() -> None:
-    spec = find_by_name("novita")
-
-    assert spec is not None
-    assert spec.display_name == "Novita AI"
-    assert spec.env_key == "NOVITA_API_KEY"
-    assert spec.backend == "openai_compat"
-    assert spec.mode == "gateway"
-    assert spec.default_api_base == "https://api.novita.ai/openai"
-    assert find_by_name("novita-ai") == spec
-    assert find_by_name("novita_ai") == spec
-    assert find_gateway(api_base="https://api.novita.ai/openai") == spec
+    # Former NVIDIA / OrcaRouter key formats no longer claim a gateway.
+    assert find_gateway(api_key="nvapi-test-key") is None
+    assert find_gateway(api_key="sk-orca-test-key") is None
+    # OpenRouter keys still resolve to the retained gateway.
+    assert find_gateway(api_key="sk-or-v1-abcdef").name == "openrouter"
 
 
 def test_openai_codex_is_not_detected_from_api_base() -> None:
@@ -71,22 +77,3 @@ def test_github_copilot_is_oauth_backed() -> None:
     assert spec is not None
     assert spec.auth_mode == "oauth"
     assert spec.env_key == ""
-
-
-def test_orcarouter_provider_aliases_and_detection() -> None:
-    spec = find_by_name("orcarouter")
-
-    assert spec is not None
-    assert spec.display_name == "OrcaRouter"
-    assert spec.env_key == "ORCAROUTER_API_KEY"
-    assert spec.backend == "openai_compat"
-    assert spec.mode == "gateway"
-    assert spec.default_api_base == "https://api.orcarouter.ai/v1"
-    assert find_by_name("orca_router") == spec
-    assert find_by_name("orca-router") == spec
-    # sk-orca- keys must resolve to OrcaRouter, not OpenRouter (sk-or-).
-    assert find_gateway(api_key="sk-orca-test-key") == spec
-    assert find_gateway(api_base="https://api.orcarouter.ai/v1") == spec
-    # An OpenRouter key/base must not be claimed by OrcaRouter.
-    assert find_gateway(api_key="sk-or-v1-abcdef") is not None
-    assert find_gateway(api_key="sk-or-v1-abcdef").name != "orcarouter"

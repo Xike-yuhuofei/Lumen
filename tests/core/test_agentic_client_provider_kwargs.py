@@ -202,7 +202,6 @@ def test_build_openai_client_routes_codebuddy_backend_through_adapter(monkeypatc
 
 def test_anthropic_backend_can_use_native_tool_calling() -> None:
     assert can_use_native_tool_calling(binding="custom_anthropic", model="claude-test") is True
-    assert can_use_native_tool_calling(binding="minimax_anthropic", model="MiniMax-M3") is True
 
 
 def test_custom_qwen_can_use_native_tool_calling() -> None:
@@ -210,10 +209,10 @@ def test_custom_qwen_can_use_native_tool_calling() -> None:
     assert can_use_native_tool_calling(binding="dashscope", model="qwen-plus") is True
 
 
-def test_siliconflow_deepseek_can_use_native_tool_calling() -> None:
+def test_dashscope_deepseek_can_use_native_tool_calling() -> None:
     assert (
         can_use_native_tool_calling(
-            binding="siliconflow",
+            binding="dashscope",
             model="deepseek-ai/DeepSeek-V4-Pro",
         )
         is True
@@ -228,17 +227,9 @@ def test_registered_cloud_openai_compat_providers_enable_native_tools() -> None:
     # gap that affected SiliconFlow before #584).
     for binding in (
         "gemini",
-        "zhipu",
-        "qianfan",
-        "stepfun",
-        "xiaomi_mimo",
-        "nvidia_nim",
-        "aihubmix",
-        "atlascloud",
-        "edenai",
-        "novita",
-        "volcengine_coding_plan",
-        "byteplus_coding_plan",
+        "dashscope",
+        "deepseek",
+        "openai",
     ):
         assert can_use_native_tool_calling(binding=binding, model=None) is True, binding
 
@@ -263,10 +254,6 @@ def test_local_and_github_copilot_backends_stay_opted_out_of_native_tools() -> N
     for binding in (
         "ollama",
         "vllm",
-        "lm_studio",
-        "llama_cpp",
-        "lemonade",
-        "ovms",
         "github_copilot",
     ):
         assert can_use_native_tool_calling(binding=binding, model=None) is False, binding

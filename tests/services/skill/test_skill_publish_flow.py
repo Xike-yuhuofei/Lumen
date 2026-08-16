@@ -159,28 +159,3 @@ def test_publish_requires_version(tmp_path: Path) -> None:
         publish_to_hub(root, token="tok", provider=_CapturingProvider())
 
 
-# ── two-level domain picker resolution ─────────────────────────────────────
-
-
-def test_select_domains_resolution(monkeypatch: pytest.MonkeyPatch) -> None:
-    from deeptutor_cli import skill_prompts
-
-    # Script the multi-selects: roots = [arts, math]; arts children = [instruments];
-    # math children = [] (so math contributes itself).
-    calls: list[list[str]] = [["arts", "math"], ["arts.instruments"], []]
-
-    def fake_select_many(options, title, **kwargs):  # noqa: ANN001
-        return calls.pop(0)
-
-    monkeypatch.setattr(skill_prompts, "select_many", fake_select_many)
-    result = skill_prompts.select_domains()
-    assert result == ["arts.instruments", "math"]
-
-
-def test_parse_indices() -> None:
-    from deeptutor_cli.skill_prompts import _parse_indices
-
-    assert _parse_indices("1, 3 4", 5) == [0, 2, 3]
-    assert _parse_indices("", 5) == []
-    assert _parse_indices("9", 5) is None
-    assert _parse_indices("x", 5) is None

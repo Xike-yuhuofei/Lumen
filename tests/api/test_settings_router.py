@@ -559,25 +559,25 @@ def test_embedding_provider_choices_use_full_endpoint_urls() -> None:
     assert "custom_openai_sdk" not in embedding
 
 
-def test_llm_provider_choices_include_atlascloud() -> None:
+def test_llm_provider_choices_include_openrouter() -> None:
     llm = {item["value"]: item for item in settings_router._provider_choices()["llm"]}
 
-    assert llm["atlascloud"]["label"] == "Atlas Cloud"
-    assert llm["atlascloud"]["base_url"] == "https://api.atlascloud.ai/v1"
+    assert llm["openrouter"]["label"] == "OpenRouter"
+    assert llm["openrouter"]["base_url"] == "https://openrouter.ai/api/v1"
 
 
-def test_llm_provider_choices_include_novita() -> None:
+def test_llm_provider_choices_include_dashscope() -> None:
     llm = {item["value"]: item for item in settings_router._provider_choices()["llm"]}
 
-    assert llm["novita"]["label"] == "Novita AI"
-    assert llm["novita"]["base_url"] == "https://api.novita.ai/openai"
+    assert llm["dashscope"]["label"] == "DashScope"
+    assert llm["dashscope"]["base_url"] == "https://dashscope.aliyuncs.com/compatible-mode/v1"
 
 
-def test_llm_provider_choices_include_edenai() -> None:
+def test_llm_provider_choices_exclude_pruned_providers() -> None:
     llm = {item["value"]: item for item in settings_router._provider_choices()["llm"]}
 
-    assert llm["edenai"]["label"] == "Eden AI"
-    assert llm["edenai"]["base_url"] == "https://api.edenai.run/v3"
+    for pruned in ("atlascloud", "novita", "edenai", "zhipu", "moonshot", "groq"):
+        assert pruned not in llm, pruned
 
 
 @pytest.mark.asyncio

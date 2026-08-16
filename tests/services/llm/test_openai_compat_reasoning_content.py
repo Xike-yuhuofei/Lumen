@@ -123,27 +123,6 @@ def test_services_custom_qwen_enables_thinking_without_top_level_effort() -> Non
     assert kwargs["extra_body"] == {"enable_thinking": True}
 
 
-@pytest.mark.parametrize(
-    "model",
-    [
-        "kimi-k3",
-        "kimi-k2.7-code",
-        "kimi-k2.7-code-highspeed",
-        "kimi-k2.6",
-        "kimi-k2.5",
-        "kimi-latest",
-    ],
-)
-def test_services_moonshot_kimi_drops_temperature(model: str) -> None:
-    # Kimi models reject any explicit temperature (HTTP 400 "only 1 is
-    # allowed for this model"); the parameter must be omitted entirely.
-    kwargs = _build_services_kwargs("moonshot", None, model=model)
-
-    assert "temperature" not in kwargs
-
-
-def test_services_moonshot_v1_keeps_temperature() -> None:
-    # The tunable moonshot-v1-* series must still receive the caller's value.
-    kwargs = _build_services_kwargs("moonshot", None, model="moonshot-v1-8k")
-
-    assert kwargs["temperature"] == 0.7
+# NOTE: moonshot-specific model_overrides were removed with the moonshot
+# ProviderSpec (see provider_registry.py pruning); kimi-model temperature
+# behavior is no longer wired to a registered provider.

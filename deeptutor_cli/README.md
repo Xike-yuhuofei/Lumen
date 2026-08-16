@@ -31,7 +31,7 @@ pip install -e ".[math-animator]"  # 数学动画（另需系统 LaTeX/ffmpeg）
 pip install -e ".[all]"            # 全部依赖（含开发工具）
 ```
 
-`deeptutor init --cli` 和普通 `deeptutor init` 使用同一套 `data/user/settings/` 配置目录；区别是 `--cli` 不询问 Web 后端/前端端口，仍会创建 `system.json`、`auth.json`、`integrations.json`、`model_catalog.json`、`main.yaml` 和 `agents.yaml`，并继续询问 LLM 配置。Embedding 配置默认跳过；如果要使用 `deeptutor kb ...` 或 RAG，请在向导里选择配置 embedding，或稍后编辑 `data/user/settings/model_catalog.json`。
+`deeptutor init --cli` 和普通 `deeptutor init` 使用同一套 `data/user/settings/` 配置目录；区别是 `--cli` 不询问 Web 后端/前端端口，仍会创建 `system.json`、`auth.json`、`integrations.json`、`model_catalog.json`、`main.yaml` 和 `agents.yaml`，并继续询问 LLM 配置。Embedding 配置默认跳过；如果要使用 RAG 或知识库，请在向导里选择配置 embedding，或稍后编辑 `data/user/settings/model_catalog.json`。
 
 Windows PowerShell 可使用：
 
@@ -167,19 +167,6 @@ deeptutor serve [--host 0.0.0.0] [--port 8001] [--reload]
 
 ## 资源管理命令
 
-### `kb` — 知识库
-
-```bash
-deeptutor kb list                                # 列出所有知识库
-deeptutor kb info <name>                         # 查看详情
-deeptutor kb create <name> --doc file.pdf        # 创建并导入文档
-deeptutor kb create <name> --docs-dir ./docs/    # 从目录批量导入
-deeptutor kb add <name> --doc extra.pdf          # 追加文档
-deeptutor kb set-default <name>                  # 设为默认
-deeptutor kb search <name> "查询内容"             # 搜索
-deeptutor kb delete <name> --force               # 删除
-```
-
 ### `session` — 会话
 
 ```bash
@@ -190,74 +177,16 @@ deeptutor session rename <id> --title "新标题"
 deeptutor session delete <id>
 ```
 
-### `notebook` — 笔记本
-
-```bash
-deeptutor notebook list
-deeptutor notebook create "笔记" --description "描述"
-deeptutor notebook show <id>
-deeptutor notebook add-md <id> ./notes.md
-deeptutor notebook replace-md <id> <record_id> ./updated.md
-deeptutor notebook remove-record <id> <record_id>
-```
-
-### `memory` — 长期记忆
-
-```bash
-deeptutor memory show
-deeptutor memory clear --force
-```
-
-### `plugin` — 插件信息
-
-```bash
-deeptutor plugin list                            # 查看所有工具和 capability
-deeptutor plugin info <name>                     # 查看详情
-```
-
 ### `config` — 配置
 
 ```bash
 deeptutor config show
 ```
 
-### `provider` — 提供方认证 / 校验
-
-```bash
-deeptutor provider login openai-codex      # 执行 OpenAI Codex OAuth 登录
-deeptutor provider login github-copilot    # 校验现有 GitHub Copilot 认证是否可用
-deeptutor provider login codebuddy         # 校验 CodeBuddy SDK 登录；未登录时打开登录入口
-```
-
-`openai-codex` 使用 Lumen 自己的独立 OAuth 流程登录。它不需要 `OPENAI_API_KEY`，也不会读取或同步本机 `~/.codex`；凭据保存在 `data/system/user-secrets/<owner>/private/openai-codex/`（沙箱访问不到的目录），与 Web 设置页共用。
-
-远程部署时，浏览器的 `localhost` 和服务器的 `localhost` 不是同一台机器，仅有普通反向代理无法把浏览器的 localhost callback 送到服务器，必须用 SSH 隧道建立 callback 桥。隧道通向已发布的 Web 端口；Next.js 只把精确的 callback 路径改写到 public callback broker，broker 校验 `state` 后才路由到原 OAuth operation。callback listener 仍位于后端 loopback，不发布 `1455`/`1457`，并支持默认 Docker bridge 网络。
-
-```bash
-ssh -N -L 1455:127.0.0.1:3782 <ssh-user>@<server-host>
-```
-
-若 Lumen 显示 fallback callback 端口 `1457`，则使用：
-
-```bash
-ssh -N -L 1457:127.0.0.1:3782 <ssh-user>@<server-host>
-```
-
-只运行与实际 callback 端口对应的其中一条命令，不能两条都运行。`3782` 只是示例 Web 端口：它是 Lumen 配置并作为 `callback_forward_port` 显示的 frontend/container 端口，不保证 SSH 主机的 `127.0.0.1` 正在监听同一端口。若 Docker/Podman 映射到不同宿主机端口，或反向代理监听不同端口，只替换 SSH 命令右侧的目标端口（上例中的 `3782`）为 SSH 主机 `127.0.0.1` 实际监听的 Web 端口；左侧 callback 端口仍保持 `1455` 或 `1457`。`<server-host>` 是该 loopback 监听端口所在的 SSH 主机；若浏览器域名指向反向代理或负载均衡器，请替换为正确的 SSH 前端主机。
-
-CLI 会先打印隧道命令，随后立即尝试打开浏览器。远程用户应先保持授权页打开但不要完成授权，在另一终端建立所显示的隧道，然后再继续授权。
-
-localhost 检测存在边界：若 Web 本身已通过 SSH 或 IDE localhost 转发访问，浏览器无法判断服务器是远程的。对于当前 Web operation，应保持其授权页未完成，从该 operation 的 authorize URL 中读取 `redirect_uri`，确认 callback 是 `1455` 还是 `1457`，再把该本地端口通过第二条隧道转到实际 Web 端口。另一种方法是取消该 Web operation，再通过 CLI 启动一个新 operation；CLI 输出只属于新 operation，不能用于当前 Web operation。
-
-Codex 令牌授权的是**你本人**的 ChatGPT 套餐，因此凭据只归当前登录用户，不会通过模型授权共享给部署内的其他用户——每位用户各自登录。登录成功后，模型列表来自该账号的动态目录；仅当此前尚未配置任何 LLM 时，Codex 才会被自动设为活动模型，否则不改动你已选的模型。目录刷新失败、上游 `429` 或其他错误都会如实报告，不会回退到付费 API Provider。这条 Codex backend 兼容路径目前属于实验性能力。
-
----
-
 ## 典型工作流
 
 ```bash
-# 1. 创建知识库
-deeptutor kb create calculus --doc 微积分教材.pdf
+# 1. 在 Web 界面创建知识库 calculus（或使用已有知识库）
 
 # 2. 用知识库解题
 deeptutor run deep_solve "求 ∫sin(x)cos(x)dx" -t rag --kb calculus -l zh

@@ -42,10 +42,7 @@ FEATURED_LLM_PROVIDERS: tuple[str, ...] = (
     "anthropic",
     "deepseek",
     "dashscope",
-    "zhipu",
-    "moonshot",
     "gemini",
-    "siliconflow",
     "openrouter",
     "ollama",
 )
@@ -62,23 +59,11 @@ LLM_FALLBACK_MODELS: dict[str, tuple[str, ...]] = {
     ),
     "deepseek": ("deepseek-chat", "deepseek-reasoner"),
     "dashscope": ("qwen-plus", "qwen-turbo", "qwen-max", "qwen3-coder-plus"),
-    "zhipu": ("glm-4.6", "glm-4.5", "glm-4-flash"),
-    "moonshot": ("kimi-k2.6", "kimi-k2.5", "kimi-latest"),
     "gemini": ("gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite"),
-    "siliconflow": (
-        "Qwen/Qwen3-Coder-480B-A35B-Instruct",
-        "deepseek-ai/DeepSeek-V3",
-    ),
     "openrouter": (
         "openai/gpt-4o-mini",
         "anthropic/claude-sonnet-4-6",
         "deepseek/deepseek-chat",
-    ),
-    "orcarouter": (
-        "orcarouter/auto",
-        "anthropic/claude-sonnet-4-6",
-        "deepseek/deepseek-v4-pro",
-        "openai/gpt-4o",
     ),
     "ollama": ("llama3.2", "qwen2.5", "mistral"),
 }
