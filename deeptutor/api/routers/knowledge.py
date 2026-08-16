@@ -592,7 +592,7 @@ def _load_kb_entry_or_404(manager: KnowledgeBaseManager, kb_name: str) -> dict:
     return kb_entry
 
 def _assert_not_connected_kb(kb_name: str, kb_entry: dict) -> None:
-    """Block writes to connected KBs (Obsidian vaults, linked indexes).
+    """Block writes to connected KBs (linked indexes, external servers).
 
     They are read-only pointers to the user's external files — we never write
     into or re-index them.
@@ -955,6 +955,7 @@ async def set_rag_provider_mode(provider: str, payload: ProviderModeUpdate):
     get_kb_config_service().set_provider_mode(provider, mode)
     return {"provider": provider, "mode": mode}
 
+
 class LlamaIndexConfigUpdate(BaseModel):
     """Partial update for the LlamaIndex engine knobs (omitted fields kept)."""
 
@@ -1243,35 +1244,6 @@ async def set_default_kb(kb_name: str):
         logger.error(f"Error setting default KB: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-class ConnectObsidianRequest(BaseModel):
-    name: str
-    vault_path: str
-
-@router.post("/connect-obsidian")
-async def connect_obsidian_vault(payload: ConnectObsidianRequest):
-    """Connect an existing Obsidian vault as a knowledge base.
-
-    Registers a pointer to the user's vault directory (``type: obsidian``) — no
-    upload, no index. The vault must be a directory the server can reach (i.e. a
-    local/self-hosted deployment); the Obsidian capability reads it live.
-    """
-    name = (payload.name or "").strip()
-    vault_path = (payload.vault_path or "").strip()
-    if not name or not vault_path:
-        raise HTTPException(status_code=400, detail="Both name and vault_path are required.")
-    try:
-        folder = assert_path_allowed(vault_path)
-        manager = get_kb_manager()
-        entry = manager.register_obsidian_vault(name, str(folder))
-        return {"status": "connected", "name": name, "vault_path": entry["vault_path"]}
-    except ValueError as e:
-        # Missing/invalid path, disallowed location, or a name clash → 400.
-        raise HTTPException(status_code=400, detail=str(e))
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error connecting Obsidian vault: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 class ProbeFolderRequest(BaseModel):
     folder_path: str

@@ -3,7 +3,7 @@
 "How many files are in this knowledge base?" is a question about the
 collection, not about passage similarity, so it is answered from disk. These
 tests pin the counting rules (what is and isn't a document), the degradations
-(remote / agent / unreadable KBs), and the wording contract both consumers —
+(remote / unreadable KBs), and the wording contract both consumers —
 the chat system prompt and the ``kb_files`` tool — render from.
 """
 
@@ -12,7 +12,6 @@ from __future__ import annotations
 from pathlib import Path
 
 from deeptutor.knowledge.manifest import (
-    UNAVAILABLE_AGENT,
     UNAVAILABLE_MISSING,
     build_manifest,
     document_root,
@@ -128,13 +127,6 @@ class TestConnectedKbs:
 
         assert manifest.total == 2
         assert document_root(tmp_path / "Linked", entry) == external
-
-    def test_connected_agent_is_not_a_document_collection(self, tmp_path: Path) -> None:
-        entry = {"type": "subagent", "agent_kind": "claude_code"}
-
-        manifest = build_manifest(name="Agent", kb_dir=tmp_path / "Agent", entry=entry)
-
-        assert manifest.unavailable == UNAVAILABLE_AGENT
 
     def test_missing_root_is_unavailable_not_empty(self, tmp_path: Path) -> None:
         manifest = build_manifest(name="Fresh", kb_dir=tmp_path / "Fresh", entry=_READY)

@@ -17,9 +17,6 @@ block_catalog: |
     guided walkthrough, clickable exercise, animation with controls.
     params: {"interaction": "<interactive|walkthrough|simulation|guided exercise>",
              "focus": "<what the learner manipulates>"}
-  - **animation**: Manim-rendered video explanation (mathematical processes,
-    derivations, algorithms). Heavyweight; use sparingly.
-    params: {"focus": "<what the animation shows>", "quality": "low|medium|high"}
   - **code**: Runnable code example. params: {"language": "<python|js|...>", "intent": "<example|verify|scaffold>"}
   - **timeline**: Chronological event sequence.
 
@@ -38,7 +35,7 @@ architect_system: |
   - Each block should connect logically to the previous one via transition_in.
   - At least 1 section for core prose, but you may scatter multiple sections
     at different points in the sequence.
-  - Match block types to the content's nature: derivations need animation/code,
+  - Match block types to the content's nature: derivations need code/figure,
     concepts need figure (svg/chartjs/mermaid), interactive exploration needs
     interactive, practice needs quiz/code.
   - Do NOT emit deep_dive / user_note / concept_graph.

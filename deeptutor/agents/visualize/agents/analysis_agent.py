@@ -35,20 +35,7 @@ class AnalysisAgent(BaseAgent):
         render_mode: str = "auto",
         attachments: list[Attachment] | None = None,
     ) -> VisualizationAnalysis:
-        # Manim modes short-circuit the LLM call entirely — MathAnimatorPipeline
-        # has its own ConceptAnalysisAgent that produces the manim-specific
-        # design brief. We only need a stub VisualizationAnalysis here so the
-        # capability runner can dispatch on render_type.
-        if render_mode in ("manim_video", "manim_image"):
-            return VisualizationAnalysis(
-                render_type=render_mode,  # type: ignore[arg-type]
-                description="",
-                data_description="",
-                chart_type="",
-                visual_elements=[],
-                rationale=f"User selected {render_mode} explicitly.",
-            )
-
+        # The analysis agent only ever produces the text-emitting render types.
         if render_mode in ("svg", "chartjs", "mermaid", "html"):
             system_prompt = self.get_prompt("system_fixed")
             user_template = self.get_prompt("user_template_fixed")

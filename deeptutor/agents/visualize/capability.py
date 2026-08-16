@@ -2,11 +2,10 @@
 Visualize Capability
 ====================
 
-Unified visualization capability. AnalysisAgent picks one of six render
-types — svg / chartjs / mermaid / html (text-emitting, three-stage pipeline)
-or manim_video / manim_image (Manim subprocess pipeline). The result
-envelope carries ``render_type`` as the discriminator so the frontend can
-delegate to the right viewer.
+Unified visualization capability. AnalysisAgent picks one of four render
+types — svg / chartjs / mermaid / html (text-emitting, three-stage pipeline).
+The result envelope carries ``render_type`` as the discriminator so the
+frontend can delegate to the right viewer.
 """
 
 from __future__ import annotations
@@ -29,30 +28,21 @@ from deeptutor.runtime.request_contracts import (
 
 logger = logging.getLogger(__name__)
 
-# Stages exposed in the manifest. The first three cover the text-emitting
-# path (svg/chartjs/mermaid/html); the rest cover the manim subprocess
-# path. A given turn only streams a subset of these.
+# Stages exposed in the manifest. The three stages cover the text-emitting
+# path (svg/chartjs/mermaid/html). A given turn only streams a subset of these.
 _VISUALIZE_STAGES = [
     "analyzing",
     "generating",
     "reviewing",
-    "concept_analysis",
-    "concept_design",
-    "code_generation",
-    "code_retry",
-    "summary",
     "render_output",
 ]
-
-_MANIM_RENDER_TYPES = {"manim_video", "manim_image"}
 
 
 class VisualizeCapability(BaseCapability):
     manifest = CapabilityManifest(
         name="visualize",
         description=(
-            "Generate SVG, Chart.js, Mermaid, interactive HTML, or Manim "
-            "animation/storyboard visualizations."
+            "Generate SVG, Chart.js, Mermaid, or interactive HTML visualizations."
         ),
         stages=_VISUALIZE_STAGES,
         tools_used=[],
@@ -110,20 +100,6 @@ class VisualizeCapability(BaseCapability):
                 source=self.name,
                 stage="analyzing",
             )
-
-        # Branch: manim path takes over completely after the analysis stage,
-        # using its own multi-agent pipeline + Manim subprocess.
-        if analysis.render_type in _MANIM_RENDER_TYPES:
-            await self._run_manim_path(
-                context=context,
-                stream=stream,
-                render_type=analysis.render_type,
-                visualize_config=request_config,
-                history_context=history_context,
-                usage=usage,
-                i18n=i18n,
-            )
-            return
 
         # Stage 2: Generate code
         async with stream.stage("generating", source=self.name):
@@ -270,222 +246,6 @@ class VisualizeCapability(BaseCapability):
                 },
                 "analysis": analysis.model_dump(),
                 "review": review.model_dump(),
-            },
-            source=self.name,
-            usage=usage,
-        )
-
-    async def _run_manim_path(
-        self,
-        *,
-        context: UnifiedContext,
-        stream: StreamBus,
-        render_type: str,
-        visualize_config: VisualizeRequestConfig,
-        history_context: str,
-        usage: UsageTracker | None = None,
-        i18n: StatusI18n | None = None,
-    ) -> None:
-        """
-        Manim sub-pipeline. Mirrors ``MathAnimatorCapability.run`` but emits
-        the final result with ``render_type`` as the discriminator so the
-        unified frontend dispatcher can route to ``MathAnimatorViewer``.
-        """
-        import importlib.util
-        import time
-
-        if importlib.util.find_spec("manim") is None:
-            raise RuntimeError(
-                "Manim rendering requires optional dependencies. "
-                "Install with `pip install 'deeptutor[math-animator]'` "
-                "or `pip install -r requirements/math-animator.txt`."
-            )
-
-        from deeptutor.agents.math_animator.pipeline import MathAnimatorPipeline
-        from deeptutor.agents.math_animator.request_config import MathAnimatorRequestConfig
-        from deeptutor.core.trace import build_trace_metadata, new_call_id
-        from deeptutor.services.llm.config import get_llm_config
-
-        if i18n is None:
-            i18n = StatusI18n(self.name, context.language, module="visualize")
-        output_mode = "image" if render_type == "manim_image" else "video"
-        request_config = MathAnimatorRequestConfig(
-            output_mode=output_mode,  # type: ignore[arg-type]
-            quality=visualize_config.quality,
-            style_hint=visualize_config.style_hint,
-        )
-
-        llm_config = get_llm_config()
-        pipeline = MathAnimatorPipeline(
-            api_key=llm_config.api_key,
-            base_url=llm_config.base_url,
-            api_version=llm_config.api_version,
-            language=context.language,
-            trace_callback=self._build_trace_bridge(stream, i18n=i18n),
-        )
-
-        timings: dict[str, float] = {}
-        turn_id = str(
-            context.metadata.get("turn_id", "") or context.session_id or "visualize-manim"
-        )
-        render_call_meta = build_trace_metadata(
-            call_id=new_call_id("manim-render"),
-            phase="render_output",
-            label="Render output",
-            call_kind="math_render_output",
-            trace_role="render",
-            trace_kind="progress",
-            output_mode=request_config.output_mode,
-            quality=request_config.quality,
-        )
-
-        stage_start = time.perf_counter()
-        async with stream.stage("concept_analysis", source=self.name):
-            analysis = await pipeline.run_analysis(
-                user_input=context.user_message,
-                history_context=history_context,
-                request_config=request_config,
-                attachments=context.attachments,
-            )
-        timings["concept_analysis"] = round(time.perf_counter() - stage_start, 3)
-
-        stage_start = time.perf_counter()
-        async with stream.stage("concept_design", source=self.name):
-            design = await pipeline.run_design(
-                user_input=context.user_message,
-                request_config=request_config,
-                analysis=analysis,
-            )
-        timings["concept_design"] = round(time.perf_counter() - stage_start, 3)
-
-        stage_start = time.perf_counter()
-        async with stream.stage("code_generation", source=self.name):
-            generated = await pipeline.run_code_generation(
-                user_input=context.user_message,
-                request_config=request_config,
-                analysis=analysis,
-                design=design,
-            )
-            await stream.progress(
-                message=i18n.t("manim_code_prepared", "Manim code prepared."),
-                source=self.name,
-                stage="code_generation",
-            )
-        timings["code_generation"] = round(time.perf_counter() - stage_start, 3)
-
-        async def _on_retry(retry_attempt) -> None:
-            await stream.progress(
-                message=i18n.t(
-                    "manim_retry",
-                    f"Retry {retry_attempt.attempt}: {retry_attempt.error}",
-                    attempt=retry_attempt.attempt,
-                    error=retry_attempt.error,
-                ),
-                source=self.name,
-                stage="code_retry",
-                metadata={**render_call_meta, "trace_layer": "raw"},
-            )
-
-        async def _on_render_progress(message: str, raw: bool) -> None:
-            await stream.progress(
-                message=message,
-                source=self.name,
-                stage="render_output",
-                metadata={
-                    **render_call_meta,
-                    "trace_layer": "raw" if raw else "summary",
-                },
-            )
-
-        async def _on_retry_status(message: str) -> None:
-            await stream.progress(
-                message=message,
-                source=self.name,
-                stage="code_retry",
-                metadata={"trace_layer": "summary"},
-            )
-
-        stage_start = time.perf_counter()
-        async with stream.stage("code_retry", source=self.name):
-            await stream.progress(
-                message=i18n.t(
-                    "manim_rendering",
-                    (
-                        f"Rendering {request_config.output_mode} "
-                        f"with quality={request_config.quality}."
-                    ),
-                    mode=request_config.output_mode,
-                    quality=request_config.quality,
-                ),
-                source=self.name,
-                stage="code_retry",
-                metadata={**render_call_meta, "call_state": "running"},
-            )
-            final_code, render_result = await pipeline.run_render(
-                turn_id=turn_id,
-                user_input=context.user_message,
-                request_config=request_config,
-                initial_code=generated.code,
-                on_retry=_on_retry,
-                on_render_progress=_on_render_progress,
-                on_retry_status=_on_retry_status,
-            )
-        timings["code_retry"] = round(time.perf_counter() - stage_start, 3)
-
-        stage_start = time.perf_counter()
-        async with stream.stage("summary", source=self.name):
-            summary = await pipeline.run_summary(
-                user_input=context.user_message,
-                request_config=request_config,
-                analysis=analysis,
-                design=design,
-                render_result=render_result,
-            )
-            if summary.summary_text:
-                await stream.content(summary.summary_text, source=self.name, stage="summary")
-        timings["summary"] = round(time.perf_counter() - stage_start, 3)
-
-        async with stream.stage("render_output", source=self.name):
-            artifact_count = len(render_result.artifacts)
-            artifact_key = "manim_artifacts_one" if artifact_count == 1 else "manim_artifacts_many"
-            await stream.progress(
-                message=i18n.t(
-                    artifact_key,
-                    (
-                        f"Prepared {artifact_count} "
-                        f"{'artifact' if artifact_count == 1 else 'artifacts'}."
-                    ),
-                    count=artifact_count,
-                ),
-                source=self.name,
-                stage="render_output",
-                metadata={**render_call_meta, "call_state": "complete"},
-            )
-        timings["render_output"] = 0.0
-        visual_review = getattr(render_result, "visual_review", None)
-
-        await emit_capability_result(
-            stream,
-            {
-                "response": summary.summary_text,
-                "render_type": render_type,
-                "summary": summary.model_dump(),
-                "code": {
-                    "language": "python",
-                    "content": final_code,
-                },
-                "output_mode": request_config.output_mode,
-                "artifacts": [artifact.model_dump() for artifact in render_result.artifacts],
-                "timings": timings,
-                "render": {
-                    "quality": request_config.quality,
-                    "retry_attempts": render_result.retry_attempts,
-                    "retry_history": [item.model_dump() for item in render_result.retry_history],
-                    "source_code_path": render_result.source_code_path,
-                    "visual_review": visual_review.model_dump() if visual_review else None,
-                },
-                "analysis": analysis.model_dump(),
-                "design": design.model_dump(),
             },
             source=self.name,
             usage=usage,

@@ -387,11 +387,9 @@ def _provider_choices() -> dict[str, list[dict[str, Any]]]:
     from deeptutor.services.config.provider_runtime import (
         DEPRECATED_SEARCH_PROVIDERS,
         EMBEDDING_PROVIDERS,
-        IMAGEGEN_PROVIDERS,
         SEARCH_PROVIDERS,
         STT_PROVIDERS,
         TTS_PROVIDERS,
-        VIDEOGEN_PROVIDERS,
     )
     from deeptutor.services.provider_registry import PROVIDERS
 
@@ -482,38 +480,12 @@ def _provider_choices() -> dict[str, list[dict[str, Any]]]:
         ],
         key=lambda p: p["label"].lower(),
     )
-    imagegen = sorted(
-        [
-            {
-                "value": name,
-                "label": spec.label,
-                "base_url": spec.default_api_base,
-                "default_model": spec.default_model,
-            }
-            for name, spec in IMAGEGEN_PROVIDERS.items()
-        ],
-        key=lambda p: p["label"].lower(),
-    )
-    videogen = sorted(
-        [
-            {
-                "value": name,
-                "label": spec.label,
-                "base_url": spec.default_api_base,
-                "default_model": spec.default_model,
-            }
-            for name, spec in VIDEOGEN_PROVIDERS.items()
-        ],
-        key=lambda p: p["label"].lower(),
-    )
     return {
         "llm": llm,
         "embedding": embedding,
         "search": search,
         "tts": tts,
         "stt": stt,
-        "imagegen": imagegen,
-        "videogen": videogen,
     }
 
 

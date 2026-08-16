@@ -1,7 +1,6 @@
 """Block generators – one per ``BlockType``."""
 
 # Phase 2+ generators
-from .animation import AnimationGenerator
 from .base import (
     BlockContext,
     BlockGenerator,
@@ -33,7 +32,6 @@ __all__ = [
     "UserNoteGenerator",
     "FigureGenerator",
     "InteractiveGenerator",
-    "AnimationGenerator",
     "CodeGenerator",
     "TimelineGenerator",
     "FlashCardsGenerator",

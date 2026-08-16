@@ -235,7 +235,6 @@ def _payload_for_type(block_type: str, payload: dict[str, Any]) -> str:
     elif block_type in {
         BlockType.FIGURE.value,
         BlockType.INTERACTIVE.value,
-        BlockType.ANIMATION.value,
         BlockType.CONCEPT_GRAPH.value,
     }:
         main = _format_visual_summary(payload)

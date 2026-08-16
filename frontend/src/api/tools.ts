@@ -6,8 +6,6 @@ export const TOOL_SHORT_LABELS: Record<string, { zh: string; en: string }> = {
   paper_search: { zh: '论文搜索', en: 'Paper search' },
   reason: { zh: '深度推理', en: 'Deep reason' },
   geogebra_analysis: { zh: 'GeoGebra 分析', en: 'GeoGebra analysis' },
-  imagegen: { zh: '图像生成', en: 'Image generation' },
-  videogen: { zh: '视频生成', en: 'Video generation' },
 }
 
 export const FALLBACK_TOGGLEABLE_TOOLS = [

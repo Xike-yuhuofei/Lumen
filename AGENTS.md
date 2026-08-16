@@ -62,8 +62,7 @@ Multi-stage pipelines that own the turn:
 | `deep_solve`     | planning → reasoning → writing                        |
 | `deep_question`  | ideation → generation                                 |
 | `deep_research`  | rephrasing → decomposing → researching → reporting    |
-| `visualize`      | analyzing → generating → reviewing (SVG / Chart.js / Mermaid / HTML; or routes to Manim sub-stages via `render_type`) |
-| `math_animator`  | concept_analysis → concept_design → code_generation → code_retry → summary → render_output |
+| `visualize`      | analyzing → generating → reviewing (SVG / Chart.js / Mermaid / HTML) |
 
 All capabilities converge on `emit_capability_result()` in
 `deeptutor/capabilities/_shared.py` so every turn emits the same envelope
@@ -80,7 +79,7 @@ pip install deeptutor-cli  # CLI-only
 # Run any capability
 deeptutor run chat "Explain Fourier transform"
 deeptutor run deep_solve "Solve x^2=4" -t rag --kb my-kb
-deeptutor run visualize "Animate sine wave" --config render_mode=manim_video
+deeptutor run visualize "Animate sine wave"
 
 # Interactive REPL
 deeptutor chat
@@ -132,7 +131,6 @@ Source extras (.[ extra ], defined in pyproject.toml):
 .[partners]       — Partner channel SDKs + MCP client  (legacy alias: .[tutorbot])
 .[matrix]         — Matrix channel for Partners (matrix-nio; needs libolm)
 .[matrix-e2e]     — Matrix with end-to-end encryption (matrix-nio[e2e])
-.[math-animator]  — Manim addon (powers `visualize` Manim renders + `deeptutor run math_animator`)
 .[dev]            — Test / lint tooling
 .[all]            — Everything above
 ```

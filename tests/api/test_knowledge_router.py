@@ -64,7 +64,7 @@ class _FakeKBManager:
         kb_dir.mkdir(parents=True, exist_ok=True)
         return kb_dir
 
-    def register_connected_kb(self, name: str, kind: str = "obsidian") -> dict:
+    def register_connected_kb(self, name: str, kind: str = "linked") -> dict:
         if name in self.config.get("knowledge_bases", {}):
             raise ValueError(f"A knowledge base named '{name}' already exists.")
         entry = {
@@ -72,8 +72,8 @@ class _FakeKBManager:
             "type": kind,
             "status": "ready",
         }
-        if kind == "obsidian":
-            entry["vault_path"] = f"/external/{name}"
+        if kind == "linked":
+            entry["external_path"] = f"/external/{name}"
         self.config.setdefault("knowledge_bases", {})[name] = entry
         return entry
 
@@ -537,7 +537,7 @@ def test_remote_kb_file_listing_is_empty_without_creating_local_storage(
     monkeypatch, tmp_path: Path
 ) -> None:
     manager = _FakeKBManager(tmp_path / "knowledge_bases")
-    manager.register_connected_kb("remote", kind="obsidian")
+    manager.register_connected_kb("remote", kind="linked")
     monkeypatch.setattr(knowledge_router_module, "get_kb_manager", lambda: manager)
 
     with TestClient(_build_app()) as client:
@@ -567,7 +567,7 @@ def test_remote_kb_rejects_local_file_operations_without_creating_storage(
     monkeypatch, tmp_path: Path, method: str, url: str, kwargs: dict
 ) -> None:
     manager = _FakeKBManager(tmp_path / "knowledge_bases")
-    manager.register_connected_kb("remote", kind="obsidian")
+    manager.register_connected_kb("remote", kind="linked")
     monkeypatch.setattr(knowledge_router_module, "get_kb_manager", lambda: manager)
 
     with TestClient(_build_app()) as client:
@@ -1004,7 +1004,7 @@ def test_assert_not_connected_kb_blocks_connected_writes() -> None:
     from fastapi import HTTPException
 
     guard = knowledge_router_module._assert_not_connected_kb
-    for kind in ("linked", "obsidian", "subagent"):
+    for kind in ("linked",):
         with pytest.raises(HTTPException) as excinfo:
             guard("kb", {"type": kind})
         assert excinfo.value.status_code == 409

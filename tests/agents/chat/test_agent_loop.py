@@ -9,7 +9,6 @@ import pytest
 
 from deeptutor.agents.chat.agent_loop import InlineThinkFilter
 from deeptutor.agents.chat.agentic_pipeline import AgenticChatPipeline
-from deeptutor.capabilities.explore_context import explorer as explorer_mod
 from deeptutor.capabilities.mastery import MASTERY_TOOL_NAMES
 from deeptutor.core.context import Attachment, UnifiedContext
 from deeptutor.core.stream import StreamEvent, StreamEventType
@@ -358,64 +357,6 @@ async def test_empty_finish_gets_one_nudge_then_recovers(
     result = _result(events)
     assert result.metadata["response"] == "Here is the real answer."
     assert result.metadata["completed"] is True
-
-
-@pytest.mark.asyncio
-async def test_explore_context_pre_pass_seeds_loop_without_polluting_answer(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """When the user attaches fresh context, the explore_context pre-pass runs
-    before the answer loop and folds an objective briefing into the loop's
-    user-message seed — while its own output never appears as the answer."""
-
-    def _fake_explore_stream(*_args, **_kwargs):
-        async def _gen():
-            yield "The user and the external agent updated the navigation."
-
-        return _gen()
-
-    monkeypatch.setattr(explorer_mod, "llm_stream", _fake_explore_stream)
-    monkeypatch.setattr(
-        explorer_mod,
-        "get_llm_config",
-        lambda: SimpleNamespace(
-            model="gpt-test", api_key="k", base_url="u", api_version=None, binding="openai"
-        ),
-    )
-
-    registry = _Registry()
-    client = _ScriptedChatClient([[_llm_chunk(content="Here is what that chat did.")]])
-    pipeline = AgenticChatPipeline(language="en")
-    pipeline.registry = registry
-    monkeypatch.setattr(pipeline, "_compose_enabled_tools", lambda _context: [])
-    monkeypatch.setattr(pipeline, "_build_openai_client", lambda: client)
-
-    context = UnifiedContext(
-        session_id="s1",
-        user_message="what did this chat do?",
-        source_manifest="[Attached Sources]\n- id=hs-imported_claude_code_x type=history",
-        metadata={
-            "source_index": {"hs-imported_claude_code_x": "## Claude Code\nI updated the nav."},
-            "history_references": ["imported_claude_code_x"],
-        },
-    )
-    events = await _run(pipeline, context)
-
-    # The briefing rode into the answer loop's trailing user message (the seed).
-    first_call_messages = client.calls[0]["messages"]
-    seed_user_msg = first_call_messages[-1]["content"]
-    assert "external agent updated the navigation" in seed_user_msg
-
-    # The pre-pass streamed THINKING (reasoning trace), never CONTENT — the
-    # answer is only the chat loop's finish text.
-    assert _contents(events) == ["Here is what that chat did."]
-    explore_thinking = "".join(
-        e.content
-        for e in events
-        if e.type == StreamEventType.THINKING
-        and str((e.metadata or {}).get("call_kind")) == "context_exploration"
-    )
-    assert "external agent updated the navigation" in explore_thinking
 
 
 @pytest.mark.asyncio

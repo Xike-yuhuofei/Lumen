@@ -18,7 +18,6 @@ data/user/
         ├── deep_solve/
         ├── deep_question/
         ├── deep_research/
-        ├── math_animator/
         └── _detached_code_execution/
 """
 
@@ -35,7 +34,6 @@ AgentModule = Literal[
     "co-writer",
     "run_code_workspace",
     "logs",
-    "math_animator",
 ]
 
 ChatWorkspaceFeature = Literal[
@@ -43,7 +41,6 @@ ChatWorkspaceFeature = Literal[
     "deep_solve",
     "deep_question",
     "deep_research",
-    "math_animator",
     "_detached_code_execution",
 ]
 
@@ -71,7 +68,6 @@ class PathService:
         "chat": ("chat", "chat"),
         "question": ("chat", "deep_question"),
         "research": ("chat", "deep_research"),
-        "math_animator": ("chat", "math_animator"),
         "co-writer": ("co-writer", None),
         "run_code_workspace": ("chat", "_detached_code_execution"),
     }
@@ -168,18 +164,7 @@ class PathService:
         ):
             return candidate
 
-        if (
-            len(parts) >= 5
-            and parts[:3] == ("workspace", "chat", "math_animator")
-            and "artifacts" in parts[4:]
-        ):
-            return candidate
-
         if len(parts) >= 5 and parts[:2] == ("workspace", "chat") and "code_runs" in parts[3:]:
-            return candidate
-
-        # Generated media (imagegen / videogen tools write under <task>/media/).
-        if len(parts) >= 5 and parts[:2] == ("workspace", "chat") and "media" in parts[3:]:
             return candidate
 
         if len(parts) >= 5 and parts[:3] == ("workspace", "chat", "chat") and parts[4] == "exec":
@@ -239,7 +224,6 @@ class PathService:
             "deep_solve",
             "deep_question",
             "deep_research",
-            "math_animator",
             "_detached_code_execution",
         }:
             return self.get_chat_feature_dir(cast(ChatWorkspaceFeature, feature))
@@ -428,7 +412,6 @@ class PathService:
                 "deep_solve",
                 "deep_question",
                 "deep_research",
-                "math_animator",
                 "_detached_code_execution",
             ),
         ):

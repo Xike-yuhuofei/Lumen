@@ -196,9 +196,10 @@ class AgentLoop:
 
     async def run(self) -> None:
         state = AgentLoopState()
-        # Optional async pre-pass briefings (e.g. explore_context) run BEFORE
-        # the answer stage so they form their own preceding activity group and
-        # their grounding can ride in the loop's user-message seed.
+        # Optional async pre-pass briefings (e.g. a capability's pre_loop)
+        # run BEFORE the answer stage so they form their own preceding
+        # activity group and their grounding can ride in the loop's
+        # user-message seed.
         capability_briefing = await self.pipeline._capability_pre_loop_briefings(
             self.context, self.stream
         )

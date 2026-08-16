@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from deeptutor.core.tool_protocol import BaseTool, ToolDefinition, ToolResult
 from deeptutor.runtime.registry.deferred_tools import (
     DeferredToolLoader,
@@ -29,15 +27,6 @@ class _FakeDeferredTool(BaseTool):
 
     async def execute(self, **kwargs: object) -> ToolResult:
         return ToolResult(content="ok")
-
-
-@pytest.fixture(autouse=True)
-def _no_persist(monkeypatch):
-    """Stop DeferredToolLoader persistence from touching disk."""
-    monkeypatch.setattr(
-        "deeptutor.services.mcp.session_state.record_loaded_tools",
-        lambda session_id, names: None,
-    )
 
 
 def _registry(*tools: BaseTool) -> ToolRegistry:

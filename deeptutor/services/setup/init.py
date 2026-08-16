@@ -87,7 +87,6 @@ DEFAULT_AGENTS_SETTINGS = {
     },
     "plugins": {
         "vision_solver": {"temperature": 0.3, "max_tokens": 12000},
-        "math_animator": {"temperature": 0.4, "max_tokens": 12000},
     },
 }
 
@@ -133,7 +132,6 @@ def init_user_directories(project_root: Path | None = None) -> None:
             ├── deep_solve/
             ├── deep_question/
             ├── deep_research/
-            ├── math_animator/
             └── _detached_code_execution/
 
     Args:

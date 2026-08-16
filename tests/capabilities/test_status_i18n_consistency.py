@@ -56,7 +56,7 @@ def test_code_i18n_keys_exist_in_yaml() -> None:
 def test_no_orphan_yaml_keys() -> None:
     """Every yaml status key must be referenced as a string literal somewhere in
     the module. Tolerates dynamic dispatch (e.g.
-    ``artifact_key = "manim_artifacts_one" if ... else "manim_artifacts_many"``)
+    ``artifact_key = "figures_one" if ... else "figures_many"``)
     while still catching dead copy left behind by deleted code paths."""
     code = _code()
     orphans = {k for k in _status_keys("en") if f'"{k}"' not in code}

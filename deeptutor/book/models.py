@@ -58,10 +58,9 @@ class BlockType(str, Enum):
     CALLOUT = "callout"
     QUIZ = "quiz"
     USER_NOTE = "user_note"
-    # Phase 2 — visual taxonomy: figure (svg/chartjs/mermaid) | interactive (html) | animation (video)
+    # Phase 2 — visual taxonomy: figure (svg/chartjs/mermaid) | interactive (html)
     FIGURE = "figure"
     INTERACTIVE = "interactive"
-    ANIMATION = "animation"
     CODE = "code"
     TIMELINE = "timeline"
     FLASH_CARDS = "flash_cards"
@@ -83,7 +82,7 @@ class ContentType(str, Enum):
     """Hint that drives Page Planner template selection."""
 
     THEORY = "theory"  # text + figure + quiz + flash_cards
-    DERIVATION = "derivation"  # text + animation + code + quiz
+    DERIVATION = "derivation"  # text + code + quiz
     HISTORY = "history"  # text + timeline + figure + quiz
     PRACTICE = "practice"  # quiz + code + text(explanation)
     CONCEPT = "concept"  # text + figure + flash_cards + quiz

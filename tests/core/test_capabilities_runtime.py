@@ -72,7 +72,6 @@ def test_builtin_capability_registry_covers_documented_capabilities() -> None:
         "deep_solve",
         "deep_question",
         "deep_research",
-        "math_animator",
         "visualize",
         "mastery_path",
     }

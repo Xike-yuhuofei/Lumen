@@ -23,7 +23,7 @@ system: |
   - 按由浅入深排序；prerequisites 仅引用前面已出现的章节标题
   - 为每章选择最合适的 content_type：
       * theory     – 概念讲解 + 视觉化
-      * derivation – 公式推导，适合配合动画
+      * derivation – 公式推导，适合配合图形逐步拆解
       * history    – 时间线 / 案例研究
       * practice   – 练习驱动
       * concept    – 定义 / 术语密集

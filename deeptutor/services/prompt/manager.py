@@ -30,7 +30,6 @@ class PromptManager:
         "research",
         "solve",
         "question",
-        "math_animator",
         "book",
         "notebook",
         "visualize",

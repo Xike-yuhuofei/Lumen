@@ -114,10 +114,10 @@ def test_every_source_of_context_lands_in_its_own_segment() -> None:
 
 
 def test_capability_blocks_are_summed_under_one_key() -> None:
-    budget = _budget(blocks=[PromptBlock("solve", "aaa"), PromptBlock("obsidian", "bb")])
+    budget = _budget(blocks=[PromptBlock("solve", "aaa"), PromptBlock("mastery", "bb")])
 
     assert _tokens(budget) == {
-        "capability": _chars("## solve\naaa") + _chars("## obsidian\nbb"),
+        "capability": _chars("## solve\naaa") + _chars("## mastery\nbb"),
     }
 
 

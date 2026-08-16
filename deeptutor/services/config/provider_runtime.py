@@ -7,7 +7,6 @@ import json
 from typing import Any
 from urllib.parse import urlparse
 
-from deeptutor.services.imagegen.config import ImagegenConfig
 from deeptutor.services.model_selection import LLMSelection, apply_llm_selection_to_catalog
 from deeptutor.services.provider_registry import (
     NANOBOT_LLM_PROVIDERS,
@@ -18,7 +17,6 @@ from deeptutor.services.provider_registry import (
     find_by_name,
     find_gateway,
 )
-from deeptutor.services.videogen.config import VideogenConfig
 from deeptutor.services.voice.config import (
     AUTH_API_KEY_HEADER,
     AUTH_BEARER,
@@ -401,110 +399,6 @@ VOICE_PROVIDER_ALIASES = {
 def _canonical_voice_provider(name: str | None, table: dict[str, VoiceProviderSpec]) -> str:
     key = (name or "").strip().lower().replace("-", "_")
     key = VOICE_PROVIDER_ALIASES.get(key, key)
-    return key if key in table else "custom"
-
-
-@dataclass(frozen=True)
-class GenerationProviderSpec:
-    """Metadata for one image- or video-generation provider entry.
-
-    ``default_api_base`` is the provider's **API base** (e.g.
-    ``https://api.openai.com/v1`` or ``https://ark.cn-beijing.volces.com/api/v3``);
-    the adapter appends the relative path (``images/generations`` or
-    ``contents/generations/tasks``). ``adapter`` selects the HTTP adapter:
-    imagegen providers share ``openai_compat``; videogen task-style providers
-    use ``async_task``.
-    """
-
-    label: str
-    default_api_base: str
-    adapter: str = "openai_compat"
-    auth_style: str = AUTH_BEARER
-    default_model: str = ""
-    is_local: bool = False
-
-
-# Image-generation providers in the OpenAI-compatible cluster. A single adapter
-# covers all of these; ``default_model`` is only a Settings prefill hint.
-IMAGEGEN_PROVIDERS: dict[str, GenerationProviderSpec] = {
-    "openai": GenerationProviderSpec(
-        label="OpenAI",
-        default_api_base="https://api.openai.com/v1",
-        default_model="gpt-image-1",
-    ),
-    "volcengine": GenerationProviderSpec(
-        label="Volcengine Ark (Seedream)",
-        default_api_base="https://ark.cn-beijing.volces.com/api/v3",
-        default_model="doubao-seedream-3-0-t2i-250415",
-    ),
-    "siliconflow": GenerationProviderSpec(
-        label="SiliconFlow",
-        default_api_base="https://api.siliconflow.cn/v1",
-        default_model="Kwai-Kolors/Kolors",
-    ),
-    # OpenRouter generates images through /chat/completions (modalities), not the
-    # OpenAI Images API — so it uses the chat_completions adapter, not openai_compat.
-    "openrouter": GenerationProviderSpec(
-        label="OpenRouter",
-        default_api_base="https://openrouter.ai/api/v1",
-        adapter="chat_completions",
-        default_model="google/gemini-2.5-flash-image-preview",
-    ),
-    "azure_openai": GenerationProviderSpec(
-        label="Azure OpenAI",
-        default_api_base="",
-        auth_style=AUTH_API_KEY_HEADER,
-        default_model="dall-e-3",
-    ),
-    "custom": GenerationProviderSpec(
-        label="OpenAI Compatible",
-        default_api_base="",
-        default_model="",
-    ),
-    # Generic chat-completions image output (any OpenRouter-style gateway).
-    "custom_chat": GenerationProviderSpec(
-        label="Chat Completions (Custom)",
-        default_api_base="",
-        adapter="chat_completions",
-        default_model="",
-    ),
-}
-
-# Video-generation providers. Text-to-video has no synchronous standard; these
-# all use the async-task adapter (submit → poll → download).
-VIDEOGEN_PROVIDERS: dict[str, GenerationProviderSpec] = {
-    "volcengine": GenerationProviderSpec(
-        label="Volcengine Ark (Seedance)",
-        default_api_base="https://ark.cn-beijing.volces.com/api/v3",
-        adapter="async_task",
-        default_model="doubao-seedance-1-0-pro-250528",
-    ),
-    "custom": GenerationProviderSpec(
-        label="Async Task (Custom)",
-        default_api_base="",
-        adapter="async_task",
-        default_model="",
-    ),
-}
-
-# Provider-name aliases accepted from older/loose catalog values.
-GENERATION_PROVIDER_ALIASES = {
-    "ark": "volcengine",
-    "volces": "volcengine",
-    "doubao": "volcengine",
-    "seedream": "volcengine",
-    "seedance": "volcengine",
-    "azure": "azure_openai",
-    "aoai": "azure_openai",
-    "openai_compatible": "custom",
-}
-
-
-def _canonical_generation_provider(
-    name: str | None, table: dict[str, GenerationProviderSpec]
-) -> str:
-    key = (name or "").strip().lower().replace("-", "_")
-    key = GENERATION_PROVIDER_ALIASES.get(key, key)
     return key if key in table else "custom"
 
 
@@ -1054,87 +948,6 @@ def resolve_stt_runtime_config(
     )
 
 
-def resolve_imagegen_runtime_config(
-    catalog: dict[str, Any] | None = None,
-    *,
-    service: ModelCatalogService | None = None,
-) -> ImagegenConfig:
-    """Resolve the active text-to-image config from the model catalog."""
-    catalog_service = service or get_model_catalog_service()
-    loaded = _load_catalog(catalog)
-    profile, model = _active_profile_and_model(loaded, catalog_service, "imagegen")
-    resolved_model = _as_str((model or {}).get("model"))
-    if not resolved_model:
-        raise ValueError(
-            "No active image-generation model is configured. "
-            "Set it in Settings > Media Generation > Image Generation."
-        )
-
-    provider = _canonical_generation_provider(
-        _as_str((profile or {}).get("binding")), IMAGEGEN_PROVIDERS
-    )
-    spec = IMAGEGEN_PROVIDERS[provider]
-    api_base = _as_str((profile or {}).get("base_url")) or spec.default_api_base
-    api_key = _as_str((profile or {}).get("api_key"))
-    if not api_key and spec.is_local:
-        api_key = "sk-no-key-required"
-
-    return ImagegenConfig(
-        model=resolved_model,
-        provider_name=provider,
-        adapter=spec.adapter,
-        auth_style=spec.auth_style,
-        api_key=api_key,
-        base_url=api_base,
-        api_version=_as_str((profile or {}).get("api_version")) or None,
-        extra_headers=_to_headers((profile or {}).get("extra_headers")),
-        size=_as_str((model or {}).get("size")),
-        quality=_as_str((model or {}).get("quality")),
-        style=_as_str((model or {}).get("style")),
-        response_format=_as_str((model or {}).get("response_format")),
-    )
-
-
-def resolve_videogen_runtime_config(
-    catalog: dict[str, Any] | None = None,
-    *,
-    service: ModelCatalogService | None = None,
-) -> VideogenConfig:
-    """Resolve the active text-to-video config from the model catalog."""
-    catalog_service = service or get_model_catalog_service()
-    loaded = _load_catalog(catalog)
-    profile, model = _active_profile_and_model(loaded, catalog_service, "videogen")
-    resolved_model = _as_str((model or {}).get("model"))
-    if not resolved_model:
-        raise ValueError(
-            "No active video-generation model is configured. "
-            "Set it in Settings > Media Generation > Video Generation."
-        )
-
-    provider = _canonical_generation_provider(
-        _as_str((profile or {}).get("binding")), VIDEOGEN_PROVIDERS
-    )
-    spec = VIDEOGEN_PROVIDERS[provider]
-    api_base = _as_str((profile or {}).get("base_url")) or spec.default_api_base
-    api_key = _as_str((profile or {}).get("api_key"))
-    if not api_key and spec.is_local:
-        api_key = "sk-no-key-required"
-
-    return VideogenConfig(
-        model=resolved_model,
-        provider_name=provider,
-        adapter=spec.adapter,
-        auth_style=spec.auth_style,
-        api_key=api_key,
-        base_url=api_base,
-        api_version=_as_str((profile or {}).get("api_version")) or None,
-        extra_headers=_to_headers((profile or {}).get("extra_headers")),
-        aspect_ratio=_as_str((model or {}).get("aspect_ratio")),
-        duration=_as_str((model or {}).get("duration")),
-        resolution=_as_str((model or {}).get("resolution")),
-    )
-
-
 def _resolve_search_max_results(catalog: dict[str, Any], default: int = 5) -> int:
     profile = get_model_catalog_service().get_active_profile(catalog, "search") or {}
     raw = profile.get("max_results")
@@ -1339,11 +1152,6 @@ __all__ = [
     "STT_PROVIDERS",
     "resolve_tts_runtime_config",
     "resolve_stt_runtime_config",
-    "GenerationProviderSpec",
-    "IMAGEGEN_PROVIDERS",
-    "VIDEOGEN_PROVIDERS",
-    "resolve_imagegen_runtime_config",
-    "resolve_videogen_runtime_config",
     "EMBEDDING_PROVIDER_ALIASES",
     "embedding_endpoint_validation_error",
     "normalize_embedding_endpoint_for_display",

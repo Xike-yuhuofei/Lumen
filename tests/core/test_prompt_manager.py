@@ -47,14 +47,6 @@ class TestPromptManager:
             or prompts == {}
         )
 
-    def test_load_prompts_math_animator_concept_analysis(self):
-        """Math animator prompts must be available to the shared loader."""
-        pm = get_prompt_manager()
-        prompts = pm.reload_prompts("math_animator", "concept_analysis_agent", "zh")
-
-        assert prompts["system"]
-        assert prompts["user_template"]
-
     def test_load_prompts_solve_module(self):
         """Test loading prompts for solve module."""
         pm = get_prompt_manager()
@@ -94,7 +86,7 @@ class TestPromptManager:
 
         # Load some prompts
         pm.load_prompts("research", "pipeline", "en")
-        pm.load_prompts("math_animator", "concept_analysis_agent", "en")
+        pm.load_prompts("solve", "solve_agent", "en")
 
         assert len(pm._cache) >= 2
 
@@ -107,13 +99,13 @@ class TestPromptManager:
 
         # Load prompts for multiple modules
         pm.load_prompts("research", "pipeline", "en")
-        pm.load_prompts("math_animator", "concept_analysis_agent", "en")
+        pm.load_prompts("solve", "solve_agent", "en")
 
         # Clear only research cache
         pm.clear_cache("research")
 
         # Solve prompts should still be cached
-        assert any("math_animator" in k for k in pm._cache)
+        assert any("solve" in k for k in pm._cache)
         assert not any("research" in k for k in pm._cache)
 
     def test_get_prompt_helper(self):

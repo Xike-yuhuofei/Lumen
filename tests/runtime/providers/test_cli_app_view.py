@@ -38,20 +38,6 @@ def roots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     return admin_root
 
 
-@pytest.fixture(autouse=True)
-def no_mcp(monkeypatch: pytest.MonkeyPatch) -> None:
-    """An MCP manager with nothing configured, so the CLI half is what is tested."""
-
-    class _Manager:
-        async def ensure_started(self) -> None:
-            return None
-
-        async def ensure_scope(self, owner_id: str) -> list[Any]:
-            return []
-
-    monkeypatch.setattr("deeptutor.services.mcp.get_mcp_manager", lambda: _Manager())
-
-
 class _Registry:
     """The narrow read surface ``build_tool_view`` actually uses."""
 

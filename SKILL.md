@@ -6,7 +6,7 @@
 
 Use this skill when the user wants to:
 - Set up or configure Lumen
-- Chat with Lumen or run a capability (deep solve, quiz generation, deep research, visualize, math animation, mastery path)
+- Chat with Lumen or run a capability (deep solve, quiz generation, deep research, visualize, mastery path)
 - Create, manage, or search knowledge bases
 - Create, manage, or run Partners (IM-connected companions)
 - Search, install, or manage skills from a hub (ClawHub)
@@ -35,10 +35,9 @@ deeptutor run deep_solve "Solve x^2 = 4" --tool rag --kb textbook
 deeptutor run deep_question "Linear algebra" --config num_questions=5
 deeptutor run deep_research "Attention mechanisms" --kb papers --config mode=report --config depth=standard
 deeptutor run visualize "Plot the unit circle"
-deeptutor run math_animator "Visualize a Fourier series"
 
 # Capabilities accepted by `run` / `chat -c`:
-#   chat, deep_solve, deep_question, deep_research, visualize, math_animator, mastery_path
+#   chat, deep_solve, deep_question, deep_research, visualize, mastery_path
 
 # Options for `run`:
 #   --session <id>         Resume existing session
@@ -54,7 +53,7 @@ deeptutor run math_animator "Visualize a Fourier series"
 
 `deeptutor chat` accepts the same `--session / --tool / --kb / --notebook-ref / --history-ref / --language / --config / --config-json` options, plus `--capability/-c <name>` to set the initial capability.
 
-**Tools** for `--tool` / `-t`: user-toggleable tools are `brainstorm`, `web_search`, `paper_search`, `reason`, `geogebra_analysis`, `imagegen`, and `videogen`. Context-gated tools (`rag`, `code_execution`, `read_source`, `web_fetch`, `github`, `ask_user`, …) auto-mount when their context is present, but can also be force-enabled with `--tool`. The full registered set is shown in the Web UI under **Settings → Tools**.
+**Tools** for `--tool` / `-t`: user-toggleable tools are `brainstorm`, `web_search`, `paper_search`, `reason`, and `geogebra_analysis`. Context-gated tools (`rag`, `code_execution`, `read_source`, `web_fetch`, `github`, `ask_user`, …) auto-mount when their context is present, but can also be force-enabled with `--tool`. The full registered set is shown in the Web UI under **Settings → Tools**.
 
 ### Sessions
 
