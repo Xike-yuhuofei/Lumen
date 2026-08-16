@@ -22,7 +22,10 @@ from urllib import request as urlrequest
 from deeptutor.brand import PRODUCT_NAME
 from deeptutor.runtime.banner import labels_for, print_banner, resolve_language
 from deeptutor.runtime.home import DEEPTUTOR_HOME_ENV, PACKAGE_ROOT, get_runtime_home
-from deeptutor.runtime.memory_probe import SUPERVISOR_PID_ENV
+
+# Stamped by the launcher onto every child's environment so the backend can
+# find the root of the DeepTutor process tree.
+SUPERVISOR_PID_ENV = "DEEPTUTOR_SUPERVISOR_PID"
 
 BACKEND_READY_TIMEOUT = 60
 FRONTEND_READY_TIMEOUT = 120
@@ -758,10 +761,8 @@ def start(home: str | Path | None = None, *, dev: bool = False) -> None:
         common_env["DEEPTUTOR_SPA_DIR"] = str(frontend.spa_dir)
     common_env["PYTHONUNBUFFERED"] = "1"
     common_env["PYTHONIOENCODING"] = "utf-8:replace"
-    # Anchor for deeptutor.runtime.memory_probe: the backend and the frontend
-    # are siblings under this process, so only the supervisor's pid identifies
-    # the tree that is "DeepTutor". Without it the probe can only measure the
-    # backend itself.
+    # The backend and the frontend are siblings under this process, so the
+    # supervisor's pid identifies the tree that is "DeepTutor".
     common_env[SUPERVISOR_PID_ENV] = str(os.getpid())
     _apply_single_user_allocator_env(common_env)
 

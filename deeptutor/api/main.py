@@ -311,15 +311,10 @@ except Exception:
 # Import routers only after runtime settings are initialized.
 # Some router modules load YAML settings at import time.
 from deeptutor.api.routers import (
-    agent_config,
     attachments,
     auth,
     book,
-    capabilities_settings,
     chat,
-    co_writer,
-    dashboard,
-    imports,
     knowledge,
     mastery_path,
     mcp_settings,
@@ -328,17 +323,12 @@ from deeptutor.api.routers import (
     outputs,
     partners,
     personas,
-    plugins_api,
     question,
-    question_notebook,
-    quiz_judge,
     sessions,
     settings,
     skills,
-    space_cli_apps,
     space_mcp,
     subagents,
-    system,
     unified_ws,
     voice,
 )
@@ -375,39 +365,24 @@ app.include_router(
 app.include_router(
     knowledge.router, prefix="/api/v1/knowledge", tags=["knowledge"], dependencies=_auth
 )
-app.include_router(imports.router, prefix="/api/v1/imports", tags=["imports"], dependencies=_auth)
-app.include_router(
-    dashboard.router, prefix="/api/v1/dashboard", tags=["dashboard"], dependencies=_auth
-)
+
 app.include_router(
     mastery_path.router,
     prefix="/api/v1/learning",
     tags=["mastery-path"],
     dependencies=_auth,
 )
-app.include_router(
-    co_writer.router, prefix="/api/v1/co_writer", tags=["co_writer"], dependencies=_auth
-)
+
 app.include_router(
     notebook.router, prefix="/api/v1/notebook", tags=["notebook"], dependencies=_auth
 )
 app.include_router(book.router, prefix="/api/v1/book", tags=["book"], dependencies=_auth)
 app.include_router(memory.router, prefix="/api/v1/memory", tags=["memory"], dependencies=_auth)
-app.include_router(
-    capabilities_settings.router,
-    prefix="/api/v1/capabilities",
-    tags=["capabilities"],
-    dependencies=_auth,
-)
+
 app.include_router(
     sessions.router, prefix="/api/v1/sessions", tags=["sessions"], dependencies=_auth
 )
-app.include_router(
-    question_notebook.router,
-    prefix="/api/v1/question-notebook",
-    tags=["question-notebook"],
-    dependencies=_auth,
-)
+
 # Public UI-settings read (auth pages bootstrap the interface language
 # before a session exists, so GET /api/v1/settings/ui must not be gated
 # by _auth). Mounted first so the path resolves here, not on the gated
@@ -436,16 +411,7 @@ app.include_router(
     tags=["space-mcp"],
     dependencies=_auth,
 )
-# CLI apps. Only ``_auth`` here as well, but for a different reason: the two
-# routes that install or remove an app carry their own ``require_admin``, and
-# what is left for an ordinary account is reading the catalog and toggling its
-# own preference among apps an administrator already granted it.
-app.include_router(
-    space_cli_apps.router,
-    prefix="/api/v1/space/cli-apps",
-    tags=["space-cli-apps"],
-    dependencies=_auth,
-)
+
 app.include_router(skills.router, prefix="/api/v1/skills", tags=["skills"], dependencies=_auth)
 app.include_router(
     subagents.router, prefix="/api/v1/subagents", tags=["subagents"], dependencies=_auth
@@ -454,14 +420,7 @@ app.include_router(
     personas.router, prefix="/api/v1/personas", tags=["personas"], dependencies=_auth
 )
 app.include_router(tools_router.router, prefix="/api/v1/tools", tags=["tools"], dependencies=_auth)
-app.include_router(system.router, prefix="/api/v1/system", tags=["system"], dependencies=_auth)
 app.include_router(voice.router, prefix="/api/v1/voice", tags=["voice"], dependencies=_auth)
-app.include_router(
-    plugins_api.router, prefix="/api/v1/plugins", tags=["plugins"], dependencies=_auth
-)
-app.include_router(
-    agent_config.router, prefix="/api/v1/agent-config", tags=["agent-config"], dependencies=_auth
-)
 app.include_router(
     partners.router, prefix="/api/v1/partners", tags=["partners"], dependencies=_admin
 )
@@ -475,10 +434,6 @@ app.include_router(
 # Unified WebSocket endpoint — auth is checked inside the handler (WebSockets
 # cannot use FastAPI dependencies in the standard way)
 app.include_router(unified_ws.router, prefix="/api/v1", tags=["unified-ws"])
-
-# Quiz AI-judge WebSocket — same caveat as unified_ws above; auth is checked
-# inside the handler so the WS upgrade isn't rejected by an HTTP-style dep.
-app.include_router(quiz_judge.router, prefix="/api/v1", tags=["quiz-judge"])
 
 
 @app.get("/")

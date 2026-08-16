@@ -30,7 +30,6 @@ class PromptManager:
         "research",
         "solve",
         "question",
-        "co_writer",
         "math_animator",
         "book",
         "notebook",
@@ -42,7 +41,6 @@ class PromptManager:
     # Map module_name → on-disk path component under deeptutor/
     NON_AGENT_MODULES: dict[str, str] = {
         "book": "book",
-        "co_writer": "co_writer",
         "capabilities": "capabilities",
     }
 
@@ -62,7 +60,7 @@ class PromptManager:
         Load prompts for an agent.
 
         Args:
-            module_name: Module name (research, solve, question, co_writer)
+            module_name: Module name (research, solve, question)
             agent_name: Agent name (filename without .yaml)
             language: Language code ('zh' or 'en')
             subdirectory: Optional subdirectory (e.g., 'solve_loop' for solve module)
