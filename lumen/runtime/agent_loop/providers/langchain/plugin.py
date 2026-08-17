@@ -309,9 +309,7 @@ class _LangChainAgentLoopAdapter(AgentLoopService):
                 elif kind == "on_chain_end" and name == "LangGraph":
                     output_data = event.get("data", {}).get("output", {})
                     msg_list = (
-                        output_data.get("messages", [])
-                        if isinstance(output_data, dict)
-                        else []
+                        output_data.get("messages", []) if isinstance(output_data, dict) else []
                     )
                     if msg_list and isinstance(msg_list[-1], AIMessage):
                         last = msg_list[-1]

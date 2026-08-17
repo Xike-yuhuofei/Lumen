@@ -55,9 +55,7 @@ def _stub_resolver(
         asked.append(kb_ref)
         return manifests.get(kb_ref)
 
-    monkeypatch.setattr(
-        "deeptutor.services.user.resolve_kb_manifest", _resolve, raising=False
-    )
+    monkeypatch.setattr("deeptutor.services.user.resolve_kb_manifest", _resolve, raising=False)
     return asked
 
 
@@ -148,9 +146,7 @@ async def test_unreadable_kb_costs_the_manifest_not_the_turn(
             raise OSError("permission denied")
         return _manifest(kb_ref, "a.pdf")
 
-    monkeypatch.setattr(
-        "deeptutor.services.user.resolve_kb_manifest", _boom, raising=False
-    )
+    monkeypatch.setattr("deeptutor.services.user.resolve_kb_manifest", _boom, raising=False)
     context = UnifiedContext(
         session_id="s1", user_message="how many?", knowledge_bases=["broken", "course"]
     )

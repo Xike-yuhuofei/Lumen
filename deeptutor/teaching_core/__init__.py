@@ -5,6 +5,7 @@ The canonical teaching stack now lives in ``lumen.modes.learn``
 re-exports it for existing importers only; new code must import from
 ``lumen.modes.learn`` directly.
 """
+
 from lumen.modes.learn.adapters import learner_state_from_progress
 from lumen.modes.learn.application.teaching_service import TeachingService
 from lumen.modes.learn.domain.teaching_graph import TeachingKnowledgeGraph

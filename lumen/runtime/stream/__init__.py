@@ -5,6 +5,7 @@ for streaming infrastructure (``StreamEvent`` / ``StreamBus``).  The legacy
 path ``deeptutor.core.stream`` / ``deeptutor.core.stream_bus`` re-exports it so
 existing importers keep working.
 """
+
 from lumen.runtime.stream.bus import (
     StreamBus,
     get_bus,

@@ -75,7 +75,9 @@ class ScriptedLangChainModel(BaseChatModel):
             ]
         )
 
-    async def _astream(self, messages, stop=None, run_manager=None, **kwargs) -> AsyncIterator[ChatGenerationChunk]:
+    async def _astream(
+        self, messages, stop=None, run_manager=None, **kwargs
+    ) -> AsyncIterator[ChatGenerationChunk]:
         step = self._script[min(self._index, len(self._script) - 1)]
         self._index += 1
         if isinstance(step, str):

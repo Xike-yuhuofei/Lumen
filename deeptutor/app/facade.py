@@ -76,9 +76,7 @@ class DeepTutorApp:
             return "mode.learn"
         if mode == "chat":
             return "chat"
-        raise ValueError(
-            f"Unknown capability `{requested}`. Available: chat, mode.learn"
-        )
+        raise ValueError(f"Unknown capability `{requested}`. Available: chat, mode.learn")
 
     @staticmethod
     def _chat_manifest() -> dict[str, Any]:

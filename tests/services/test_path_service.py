@@ -30,9 +30,7 @@ def test_public_output_filter_allows_only_whitelisted_artifacts(tmp_path: Path) 
         denied.write_text("{}", encoding="utf-8")
 
         assert (
-            service.is_public_output_path(
-                "workspace/chat/_detached_code_execution/run_1/plot.png"
-            )
+            service.is_public_output_path("workspace/chat/_detached_code_execution/run_1/plot.png")
             is True
         )
         assert service.is_public_output_path("settings/model_catalog.json") is False
@@ -53,9 +51,7 @@ def test_public_output_filter_rejects_chat_exec_artifacts(tmp_path: Path) -> Non
         service._user_data_dir = tmp_path / "data" / "user"
 
         # exec paths are no longer whitelisted as public output paths.
-        assert (
-            service.is_public_output_path("workspace/chat/chat/turn_1/exec/report.pdf") is False
-        )
+        assert service.is_public_output_path("workspace/chat/chat/turn_1/exec/report.pdf") is False
     finally:
         service._project_root = original_root
         service._user_data_dir = original_user_dir

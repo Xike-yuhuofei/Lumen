@@ -194,9 +194,7 @@ async def test_production_binding_uses_real_llm_and_retrieval():
 
     try:
         assert isinstance(root.require("runtime.llm"), _LLMServiceAdapter)
-        assert isinstance(
-            root.require("knowledge.retrieval"), _KnowledgeRetrievalServiceAdapter
-        )
+        assert isinstance(root.require("knowledge.retrieval"), _KnowledgeRetrievalServiceAdapter)
         assert isinstance(root.require("runtime.tools"), _ToolServiceAdapter)
         assert isinstance(root.require("memory"), _MemoryServiceAdapter)
         assert isinstance(root.require("notebook"), _NotebookServiceAdapter)

@@ -6,9 +6,7 @@ from deeptutor.capabilities.mastery import MasteryLoopCapability
 from deeptutor.capabilities.protocol import LoopCapability
 from deeptutor.core.context import UnifiedContext
 
-LOOP_CAPABILITIES: tuple[LoopCapability, ...] = (
-    MasteryLoopCapability(),
-)
+LOOP_CAPABILITIES: tuple[LoopCapability, ...] = (MasteryLoopCapability(),)
 
 
 def active_loop_capabilities(context: UnifiedContext) -> tuple[LoopCapability, ...]:
