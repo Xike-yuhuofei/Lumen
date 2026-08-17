@@ -65,9 +65,6 @@ def _guard_real_owner_secrets():
 @pytest.fixture(autouse=True)
 def _isolate_provider_env(monkeypatch):
     """Hide residual provider environment variables from every test."""
-    monkeypatch.delenv("CODEBUDDY_API_KEY", raising=False)
-    monkeypatch.delenv("CODEBUDDY_BASE_URL", raising=False)
-    monkeypatch.delenv("DEEPTUTOR_CODEBUDDY_BACKEND", raising=False)
     yield
 
 

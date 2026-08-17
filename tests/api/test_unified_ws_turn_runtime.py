@@ -193,10 +193,10 @@ async def test_turn_runtime_replays_events_and_materializes_messages(
     assert detail["messages"][0]["metadata"]["request_snapshot"]["masteryPathId"] == "path-1"
     # Chat capability: the raw user message stays raw. Book references are
     # still accepted in the payload metadata but no longer resolved into
-    # source entries (the DeepBook module was removed).
+    # source entries.
     assert str(captured["user_message"]) == "hello, i'm frank"
     manifest = str(captured.get("source_manifest") or "")
-    assert manifest == "", "book references no longer produce source entries (DeepBook deleted)"
+    assert manifest == "", "book references no longer produce source entries"
     source_index = (captured.get("metadata") or {}).get("source_index") or {}
     assert source_index == {}
     assert captured["metadata"] and captured["metadata"]["book_references"] == [
