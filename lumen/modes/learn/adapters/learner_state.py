@@ -33,7 +33,7 @@ from lumen.modes.learn.domain.teaching_models import (
     TeachingActionType,
     TeachingNodeType,
 )
-from lumen.modes.learn.policy.policy import due_reviews, gate_threshold
+from lumen.modes.learn.policy.policy import due_reviews, gate_threshold, goal_scope
 
 
 def learner_state_from_progress(
@@ -46,8 +46,10 @@ def learner_state_from_progress(
 
     * ``mastery``: per-node mastery levels (qualitative passes raised to 1.0).
     * ``attempts``: per-node attempt counts.
-    * ``misconceptions``: knowledge points with active / retrying error records
-      (kept only when the node is a MISCONCEPTION in ``graph``, when provided).
+    * ``misconceptions``: misconception node ids with active / retrying error
+      records — either matched on a wrong answer (``misconception_node_id``,
+      the production path) or recorded directly against a MISCONCEPTION-typed
+      node (kept for hand-built teaching graphs).
     * ``due_reviews``: review task node ids whose ``due_at`` has passed
       (resolved at ``now`` so the engine stays time-free).
     * ``pending_answer`` / ``pending_node_id``: from ``pending_question``.
@@ -63,17 +65,22 @@ def learner_state_from_progress(
     for attempt in progress.quiz_attempts:
         attempts[attempt.knowledge_point_id] = attempts.get(attempt.knowledge_point_id, 0) + 1
 
-    active_errors = {
-        rec.knowledge_point_id
-        for rec in progress.error_records
-        if rec.status in ("active", "retrying")
-    }
     misconceptions: set[str] = set()
-    if graph is not None:
-        for node_id in active_errors:
-            node = graph.node(node_id) if graph.has_node(node_id) else None
-            if node is not None and node.type == TeachingNodeType.MISCONCEPTION:
-                misconceptions.add(node_id)
+    for rec in progress.error_records:
+        if rec.status not in ("active", "retrying"):
+            continue
+        # Production path: a wrong answer matched a registered misconception.
+        if rec.misconception_node_id:
+            if graph is None or (
+                graph.has_node(rec.misconception_node_id)
+                and graph.node(rec.misconception_node_id).type == TeachingNodeType.MISCONCEPTION
+            ):
+                misconceptions.add(rec.misconception_node_id)
+            continue
+        # Hand-built-graph path: the errored node itself is a misconception.
+        if graph is not None and graph.has_node(rec.knowledge_point_id):
+            if graph.node(rec.knowledge_point_id).type == TeachingNodeType.MISCONCEPTION:
+                misconceptions.add(rec.knowledge_point_id)
 
     moment = time.time() if now is None else now
     due_review_ids = [task.knowledge_point_id for task in due_reviews(progress, now=moment)]
@@ -102,13 +109,33 @@ def goal_from_progress(
     only knowledge points present in it become targets — so an extracted graph
     whose node ids do not equal the path's kp ids never drives the engine with
     dangling targets.
+
+    Per-node mastery gates mirror ``policy.gate_threshold`` exactly (0.9 for
+    MEMORY / PROCEDURE, 1.0 for the qualitatively-gated CONCEPT / DESIGN whose
+    passes project to full mastery). This keeps the TeachingEngine and the
+    mastery-tool gates a single decision authority: the engine only reports
+    COMPLETE when ``policy.next_objective`` would too.
+
+    An explicit goal scope (``goal_kp_ids``) narrows the targets to the
+    learner's chosen objectives; prerequisites of in-scope targets still gate
+    via the prerequisite policy (out-of-scope nodes are never *targets* but
+    remain *gates*).
     """
+    scope = goal_scope(progress)
     targets: list[str] = []
+    node_thresholds: dict[str, float] = {}
     for module in sorted(progress.modules, key=lambda m: m.order):
         for kp in module.knowledge_points:
+            if scope is not None and kp.id not in scope:
+                continue
             if graph is None or graph.has_node(kp.id):
                 targets.append(kp.id)
-    return LearningGoal(name=name, target_node_ids=targets)
+                node_thresholds[kp.id] = gate_threshold(kp.type)
+    return LearningGoal(
+        name=name or progress.goal_name,
+        target_node_ids=targets,
+        node_thresholds=node_thresholds,
+    )
 
 
 def evidence_bundle_from_progress(progress: LearningProgress) -> EvidenceBundle:

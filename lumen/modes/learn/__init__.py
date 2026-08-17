@@ -2,6 +2,7 @@
 
 This is the canonical home of the Learn mode since Phase 6B1.
 """
+
 from lumen.modes.learn.contract import LearnModeService
 from lumen.modes.learn.plugin import ModeLearnPlugin
 

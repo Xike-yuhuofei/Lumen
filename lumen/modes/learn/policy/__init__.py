@@ -5,6 +5,7 @@ Owns the next-objective gate (``policy``), the mastery scoring policy
 deterministic Teaching Engine (``engine``).  Answer grading and pending
 question state live in ``lumen.modes.learn.assessment``.
 """
+
 from lumen.modes.learn.policy.engine import DEFAULT_POLICY_PRIORITY, TeachingEngine
 from lumen.modes.learn.policy.mastery import compute_mastery
 from lumen.modes.learn.policy.policy import (
@@ -23,11 +24,20 @@ from lumen.modes.learn.policy.policy import (
 from lumen.modes.learn.policy.scheduler import INTERVAL_SEQUENCES, SpacedRepetitionScheduler
 
 __all__ = [
-    "NextStep", "QUANTITATIVE_GATE", "QUALITATIVE_TYPES",
-    "gate_threshold", "is_mastered", "display_mastery",
-    "objective_status", "due_reviews", "find_knowledge_point",
-    "next_objective", "map_summary",
+    "NextStep",
+    "QUANTITATIVE_GATE",
+    "QUALITATIVE_TYPES",
+    "gate_threshold",
+    "is_mastered",
+    "display_mastery",
+    "objective_status",
+    "due_reviews",
+    "find_knowledge_point",
+    "next_objective",
+    "map_summary",
     "compute_mastery",
-    "SpacedRepetitionScheduler", "INTERVAL_SEQUENCES",
-    "DEFAULT_POLICY_PRIORITY", "TeachingEngine",
+    "SpacedRepetitionScheduler",
+    "INTERVAL_SEQUENCES",
+    "DEFAULT_POLICY_PRIORITY",
+    "TeachingEngine",
 ]

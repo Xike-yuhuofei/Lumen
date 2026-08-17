@@ -285,6 +285,12 @@ class LearningGoal(BaseModel):
     target_node_ids: list[str]
     mastery_threshold: float = 0.8
     prerequisite_threshold: float = 0.7
+    # Per-node mastery gates keyed by node id. When a node has an entry it
+    # overrides ``mastery_threshold`` for that node — this is how the engine
+    # and the per-type mastery gates (``policy.gate_threshold``) stay a single
+    # decision authority: quantitative types gate at 0.9, qualitative types
+    # gate at 1.0 (a qualitative pass projects to full mastery).
+    node_thresholds: dict[str, float] = Field(default_factory=dict)
 
     @field_validator("mastery_threshold", "prerequisite_threshold")
     @classmethod
@@ -292,6 +298,19 @@ class LearningGoal(BaseModel):
         if not 0.0 <= value <= 1.0:
             raise ValueError("threshold must be between 0 and 1")
         return value
+
+    @field_validator("node_thresholds")
+    @classmethod
+    def _valid_node_thresholds(cls, value: dict[str, float]) -> dict[str, float]:
+        for node_id, threshold in value.items():
+            if not 0.0 <= threshold <= 1.0:
+                raise ValueError(f"node_thresholds[{node_id!r}] must be between 0 and 1")
+        return value
+
+    def threshold_for(self, node_id: str) -> float:
+        """The mastery gate that applies to *node_id* (per-node override, else
+        the goal-wide threshold)."""
+        return self.node_thresholds.get(node_id, self.mastery_threshold)
 
 
 class LearningPlan(BaseModel):
