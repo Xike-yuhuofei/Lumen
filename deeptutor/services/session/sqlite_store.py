@@ -57,7 +57,7 @@ _ID_SAFE = re.compile(r"[^A-Za-z0-9_-]")
 def make_imported_session_id(source: str, external_id: str) -> str:
     """Build a deterministic, dedup-friendly id for an imported conversation.
 
-    ``source`` (e.g. ``claude_code``/``codex``) namespaces the original
+    ``source`` (e.g. ``claude_code``) namespaces the original
     session uuid so two tools that happen to reuse an id never collide; the
     determinism is what makes re-importing the same folder idempotent.
     """
@@ -1029,7 +1029,7 @@ class SQLiteSessionStore:
         messages: list[dict[str, Any]],
     ) -> dict[str, Any]:
         """Persist a pre-existing conversation (imported from an external CLI
-        such as Claude Code or Codex) as a normal session, so the chat loop can
+        such as Claude Code) as a normal session, so the chat loop can
         re-open and continue it. ``session_id`` must carry the ``imported_``
         prefix (see :data:`_IMPORTED_ID_PREFIX`). Idempotent by id: a session
         already present is left untouched.

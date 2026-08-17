@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Literal
+from typing import Any, Callable
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, ValidationError
 
 _RUNTIME_ONLY_KEYS = {
     "_persist_user_message",
@@ -14,18 +14,6 @@ _RUNTIME_ONLY_KEYS = {
 
 class ChatRequestConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
-
-
-class VisualizeRequestConfig(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    render_mode: Literal[
-        "auto",
-        "svg",
-        "chartjs",
-        "mermaid",
-        "html",
-    ] = "auto"
 
 
 def _clean_public_config(raw_config: dict[str, Any] | None) -> dict[str, Any]:
@@ -60,24 +48,16 @@ def validate_chat_request_config(raw_config: dict[str, Any] | None) -> ChatReque
     return _validate_model(ChatRequestConfig, raw_config, label="chat")
 
 
-def validate_visualize_request_config(
-    raw_config: dict[str, Any] | None,
-) -> VisualizeRequestConfig:
-    return _validate_model(VisualizeRequestConfig, raw_config, label="visualize")
-
-
 def build_request_schema(model_type: type[BaseModel]) -> dict[str, Any]:
     return model_type.model_json_schema(mode="validation")
 
 
 CAPABILITY_CONFIG_VALIDATORS: dict[str, Callable[[dict[str, Any] | None], Any]] = {
     "chat": validate_chat_request_config,
-    "visualize": validate_visualize_request_config,
 }
 
 CAPABILITY_REQUEST_SCHEMAS: dict[str, dict[str, Any]] = {
     "chat": build_request_schema(ChatRequestConfig),
-    "visualize": build_request_schema(VisualizeRequestConfig),
 }
 
 
@@ -101,10 +81,8 @@ __all__ = [
     "CAPABILITY_CONFIG_VALIDATORS",
     "CAPABILITY_REQUEST_SCHEMAS",
     "ChatRequestConfig",
-    "VisualizeRequestConfig",
     "build_request_schema",
     "get_capability_request_schema",
     "validate_capability_config",
     "validate_chat_request_config",
-    "validate_visualize_request_config",
 ]

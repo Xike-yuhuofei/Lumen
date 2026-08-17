@@ -227,7 +227,6 @@ def get_agent_params(module_name: str) -> dict:
     }
     section_map = {
         "question": ("capabilities", "question"),
-        "visualize": ("capabilities", "visualize"),
         "brainstorm": ("tools", "brainstorm"),
         "llm_probe": ("diagnostics", "llm_probe"),
     }

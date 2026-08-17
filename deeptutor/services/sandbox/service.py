@@ -3,12 +3,12 @@ Sandbox service facade.
 
 The single entry point the rest of the app uses. It owns the chosen backend,
 caches its liveness probe, enforces per-user quotas, and answers the
-capability questions the skill/exec layers ask:
+capability questions the skill/code-execution layers ask:
 
 * :func:`exec_capability_available` — does a usable sandbox of this kind
   exist at all? (drives skill ``requires.sandbox`` gating)
 * :meth:`SandboxService.isolation_level` — how strong is it? (drives the
-  exec policy gate: SYSTEM for everyone, APPLICATION for admins only)
+  code-exec policy gate: SYSTEM for everyone, APPLICATION for admins only)
 * :meth:`SandboxService.run` — execute, subject to quota.
 """
 
@@ -77,7 +77,7 @@ class SandboxService:
         :attr:`ExecResult.error`."""
         if not await self._ensure_healthy() or self._backend is None:
             return ExecResult(error=self._health_detail or t("sandbox.no_backend"))
-        # Backstop for the per-user exec grant: pipelines hide the exec tool
+        # Backstop for the per-user code-exec grant: pipelines hide the tool
         # when the grant denies it, but any path that reaches the sandbox
         # directly still answers to the same policy.
         try:

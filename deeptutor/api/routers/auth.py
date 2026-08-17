@@ -17,7 +17,7 @@ from fastapi import (
     WebSocket,
     status,
 )
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, field_validator
 
 from deeptutor.services.config import load_auth_settings
@@ -39,15 +39,11 @@ from deeptutor.services.auth import (
     authenticate,
     create_token,
     decode_token,
-    delete_user,
     get_user_info,
     is_first_user,
     list_users,
     set_avatar,
-    set_role,
 )
-from deeptutor.services.codex_auth.contracts import CodexAuthError
-from deeptutor.services.codex_auth.service import deliver_codex_oauth_callback
 
 logger = logging.getLogger(__name__)
 
@@ -351,7 +347,7 @@ def _local_admin_token_payload() -> TokenPayload:
     Mirrors the local admin identity (LOCAL_ADMIN_USERNAME / LOCAL_ADMIN_ID)
     so audit logs and self-reference checks behave the same as in multi-user
     mode. Values are kept aligned with ``local_admin_user()`` in
-    ``deeptutor/multi_user/paths.py``.
+    ``deeptutor.services.user``.
     """
     from deeptutor.services.user import LOCAL_ADMIN_ID, LOCAL_ADMIN_USERNAME
 
@@ -365,35 +361,6 @@ def _local_admin_token_payload() -> TokenPayload:
 # ---------------------------------------------------------------------------
 # Public endpoints (no auth required)
 # ---------------------------------------------------------------------------
-
-
-@router.get("/openai-codex/callback")
-async def receive_codex_oauth_callback(
-    request: Request,
-    code: str | None = None,
-    state: str | None = None,
-    error: str | None = None,
-) -> HTMLResponse:
-    headers = {"Cache-Control": "no-store"}
-    try:
-        callback_state = state if len(request.query_params.getlist("state")) == 1 else None
-        await deliver_codex_oauth_callback(code, callback_state, error)
-    except CodexAuthError as exc:
-        return HTMLResponse(
-            (
-                "<!doctype html><title>Lumen Codex</title>"
-                "<p>Authentication could not be received. Return to Lumen and try again.</p>"
-            ),
-            status_code=exc.http_status,
-            headers=headers,
-        )
-    return HTMLResponse(
-        (
-            "<!doctype html><title>Lumen Codex</title>"
-            "<p>Authentication received. You can return to Lumen.</p>"
-        ),
-        headers=headers,
-    )
 
 
 @router.get("/status", response_model=AuthStatusResponse)
@@ -692,108 +659,3 @@ async def get_avatar_image(
 
 
 # ---------------------------------------------------------------------------
-# Admin-only endpoints
-# ---------------------------------------------------------------------------
-
-
-@router.get("/users", response_model=list[UserInfo])
-async def get_users(_: TokenPayload = Depends(require_admin)) -> list[UserInfo]:
-    """List all registered users. Requires admin role."""
-    return [UserInfo(**u) for u in list_users()]
-
-
-@router.post("/users", status_code=status.HTTP_201_CREATED)
-async def admin_create_user(
-    body: RegisterRequest,
-    current: TokenPayload = Depends(require_admin),
-) -> dict:
-    """Admin-only: create a new user account.
-
-    Replaces the public ``/register`` flow once the first admin exists. The
-    new account is always created with role=``user``; admins can promote
-    later via ``PUT /users/{username}/role``.
-    """
-    if not AUTH_ENABLED:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Auth is disabled — user creation is not available.",
-        )
-
-    existing = {u["username"] for u in list_users()}
-    if body.username in existing:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Username already taken",
-        )
-
-    add_user(body.username, body.password)
-    user_id = ""
-    role = "user"
-    for item in list_users():
-        if item.get("username") == body.username:
-            user_id = str(item.get("id") or "")
-            role = str(item.get("role") or "user")
-            break
-    logger.info(
-        f"Admin '{current.username if current else 'local'}' created user '{body.username}' "
-        f"(role={role!r})"
-    )
-    return {
-        "ok": True,
-        "user_id": user_id,
-        "username": body.username,
-        "role": role,
-        "is_admin": role == "admin",
-    }
-
-
-@router.delete("/users/{username}", status_code=status.HTTP_200_OK)
-async def remove_user(
-    username: str,
-    current: TokenPayload = Depends(require_admin),
-) -> dict:
-    """Delete a user. Admins cannot delete their own account."""
-    if current and username == current.username:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="You cannot delete your own account",
-        )
-
-    # Capture the id before the record disappears so the avatar file can go too.
-    info = get_user_info(username)
-
-    removed = delete_user(username)
-    if not removed:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-
-    user_id = str(info.get("id") or "") if info else ""
-    if user_id and _USER_ID_RE.match(user_id):
-        from deeptutor.services.user import delete_avatar_file
-
-        delete_avatar_file(user_id)
-
-    logger.info(f"Admin '{current.username if current else 'local'}' deleted user '{username}'")
-    return {"ok": True}
-
-
-@router.put("/users/{username}/role", status_code=status.HTTP_200_OK)
-async def update_user_role(
-    username: str,
-    body: SetRoleRequest,
-    current: TokenPayload = Depends(require_admin),
-) -> dict:
-    """Change a user's role. Admins cannot change their own role."""
-    if current and username == current.username:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="You cannot change your own role",
-        )
-
-    updated = set_role(username, body.role)
-    if not updated:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-
-    logger.info(
-        f"Admin '{current.username if current else 'local'}' set '{username}' role to {body.role!r}"
-    )
-    return {"ok": True, "username": username, "role": body.role}

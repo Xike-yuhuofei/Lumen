@@ -10,7 +10,7 @@ from typing import Any
 from deeptutor.capabilities.mastery import MASTERY_TOOL_TYPES
 from deeptutor.core.tool_protocol import BaseTool, ToolDefinition, ToolParameter, ToolResult
 from deeptutor.knowledge.manifest import KB_FILES_DEFAULT_LIMIT, KB_FILES_MAX_LIMIT
-from deeptutor.tools.exec_tool import ExecTool
+
 from deeptutor.tools.prompting import load_prompt_hints
 
 logger = logging.getLogger(__name__)
@@ -264,11 +264,11 @@ class WebSearchTool(_PromptHintsMixin, BaseTool):
 class CodeExecutionTool(_PromptHintsMixin, BaseTool):
     """Compile and run a code snippet inside the execution sandbox.
 
-    A typed front-end over the same sandbox ``exec`` uses: the model passes
+    A typed front-end over the sandbox runner: the model passes
     ready-to-run source as ``code`` + a ``language``; we write it into the
     turn's workspace, build the per-language compile/run command, and execute
     it through :mod:`deeptutor.services.sandbox`. No second LLM call, and the
-    same OS-level isolation + quota as ``exec`` — so it inherits exec's gating
+    same OS-level isolation + quota — so it inherits the sandbox gating
     (unavailable when no sandbox backend is configured).
     """
 
@@ -361,7 +361,7 @@ class CodeExecutionTool(_PromptHintsMixin, BaseTool):
         timeout = max(1, min(timeout, 300))
 
         # ``_sandbox_*`` kwargs are injected server-side by the pipeline; the
-        # LLM never supplies them. Mirror ExecTool's contract.
+        # LLM never supplies them.
         user_id = str(kwargs.get("_sandbox_user_id") or "anonymous")
         workdir = str(kwargs.get("_sandbox_workdir") or "").strip()
         mounts = tuple(kwargs.get("_sandbox_mounts") or ())
@@ -914,69 +914,6 @@ class WriteNoteTool(_PromptHintsMixin, BaseTool):
         )
 
 
-class GithubTool(_PromptHintsMixin, BaseTool):
-    """Read-only GitHub queries via `gh`. Always auto-mounted; the
-    underlying call gracefully reports "gh unavailable" when the CLI
-    isn't installed on the server."""
-
-    _ALLOWED_QUERY_TYPES = ("pr", "issue", "run", "repo", "api")
-
-    def get_definition(self) -> ToolDefinition:
-        return ToolDefinition(
-            name="github",
-            description=(
-                "Read-only queries against GitHub PRs / issues / repos / "
-                "CI runs via the gh CLI. This tool cannot write — no "
-                "comments, no closes, no merges."
-            ),
-            parameters=[
-                ToolParameter(
-                    name="query_type",
-                    type="string",
-                    description=("One of 'pr', 'issue', 'run', 'repo', 'api'."),
-                    enum=list(_ALLOWED_QUERY_TYPES := ("pr", "issue", "run", "repo", "api")),
-                ),
-                ToolParameter(
-                    name="target",
-                    type="string",
-                    description=(
-                        "owner/repo[#number] or full URL for pr/issue; "
-                        "owner/repo for run/repo; gh-api relative path "
-                        "for api."
-                    ),
-                ),
-            ],
-        )
-
-    async def execute(self, **kwargs: Any) -> ToolResult:
-        from deeptutor.tools.github_query import run_github_query
-
-        outcome = await run_github_query(
-            query_type=str(kwargs.get("query_type") or ""),
-            target=str(kwargs.get("target") or ""),
-        )
-        if not outcome.ok:
-            return ToolResult(
-                content=outcome.error,
-                success=False,
-                metadata={"query_type": outcome.query_type, "target": outcome.target},
-            )
-        return ToolResult(
-            content=outcome.output,
-            sources=[
-                {
-                    "type": "github",
-                    "query_type": outcome.query_type,
-                    "target": outcome.target,
-                }
-            ],
-            metadata={
-                "query_type": outcome.query_type,
-                "target": outcome.target,
-            },
-        )
-
-
 class AskUserTool(_PromptHintsMixin, BaseTool):
     """Pause the turn mid-loop to ask the user a clarifying question.
 
@@ -1121,148 +1058,6 @@ class AskUserTool(_PromptHintsMixin, BaseTool):
         )
 
 
-class ReadSkillTool(_PromptHintsMixin, BaseTool):
-    """Read a skill package's SKILL.md or one of its reference files.
-
-    The system prompt carries only a one-line manifest per skill; this tool
-    is how the model pulls the full playbook on demand (progressive
-    disclosure). Multi-user-safe: skills resolve via the active user's
-    workspace (user layer shadows builtin), plus admin-assigned skills for
-    non-admin users.
-    """
-
-    def get_definition(self) -> ToolDefinition:
-        return ToolDefinition(
-            name="read_skill",
-            description=(
-                "Read a skill's full playbook (SKILL.md) or one of its "
-                "reference files. Call this BEFORE attempting a task that "
-                "matches a skill listed in the Skills section, then follow "
-                "the returned instructions."
-            ),
-            parameters=[
-                ToolParameter(
-                    name="name",
-                    type="string",
-                    description="Skill name exactly as listed in the Skills section.",
-                ),
-                ToolParameter(
-                    name="file",
-                    type="string",
-                    description=(
-                        "Optional file inside the skill package (e.g. "
-                        "'references/api.md'). Defaults to SKILL.md."
-                    ),
-                    required=False,
-                ),
-            ],
-        )
-
-    async def execute(self, **kwargs: Any) -> ToolResult:
-        from deeptutor.services.skill import get_skill_service
-        from deeptutor.services.skill.service import (
-            InvalidSkillNameError,
-            InvalidSkillPathError,
-            SkillNotFoundError,
-            SkillService,
-        )
-
-        name = str(kwargs.get("name") or "").strip()
-        rel_path = str(kwargs.get("file") or "SKILL.md").strip() or "SKILL.md"
-        if not name:
-            raise ValueError("read_skill requires a skill name.")
-
-        services: list[SkillService] = [get_skill_service()]
-        try:
-            from deeptutor.services.user import get_current_user
-            from deeptutor.services.user import get_admin_path_service
-            from deeptutor.services.user import assigned_skill_ids
-
-            user = get_current_user()
-            if not user.is_admin and name in assigned_skill_ids(user.id):
-                services.append(
-                    SkillService(root=get_admin_path_service().get_workspace_dir() / "skills")
-                )
-        except Exception:
-            logger.debug("read_skill: assigned-skill scope unavailable", exc_info=True)
-
-        for service in services:
-            try:
-                content = service.read_skill_file(name, rel_path)
-            except SkillNotFoundError:
-                continue
-            except (InvalidSkillNameError, InvalidSkillPathError) as exc:
-                return ToolResult(content=f"(read_skill error: {exc})", success=False)
-            return ToolResult(
-                content=content,
-                metadata={"skill": name, "file": rel_path, "char_count": len(content)},
-            )
-        return ToolResult(
-            content=(
-                f"(skill not found: {name!r} — use a name exactly as listed in the Skills section)"
-            ),
-            success=False,
-        )
-
-
-class LoadToolsTool(_PromptHintsMixin, BaseTool):
-    """Load deferred (Extended) tools' schemas into the current session.
-
-    The ``_tool_loader`` kwarg is injected server-side by the chat pipeline
-    (a per-turn :class:`DeferredToolLoader`); the LLM only supplies
-    ``names``.
-    """
-
-    def get_definition(self) -> ToolDefinition:
-        return ToolDefinition(
-            name="load_tools",
-            description=(
-                "Load one or more Extended Tools (listed in the Extended "
-                "Tools section) so they become callable. Call this BEFORE "
-                "using any extended tool; loaded tools stay available for "
-                "the rest of the session."
-            ),
-            parameters=[
-                ToolParameter(
-                    name="names",
-                    type="array",
-                    description=(
-                        "Exact tool names to load, as listed in the Extended Tools section."
-                    ),
-                    items={"type": "string"},
-                ),
-            ],
-        )
-
-    async def execute(self, **kwargs: Any) -> ToolResult:
-        loader = kwargs.get("_tool_loader")
-        names = kwargs.get("names")
-        if loader is None:
-            return ToolResult(
-                content="(load_tools is unavailable in this context)",
-                success=False,
-            )
-        if not isinstance(names, list) or not names:
-            raise ValueError("load_tools requires a non-empty `names` array.")
-        outcome = loader.load(names)
-        parts: list[str] = []
-        if outcome["loaded"]:
-            parts.append("Loaded (now callable): " + ", ".join(outcome["loaded"]))
-        if outcome["already_loaded"]:
-            parts.append("Already loaded: " + ", ".join(outcome["already_loaded"]))
-        if outcome["unknown"]:
-            parts.append(
-                "Unknown: "
-                + ", ".join(outcome["unknown"])
-                + " (use exact names from the Extended Tools section)"
-            )
-        return ToolResult(
-            content="\n".join(parts) or "(nothing to load)",
-            success=not outcome["unknown"] or bool(outcome["loaded"]),
-            metadata=outcome,
-        )
-
-
 class CronTool(_PromptHintsMixin, BaseTool):
     """Schedule, list, and cancel timed tasks for the current conversation.
 
@@ -1370,13 +1165,9 @@ BUILTIN_TOOL_TYPES: tuple[type[BaseTool], ...] = (
     ReadSourceTool,
     ReadMemoryTool,
     WriteMemoryTool,
-    ReadSkillTool,
-    LoadToolsTool,
-    ExecTool,
     WebFetchTool,
     ListNotebookTool,
     WriteNoteTool,
-    GithubTool,
     AskUserTool,
     CronTool,
     *MASTERY_TOOL_TYPES,
@@ -1421,13 +1212,9 @@ CONFIGURABLE_BUILTIN_TOOL_NAMES: tuple[str, ...] = (
     "read_source",
     "read_memory",
     "write_memory",
-    "read_skill",
     "list_notebook",
     "write_note",
     "web_fetch",
-    "github",
-    "exec",
-    "load_tools",
     "cron",
     "ask_user",
 )
@@ -1451,14 +1238,10 @@ __all__ = [
     "AskUserTool",
     "BrainstormTool",
     "CodeExecutionTool",
-    "ExecTool",
-    "GithubTool",
     "KbFilesTool",
     "ListNotebookTool",
     "RAGTool",
-    "LoadToolsTool",
     "ReadMemoryTool",
-    "ReadSkillTool",
     "ReadSourceTool",
     "ReasonTool",
     "WebFetchTool",

@@ -22,11 +22,12 @@ DEFAULT_SYSTEM_SETTINGS: dict[str, Any] = {
     "cors_origins": [],
     "disable_ssl_verify": False,
     "chat_attachment_dir": "",
-    # Enable the restricted-subprocess code-execution sandbox (the `exec` /
-    # `code_execution` tools the office skills — docx/pdf/pptx/xlsx — run on).
+    # Enable the restricted-subprocess code-execution sandbox (the
+    # `code_execution` tool and office skills — docx/pdf/pptx/xlsx — run on).
     # Default on so document generation works out of the box across all
     # deployment shapes; a stronger backend (runner sidecar / bwrap) still
-    # takes precedence when available. Set false to disable host-side exec.
+    # takes precedence when available. Set false to disable host-side
+    # subprocess execution.
     "sandbox_allow_subprocess": True,
     # Chat attachment policy. Size caps gate what the composer accepts and
     # what the turn runtime / partner upload endpoints extract; the char

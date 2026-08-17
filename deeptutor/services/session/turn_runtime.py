@@ -786,7 +786,7 @@ class TurnRuntimeManager:
             try:
                 # Personal (owner-bound) profiles live in the user's own
                 # catalog, so validating against the shared one alone would
-                # reject a Codex model the user signed in for themselves —
+                # reject a model the user configured for themselves —
                 # the same merge the resolution path performs (#781).
                 apply_llm_selection_to_catalog(
                     merge_personal_llm_profiles(get_model_catalog_service().load()),
@@ -1233,7 +1233,6 @@ class TurnRuntimeManager:
 
         try:
             from deeptutor.agents.notebook import NotebookAnalysisAgent
-            from deeptutor.book.context import build_book_context
             from deeptutor.core.context import Attachment, UnifiedContext
             from deeptutor.runtime.orchestrator import ChatOrchestrator
             from deeptutor.services.memory import get_memory_store
@@ -1245,7 +1244,6 @@ class TurnRuntimeManager:
             )
             from deeptutor.services.notebook import get_notebook_manager
             from deeptutor.services.session.context_builder import ContextBuilder
-            from deeptutor.services.skill import get_skill_service
 
             request_config = dict(payload.get("config", {}) or {})
             followup_question_context = _extract_followup_question_context(request_config)
@@ -1276,13 +1274,12 @@ class TurnRuntimeManager:
             notebook_references = payload.get("notebook_references", []) or []
             history_references = payload.get("history_references", []) or []
             question_notebook_references = payload.get("question_notebook_references", []) or []
-            book_context_result = build_book_context(payload.get("book_references", []) or [])
-            book_references = book_context_result.references
+            book_references: list[dict[str, Any]] = payload.get("book_references", []) or []
             memory_references = _extract_memory_references(payload)
             notebook_context = ""
             history_context = ""
             question_bank_context = ""
-            book_context = book_context_result.text
+            book_context = ""
 
             import base64 as _b64
             import uuid as _uuid
@@ -1401,11 +1398,8 @@ class TurnRuntimeManager:
             # token). Resolution: the user's own workspace first; non-admin
             # users fall back to admin-authored presets (personas carry no
             # privileged workflow, so no grant gate applies).
-            from deeptutor.services.user import get_current_user
-            from deeptutor.services.user import get_admin_path_service
-            from deeptutor.services.user import assigned_skill_ids
             from deeptutor.services.persona import PersonaService, get_persona_service
-            from deeptutor.services.skill.service import SkillService, render_skills_manifest
+            from deeptutor.services.user import get_current_user
 
             current_user = get_current_user()
             requested_persona = str(payload.get("persona") or "").strip()
@@ -1418,32 +1412,8 @@ class TurnRuntimeManager:
                     ).load_for_context(requested_persona)
             active_persona = requested_persona if persona_context else ""
 
-            # Skills: never user-selected per turn. The model sees a
-            # one-line manifest of every skill visible to this user (own +
-            # builtin, plus admin-assigned for non-admin users) and pulls
-            # full content on demand via ``read_skill``. ``always`` skills
-            # are the exception — their bodies are injected eagerly.
-            user_skill_service = get_skill_service()
-            skill_entries = user_skill_service.summary_entries()
-            always_blocks = [user_skill_service.load_always_for_context()]
-            if not current_user.is_admin:
-                assigned_service = SkillService(
-                    root=get_admin_path_service().get_workspace_dir() / "skills",
-                    builtin_root=None,
-                )
-                allowed_skills = assigned_skill_ids(current_user.id)
-                assigned_entries = [
-                    e for e in assigned_service.summary_entries() if e.name in allowed_skills
-                ]
-                skill_entries = skill_entries + assigned_entries
-                always_blocks.append(
-                    assigned_service.load_for_context(
-                        [e.name for e in assigned_entries if e.always and e.available]
-                    )
-                )
-            skills_manifest = "\n\n".join(
-                part for part in (*always_blocks, render_skills_manifest(skill_entries)) if part
-            )
+            # Skills: removed (Skill Framework deleted).
+            skills_manifest = ""
 
             # Chat capability uses the lightweight manifest + read_source
             # affordance (no upstream LLM call, no wholesale-dump into the
@@ -1673,7 +1643,7 @@ class TurnRuntimeManager:
                     "book_references": book_references,
                     "mastery_path_id": _mastery_path_id(payload.get("mastery_path_id")),
                     "book_context": book_context,
-                    "book_context_warnings": book_context_result.warnings,
+                    "book_context_warnings": [],
                     "memory_references": memory_references,
                     "question_bank_context": question_bank_context,
                     "memory_context": memory_context,

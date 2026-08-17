@@ -77,7 +77,6 @@ def test_run_command_json_mode(monkeypatch) -> None:
 def test_builtin_capability_aliases_resolve_to_canonical_names() -> None:
     runtime = DeepTutorApp()
 
-    assert runtime.resolve_capability("viz") == "visualize"
     assert runtime.resolve_capability("mastery") == "mastery_path"
     with pytest.raises(ValueError, match="Unknown capability `auto`"):
         runtime.resolve_capability("auto")

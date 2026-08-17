@@ -11,10 +11,6 @@ _CAPABILITY_DESCRIPTIONS: dict[str, dict[str, str]] = {
         "en": "Structured mastery-based learning with spaced repetition.",
         "zh": "结构化掌握式学习，结合间隔复习。",
     },
-    "visualize": {
-        "en": "Create visual explanations such as SVG, charts, Mermaid, or interactive HTML.",
-        "zh": "生成 SVG、图表、Mermaid 或交互式 HTML 等可视化讲解。",
-    },
 }
 
 _TOOL_DESCRIPTIONS: dict[str, dict[str, str]] = {
@@ -25,10 +21,6 @@ _TOOL_DESCRIPTIONS: dict[str, dict[str, str]] = {
     "code_execution": {
         "en": "Run sandboxed Python code for computation and data exploration.",
         "zh": "在沙箱中运行 Python，用于计算和数据探索。",
-    },
-    "exec": {
-        "en": "Run shell commands inside an isolated sandbox workspace.",
-        "zh": "在隔离沙箱工作区中运行 shell 命令。",
     },
     "kb_files": {
         "en": "List the documents a knowledge base holds, with the total count.",

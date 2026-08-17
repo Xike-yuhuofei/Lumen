@@ -1,4 +1,4 @@
-"""Configurable-tool surface shared by the partners and multi-user admin APIs.
+"""Configurable-tool surface shared by the partners and admin APIs.
 
 ``tools`` mirrors the user-toggleable system tools (the same pool the chat
 composer / settings expose); ``builtin_tools`` lists the auto-mounted built-in

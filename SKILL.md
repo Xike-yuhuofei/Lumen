@@ -6,7 +6,7 @@
 
 Use this skill when the user wants to:
 - Set up or configure Lumen
-- Chat with Lumen or run a capability (deep solve, quiz generation, deep research, visualize, mastery path)
+- Chat with Lumen or run a capability (quiz generation, deep research, visualize, mastery path)
 - Create, manage, or search knowledge bases
 - Create, manage, or run Partners (IM-connected companions)
 - Search, install, or manage skills from a hub (ClawHub)

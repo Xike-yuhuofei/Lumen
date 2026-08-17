@@ -131,13 +131,6 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Failed to start EventBus: {e}")
 
-    try:
-        from deeptutor.services.cron import get_cron_service
-
-        await get_cron_service().start()
-    except Exception as e:
-        logger.warning(f"Failed to start cron service: {e}")
-
     # Migrate any v1 memory files (PROFILE.md / SUMMARY.md) into a
     # backup folder so the v2 three-layer subsystem starts clean.
     try:
@@ -153,14 +146,6 @@ async def lifespan(app: FastAPI):
 
     # Execute on shutdown
     logger.info("Application shutdown")
-
-    # Stop cron scheduler
-    try:
-        from deeptutor.services.cron import get_cron_service
-
-        await get_cron_service().stop()
-    except Exception as e:
-        logger.warning(f"Failed to stop cron service: {e}")
 
     # Close pooled LLM SDK clients so their keep-alive sockets and transports
     # are released deterministically instead of waiting for interpreter GC.
@@ -272,7 +257,6 @@ except Exception:
 from deeptutor.api.routers import (
     attachments,
     auth,
-    book,
     knowledge,
     mastery_path,
     memory,
@@ -281,13 +265,9 @@ from deeptutor.api.routers import (
     personas,
     sessions,
     settings,
-    skills,
     unified_ws,
-    voice,
 )
-from deeptutor.api.routers import (
-    tools as tools_router,
-)
+from deeptutor.api.routers import tools as tools_router
 
 # Auth router is public — login/logout/register/status require no token
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
@@ -295,10 +275,9 @@ app.include_router(outputs.router, prefix="/api/outputs", tags=["outputs"])
 
 # All other routers require a valid session when AUTH_ENABLED=true.
 # require_auth is a no-op when AUTH_ENABLED=false, so this is safe for local use.
-from deeptutor.api.routers.auth import require_admin, require_auth  # noqa: E402
+from deeptutor.api.routers.auth import require_auth  # noqa: E402
 
 _auth = [Depends(require_auth)]
-_admin = [Depends(require_admin)]
 
 app.include_router(
     knowledge.router, prefix="/api/v1/knowledge", tags=["knowledge"], dependencies=_auth
@@ -314,7 +293,6 @@ app.include_router(
 app.include_router(
     notebook.router, prefix="/api/v1/notebook", tags=["notebook"], dependencies=_auth
 )
-app.include_router(book.router, prefix="/api/v1/book", tags=["book"], dependencies=_auth)
 app.include_router(memory.router, prefix="/api/v1/memory", tags=["memory"], dependencies=_auth)
 
 app.include_router(
@@ -334,12 +312,10 @@ app.include_router(
     settings.router, prefix="/api/v1/settings", tags=["settings"], dependencies=_auth
 )
 
-app.include_router(skills.router, prefix="/api/v1/skills", tags=["skills"], dependencies=_auth)
 app.include_router(
     personas.router, prefix="/api/v1/personas", tags=["personas"], dependencies=_auth
 )
 app.include_router(tools_router.router, prefix="/api/v1/tools", tags=["tools"], dependencies=_auth)
-app.include_router(voice.router, prefix="/api/v1/voice", tags=["voice"], dependencies=_auth)
 app.include_router(
     attachments.router,
     prefix="/api/attachments",

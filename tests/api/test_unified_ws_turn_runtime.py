@@ -13,15 +13,6 @@ async def _noop_async(*_args, **_kwargs):
     return None
 
 
-def _fake_skill_service() -> SimpleNamespace:
-    return SimpleNamespace(
-        summary_entries=lambda: [],
-        load_always_for_context=lambda: "",
-        load_for_context=lambda _skills: "",
-        list_skills=lambda: [],
-    )
-
-
 def _fake_persona_service() -> SimpleNamespace:
     # Non-empty render so the resolved persona is recorded in the snapshot.
     return SimpleNamespace(
@@ -141,23 +132,11 @@ async def test_turn_runtime_replays_events_and_materializes_messages(
     )
     monkeypatch.setattr("deeptutor.runtime.orchestrator.ChatOrchestrator", FakeOrchestrator)
     monkeypatch.setattr(
-        "deeptutor.book.context.build_book_context",
-        lambda *_args, **_kwargs: SimpleNamespace(
-            text="## Page: Signal Basics\nA selected page.",
-            references=[{"book_id": "book-1", "page_ids": ["page-1"]}],
-            warnings=[],
-        ),
-    )
-    monkeypatch.setattr(
         "deeptutor.services.memory.get_memory_store",
         lambda: SimpleNamespace(
             read_l3_concat=lambda: "",
             emit=_noop_async,
         ),
-    )
-    monkeypatch.setattr(
-        "deeptutor.services.skill.get_skill_service",
-        _fake_skill_service,
     )
     monkeypatch.setattr(
         "deeptutor.services.persona.get_persona_service",
@@ -212,20 +191,14 @@ async def test_turn_runtime_replays_events_and_materializes_messages(
         {"book_id": "book-1", "page_ids": ["page-1"]}
     ]
     assert detail["messages"][0]["metadata"]["request_snapshot"]["masteryPathId"] == "path-1"
-    # Chat capability now routes attached sources through the manifest +
-    # ``read_source`` tool instead of inlining ``[Book Context]`` into the
-    # user message. The raw user message stays raw; the book payload
-    # surfaces in ``context.source_manifest`` and ``metadata.source_index``.
+    # Chat capability: the raw user message stays raw. Book references are
+    # still accepted in the payload metadata but no longer resolved into
+    # source entries (the DeepBook module was removed).
     assert str(captured["user_message"]) == "hello, i'm frank"
     manifest = str(captured.get("source_manifest") or "")
-    assert "[Attached Sources]" in manifest
-    # Book source id is now per-book (``bk-{book_id}``) so multi-book
-    # sessions can read_source each independently. The mocked book has id
-    # "book-1".
-    assert "bk-book-1" in manifest
+    assert manifest == "", "book references no longer produce source entries (DeepBook deleted)"
     source_index = (captured.get("metadata") or {}).get("source_index") or {}
-    assert "bk-book-1" in source_index
-    assert "A selected page." in source_index["bk-book-1"]
+    assert source_index == {}
     assert captured["metadata"] and captured["metadata"]["book_references"] == [
         {"book_id": "book-1", "page_ids": ["page-1"]}
     ]
@@ -311,7 +284,7 @@ async def test_turn_runtime_persists_llm_selection_in_turn_snapshot(
             emit=_noop_async,
         ),
     )
-    monkeypatch.setattr("deeptutor.services.skill.get_skill_service", _fake_skill_service)
+    
     monkeypatch.setattr("deeptutor.services.persona.get_persona_service", _fake_persona_service)
 
     selection = {"profile_id": "p-alt", "model_id": "m-alt"}
@@ -388,7 +361,7 @@ async def test_turn_runtime_session_persona_persists_falls_back_and_clears(
         "deeptutor.services.memory.get_memory_store",
         lambda: SimpleNamespace(read_l3_concat=lambda: "", emit=_noop_async),
     )
-    monkeypatch.setattr("deeptutor.services.skill.get_skill_service", _fake_skill_service)
+    
     monkeypatch.setattr("deeptutor.services.persona.get_persona_service", _fake_persona_service)
 
     async def run_turn(session_id, extra):
@@ -529,7 +502,7 @@ async def test_turn_runtime_allows_model_switching_within_same_session(
             emit=_noop_async,
         ),
     )
-    monkeypatch.setattr("deeptutor.services.skill.get_skill_service", _fake_skill_service)
+    
     monkeypatch.setattr("deeptutor.services.persona.get_persona_service", _fake_persona_service)
 
     first_selection = {"profile_id": "p-default", "model_id": "m-default"}
@@ -678,7 +651,7 @@ async def test_turn_runtime_bootstraps_question_followup_context_once(
             emit=_noop_async,
         ),
     )
-    monkeypatch.setattr("deeptutor.services.skill.get_skill_service", _fake_skill_service)
+    
     monkeypatch.setattr("deeptutor.services.persona.get_persona_service", _fake_persona_service)
 
     session, turn = await runtime.start_turn(
@@ -792,7 +765,7 @@ async def test_turn_runtime_injects_memory_and_refreshes_after_completion(
             emit=fake_emit,
         ),
     )
-    monkeypatch.setattr("deeptutor.services.skill.get_skill_service", _fake_skill_service)
+    
     monkeypatch.setattr("deeptutor.services.persona.get_persona_service", _fake_persona_service)
 
     _session, turn = await runtime.start_turn(

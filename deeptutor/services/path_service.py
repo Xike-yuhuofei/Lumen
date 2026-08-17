@@ -51,7 +51,7 @@ class PathService:
     """Runtime path manager rooted at a workspace root.
 
     The default root is the historical ``data/`` directory.  The optional
-    multi-user layer instantiates this class with ``data/users/<uid>/`` so the
+    per-user layer instantiates this class with ``data/users/<uid>/`` so the
     public API can stay the same while disk writes become scoped per user.
     """
 
@@ -150,9 +150,6 @@ class PathService:
             return candidate
 
         if len(parts) >= 5 and parts[:2] == ("workspace", "chat") and "code_runs" in parts[3:]:
-            return candidate
-
-        if len(parts) >= 5 and parts[:3] == ("workspace", "chat", "chat") and parts[4] == "exec":
             return candidate
 
         # Files a CLI app produced. One directory per turn shared by every app,
@@ -395,7 +392,7 @@ def get_path_service() -> PathService:
         import logging as _logging
 
         _logging.getLogger(__name__).warning(
-            "get_path_service() fell back to default instance; multi-user path resolution failed",
+            "get_path_service() fell back to default instance; path resolution failed",
             exc_info=True,
         )
         return PathService.get_instance()

@@ -2,7 +2,7 @@ short_description: "Run a code snippet (python/c/cpp) in an isolated sandbox; re
 when_to_use: "Use when computation, algorithm checking, or numerical verification is more reliable than mental calculation."
 input_format: "`language` (python, c, or cpp) + `code` — the complete, ready-to-run source. Optional `stdin` and `timeout` (seconds, default 30)."
 guideline: "Write complete source yourself and print results to stdout. Use code execution for objective verification, not as a substitute for explaining reasoning."
-note: "Runs in this turn's workspace under the same OS-isolated sandbox as `exec`; unavailable when no sandbox backend is configured. Save generated files to the working directory to surface them as artifacts."
+note: "Runs in this turn's workspace under the same OS-isolated sandbox as other code tools; unavailable when no sandbox backend is configured. Save generated files to the working directory to surface them as artifacts."
 phase: "verification"
 aliases:
   - name: run_code

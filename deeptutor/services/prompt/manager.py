@@ -31,7 +31,6 @@ class PromptManager:
         "question",
         "book",
         "notebook",
-        "visualize",
         "chat",
     ]
 

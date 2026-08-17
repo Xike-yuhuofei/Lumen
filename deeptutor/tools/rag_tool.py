@@ -23,7 +23,7 @@ async def rag_search(
     """Retrieve passages from ``kb_name`` and synthesise an answer.
 
     ``kb_name`` must match a knowledge base the current user can access;
-    multi-user routing is delegated to :func:`resolve_for_rag` when no
+    routing is delegated to :func:`resolve_for_rag` when no
     explicit ``kb_base_dir`` is given.
     """
     query = query.strip() if isinstance(query, str) else ""

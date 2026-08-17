@@ -2,8 +2,7 @@
 
 The browser talks only to the frontend origin. ``/api/*`` and ``/ws/*`` are
 forwarded to ``DEEPTUTOR_API_BASE_URL`` (the IPv4 loopback on the resolved
-backend port, unless a split deployment set an in-network base). Codex OAuth
-callbacks on ``/auth/callback`` are rewritten to the backend auth route.
+backend port, unless a split deployment set an in-network base).
 """
 
 from __future__ import annotations
@@ -25,8 +24,6 @@ from starlette.websockets import WebSocket, WebSocketDisconnect
 
 from deeptutor.brand import PRODUCT_NAME
 
-CODEX_CALLBACK_PATH = "/auth/callback"
-CODEX_CALLBACK_API_PATH = "/api/v1/auth/openai-codex/callback"
 DEFAULT_API_BASE = "http://127.0.0.1:8001"
 SPA_DIR_ENV = "DEEPTUTOR_SPA_DIR"
 API_BASE_ENV = "DEEPTUTOR_API_BASE_URL"
@@ -63,15 +60,12 @@ def resolve_spa_dir(raw: str | None = None) -> Path | None:
 
 
 def backend_path(pathname: str) -> str:
-    if pathname == CODEX_CALLBACK_PATH:
-        return CODEX_CALLBACK_API_PATH
     return pathname
 
 
 def is_proxied_path(pathname: str) -> bool:
     return (
-        pathname == CODEX_CALLBACK_PATH
-        or pathname.startswith("/api/")
+        pathname.startswith("/api/")
         or pathname.startswith("/ws/")
         or pathname == "/api"
         or pathname == "/ws"

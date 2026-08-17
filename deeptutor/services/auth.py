@@ -90,7 +90,7 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# User store — multi-user JSON store plus optional auth.json bootstrap user
+# User store — JSON store plus optional auth.json bootstrap user
 # ---------------------------------------------------------------------------
 
 
@@ -113,8 +113,8 @@ def _load_users() -> dict[str, dict]:
     Load the user store, migrating old flat format if needed.
 
     Priority:
-      1. multi-user identity store
-      2. auth.json username + password_hash — single-user bootstrap user
+      1. identity store (JSON user records)
+      2. auth.json username + password_hash — bootstrap admin user
 
     Old format: {"alice": "$2b$12$..."}
     New format: {"alice": {"hash": "...", "role": "admin", "created_at": "..."}}

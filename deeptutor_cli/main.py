@@ -46,7 +46,7 @@ def run_capability(
         ...,
         help=(
             "Capability name (e.g. chat, "
-            "visualize, mastery_path)."
+            "mastery_path)."
         ),
     ),
     message: str = typer.Argument(..., help="Message to send."),

@@ -1,6 +1,6 @@
 """Generated-file attachments carried by a turn's stream events.
 
-The ``exec`` / ``code_execution`` / media tools write files into the turn
+The ``code_execution`` / media tools write files into the turn
 workspace and publish them in two places: each ``tool_result`` event carries
 them in ``metadata.tool_metadata.artifacts`` the moment the tool finishes (the
 source that survives cancelled turns), and the loop's final SOURCES event

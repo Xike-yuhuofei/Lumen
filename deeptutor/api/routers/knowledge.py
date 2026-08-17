@@ -110,7 +110,7 @@ def get_kb_manager():
 def _overridden_kb_manager() -> KnowledgeBaseManager | None:
     """Return the legacy/test manager when the route-level getter is patched.
 
-    Production multi-user access control goes through ``assert_writable`` and
+    Production access control goes through ``assert_writable`` and
     ``resolve_kb``. Older tests and single-module integrations patch
     ``get_kb_manager`` directly, so we keep that seam without weakening the
     normal write guard.
@@ -999,9 +999,9 @@ async def get_rag_pipeline_preflight(provider: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# Model kinds an engine page is allowed to read/switch. ``vision`` is not a
-# catalog service (it rides on the active chat model), so it is intentionally
-# excluded here.
+# Model kinds an engine page is allowed to read/switch. Multimodal models
+# (image-in/out) are not a separate catalog service — they ride on the
+# active chat model, so they are intentionally excluded here.
 _ENGINE_MODEL_KINDS = ("llm", "embedding")
 
 

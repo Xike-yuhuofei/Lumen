@@ -11,8 +11,6 @@ from typing import Any
 import pytest
 
 from deeptutor.agents.chat.capability import ChatCapability
-from deeptutor.agents.visualize.capability import VisualizeCapability
-import deeptutor.agents.visualize.pipeline as visualize_pipeline
 from deeptutor.core.context import Attachment, UnifiedContext
 from deeptutor.core.stream import StreamEvent, StreamEventType
 from deeptutor.core.stream_bus import StreamBus
@@ -66,7 +64,6 @@ async def _collect_events(run_coro) -> list[StreamEvent]:
 def test_builtin_capability_registry_covers_documented_capabilities() -> None:
     assert set(BUILTIN_CAPABILITY_CLASSES) == {
         "chat",
-        "visualize",
         "mastery_path",
     }
 
@@ -130,64 +127,8 @@ async def test_chat_capability_streams_content_and_tool_context(
 # ``tests/agents/question/test_pipeline.py`` (plan parsing, payload
 # normalization, templates_override / mimic flow, structured emission,
 # tool wiring, history loader, etc.). The ``deep_question`` capability
-# itself was pruned in the pre-plugin cleanup — question generation is
-# now driven by the BookEngine quiz block via ``AgentCoordinator``.
+# drives question generation via the BookEngine quiz block and
+# ``AgentCoordinator``.
 
 
-@pytest.mark.asyncio
-async def test_visualize_capability_passes_attachments_to_analysis_agent(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    captured: dict[str, Any] = {}
 
-    class FakeAnalysis:
-        render_type = "svg"
-        description = "A diagram"
-        data_description = "diagram data"
-
-        def model_dump(self) -> dict[str, Any]:
-            return {
-                "render_type": self.render_type,
-                "description": self.description,
-                "data_description": self.data_description,
-            }
-
-    class FakeVisualizePipeline:
-        def __init__(self, **kwargs: Any) -> None:
-            captured["init"] = kwargs
-
-        async def run_analysis(self, **kwargs: Any) -> FakeAnalysis:
-            captured["analysis"] = kwargs
-            return FakeAnalysis()
-
-        async def run_code_generation(self, **kwargs: Any) -> str:
-            captured["code_generation"] = kwargs
-            # Valid per validate_visualization (well-formed XML + camelCase
-            # viewBox), so the capability takes the no-repair path.
-            return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"></svg>'
-
-    monkeypatch.setattr(
-        visualize_pipeline,
-        "VisualizePipeline",
-        FakeVisualizePipeline,
-    )
-    _install_module(
-        monkeypatch,
-        "deeptutor.services.llm.config",
-        get_llm_config=lambda: SimpleNamespace(api_key="k", base_url="u", api_version="v1"),
-    )
-
-    context = UnifiedContext(
-        user_message="make a figure",
-        active_capability="visualize",
-        config_overrides={"render_mode": "svg"},
-        language="en",
-        attachments=[Attachment(type="image", base64="ZmFrZQ==", filename="figure.png")],
-    )
-
-    capability = VisualizeCapability()
-    events = await _collect_events(lambda bus: capability.run(context, bus))
-
-    assert captured["analysis"]["attachments"][0].filename == "figure.png"
-    result_event = next(event for event in events if event.type == StreamEventType.RESULT)
-    assert result_event.metadata["render_type"] == "svg"

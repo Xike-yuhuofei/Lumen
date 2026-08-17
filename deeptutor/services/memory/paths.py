@@ -7,7 +7,7 @@ Layout under the per-user memory root::
     L3/<recent|profile|scope|preferences>.md  (L3, cross-surface)
     backup/<timestamp>/...                (v1 migration archive)
 
-The root itself is resolved via :class:`PathService` so the multi-user
+The root itself is resolved via :class:`PathService` so the
 context (workspace_root) is picked up at call time, not import time.
 """
 

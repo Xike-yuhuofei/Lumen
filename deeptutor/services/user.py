@@ -1,8 +1,7 @@
 """Single-user identity and access helpers for Lumen.
 
 Lumen runs as one local deployment account (the local admin). This module is
-the consolidated home for the single-user machinery that formerly lived under
-``deeptutor.multi_user`` and was already collapsed to single-user semantics:
+the consolidated home for the single-user machinery:
 identity models, path resolution, the request-local current-user context, the
 knowledge-base / model / skill / tool access helpers and the auth user store.
 

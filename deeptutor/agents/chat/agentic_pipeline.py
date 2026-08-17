@@ -198,8 +198,8 @@ class AgenticChatPipeline:
         self._respond_max_tokens = _read_int(
             chat_cfg.get("responding"), key="max_tokens", default=8000
         )
-        # Per-capability overrides (e.g. deep solve forwards its own round
-        # budget / temperature / answer-token cap, read from the solve
+        # Per-capability overrides (e.g. mastery path forwards its own round
+        # budget / temperature / answer-token cap, read from the mastery
         # settings). Chat itself passes none and keeps the chat_cfg values.
         if max_rounds is not None:
             self._max_rounds = max(1, int(max_rounds))
@@ -498,8 +498,9 @@ class AgenticChatPipeline:
 
             # A partner turn runs as a synthetic non-admin user but IS the admin
             # owner's extension (partners are anchored to the admin workspace), so
-            # exec follows the owner's authority — not the partner's "user" role.
-            # The owner still gates exec per-partner via the builtin-tool whitelist.
+            # code-execution follows the owner's authority — not the partner's
+            # "user" role.
+            # The owner still gates code-execution per-partner via the builtin-tool whitelist.
             is_partner = self._is_partner_turn(context)
 
             level = await get_sandbox_service().isolation_level()
@@ -522,7 +523,7 @@ class AgenticChatPipeline:
                     return True
             return False
         except Exception:
-            logger.warning("exec policy gate failed; disabling exec", exc_info=True)
+            logger.warning("code-exec policy gate failed; disabling", exc_info=True)
             return False
 
     def _compose_enabled_tools(self, context: UnifiedContext) -> list[str]:
@@ -535,9 +536,7 @@ class AgenticChatPipeline:
                 has_sources=True,
                 has_memory=user_has_memory(),
                 has_notebooks=user_has_notebooks(),
-                has_skills=bool(context.skills_manifest),
                 has_deferred_tools=getattr(self, "_deferred_loader", None) is not None,
-                has_exec=getattr(self, "_exec_enabled", False),
                 has_code=getattr(self, "_exec_enabled", False),
             ),
             capability_owned=self._capability_owned_tools(context),
@@ -839,7 +838,6 @@ class AgenticChatPipeline:
         task_dir = (
             get_path_service().get_task_workspace("chat", workspace_key) if workspace_key else None
         )
-        exec_dir = task_dir / "exec" if task_dir is not None else None
         if tool_name == "rag":
             kwargs.setdefault("mode", "hybrid")
         elif tool_name == "kb_files":
@@ -849,16 +847,6 @@ class AgenticChatPipeline:
             kwargs["language"] = context.language or "en"
         elif tool_name == "load_tools":
             kwargs["_tool_loader"] = self._deferred_loader
-        elif tool_name == "exec":
-            from deeptutor.services.sandbox import Mount
-
-            kwargs["_sandbox_user_id"] = self._current_user_id()
-            if exec_dir is not None:
-                exec_dir.mkdir(parents=True, exist_ok=True)
-                kwargs["_sandbox_workdir"] = str(exec_dir)
-                kwargs["_sandbox_mounts"] = (
-                    Mount(host_path=str(exec_dir), sandbox_path=str(exec_dir), read_only=False),
-                )
         elif tool_name == "code_execution":
             from deeptutor.services.sandbox import Mount
 
@@ -1288,32 +1276,32 @@ class AgenticChatPipeline:
         try:
             from deeptutor.services.path_service import get_path_service
 
-            exec_dir = (
+            code_dir = (
                 get_path_service().get_task_workspace(
                     "chat",
                     self._workspace_key(context),
                 )
-                / "exec"
+                / "code_runs"
             )
         except Exception:
             return ""
         if self.language == "zh":
             return (
                 "[本轮工作区]\n"
-                f"脚本和临时文件应写入：{exec_dir}\n"
+                f"脚本和临时文件应写入：{code_dir}\n"
                 "相对路径会解析到这个目录。需要创建 PDF、图片、表格或其他下载文件时，"
-                "直接通过 exec 写入并运行脚本（如 heredoc：python - <<'PY' … PY，"
+                "直接通过 code_execution 写入并运行脚本（如 heredoc：python - <<'PY' … PY，"
                 "或 cat > gen.py <<'EOF' … EOF 后再运行）。生成的文件会自动以可下载"
                 "卡片呈现给用户——在回答里描述你做了什么即可，不要粘贴原始 URL。"
             )
         return (
             "[Turn workspace]\n"
-            f"Scripts and temporary files should be written under: {exec_dir}\n"
+            f"Scripts and temporary files should be written under: {code_dir}\n"
             "Relative paths resolve to this directory. When creating PDFs, images, "
             "spreadsheets, or other downloadable files, write and run scripts directly "
-            "through exec (e.g. a heredoc: python - <<'PY' … PY, or cat > gen.py <<'EOF' "
-            "… EOF then run it). Generated files are shown to the user automatically as "
-            "downloadable cards — describe what you made, do not paste raw URLs."
+            "through code_execution (e.g. a heredoc: python - <<'PY' … PY, or cat > gen.py "
+            "<<'EOF' … EOF then run it). Generated files are shown to the user automatically "
+            "as downloadable cards — describe what you made, do not paste raw URLs."
         )
 
     def _t(self, key: str, default: str = "", **kwargs: Any) -> str:

@@ -16,7 +16,6 @@ from deeptutor.services.sandbox.spec import ExecResult
 from deeptutor.tools.builtin import (
     BrainstormTool,
     CodeExecutionTool,
-    ExecTool,
     RAGTool,
     ReasonTool,
     WebSearchTool,
@@ -50,56 +49,6 @@ def _install_module(
         parent = sys.modules[".".join(parts[:-1])]
         monkeypatch.setattr(parent, parts[-1], module, raising=False)
     return module
-
-
-@pytest.mark.asyncio
-async def test_exec_tool_reports_generated_public_artifacts(
-    tmp_path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    path_service = PathService(workspace_root=tmp_path / "data")
-    workdir = path_service.get_task_workspace("chat", "turn_1") / "exec"
-
-    class FakeSandboxService:
-        async def run(self, request, *, user_id: str):
-            assert user_id == "user-1"
-            assert request.command == "python build_pdf.py"
-            output_dir = PathService(workspace_root=tmp_path / "data").get_task_workspace(
-                "chat", "turn_1"
-            )
-            assert request.workdir == str(output_dir / "exec")
-            work = output_dir / "exec"
-            work.mkdir(parents=True, exist_ok=True)
-            (work / "report.pdf").write_bytes(b"%PDF-1.4\n")
-            (work / "build_pdf.py").write_text("print('internal')", encoding="utf-8")
-            return ExecResult(stdout="created report.pdf\n", exit_code=0)
-
-    import deeptutor.services.sandbox as sandbox_pkg
-    import deeptutor.services.sandbox.artifacts as sandbox_artifacts
-
-    monkeypatch.setattr(sandbox_pkg, "get_sandbox_service", lambda: FakeSandboxService())
-    monkeypatch.setattr(sandbox_artifacts, "get_path_service", lambda: path_service)
-
-    result = await ExecTool().execute(
-        command="python build_pdf.py",
-        _sandbox_user_id="user-1",
-        _sandbox_workdir=str(workdir),
-    )
-
-    assert result.success is True
-    assert "Generated artifacts" in result.content
-    assert "report.pdf" in result.content
-    # The model is told to mention the exact filename (the UI linkifies it); the
-    # raw download URL is delivered out-of-band (sources/metadata), never in the
-    # model-facing text, so the model can't paste it.
-    assert "clickable link" in result.content
-    assert "/api/outputs/" not in result.content
-    assert "build_pdf.py" not in result.content
-    assert result.metadata["artifacts"][0]["filename"] == "report.pdf"
-    assert (
-        result.metadata["artifacts"][0]["url"]
-        == "/api/outputs/workspace/chat/chat/turn_1/exec/report.pdf"
-    )
-    assert result.sources[0]["url"].endswith("/report.pdf")
 
 
 @pytest.mark.asyncio
