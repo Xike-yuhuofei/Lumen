@@ -8,7 +8,6 @@ async function openHome(page: Page) {
       localStorage.setItem('trae:theme', 'dark')
       localStorage.removeItem('trae:language')
       localStorage.removeItem('deeptutor:response-language')
-      localStorage.removeItem('deeptutor:voice-autoplay')
       localStorage.removeItem('deeptutor:chat-timeout')
       localStorage.removeItem('deeptutor:general-settings')
       sessionStorage.setItem('trae:settings-init', '1')
@@ -48,9 +47,6 @@ test.describe('通用设置', () => {
     await openChatPane(page)
     await expect(page.locator('.dtSettingsSection').nth(0)).toHaveText('回复')
     await expect(page.locator('.dtSettingsSection').nth(1)).toHaveText('可选工具')
-    await expect(page.getByRole('switch', { name: '回复自动朗读' })).toBeVisible()
-    await expect(page.getByRole('button', { name: '模型回复语言' })).toBeVisible()
-    await expect(page.getByRole('button', { name: '对话等待超时' })).toBeVisible()
     await expect(page.getByRole('switch', { name: '头脑风暴' })).toBeVisible()
     await page.locator('.dtSettingsClose').click()
     await expect(page.locator('.dtSettings[role="dialog"]')).toHaveCount(0)
@@ -79,12 +75,11 @@ test.describe('通用设置', () => {
     await expect(page.locator('.accountMenuValue-iTOf2H').filter({ hasText: 'English' })).toBeVisible()
   })
 
-  test('回复语言、自动朗读、超时与工具可改并保存', async ({ page }) => {
+  test('回复语言、超时与工具可改并保存', async ({ page }) => {
     await openHome(page)
 
     const saved = {
       responseLanguage: 'zh',
-      autoplay: false,
       timeout: 180,
       tools: ['brainstorm', 'web_search', 'reason'],
     }
@@ -99,14 +94,6 @@ test.describe('通用设置', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({ response_language: saved.responseLanguage }),
-      })
-    })
-    await page.route('**/api/v1/settings/voice-autoplay', async (route) => {
-      saved.autoplay = Boolean((route.request().postDataJSON() as { voice_autoplay?: boolean }).voice_autoplay)
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ voice_autoplay: saved.autoplay }),
       })
     })
     await page.route('**/api/v1/settings/chat-response-timeout', async (route) => {
@@ -156,7 +143,6 @@ test.describe('通用设置', () => {
         body: JSON.stringify({
           ui: {
             response_language: saved.responseLanguage,
-            voice_autoplay: saved.autoplay,
             chat_response_timeout: saved.timeout,
           },
         }),
@@ -167,21 +153,17 @@ test.describe('通用设置', () => {
     await openChatPane(page)
     await page.getByRole('button', { name: '模型回复语言' }).click()
     await page.getByRole('option', { name: 'English' }).click()
-    await page.getByRole('switch', { name: '回复自动朗读' }).click()
     await page.getByRole('button', { name: '对话等待超时' }).click()
     await page.getByRole('option', { name: '5 分钟' }).click()
     await page.getByRole('switch', { name: '网页搜索' }).click()
 
     await expect(page.getByRole('button', { name: '模型回复语言' })).toContainText('English')
-    await expect(page.getByRole('switch', { name: '回复自动朗读' })).toHaveAttribute('aria-checked', 'true')
     await expect(page.getByRole('button', { name: '对话等待超时' })).toContainText('5 分钟')
     await expect(page.getByRole('switch', { name: '网页搜索' })).toHaveAttribute('aria-checked', 'false')
 
     const storedLang = await page.evaluate(() => localStorage.getItem('deeptutor:response-language'))
-    const storedPlay = await page.evaluate(() => localStorage.getItem('deeptutor:voice-autoplay'))
     const storedTimeout = await page.evaluate(() => localStorage.getItem('deeptutor:chat-timeout'))
     expect(storedLang).toBe('en')
-    expect(storedPlay).toBe('1')
     expect(storedTimeout).toBe('300')
 
     await page.reload()
@@ -190,7 +172,6 @@ test.describe('通用设置', () => {
     await page.locator('.accountMenuItem-NXEKcd').filter({ hasText: '设置' }).click()
     await openChatPane(page)
     await expect(page.getByRole('button', { name: '模型回复语言' })).toContainText('English')
-    await expect(page.getByRole('switch', { name: '回复自动朗读' })).toHaveAttribute('aria-checked', 'true')
     await expect(page.getByRole('button', { name: '对话等待超时' })).toContainText('5 分钟')
     await expect(page.getByRole('switch', { name: '网页搜索' })).toHaveAttribute('aria-checked', 'false')
   })
@@ -269,11 +250,9 @@ test.describe('通用设置', () => {
     await assertAllVisible('option', ['30 秒', '1 分钟', '3 分钟', '5 分钟', '10 分钟', '30 分钟'])
     await page.getByRole('option', { name: '3 分钟' }).click()
 
-    await assertAllVisible('switch', ['回复自动朗读', '头脑风暴', '网页搜索', '论文搜索', '深度推理'])
-    await page.getByRole('switch', { name: '回复自动朗读' }).click()
+    await assertAllVisible('switch', ['头脑风暴', '网页搜索', '深度推理'])
     await page.getByRole('switch', { name: '头脑风暴' }).click()
     await page.getByRole('switch', { name: '网页搜索' }).click()
-    await page.getByRole('switch', { name: '论文搜索' }).click()
     await page.getByRole('switch', { name: '深度推理' }).click()
   })
 

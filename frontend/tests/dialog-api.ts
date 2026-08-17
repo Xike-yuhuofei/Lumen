@@ -119,10 +119,6 @@ export async function mockDialogApi(page: Page, opts?: {
     })
   })
 
-  await page.route('**/api/v1/settings/voice-autoplay', async (route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ voice_autoplay: true }) })
-  })
-
   await page.route('**/api/v1/settings/chat-response-timeout', async (route) => {
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ chat_response_timeout: 180 }) })
   })
