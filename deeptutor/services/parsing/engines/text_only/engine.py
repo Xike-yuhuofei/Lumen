@@ -10,7 +10,7 @@ from deeptutor.utils.document_extractor import (
     DocumentExtractionError,
     extract_text_from_path,
 )
-from deeptutor.utils.document_validator import DocumentValidator
+from lumen.shared._util.document_validator import DocumentValidator
 
 from ...base import ReadinessReport
 from ...signature import ParserSignature

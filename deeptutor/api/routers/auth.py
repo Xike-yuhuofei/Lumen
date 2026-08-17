@@ -11,7 +11,6 @@ from fastapi import (
     File,
     Header,
     HTTPException,
-    Request,
     Response,
     UploadFile,
     WebSocket,
@@ -29,8 +28,6 @@ from deeptutor.services.config import load_auth_settings
 _SECURE = bool(load_auth_settings()["cookie_secure"])
 _SAMESITE = "none" if _SECURE else "lax"
 
-from deeptutor.services.user import set_current_user, user_from_token_payload
-from deeptutor.services.user import local_admin_user
 from deeptutor.services.auth import (
     AUTH_ENABLED,
     TOKEN_EXPIRE_HOURS,
@@ -44,6 +41,7 @@ from deeptutor.services.auth import (
     list_users,
     set_avatar,
 )
+from deeptutor.services.user import local_admin_user, set_current_user, user_from_token_payload
 
 logger = logging.getLogger(__name__)
 

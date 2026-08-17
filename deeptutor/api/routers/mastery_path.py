@@ -9,18 +9,18 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from pydantic import ValidationError as PydanticValidationError
 
-from deeptutor.learning import policy as learning_policy
-from deeptutor.learning import prompts as learning_prompts
-from deeptutor.learning.models import (
+from deeptutor.services.settings.interface_settings import get_response_language
+from deeptutor.utils.json_parser import parse_json_response
+from lumen.modes.learn.adapters.storage import LearningStore
+from lumen.modes.learn.application.prompts import default_module_name, notebook_generation_prompts
+from lumen.modes.learn.application.service import LearningService
+from lumen.modes.learn.domain.models import (
     KnowledgePoint,
     KnowledgeType,
     LearningModule,
     LearningStage,
 )
-from deeptutor.learning.service import LearningService
-from deeptutor.learning.storage import LearningStore
-from deeptutor.services.settings.interface_settings import get_response_language
-from deeptutor.utils.json_parser import parse_json_response
+from lumen.modes.learn.policy.policy import map_summary, next_objective
 
 router = APIRouter()
 
@@ -126,8 +126,8 @@ async def get_progress_map(book_id: str):
     progress = service.get_or_create(book_id)
     return {
         "book_id": book_id,
-        "next": learning_policy.next_objective(progress).to_dict(),
-        "map": learning_policy.map_summary(progress),
+        "next": next_objective(progress).to_dict(),
+        "map": map_summary(progress),
     }
 
 
@@ -246,7 +246,7 @@ async def generate_from_notebook(book_id: str, body: GenerateFromNotebookRequest
     from deeptutor.services.llm import complete
 
     language = get_response_language()
-    system_prompt, prompt = learning_prompts.notebook_generation_prompts(language, records_json)
+    system_prompt, prompt = notebook_generation_prompts(language, records_json)
     response = await complete(prompt=prompt, system_prompt=system_prompt)
     # LLMs commonly fence/slightly-malform JSON; use the shared fence-stripping
     # repair parser instead of bare json.loads so the common case isn't a 502.
@@ -264,7 +264,7 @@ async def generate_from_notebook(book_id: str, body: GenerateFromNotebookRequest
     for i, m in enumerate(modules_raw):
         if not isinstance(m, dict) or "name" not in m:
             continue
-        fallback_name = learning_prompts.default_module_name(language, i + 1)
+        fallback_name = default_module_name(language, i + 1)
         module_name = str(m.get("name") or fallback_name).strip()[:200] or fallback_name
         kps = []
         for j, kp in enumerate(m.get("knowledge_points", [])):

@@ -14,6 +14,7 @@ import logging
 from typing import TYPE_CHECKING, Any, Literal
 
 from deeptutor.core.stream import StreamEvent, StreamEventType
+from deeptutor.core.stream_bus import StreamBus, register_bus, unregister_bus
 from deeptutor.services.llm.utils import clean_thinking_tags
 from deeptutor.services.path_service import get_path_service
 from deeptutor.services.session.artifact_attachments import (
@@ -23,6 +24,7 @@ from deeptutor.services.session.artifact_attachments import (
 from deeptutor.services.session.protocol import SessionStoreProtocol
 
 if TYPE_CHECKING:
+    from deeptutor.core.context import UnifiedContext
     from deeptutor.services.llm.config import LLMConfig
 
 logger = logging.getLogger(__name__)
@@ -629,7 +631,7 @@ class TurnRuntimeManager:
         self._executions: dict[str, _TurnExecution] = {}
         # Per-turn reply queues used by tools that pause the agentic
         # loop (e.g. ``ask_user``). Queue is created in ``_run_turn``
-        # before the orchestrator is invoked and cleaned up in the
+        # before the agent loop is invoked and cleaned up in the
         # ``finally`` block, so callers of ``submit_user_reply`` see
         # ``False`` for any turn that is no longer awaiting input.
         # Each entry is a dict of shape:
@@ -750,8 +752,8 @@ class TurnRuntimeManager:
             # never silently fall through to the global LLM client (which is
             # configured from admin runtime settings). Admin keeps the existing behavior
             # (None llm_selection → default config from admin scope).
-            from deeptutor.services.user import get_current_user
             from deeptutor.services.user import (
+                get_current_user,
                 has_capability_access,
                 redacted_model_access,
             )
@@ -776,12 +778,12 @@ class TurnRuntimeManager:
                     "model_id": assigned_llms[0].get("model_id"),
                 }
         if llm_selection:
-            from deeptutor.services.user import merge_personal_llm_profiles
             from deeptutor.services.config import get_model_catalog_service
             from deeptutor.services.model_selection import (
                 LLMSelection,
                 apply_llm_selection_to_catalog,
             )
+            from deeptutor.services.user import merge_personal_llm_profiles
 
             try:
                 # Personal (owner-bound) profiles live in the user's own
@@ -1191,6 +1193,151 @@ class TurnRuntimeManager:
         async for item in self.subscribe_turn(active_turn["id"], after_seq=after_seq):
             yield item
 
+    @staticmethod
+    async def _resolve_learn_service(capability_name: str | None):
+        """Resolve the Plugin Kernel's ``mode.learn`` service for a Learn turn.
+
+        Learn is identified by its canonical mode name plus the legacy
+        compatibility entries (``mastery_path`` / ``mastery``).  Returns
+        ``None`` when the capability is not a Learn name; otherwise the
+        production assembly is booted on demand (see
+        ``lumen.bootstrap.resolve_learn_service``).
+        """
+        if capability_name not in ("mastery_path", "mastery", "mode.learn"):
+            return None
+        from lumen.bootstrap import resolve_learn_service
+
+        return await resolve_learn_service(capability_name)
+
+    @staticmethod
+    async def _resolve_agent_loop_service():
+        """Resolve the Plugin Kernel's ``runtime.agent_loop`` service for a
+        generic agent turn.
+
+        The production assembly is booted on demand when none is active, so
+        every generic turn — WS, CLI, Cron, SDK — runs through the same
+        Runtime contract.
+        """
+        from lumen.bootstrap import resolve_agent_loop_service
+
+        return await resolve_agent_loop_service()
+
+    async def _iter_learn_turn(
+        self,
+        learn_service: Any,
+        context: UnifiedContext,
+    ) -> AsyncIterator[StreamEvent]:
+        """Run one Learn turn through the Plugin Kernel's ``mode.learn``.
+
+        Uses the same StreamBus lifecycle (register / emit / close /
+        unregister + terminal DONE) as the generic agent turn so the turn
+        runtime consumes the exact same event shape — the turn runs through
+        ``LearnModeService.handle_turn`` and then the injected
+        ``runtime.agent_loop``.  The caller keeps the orchestration
+        responsibility (event capture, persistence, DONE reconciliation).
+        """
+        bus = StreamBus()
+        turn_id = str(context.metadata.get("turn_id") or "")
+        if turn_id:
+            register_bus(turn_id, bus)
+
+        async def _run() -> None:
+            status = "completed"
+            try:
+                await learn_service.handle_turn(context, bus)
+            except asyncio.CancelledError:
+                raise
+            except Exception as exc:
+                status = "failed"
+                logger.error("mode.learn turn failed: %s", exc, exc_info=True)
+                await bus.error(
+                    str(exc),
+                    source="mode.learn",
+                    metadata={"turn_terminal": True, "status": status},
+                )
+            finally:
+                await bus.emit(
+                    StreamEvent(
+                        type=StreamEventType.DONE,
+                        source="mode.learn",
+                        metadata={"status": status},
+                    )
+                )
+                await bus.close()
+                if turn_id:
+                    unregister_bus(turn_id)
+
+        task = asyncio.create_task(_run())
+        try:
+            async for event in bus.subscribe():
+                yield event
+        finally:
+            # Propagate cancellation to the in-flight Learn turn so a
+            # cancelled WS turn also stops the underlying agent loop.
+            if task is not None and not task.done():
+                task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await task
+
+    async def _iter_agent_turn(
+        self,
+        agent_loop: Any,
+        context: UnifiedContext,
+    ) -> AsyncIterator[StreamEvent]:
+        """Run one generic agent turn through the Plugin Kernel's
+        ``runtime.agent_loop`` contract.
+
+        This is the Runtime front door for a generic agent turn (WS / CLI /
+        Cron / SDK): the same Runtime entry ``mode.learn`` uses, so every
+        turn — learn or generic — converges on ``runtime.agent_loop``.
+        Mirrors ``_iter_learn_turn``'s StreamBus lifecycle (register / emit /
+        close / unregister + terminal DONE) so the turn runtime consumes the
+        exact same event shape.  The caller keeps the orchestration
+        responsibility (event capture, persistence, DONE reconciliation).
+        """
+        bus = StreamBus()
+        turn_id = str(context.metadata.get("turn_id") or "")
+        if turn_id:
+            register_bus(turn_id, bus)
+
+        async def _run() -> None:
+            status = "completed"
+            try:
+                await agent_loop.run(context=context, stream=bus, language=context.language)
+            except asyncio.CancelledError:
+                raise
+            except Exception as exc:
+                status = "failed"
+                logger.error("generic agent turn failed: %s", exc, exc_info=True)
+                await bus.error(
+                    str(exc),
+                    source="chat",
+                    metadata={"turn_terminal": True, "status": status},
+                )
+            finally:
+                await bus.emit(
+                    StreamEvent(
+                        type=StreamEventType.DONE,
+                        source="chat",
+                        metadata={"status": status},
+                    )
+                )
+                await bus.close()
+                if turn_id:
+                    unregister_bus(turn_id)
+
+        task = asyncio.create_task(_run())
+        try:
+            async for event in bus.subscribe():
+                yield event
+        finally:
+            # Propagate cancellation to the in-flight agent turn so a
+            # cancelled WS turn also stops the underlying agent loop.
+            if task is not None and not task.done():
+                task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await task
+
     async def _run_turn(self, execution: _TurnExecution) -> None:
         payload = execution.payload
         session_id = execution.session_id
@@ -1222,7 +1369,7 @@ class TurnRuntimeManager:
         llm_scope_token: Token[LLMConfig | None] | None = None
         reset_active_llm_selection: Callable[[Token[LLMConfig | None] | None], None] | None = None
         # One queue per turn for ``ask_user`` style pause-resume.
-        # Created here (BEFORE the orchestrator runs) so the pipeline can
+        # Created here (BEFORE the agent loop runs) so the pipeline can
         # await on the awaitable we publish into ``context.metadata``.
         # Cleaned up unconditionally in the outer ``finally``.
         reply_queue: asyncio.Queue[dict[str, Any] | None] = asyncio.Queue()
@@ -1234,7 +1381,6 @@ class TurnRuntimeManager:
         try:
             from deeptutor.agents.notebook import NotebookAnalysisAgent
             from deeptutor.core.context import Attachment, UnifiedContext
-            from deeptutor.runtime.orchestrator import ChatOrchestrator
             from deeptutor.services.memory import get_memory_store
             from deeptutor.services.model_selection.runtime import (
                 activate_llm_selection,
@@ -1399,7 +1545,7 @@ class TurnRuntimeManager:
             # users fall back to admin-authored presets (personas carry no
             # privileged workflow, so no grant gate applies).
             from deeptutor.services.persona import PersonaService, get_persona_service
-            from deeptutor.services.user import get_current_user
+            from deeptutor.services.user import get_admin_path_service, get_current_user
 
             current_user = get_current_user()
             requested_persona = str(payload.get("persona") or "").strip()
@@ -1411,9 +1557,6 @@ class TurnRuntimeManager:
                         root=get_admin_path_service().get_workspace_dir() / "personas"
                     ).load_for_context(requested_persona)
             active_persona = requested_persona if persona_context else ""
-
-            # Skills: removed (Skill Framework deleted).
-            skills_manifest = ""
 
             # Chat capability uses the lightweight manifest + read_source
             # affordance (no upstream LLM call, no wholesale-dump into the
@@ -1628,7 +1771,6 @@ class TurnRuntimeManager:
                 language=payload.get("language", "en"),
                 memory_context=memory_context,
                 persona_context=persona_context,
-                skills_manifest=skills_manifest,
                 source_manifest=source_manifest_text,
                 metadata={
                     "conversation_summary": history_result.conversation_summary,
@@ -1665,9 +1807,28 @@ class TurnRuntimeManager:
                 },
             )
 
-            orch = ChatOrchestrator()
+            # Learn requests (mastery_path / mastery / mode.learn) are routed
+            # through the Plugin Kernel's ``mode.learn`` service
+            # (LumenBootstrap → resolve_mode() → mode.learn → runtime.agent_loop).
+            # Generic agent turns (chat / everything else) route through the
+            # Plugin Kernel's ``runtime.agent_loop`` contract — the same Runtime
+            # entry mode.learn uses — so WS / CLI / Cron / SDK generic turns
+            # all converge on one Runtime entry.  Both resolutions boot the
+            # production assembly on demand (see ``lumen.bootstrap``).
+            learn_service = await self._resolve_learn_service(capability_name)
+            if learn_service is not None:
+                turn_events = self._iter_learn_turn(learn_service, context)
+            else:
+                agent_loop = await self._resolve_agent_loop_service()
+                if agent_loop is None:
+                    raise RuntimeError(
+                        "runtime.agent_loop service is not available — the Plugin "
+                        "Kernel assembly is broken; refusing to run the turn"
+                    )
+                turn_events = self._iter_agent_turn(agent_loop, context)
+
             pending_done_event: StreamEvent | None = None
-            async for event in orch.handle(context):
+            async for event in turn_events:
                 if event.type == StreamEventType.SESSION:
                     continue
                 if event.type == StreamEventType.DONE:

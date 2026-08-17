@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import sys
 from typing import Any
@@ -73,12 +74,18 @@ async def _maybe_send_desktop_notification(job: CronJob, text: str) -> None:
 
 async def _execute_chat_job(job: CronJob) -> tuple[str, str | None]:
     """Run one chat turn in the owner's scope and append the exchange to the
-    originating session, so the result is waiting in their chat history."""
+    originating session, so the result is waiting in their chat history.
+
+    The turn runs through the Plugin Kernel's ``runtime.agent_loop`` — the
+    same Runtime entry the WS generic turn, the CLI and ``mode.learn`` use —
+    so Cron generic turns converge on one Runtime contract.  The production
+    assembly is booted on demand when none is active yet.
+    """
     from deeptutor.core.context import UnifiedContext
-    from deeptutor.core.stream import StreamEventType
-    from deeptutor.services.user import local_admin_user, user_context
-    from deeptutor.runtime.orchestrator import ChatOrchestrator
+    from deeptutor.core.stream import StreamEvent, StreamEventType
+    from deeptutor.core.stream_bus import StreamBus, register_bus, unregister_bus
     from deeptutor.services.session import get_sqlite_session_store
+    from deeptutor.services.user import local_admin_user, user_context
 
     # Single-user mode: every cron job runs in the local admin's scope.
     user = local_admin_user()
@@ -91,6 +98,7 @@ async def _execute_chat_job(job: CronJob) -> tuple[str, str | None]:
             return "error", "session no longer exists"
 
         history = await store.get_messages_for_context(job.owner.session_id)
+        turn_id = f"cron-{job.id}-{uuid.uuid4().hex[:8]}"
         context = UnifiedContext(
             session_id=job.owner.session_id,
             user_message=prompt,
@@ -102,7 +110,7 @@ async def _execute_chat_job(job: CronJob) -> tuple[str, str | None]:
             active_capability="chat",
             language=job.owner.language or "en",
             metadata={
-                "turn_id": f"cron-{job.id}-{uuid.uuid4().hex[:8]}",
+                "turn_id": turn_id,
                 "source": "cron",
                 "cron_job_id": job.id,
             },
@@ -110,7 +118,51 @@ async def _execute_chat_job(job: CronJob) -> tuple[str, str | None]:
 
         final_text = ""
         errors: list[str] = []
-        async for event in ChatOrchestrator().handle(context):
+
+        async def _iter_events():
+            """Stream the generic agent turn, yielding RESULT/ERROR events."""
+            from lumen.bootstrap import resolve_agent_loop_service
+
+            agent_loop = await resolve_agent_loop_service()
+
+            async def _run_turn(context, bus):
+                await agent_loop.run(context=context, stream=bus, language=context.language)
+
+            bus = StreamBus()
+            register_bus(turn_id, bus)
+
+            async def _run() -> None:
+                try:
+                    await _run_turn(context, bus)
+                except Exception as exc:
+                    logger.error("cron agent turn failed: %s", exc, exc_info=True)
+                    await bus.error(
+                        str(exc),
+                        source="chat",
+                        metadata={"turn_terminal": True, "status": "failed"},
+                    )
+                finally:
+                    await bus.emit(
+                        StreamEvent(
+                            type=StreamEventType.DONE,
+                            source="chat",
+                            metadata={"status": "completed"},
+                        )
+                    )
+                    await bus.close()
+                    unregister_bus(turn_id)
+
+            task = asyncio.create_task(_run())
+            try:
+                async for event in bus.subscribe():
+                    yield event
+            finally:
+                if task is not None and not task.done():
+                    task.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await task
+
+        async for event in _iter_events():
             meta: dict[str, Any] = event.metadata or {}
             if event.type == StreamEventType.RESULT and event.source == "chat":
                 final_text = str(meta.get("response") or "")

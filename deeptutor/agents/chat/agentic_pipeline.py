@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Callable
 import logging
 from typing import Any
 
@@ -159,6 +160,12 @@ class AgenticChatPipeline:
         max_rounds: int | None = None,
         temperature: float | None = None,
         max_tokens: int | None = None,
+        registry: ToolLookup | None = None,
+        client_factory: Callable[[LLMClientConfig], Any] | None = None,
+        memory_service: Any | None = None,
+        notebook_service: Any | None = None,
+        knowledge_sources: Any | None = None,
+        knowledge_retrieval: Any | None = None,
     ) -> None:
         self.language = "zh" if language.lower().startswith("zh") else "en"
         self.llm_config = get_llm_config()
@@ -171,7 +178,21 @@ class AgenticChatPipeline:
         self.reasoning_effort = getattr(self.llm_config, "reasoning_effort", None)
         # Process-wide registry. Stays the base for the whole turn; the
         # per-turn scoped view lives on ``_tool_view`` (see ``tool_lookup``).
-        self.registry: ToolLookup = get_tool_registry()
+        # An injected ``registry`` (e.g. the kernel's ``runtime.tools``
+        # service) overrides the global default without changing behavior.
+        self.registry: ToolLookup = registry if registry is not None else get_tool_registry()
+        # Optional hook to build the OpenAI-compatible client handle. Lets a
+        # caller inject a provider (e.g. the kernel's ``runtime.llm``) while
+        # ``_build_openai_client`` keeps its default wiring when unset.
+        self._client_factory = client_factory
+        # Injected shared services (Phase 5). When provided, the pipeline
+        # resolves memory/notebook/knowledge capabilities through these
+        # contracts instead of the process-global registry. The global
+        # fallbacks below are kept as DEPRECATED compatibility paths.
+        self._memory_service = memory_service
+        self._notebook_service = notebook_service
+        self._knowledge_sources = knowledge_sources
+        self._knowledge_retrieval = knowledge_retrieval
         self._usage = UsageTracker(model=self.model)
         self._tool_view: ProviderToolView | None = None
         self._deferred_loader: DeferredToolLoader | None = None
@@ -526,6 +547,35 @@ class AgenticChatPipeline:
             logger.warning("code-exec policy gate failed; disabling", exc_info=True)
             return False
 
+    def _has_memory(self) -> bool:
+        """Auto-mount gate for ``read_memory``.
+
+        Prefers the injected ``memory`` contract (Phase 5). Falls back to the
+        global memory store — DEPRECATED compatibility path.
+        """
+        memory_service = getattr(self, "_memory_service", None)
+        if memory_service is not None:
+            try:
+                overview = memory_service.overview() or []
+                return bool(overview)
+            except Exception:
+                return False
+        return user_has_memory()
+
+    def _has_notebooks(self) -> bool:
+        """Auto-mount gate for ``list_notebook`` / ``write_note``.
+
+        Prefers the injected ``notebook`` contract (Phase 5). Falls back to
+        the global notebook manager — DEPRECATED compatibility path.
+        """
+        notebook_service = getattr(self, "_notebook_service", None)
+        if notebook_service is not None:
+            try:
+                return bool(notebook_service.list())
+            except Exception:
+                return False
+        return user_has_notebooks()
+
     def _compose_enabled_tools(self, context: UnifiedContext) -> list[str]:
         composed = compose_enabled_tools(
             registry=self.tool_lookup,
@@ -534,8 +584,8 @@ class AgenticChatPipeline:
             mount_flags=ToolMountFlags(
                 has_kb=bool(self._rag_kbs(context)),
                 has_sources=True,
-                has_memory=user_has_memory(),
-                has_notebooks=user_has_notebooks(),
+                has_memory=self._has_memory(),
+                has_notebooks=self._has_notebooks(),
                 has_deferred_tools=getattr(self, "_deferred_loader", None) is not None,
                 has_code=getattr(self, "_exec_enabled", False),
             ),
@@ -1148,6 +1198,9 @@ class AgenticChatPipeline:
     # ---- LLM client ------------------------------------------------------
 
     def _build_openai_client(self):
+        factory = getattr(self, "_client_factory", None)
+        if factory is not None:
+            return factory(self._client_config)
         return build_openai_client(self._client_config)
 
     def _completion_kwargs(self, max_tokens: int) -> dict[str, Any]:

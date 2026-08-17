@@ -223,8 +223,7 @@ class ModelCatalogService:
 
 def get_model_catalog_service() -> ModelCatalogService:
     try:
-        from deeptutor.services.user import get_current_user
-        from deeptutor.services.user import get_admin_path_service
+        from deeptutor.services.user import get_admin_path_service, get_current_user
 
         if not get_current_user().is_admin:
             return ModelCatalogService.get_instance(

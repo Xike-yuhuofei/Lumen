@@ -9,7 +9,6 @@ import pytest
 from typer.testing import CliRunner
 
 from deeptutor.app import DeepTutorApp, TurnRequest
-from deeptutor.runtime.bootstrap.builtin_capabilities import BUILTIN_CAPABILITY_CLASSES
 from deeptutor_cli.main import app
 
 runner = CliRunner()
@@ -37,7 +36,9 @@ def test_run_command_json_mode(monkeypatch) -> None:
     captured_requests: list[TurnRequest] = []
     _install_fake_runtime(monkeypatch, captured_requests)
 
-    capabilities = list(BUILTIN_CAPABILITY_CLASSES)
+    # ``chat`` is the only generic capability (the legacy CapabilityRegistry
+    # is removed).
+    capabilities = ["chat"]
 
     for cap in capabilities:
         result = runner.invoke(
@@ -77,7 +78,11 @@ def test_run_command_json_mode(monkeypatch) -> None:
 def test_builtin_capability_aliases_resolve_to_canonical_names() -> None:
     runtime = DeepTutorApp()
 
-    assert runtime.resolve_capability("mastery") == "mastery_path"
+    # Learn aliases resolve to the canonical ``mode.learn`` id — not the legacy
+    # ``mastery_path`` manifest name.
+    assert runtime.resolve_capability("mastery") == "mode.learn"
+    assert runtime.resolve_capability("mastery_path") == "mode.learn"
+    assert runtime.resolve_capability("mode.learn") == "mode.learn"
     with pytest.raises(ValueError, match="Unknown capability `auto`"):
         runtime.resolve_capability("auto")
     with pytest.raises(ValueError, match="Unknown capability `quiz`"):

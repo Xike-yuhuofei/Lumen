@@ -165,35 +165,8 @@ def get_path_from_config(config: dict[str, Any], path_key: str, default: str = N
     return default
 
 
-def parse_language(language: Any) -> str:
-    """
-    Unified language configuration parser, supports multiple input formats
-
-    Resolves the spelled-out aliases of the two locales that ship prompt
-    resources ("english"/"en", "chinese"/"cn"/"zh") and otherwise passes the
-    code through normalized, so a request for Japanese stays ``"ja"`` instead
-    of collapsing to Chinese (#712). Callers that load per-language prompt
-    files fall back to English when a code has no files of its own; what makes
-    the model actually answer in that language is the directive built from
-    this code, not the prompt file.
-
-    Args:
-        language: Language configuration value ("zh"/"en"/"Chinese"/"ja"/…)
-
-    Returns:
-        Normalized language code, defaulting to 'zh' when nothing is configured
-    """
-    if not isinstance(language, str) or not language.strip():
-        return "zh"
-
-    from deeptutor.services.prompt.language import normalize_language
-
-    code = normalize_language(language)
-    if code in ("en", "english"):
-        return "en"
-    if code in ("zh", "chinese", "cn"):
-        return "zh"
-    return code
+# ``parse_language`` is pure and lumen-owned; keep this name as a compat facade.
+from lumen.shared._util.language import parse_language  # noqa: E402
 
 
 def get_agent_params(module_name: str) -> dict:

@@ -24,7 +24,7 @@ import logging
 from pathlib import Path
 import zipfile
 
-from deeptutor.utils.document_validator import DocumentValidator
+from lumen.shared._util.document_validator import DocumentValidator
 
 logger = logging.getLogger(__name__)
 

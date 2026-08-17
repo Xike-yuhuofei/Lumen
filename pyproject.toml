@@ -177,7 +177,7 @@ version = {attr = "deeptutor.__version__.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["deeptutor*", "deeptutor_cli*"]
+include = ["deeptutor*", "deeptutor_cli*", "lumen*"]
 
 [tool.setuptools.package-data]
 # Runtime data shipped inside the deeptutor package: prompt YAMLs (loaded by
@@ -325,7 +325,7 @@ line-ending = "auto"
 # Ruff import sorting (isort replacement)
 # ============================================
 [tool.ruff.lint.isort]
-known-first-party = ["deeptutor", "deeptutor_cli", "scripts"]
+known-first-party = ["deeptutor", "deeptutor_cli", "scripts", "lumen"]
 force-sort-within-sections = true
 split-on-trailing-comma = true
 

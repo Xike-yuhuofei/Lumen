@@ -112,25 +112,28 @@ async def test_turn_runtime_replays_events_and_materializes_messages(
                 budget=0,
             )
 
-    class FakeOrchestrator:
-        async def handle(self, context):
+    class FakePipeline:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def run(self, context, stream):
             captured["user_message"] = context.user_message
             captured["metadata"] = context.metadata
             captured["source_manifest"] = context.source_manifest
-            yield StreamEvent(
+            await stream.emit(StreamEvent(
                 type=StreamEventType.CONTENT,
                 source="chat",
                 stage="responding",
                 content="Hello Frank",
                 metadata={"call_kind": "llm_final_response"},
-            )
-            yield StreamEvent(type=StreamEventType.DONE, source="chat")
+            ))
+            await stream.emit(StreamEvent(type=StreamEventType.DONE, source="chat"))
 
     monkeypatch.setattr("deeptutor.services.llm.config.get_llm_config", lambda: SimpleNamespace())
     monkeypatch.setattr(
         "deeptutor.services.session.context_builder.ContextBuilder", FakeContextBuilder
     )
-    monkeypatch.setattr("deeptutor.runtime.orchestrator.ChatOrchestrator", FakeOrchestrator)
+    monkeypatch.setattr("deeptutor.agents.chat.agentic_pipeline.AgenticChatPipeline", FakePipeline)
     monkeypatch.setattr(
         "deeptutor.services.memory.get_memory_store",
         lambda: SimpleNamespace(
@@ -243,17 +246,20 @@ async def test_turn_runtime_persists_llm_selection_in_turn_snapshot(
                 budget=0,
             )
 
-    class FakeOrchestrator:
-        async def handle(self, context):
+    class FakePipeline:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def run(self, context, stream):
             captured["metadata"] = context.metadata
-            yield StreamEvent(
+            await stream.emit(StreamEvent(
                 type=StreamEventType.CONTENT,
                 source="chat",
                 stage="responding",
                 content="Alt reply",
                 metadata={"call_kind": "llm_final_response"},
-            )
-            yield StreamEvent(type=StreamEventType.DONE, source="chat")
+            ))
+            await stream.emit(StreamEvent(type=StreamEventType.DONE, source="chat"))
 
     def fake_activate(selection):
         captured["activated_selection"] = selection
@@ -276,7 +282,7 @@ async def test_turn_runtime_persists_llm_selection_in_turn_snapshot(
     monkeypatch.setattr(
         "deeptutor.services.session.context_builder.ContextBuilder", FakeContextBuilder
     )
-    monkeypatch.setattr("deeptutor.runtime.orchestrator.ChatOrchestrator", FakeOrchestrator)
+    monkeypatch.setattr("deeptutor.agents.chat.agentic_pipeline.AgenticChatPipeline", FakePipeline)
     monkeypatch.setattr(
         "deeptutor.services.memory.get_memory_store",
         lambda: SimpleNamespace(
@@ -341,22 +347,25 @@ async def test_turn_runtime_session_persona_persists_falls_back_and_clears(
                 budget=0,
             )
 
-    class FakeOrchestrator:
-        async def handle(self, context):
-            yield StreamEvent(
+    class FakePipeline:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def run(self, context, stream):
+            await stream.emit(StreamEvent(
                 type=StreamEventType.CONTENT,
                 source="chat",
                 stage="responding",
                 content="ok",
                 metadata={"call_kind": "llm_final_response"},
-            )
-            yield StreamEvent(type=StreamEventType.DONE, source="chat")
+            ))
+            await stream.emit(StreamEvent(type=StreamEventType.DONE, source="chat"))
 
     monkeypatch.setattr("deeptutor.services.llm.config.get_llm_config", lambda: SimpleNamespace())
     monkeypatch.setattr(
         "deeptutor.services.session.context_builder.ContextBuilder", FakeContextBuilder
     )
-    monkeypatch.setattr("deeptutor.runtime.orchestrator.ChatOrchestrator", FakeOrchestrator)
+    monkeypatch.setattr("deeptutor.agents.chat.agentic_pipeline.AgenticChatPipeline", FakePipeline)
     monkeypatch.setattr(
         "deeptutor.services.memory.get_memory_store",
         lambda: SimpleNamespace(read_l3_concat=lambda: "", emit=_noop_async),
@@ -456,17 +465,20 @@ async def test_turn_runtime_allows_model_switching_within_same_session(
                 budget=0,
             )
 
-    class FakeOrchestrator:
-        async def handle(self, context):
+    class FakePipeline:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def run(self, context, stream):
             metadata_seen.append(context.metadata)
-            yield StreamEvent(
+            await stream.emit(StreamEvent(
                 type=StreamEventType.CONTENT,
                 source="chat",
                 stage="responding",
                 content=f"Reply from {context.metadata['llm_model']}",
                 metadata={"call_kind": "llm_final_response"},
-            )
-            yield StreamEvent(type=StreamEventType.DONE, source="chat")
+            ))
+            await stream.emit(StreamEvent(type=StreamEventType.DONE, source="chat"))
 
     def fake_activate(selection):
         activated.append(dict(selection or {}))
@@ -494,7 +506,7 @@ async def test_turn_runtime_allows_model_switching_within_same_session(
     monkeypatch.setattr(
         "deeptutor.services.session.context_builder.ContextBuilder", FakeContextBuilder
     )
-    monkeypatch.setattr("deeptutor.runtime.orchestrator.ChatOrchestrator", FakeOrchestrator)
+    monkeypatch.setattr("deeptutor.agents.chat.agentic_pipeline.AgenticChatPipeline", FakePipeline)
     monkeypatch.setattr(
         "deeptutor.services.memory.get_memory_store",
         lambda: SimpleNamespace(
@@ -625,25 +637,28 @@ async def test_turn_runtime_bootstraps_question_followup_context_once(
                 budget=0,
             )
 
-    class FakeOrchestrator:
-        async def handle(self, context):
+    class FakePipeline:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def run(self, context, stream):
             captured["conversation_history"] = context.conversation_history
             captured["config_overrides"] = context.config_overrides
             captured["metadata"] = context.metadata
-            yield StreamEvent(
+            await stream.emit(StreamEvent(
                 type=StreamEventType.CONTENT,
                 source="chat",
                 stage="responding",
                 content="Let's discuss this question.",
                 metadata={"call_kind": "llm_final_response"},
-            )
-            yield StreamEvent(type=StreamEventType.DONE, source="chat")
+            ))
+            await stream.emit(StreamEvent(type=StreamEventType.DONE, source="chat"))
 
     monkeypatch.setattr("deeptutor.services.llm.config.get_llm_config", lambda: SimpleNamespace())
     monkeypatch.setattr(
         "deeptutor.services.session.context_builder.ContextBuilder", FakeContextBuilder
     )
-    monkeypatch.setattr("deeptutor.runtime.orchestrator.ChatOrchestrator", FakeOrchestrator)
+    monkeypatch.setattr("deeptutor.agents.chat.agentic_pipeline.AgenticChatPipeline", FakePipeline)
     monkeypatch.setattr(
         "deeptutor.services.memory.get_memory_store",
         lambda: SimpleNamespace(
@@ -731,21 +746,24 @@ async def test_turn_runtime_injects_memory_and_refreshes_after_completion(
                 budget=0,
             )
 
-    class FakeOrchestrator:
-        async def handle(self, context):
+    class FakePipeline:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def run(self, context, stream):
             captured["conversation_history"] = context.conversation_history
             captured["memory_context"] = context.memory_context
             captured["conversation_context_text"] = context.metadata.get(
                 "conversation_context_text"
             )
-            yield StreamEvent(
+            await stream.emit(StreamEvent(
                 type=StreamEventType.CONTENT,
                 source="chat",
                 stage="responding",
                 content="Stored reply",
                 metadata={"call_kind": "llm_final_response"},
-            )
-            yield StreamEvent(type=StreamEventType.DONE, source="chat")
+            ))
+            await stream.emit(StreamEvent(type=StreamEventType.DONE, source="chat"))
 
     emit_calls: list[object] = []
 
@@ -757,7 +775,7 @@ async def test_turn_runtime_injects_memory_and_refreshes_after_completion(
     monkeypatch.setattr(
         "deeptutor.services.session.context_builder.ContextBuilder", FakeContextBuilder
     )
-    monkeypatch.setattr("deeptutor.runtime.orchestrator.ChatOrchestrator", FakeOrchestrator)
+    monkeypatch.setattr("deeptutor.agents.chat.agentic_pipeline.AgenticChatPipeline", FakePipeline)
     monkeypatch.setattr(
         "deeptutor.services.memory.get_memory_store",
         lambda: SimpleNamespace(

@@ -1,6 +1,5 @@
 """Core contracts shared across runtime, tools, and capabilities."""
 
-from .capability_protocol import BaseCapability, CapabilityManifest
 from .context import Attachment, UnifiedContext
 from .stream import StreamEvent, StreamEventType
 from .stream_bus import StreamBus
@@ -27,8 +26,6 @@ __all__ = [
     "ToolParameter",
     "ToolPromptHints",
     "ToolResult",
-    "BaseCapability",
-    "CapabilityManifest",
     "UnifiedContext",
     "Attachment",
 ]

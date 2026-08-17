@@ -57,8 +57,7 @@ deeptutor run <capability> <message> [options]
 | Capability | 说明 |
 |------------|------|
 | `chat` | 对话（默认，可挂载工具） |
-| `visualize` | 生成图表、图解、Mermaid 或 HTML 可视化 |
-| `mastery_path` | 掌握式学习路径与测评循环 |
+| `mode.learn`（Learn） | 掌握式学习路径与测评循环。CLI 沿用兼容名 `mastery_path`（别名 `mastery`） |
 
 ### 选项
 
@@ -80,13 +79,10 @@ deeptutor run <capability> <message> [options]
 # 对话
 deeptutor run chat "什么是傅里叶变换？" -l zh
 
-# 掌握式学习（含测评循环）
+# Learn（掌握式学习，含测评循环）—— 产品模式 mode.learn，CLI 兼容名 mastery_path
 deeptutor run mastery_path "线性代数" --kb math-textbook -l zh
 
-# 可视化
-deeptutor run visualize "画出注意力机制的数据流图" --config render_mode=mermaid
-
-# 掌握式学习
+# Learn（掌握式学习）
 deeptutor run mastery_path "带我系统掌握特征值和特征向量"
 
 # JSON 输出（适合 agent 解析）
@@ -167,7 +163,7 @@ deeptutor config show
 ```bash
 # 1. 在 Web 界面创建知识库 calculus（或使用已有知识库）
 
-# 2. 掌握式学习（含测评）
+# 2. Learn（掌握式学习，含测评；产品模式 mode.learn，CLI 兼容名 mastery_path）
 deeptutor run mastery_path "微积分" --kb calculus -l zh
 
 # 3. 查看会话记录

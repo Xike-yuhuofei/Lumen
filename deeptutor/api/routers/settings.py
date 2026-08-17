@@ -20,8 +20,6 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger(__name__)
 
 from deeptutor.brand import PRODUCT_NAME
-from deeptutor.services.user import get_current_user
-from deeptutor.services.user import allowed_llm_options
 from deeptutor.services.config import (
     get_config_test_runner,
     get_model_catalog_service,
@@ -43,6 +41,7 @@ from deeptutor.services.settings.interface_settings import (
     DEFAULT_UI_SETTINGS as INTERFACE_DEFAULTS,
 )
 from deeptutor.services.settings.interface_settings import resolve_languages
+from deeptutor.services.user import allowed_llm_options, get_current_user
 from deeptutor.tools.builtin import USER_TOGGLEABLE_TOOL_NAMES
 
 router = APIRouter()

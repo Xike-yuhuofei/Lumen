@@ -2,7 +2,7 @@
 Unified Context
 ===============
 
-A single data object that flows through the orchestrator into every
+A single data object that flows through the runtime into every
 tool / capability / plugin invocation.
 """
 
@@ -56,10 +56,6 @@ class UnifiedContext:
         persona_context: Selected persona's instructions, eagerly injected
             into the system prompt (a persona must shape the voice from the
             first token; empty when no persona is active).
-        skills_manifest: System-prompt Skills block — one line per
-            capability skill visible to this user, plus any ``always``
-            skills' full bodies. The model pulls full skill content on
-            demand via the ``read_skill`` tool.
         source_manifest: Plain-text manifest of attached sources (one line per
             source: id/name/type/preview). Empty when no sources are attached.
             Consumed by the chat capability to render an "Attached Sources"
@@ -79,6 +75,5 @@ class UnifiedContext:
     language: str = "en"
     memory_context: str = ""
     persona_context: str = ""
-    skills_manifest: str = ""
     source_manifest: str = ""
     metadata: dict[str, Any] = field(default_factory=dict)

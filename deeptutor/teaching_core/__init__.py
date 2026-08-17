@@ -1,9 +1,14 @@
-"""Teaching Core: explicit teaching model, graph, and deterministic engine."""
+"""Deprecated compatibility facade for the Teaching Core.
 
-from .adapters import learner_state_from_progress
-from .engine import TeachingEngine
-from .graph import TeachingKnowledgeGraph
-from .models import (
+The canonical teaching stack now lives in ``lumen.modes.learn``
+(domain / policy / assessment / application / adapters).  This package
+re-exports it for existing importers only; new code must import from
+``lumen.modes.learn`` directly.
+"""
+from lumen.modes.learn.adapters import learner_state_from_progress
+from lumen.modes.learn.application.teaching_service import TeachingService
+from lumen.modes.learn.domain.teaching_graph import TeachingKnowledgeGraph
+from lumen.modes.learn.domain.teaching_models import (
     LearnerState,
     LearningGoal,
     TeachingActionType,
@@ -14,7 +19,7 @@ from .models import (
     TeachingNodeType,
     TeachingRelationType,
 )
-from .teaching_service import TeachingService
+from lumen.modes.learn.policy.engine import TeachingEngine
 
 __all__ = [
     "TeachingEngine",

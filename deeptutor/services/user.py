@@ -14,8 +14,8 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from contextvars import ContextVar, Token
-from datetime import datetime, timezone
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from functools import lru_cache
 import json
 import logging
@@ -377,7 +377,7 @@ def resolve_kb_manifest(
     pattern: str = "",
 ) -> Any | None:
     """Document inventory for ``kb_ref`` (``None`` if inaccessible)."""
-    from deeptutor.knowledge.manifest import MANIFEST_NOTE_LIMIT, build_manifest
+    from deeptutor.knowledge.manifest import build_manifest
 
     if not kb_ref:
         return None

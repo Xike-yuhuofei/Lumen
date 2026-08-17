@@ -1,16 +1,10 @@
-"""Mastery Path — structured mastery-based learning engine.
+"""Deprecated compatibility facade for the Learner Domain State.
 
-Modules:
-    models      — Pydantic data models
-    storage     — JSON persistence
-    scheduler   — Spaced repetition
-    mastery     — Mastery scoring policy (swappable)
-    grading     — Deterministic answer grading
-    service     — Business logic
-    prompts     — LLM prompt templates
+The canonical Learn-mode domain now lives in ``lumen.modes.learn``
+(``lumen.modes.learn.domain.models``).  This package re-exports the models for
+existing importers only; new code must import from ``lumen.modes.learn``.
 """
-
-from deeptutor.learning.models import (
+from lumen.modes.learn.domain.models import (
     DiagnosticResult,
     ErrorRecord,
     ErrorType,

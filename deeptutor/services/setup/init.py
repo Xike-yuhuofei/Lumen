@@ -165,8 +165,8 @@ def _seed_default_personas() -> None:
     Best-effort — never blocks startup.
     """
     try:
-        from deeptutor.services.user import get_admin_path_service
         from deeptutor.services.persona.service import PersonaService
+        from deeptutor.services.user import get_admin_path_service
 
         admin_personas = get_admin_path_service().get_workspace_dir() / "personas"
         seeded = PersonaService(root=admin_personas).seed_presets()

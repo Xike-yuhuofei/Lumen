@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 import logging
-import re
 
 from deeptutor.services.voice.config import (
     AUTH_API_KEY_HEADER,
@@ -89,49 +88,8 @@ def join_audio_path(base_url: str, suffix: str) -> str:
     return f"{joined}?{query}" if sep else joined
 
 
-# Content blocks that should never be spoken aloud, stripped before synthesis.
-_FENCED_CODE = re.compile(r"```.*?```", re.DOTALL)
-_INLINE_CODE = re.compile(r"`([^`]*)`")
-_IMAGE = re.compile(r"!\[[^\]]*\]\([^)]*\)")
-_LINK = re.compile(r"\[([^\]]+)\]\([^)]*\)")
-_HEADING = re.compile(r"^\s{0,3}#{1,6}\s*", re.MULTILINE)
-_BLOCKQUOTE = re.compile(r"^\s{0,3}>\s?", re.MULTILINE)
-_LIST_MARKER = re.compile(r"^\s{0,3}(?:[-*+]|\d+[.)])\s+", re.MULTILINE)
-_EMPHASIS = re.compile(r"(\*{1,3}|_{1,3}|~~)(\S.*?\S|\S)\1")
-_HTML_TAG = re.compile(r"<[^>]+>")
-_TABLE_PIPE = re.compile(r"^\s*\|.*\|\s*$", re.MULTILINE)
-_WHITESPACE = re.compile(r"[ \t]+")
-_BLANK_LINES = re.compile(r"\n{3,}")
-
-
-def strip_markdown_for_speech(text: str, *, max_chars: int = 0) -> str:
-    """Reduce Markdown to plain prose suitable for TTS.
-
-    Drops code blocks and tables outright (they read terribly), unwraps links
-    and emphasis to their visible text, and removes structural markers. This is
-    deliberately lossy — the goal is natural speech, not faithful rendering.
-    """
-    if not text:
-        return ""
-    out = _FENCED_CODE.sub(" ", text)
-    out = _TABLE_PIPE.sub(" ", out)
-    out = _IMAGE.sub(" ", out)
-    out = _LINK.sub(r"\1", out)
-    out = _INLINE_CODE.sub(r"\1", out)
-    out = _HEADING.sub("", out)
-    out = _BLOCKQUOTE.sub("", out)
-    out = _LIST_MARKER.sub("", out)
-    out = _EMPHASIS.sub(r"\2", out)
-    out = _HTML_TAG.sub("", out)
-    out = _WHITESPACE.sub(" ", out)
-    out = _BLANK_LINES.sub("\n\n", out).strip()
-    if max_chars and len(out) > max_chars:
-        # Cut on a sentence/space boundary near the cap so speech ends cleanly.
-        window = out[:max_chars]
-        cut = max(window.rfind("."), window.rfind("\n"), window.rfind(" "))
-        out = window[: cut + 1].strip() if cut > max_chars // 2 else window.strip()
-    return out
-
+# ``strip_markdown_for_speech`` is a pure helper owned by lumen; re-export.
+from lumen.shared._util.rendering_text import strip_markdown_for_speech  # noqa: E402
 
 __all__ = [
     "VoiceProviderError",

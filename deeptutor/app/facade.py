@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 import json
 from typing import Any, AsyncIterator
 
-from deeptutor.runtime.registry.capability_registry import get_capability_registry
 from deeptutor.services.notebook import get_notebook_manager
 from deeptutor.services.session import get_session_store, get_turn_runtime_manager
 
@@ -59,40 +58,89 @@ class DeepTutorApp:
         self.runtime = get_turn_runtime_manager()
         self.store = get_session_store()
         self.notebooks = get_notebook_manager()
-        self.capabilities = get_capability_registry()
 
     def resolve_capability(self, value: str | None) -> str:
+        """Map a request onto a canonical facade capability.
+
+        ``mode.learn`` is the only canonical Learn id; the legacy
+        ``mastery_path`` / ``mastery`` names are accepted as compatibility
+        aliases and rewritten through the single canonical mapping in
+        :func:`lumen.compat.resolve_learn_mode`.  Generic turns resolve to
+        ``chat``.  Unknown names are rejected.
+        """
+        from lumen.compat import resolve_learn_mode
+
         requested = str(value or "chat").strip() or "chat"
-        manifests = self.capabilities.get_manifests()
-        for manifest in manifests:
-            if manifest["name"] == requested:
-                return requested
-            aliases = {str(alias).strip() for alias in manifest.get("cli_aliases", [])}
-            if requested in aliases:
-                return str(manifest["name"])
-        available = ", ".join(sorted(manifest["name"] for manifest in manifests))
-        raise ValueError(f"Unknown capability `{requested}`. Available: {available}")
+        mode = resolve_learn_mode(requested)
+        if mode == "mode.learn":
+            return "mode.learn"
+        if mode == "chat":
+            return "chat"
+        raise ValueError(
+            f"Unknown capability `{requested}`. Available: chat, mode.learn"
+        )
+
+    @staticmethod
+    def _chat_manifest() -> dict[str, Any]:
+        """Canonical App-layer chat manifest.
+
+        ``chat`` is the only generic capability.  Its manifest is the source
+        of truth defined here for the App contract surface
+        (``get_capability_contract*``).  ``tools_used`` is pulled lazily from
+        the chat pipeline so the facade's module import stays lightweight.
+        """
+        from deeptutor.agents.chat.agentic_pipeline import CHAT_OPTIONAL_TOOLS
+        from deeptutor.i18n.metadata_i18n import capability_description_i18n
+        from deeptutor.runtime.request_contracts import get_capability_request_schema
+
+        manifest = {
+            "name": "chat",
+            "description": (
+                "Agentic chat: an exploring agent loop with tools, followed by "
+                "a respond stage that streams the answer."
+            ),
+            "description_i18n": capability_description_i18n(
+                "chat",
+                "Agentic chat: an exploring agent loop with tools, followed by "
+                "a respond stage that streams the answer.",
+            ),
+            "stages": ["exploring", "responding"],
+            "tools_used": list(CHAT_OPTIONAL_TOOLS),
+            "cli_aliases": ["chat"],
+            "request_schema": get_capability_request_schema("chat"),
+            "config_defaults": {},
+        }
+        return manifest
 
     def get_capability_contracts(self) -> list[dict[str, Any]]:
-        contracts = []
-        for manifest in self.capabilities.get_manifests():
-            contracts.append(
-                {
-                    **manifest,
-                    "availability": self.get_capability_availability(manifest["name"]).__dict__,
-                }
-            )
-        return contracts
+        chat = self._chat_manifest()
+        return [
+            {
+                **chat,
+                "availability": asdict(self.get_capability_availability(chat["name"])),
+            }
+        ]
 
     def get_capability_contract(self, value: str) -> dict[str, Any]:
         resolved = self.resolve_capability(value)
-        for manifest in self.capabilities.get_manifests():
-            if manifest["name"] == resolved:
-                return {
-                    **manifest,
-                    "availability": self.get_capability_availability(resolved).__dict__,
-                }
-        raise ValueError(f"Capability not found: {resolved}")
+        if resolved == "mode.learn":
+            # Canonical Learn exposes a stable canonical snapshot.
+            return {
+                "name": "mode.learn",
+                "description": "Canonical guided-learning (Learn) mode.",
+                "description_i18n": {},
+                "stages": [],
+                "tools_used": [],
+                "cli_aliases": ["mastery_path", "mastery"],
+                "request_schema": {},
+                "config_defaults": {},
+                "availability": asdict(self.get_capability_availability(resolved)),
+            }
+        chat = self._chat_manifest()
+        return {
+            **chat,
+            "availability": asdict(self.get_capability_availability(chat["name"])),
+        }
 
     def get_capability_availability(self, capability: str) -> CapabilityAvailability:
         resolved = self.resolve_capability(capability)
