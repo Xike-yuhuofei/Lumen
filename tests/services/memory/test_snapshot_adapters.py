@@ -39,7 +39,7 @@ def _write_session(sessions_dir: Path, key: str, turns: list[tuple[str, str]]) -
 def partner_tree(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """Make ``tmp_path`` the admin root and route both path services there."""
     monkeypatch.setattr(adapters, "get_path_service", lambda: _FakePathService(tmp_path))
-    import deeptutor.multi_user.paths as mu_paths
+    import deeptutor.services.user as mu_paths
 
     monkeypatch.setattr(mu_paths, "get_admin_path_service", lambda: _FakePathService(tmp_path))
     return tmp_path
@@ -107,22 +107,6 @@ def test_missing_config_uses_dir_id_as_name(partner_tree: Path) -> None:
     entities = adapters.read_partner_entities()
     assert len(entities) == 1
     assert entities[0].metadata["partner_name"] == "bot3"
-
-
-def test_non_admin_scope_sees_no_partners(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """A regular user's memory view must not surface admin partner chats."""
-    admin_root = tmp_path / "admin"
-    user_root = tmp_path / "users" / "u1" / "workspace"
-    pdir = admin_root / "partners" / "bot1"
-    pdir.mkdir(parents=True)
-    _write_session(pdir / "sessions", "web:s", [("user", "q"), ("assistant", "a")])
-
-    monkeypatch.setattr(adapters, "get_path_service", lambda: _FakePathService(user_root))
-    import deeptutor.multi_user.paths as mu_paths
-
-    monkeypatch.setattr(mu_paths, "get_admin_path_service", lambda: _FakePathService(admin_root))
-
-    assert adapters.read_partner_entities() == []
 
 
 def test_fingerprint_changes_when_conversation_grows(partner_tree: Path) -> None:

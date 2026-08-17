@@ -28,7 +28,7 @@ class BaseSessionManager(ABC):
     with customization points for module-specific behavior.
 
     Path resolution is deferred to request-time via @property so that
-    multi-user isolation works correctly: ``get_path_service()`` is
+    per-user workspace isolation works correctly: ``get_path_service()`` is
     called on every access, respecting the per-request user context.
 
     Subclasses must implement:

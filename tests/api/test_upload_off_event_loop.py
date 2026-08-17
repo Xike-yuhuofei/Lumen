@@ -4,8 +4,8 @@ Batch-uploading files stalled every other request — chat WebSockets included
 — for the whole duration of the batch. Two distinct causes, both pinned here:
 
 * ``_save_uploaded_files`` is blocking end to end (a chunked write of every
-  uploaded byte, zip extraction, plus a synchronous HTTP upload per file when
-  PocketBase is on) and was called inline from an ``async def`` route.
+  uploaded byte and zip extraction) and was called inline from an
+  ``async def`` route.
 * the follow-up work runs in a FastAPI ``BackgroundTasks`` entry declared
   ``async def``, which starlette awaits ON the event loop — only *sync*
   callables get routed to its threadpool — so the staging hash/copy and the

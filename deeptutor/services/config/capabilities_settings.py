@@ -41,38 +41,15 @@ from deeptutor.utils.config_manager import ConfigManager
 # Each capability lists its (file, sub-path) reads so we know how to
 # round-trip values without disturbing unrelated YAML keys.
 _AGENTS_YAML_CAPABILITY_SECTIONS: dict[str, tuple[str, ...]] = {
-    "solve": ("capabilities", "solve"),
-    "research": ("capabilities", "research"),
     "question": ("capabilities", "question"),
-    "vision_solver": ("plugins", "vision_solver"),
 }
 
 _SIMPLE_LLM_DEFAULTS: dict[str, dict[str, Any]] = {
-    "solve": {"temperature": 0.3, "max_tokens": 8192},
-    "research": {"temperature": 0.5, "max_tokens": 16834},
     "question": {"temperature": 0.7, "max_tokens": 4096},
-    "vision_solver": {"temperature": 0.3, "max_tokens": 12000},
 }
 
 # main.yaml subtrees that capabilities read at runtime (besides LLM params).
 _MAIN_YAML_RUNTIME_DEFAULTS: dict[str, dict[str, Any]] = {
-    "solve": {
-        # Total LLM-round budget for one solve turn (plan + tool + finish all
-        # count as rounds in the flat agent loop). Higher than chat's default
-        # (each plan step costs several rounds) but kept moderate so a churning
-        # turn finishes naturally instead of running long enough to hit an LLM
-        # timeout — raise it in settings if you want deeper solving.
-        "max_rounds": 12,
-        "max_replans": 2,
-    },
-    "research": {
-        "researching": {
-            "note_agent_mode": "auto",
-            "tool_timeout": 60,
-            "tool_max_retries": 3,
-            "paper_search_years_limit": 5,
-        },
-    },
     "question": {
         "exploring": {
             "max_iterations": 7,
@@ -223,47 +200,6 @@ def _build_main_runtime_block(main_cfg: dict[str, Any], capability: str) -> dict
     defaults = _MAIN_YAML_RUNTIME_DEFAULTS.get(capability)
     if defaults is None:
         return {}
-    if capability == "solve":
-        solve_cfg = _get_at(main_cfg, ("capabilities", "solve"))
-        # The pre-flat-loop ``max_iterations_per_step`` key was inert, so a stale
-        # value is intentionally ignored — only the new ``max_rounds`` counts,
-        # otherwise everyone would silently inherit the old (too-low) number.
-        return {
-            "max_rounds": _coerce_int(
-                solve_cfg.get("max_rounds"),
-                defaults["max_rounds"],
-                lo=1,
-                hi=50,
-            ),
-            "max_replans": _coerce_int(
-                solve_cfg.get("max_replans"),
-                defaults["max_replans"],
-                lo=0,
-                hi=10,
-            ),
-        }
-    if capability == "research":
-        researching_cfg = _get_at(main_cfg, ("capabilities", "research", "researching"))
-        d = defaults["researching"]
-        return {
-            "researching": {
-                "note_agent_mode": str(
-                    researching_cfg.get("note_agent_mode") or d["note_agent_mode"]
-                ),
-                "tool_timeout": _coerce_int(
-                    researching_cfg.get("tool_timeout"), d["tool_timeout"], lo=1, hi=600
-                ),
-                "tool_max_retries": _coerce_int(
-                    researching_cfg.get("tool_max_retries"), d["tool_max_retries"], lo=0, hi=10
-                ),
-                "paper_search_years_limit": _coerce_int(
-                    researching_cfg.get("paper_search_years_limit"),
-                    d["paper_search_years_limit"],
-                    lo=1,
-                    hi=50,
-                ),
-            },
-        }
     if capability == "question":
         exploring_cfg = _get_at(main_cfg, ("capabilities", "question", "exploring"))
         d = defaults["exploring"]
@@ -357,37 +293,6 @@ def _apply_main_runtime(
     defaults = _MAIN_YAML_RUNTIME_DEFAULTS.get(capability)
     if defaults is None:
         return
-    if capability == "solve":
-        solve_section: dict[str, Any] = {}
-        if "max_rounds" in block:
-            solve_section["max_rounds"] = _coerce_int(
-                block.get("max_rounds"),
-                defaults["max_rounds"],
-                lo=1,
-                hi=50,
-            )
-        if "max_replans" in block:
-            solve_section["max_replans"] = _coerce_int(
-                block.get("max_replans"),
-                defaults["max_replans"],
-                lo=0,
-                hi=10,
-            )
-        if solve_section:
-            main_payload.setdefault("capabilities", {})["solve"] = solve_section
-    if capability == "research" and isinstance(block.get("researching"), dict):
-        d = defaults["researching"]
-        r = block["researching"]
-        main_payload.setdefault("capabilities", {}).setdefault("research", {})["researching"] = {
-            "note_agent_mode": str(r.get("note_agent_mode") or d["note_agent_mode"]),
-            "tool_timeout": _coerce_int(r.get("tool_timeout"), d["tool_timeout"], lo=1, hi=600),
-            "tool_max_retries": _coerce_int(
-                r.get("tool_max_retries"), d["tool_max_retries"], lo=0, hi=10
-            ),
-            "paper_search_years_limit": _coerce_int(
-                r.get("paper_search_years_limit"), d["paper_search_years_limit"], lo=1, hi=50
-            ),
-        }
     if capability == "question" and isinstance(block.get("exploring"), dict):
         d = defaults["exploring"]
         e = block["exploring"]
@@ -428,24 +333,7 @@ def save_capabilities_settings(payload: dict[str, Any]) -> dict[str, Any]:
     return capabilities_settings_dict()
 
 
-def get_solve_params() -> dict[str, Any]:
-    """Runtime solve params, read through the same coerce path as the UI.
-
-    Combines the two storage locations the solve settings page writes to:
-    ``temperature`` / ``max_tokens`` (agents.yaml) and ``max_rounds`` /
-    ``max_replans`` (main config). This is the single source the deep-solve
-    capability forwards into the chat agent loop, so the settings page actually
-    drives the loop instead of being inert.
-    """
-    agents_cfg = _read_agents_yaml()
-    main_cfg = ConfigManager().load_config()
-    llm = _build_simple_llm_block(agents_cfg, "solve")
-    runtime = _build_main_runtime_block(main_cfg, "solve")
-    return {**llm, **runtime}
-
-
 __all__ = [
     "capabilities_settings_dict",
-    "get_solve_params",
     "save_capabilities_settings",
 ]

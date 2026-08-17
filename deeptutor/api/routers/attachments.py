@@ -12,7 +12,7 @@ URL shape::
 
 The session id functions as the ACL boundary, mirroring how the rest of
 the app treats sessions today (single-tenant, session ownership is local
-trust). Once multi-user auth lands we should swap this for signed URLs.
+trust). Future auth integration should swap this for signed URLs.
 """
 
 from __future__ import annotations

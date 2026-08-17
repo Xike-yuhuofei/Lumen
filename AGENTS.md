@@ -38,7 +38,6 @@ surface in `/settings/tools`:
 | -------------- | --------------------------------------------- |
 | `brainstorm`   | Breadth-first idea exploration with rationale |
 | `web_search`   | Web search with citations                     |
-| `paper_search` | arXiv preprint search                         |
 | `reason`       | Dedicated deep-reasoning LLM call             |
 
 The rest are **context-gated**: the chat capability auto-mounts them from
@@ -48,8 +47,7 @@ any of them can also be force-enabled via `--tool`. Auto-mounted set: `rag`,
 `exec`, `code_execution` (sandboxed Python: NL intent → code → run),
 `list_notebook`, `write_note`, `web_fetch`, `github`, `cron`,
 `ask_user` (pauses the turn and resumes with the user's reply), plus the
-mastery-path tools. `geogebra_analysis` is parked under
-`COMING_SOON_TOOL_TYPES`.
+mastery-path tools.
 
 ### Level 2 — Capabilities
 
@@ -59,9 +57,6 @@ Multi-stage pipelines that own the turn:
 | ---------------- | ----------------------------------------------------- |
 | `chat`           | exploring → responding (single agentic loop, default) |
 | `mastery_path`   | responding (Guided Learning — chat loop + mastery tools, gated per topic type) |
-| `deep_solve`     | planning → reasoning → writing                        |
-| `deep_question`  | ideation → generation                                 |
-| `deep_research`  | rephrasing → decomposing → researching → reporting    |
 | `visualize`      | analyzing → generating → reviewing (SVG / Chart.js / Mermaid / HTML) |
 
 All capabilities converge on `emit_capability_result()` in
@@ -78,7 +73,6 @@ pip install deeptutor-cli  # CLI-only
 
 # Run any capability
 deeptutor run chat "Explain Fourier transform"
-deeptutor run deep_solve "Solve x^2=4" -t rag --kb my-kb
 deeptutor run visualize "Animate sine wave"
 
 # Interactive REPL

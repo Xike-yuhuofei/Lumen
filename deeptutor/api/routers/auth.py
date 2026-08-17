@@ -17,7 +17,7 @@ from fastapi import (
     WebSocket,
     status,
 )
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, field_validator
 
 from deeptutor.services.config import load_auth_settings
@@ -29,28 +29,21 @@ from deeptutor.services.config import load_auth_settings
 _SECURE = bool(load_auth_settings()["cookie_secure"])
 _SAMESITE = "none" if _SECURE else "lax"
 
-from deeptutor.multi_user.context import set_current_user, user_from_token_payload
-from deeptutor.multi_user.paths import local_admin_user
+from deeptutor.services.user import set_current_user, user_from_token_payload
+from deeptutor.services.user import local_admin_user
 from deeptutor.services.auth import (
     AUTH_ENABLED,
-    POCKETBASE_ENABLED,
     TOKEN_EXPIRE_HOURS,
     TokenPayload,
     add_user,
     authenticate,
-    authenticate_pb,
     create_token,
     decode_token,
-    delete_user,
     get_user_info,
     is_first_user,
     list_users,
-    register_pb,
     set_avatar,
-    set_role,
 )
-from deeptutor.services.codex_auth.contracts import CodexAuthError
-from deeptutor.services.codex_auth.service import deliver_codex_oauth_callback
 
 logger = logging.getLogger(__name__)
 
@@ -104,8 +97,8 @@ class RegisterRequest(BaseModel):
         v = v.strip()
         if not v:
             raise ValueError("Email cannot be empty")
-        # Accept standard email addresses (used by PocketBase mode) or plain
-        # usernames (used by the built-in SQLite/JSON auth mode).
+        # Accept standard email addresses or plain usernames (used by the
+        # built-in SQLite/JSON auth mode).
         email_re = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
         plain_re = re.compile(r"^[A-Za-z0-9_\-.]{3,64}$")
         if not email_re.match(v) and not plain_re.match(v):
@@ -354,9 +347,9 @@ def _local_admin_token_payload() -> TokenPayload:
     Mirrors the local admin identity (LOCAL_ADMIN_USERNAME / LOCAL_ADMIN_ID)
     so audit logs and self-reference checks behave the same as in multi-user
     mode. Values are kept aligned with ``local_admin_user()`` in
-    ``deeptutor/multi_user/paths.py``.
+    ``deeptutor.services.user``.
     """
-    from deeptutor.multi_user.models import LOCAL_ADMIN_ID, LOCAL_ADMIN_USERNAME
+    from deeptutor.services.user import LOCAL_ADMIN_ID, LOCAL_ADMIN_USERNAME
 
     return TokenPayload(
         username=LOCAL_ADMIN_USERNAME,
@@ -368,35 +361,6 @@ def _local_admin_token_payload() -> TokenPayload:
 # ---------------------------------------------------------------------------
 # Public endpoints (no auth required)
 # ---------------------------------------------------------------------------
-
-
-@router.get("/openai-codex/callback")
-async def receive_codex_oauth_callback(
-    request: Request,
-    code: str | None = None,
-    state: str | None = None,
-    error: str | None = None,
-) -> HTMLResponse:
-    headers = {"Cache-Control": "no-store"}
-    try:
-        callback_state = state if len(request.query_params.getlist("state")) == 1 else None
-        await deliver_codex_oauth_callback(code, callback_state, error)
-    except CodexAuthError as exc:
-        return HTMLResponse(
-            (
-                "<!doctype html><title>Lumen Codex</title>"
-                "<p>Authentication could not be received. Return to Lumen and try again.</p>"
-            ),
-            status_code=exc.http_status,
-            headers=headers,
-        )
-    return HTMLResponse(
-        (
-            "<!doctype html><title>Lumen Codex</title>"
-            "<p>Authentication received. You can return to Lumen.</p>"
-        ),
-        headers=headers,
-    )
 
 
 @router.get("/status", response_model=AuthStatusResponse)
@@ -438,26 +402,6 @@ async def login(body: LoginRequest, response: Response) -> dict:
     """Validate credentials and set a JWT cookie."""
     if not AUTH_ENABLED:
         return {"ok": True, "message": "Auth is disabled — no login required."}
-
-    if POCKETBASE_ENABLED:
-        # PocketBase mode: email = username field for backwards-compat with the
-        # existing LoginRequest schema; users can pass their email as "username".
-        pb_result = authenticate_pb(body.username, body.password)
-        if not pb_result:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Incorrect email or password",
-            )
-        payload, pb_token = pb_result
-        response.set_cookie(value=pb_token, max_age=_COOKIE_MAX_AGE, **_cookie_attrs())
-        logger.info(f"User '{payload.username}' logged in via PocketBase (role={payload.role!r})")
-        return {
-            "ok": True,
-            "user_id": payload.user_id,
-            "username": payload.username,
-            "role": payload.role,
-            "is_admin": payload.role == "admin",
-        }
 
     # Standard JWT + bcrypt mode
     result = authenticate(body.username, body.password)
@@ -507,30 +451,6 @@ async def register(body: RegisterRequest) -> dict:
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Auth is disabled — registration is not available.",
         )
-
-    if POCKETBASE_ENABLED:
-        # PocketBase deployments are documented as single-user. Keep registration
-        # closed and require admins to provision users in the PocketBase admin UI.
-        if not is_first_user():
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Self-registration is closed. Ask an administrator to create your account.",
-            )
-        result = register_pb(username=body.username, email=body.username, password=body.password)
-        if not result:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Registration failed — username or email may already be taken.",
-            )
-        logger.info(f"First user registered via PocketBase: '{body.username}'")
-        return {
-            "ok": True,
-            "user_id": result.get("id", ""),
-            "username": body.username,
-            "role": "user",
-            "is_first_user": True,
-            "is_admin": False,
-        }
 
     # Standard mode — only allowed before the first admin exists.
     if not is_first_user():
@@ -614,8 +534,8 @@ async def get_profile(
     current = _require_profile_identity(payload)
     info = get_user_info(current.username)
     if info is None:
-        # PocketBase-backed identities have no local record; fall back to the
-        # token claims so the profile page still renders.
+        # No local record for this identity (e.g. user deleted); fall back to
+        # the token claims so the profile page still renders.
         return UserInfo(
             id=current.user_id,
             username=current.username,
@@ -639,7 +559,7 @@ async def update_profile(
     if not set_avatar(current.username, body.avatar):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     # The marker no longer references an uploaded image, so drop the file.
-    from deeptutor.multi_user.identity import delete_avatar_file
+    from deeptutor.services.user import delete_avatar_file
 
     if current.user_id and _USER_ID_RE.match(current.user_id):
         delete_avatar_file(current.user_id)
@@ -654,15 +574,9 @@ async def upload_avatar(
     """Upload an avatar image for the current user.
 
     The client is expected to crop/resize before uploading; the server only
-    enforces a size cap and validates the format by magic bytes. Not available
-    in PocketBase mode (those identities have no local user record).
+    enforces a size cap and validates the format by magic bytes.
     """
     current = _require_profile_identity(payload)
-    if POCKETBASE_ENABLED:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Avatar upload is not available in PocketBase mode.",
-        )
     if not current.user_id or not _USER_ID_RE.match(current.user_id):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -685,7 +599,7 @@ async def upload_avatar(
             detail="Avatar must be a PNG, JPEG or WebP image.",
         )
 
-    from deeptutor.multi_user.identity import save_avatar_file
+    from deeptutor.services.user import save_avatar_file
 
     # Bump the version embedded in the marker so clients cache-bust the URL.
     previous = str(info.get("avatar") or "")
@@ -710,7 +624,7 @@ async def remove_avatar(
 ) -> dict:
     """Remove the current user's uploaded avatar image and reset the marker."""
     current = _require_profile_identity(payload)
-    from deeptutor.multi_user.identity import delete_avatar_file
+    from deeptutor.services.user import delete_avatar_file
 
     if current.user_id and _USER_ID_RE.match(current.user_id):
         delete_avatar_file(current.user_id)
@@ -728,7 +642,7 @@ async def get_avatar_image(
     if not _USER_ID_RE.match(user_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Avatar not found")
 
-    from deeptutor.multi_user.identity import get_avatar_file
+    from deeptutor.services.user import get_avatar_file
 
     target = get_avatar_file(user_id)
     if target is None:
@@ -745,127 +659,3 @@ async def get_avatar_image(
 
 
 # ---------------------------------------------------------------------------
-# Admin-only endpoints
-# ---------------------------------------------------------------------------
-
-
-@router.get("/users", response_model=list[UserInfo])
-async def get_users(_: TokenPayload = Depends(require_admin)) -> list[UserInfo]:
-    """List all registered users. Requires admin role."""
-    return [UserInfo(**u) for u in list_users()]
-
-
-@router.post("/users", status_code=status.HTTP_201_CREATED)
-async def admin_create_user(
-    body: RegisterRequest,
-    current: TokenPayload = Depends(require_admin),
-) -> dict:
-    """Admin-only: create a new user account.
-
-    Replaces the public ``/register`` flow once the first admin exists. The
-    new account is always created with role=``user``; admins can promote
-    later via ``PUT /users/{username}/role``.
-    """
-    if not AUTH_ENABLED:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Auth is disabled — user creation is not available.",
-        )
-
-    if POCKETBASE_ENABLED:
-        result = register_pb(username=body.username, email=body.username, password=body.password)
-        if not result:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Failed to create user — username may already be taken.",
-            )
-        logger.info(
-            f"Admin '{current.username if current else 'local'}' created PocketBase user "
-            f"'{body.username}'"
-        )
-        return {
-            "ok": True,
-            "user_id": result.get("id", ""),
-            "username": body.username,
-            "role": "user",
-            "is_admin": False,
-        }
-
-    existing = {u["username"] for u in list_users()}
-    if body.username in existing:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Username already taken",
-        )
-
-    add_user(body.username, body.password)
-    user_id = ""
-    role = "user"
-    for item in list_users():
-        if item.get("username") == body.username:
-            user_id = str(item.get("id") or "")
-            role = str(item.get("role") or "user")
-            break
-    logger.info(
-        f"Admin '{current.username if current else 'local'}' created user '{body.username}' "
-        f"(role={role!r})"
-    )
-    return {
-        "ok": True,
-        "user_id": user_id,
-        "username": body.username,
-        "role": role,
-        "is_admin": role == "admin",
-    }
-
-
-@router.delete("/users/{username}", status_code=status.HTTP_200_OK)
-async def remove_user(
-    username: str,
-    current: TokenPayload = Depends(require_admin),
-) -> dict:
-    """Delete a user. Admins cannot delete their own account."""
-    if current and username == current.username:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="You cannot delete your own account",
-        )
-
-    # Capture the id before the record disappears so the avatar file can go too.
-    info = get_user_info(username)
-
-    removed = delete_user(username)
-    if not removed:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-
-    user_id = str(info.get("id") or "") if info else ""
-    if user_id and _USER_ID_RE.match(user_id):
-        from deeptutor.multi_user.identity import delete_avatar_file
-
-        delete_avatar_file(user_id)
-
-    logger.info(f"Admin '{current.username if current else 'local'}' deleted user '{username}'")
-    return {"ok": True}
-
-
-@router.put("/users/{username}/role", status_code=status.HTTP_200_OK)
-async def update_user_role(
-    username: str,
-    body: SetRoleRequest,
-    current: TokenPayload = Depends(require_admin),
-) -> dict:
-    """Change a user's role. Admins cannot change their own role."""
-    if current and username == current.username:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="You cannot change your own role",
-        )
-
-    updated = set_role(username, body.role)
-    if not updated:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-
-    logger.info(
-        f"Admin '{current.username if current else 'local'}' set '{username}' role to {body.role!r}"
-    )
-    return {"ok": True, "username": username, "role": body.role}

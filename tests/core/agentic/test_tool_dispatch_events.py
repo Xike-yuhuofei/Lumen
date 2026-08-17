@@ -9,9 +9,10 @@ Two regressions live here:
   AND turn persistence (json.dumps in the store), leaving the turn stuck
   "running" and later mislabelled as a restart orphan.
 * Flavour-gated status — running/terminal ``call_state`` and the per-tool
-  event sink used to be wired only for retrieve-flavoured tools, so ``exec``,
-  MCP and web tools never pulsed as running and a tool that raised rendered as
-  a completed row (the frontend keys both on ``call_state``).
+  event sink used to be wired only for retrieve-flavoured tools, so
+  code-execution, MCP and web tools never pulsed as running and a tool that
+  raised rendered as a completed row (the frontend keys both on
+  ``call_state``).
 """
 
 from __future__ import annotations
@@ -138,7 +139,7 @@ def _call_id_of(event: StreamEvent) -> str:
 @pytest.mark.asyncio
 async def test_tool_call_event_args_exclude_private_kwargs() -> None:
     events = await _run_dispatch(
-        [{"id": "c1", "name": "exec", "arguments": json.dumps({"command": "true"})}],
+        [{"id": "c1", "name": "code_execution", "arguments": json.dumps({"command": "true"})}],
         registry=_Registry(),
         kwarg_augmenter=_augment,
     )
@@ -155,7 +156,7 @@ async def test_tool_call_event_args_exclude_private_kwargs() -> None:
 @pytest.mark.asyncio
 async def test_non_retrieve_tool_emits_running_then_complete() -> None:
     events = await _run_dispatch(
-        [{"id": "c1", "name": "exec", "arguments": json.dumps({"command": "true"})}],
+        [{"id": "c1", "name": "code_execution", "arguments": json.dumps({"command": "true"})}],
         registry=_Registry(),
     )
 
@@ -172,7 +173,7 @@ async def test_non_retrieve_tool_emits_running_then_complete() -> None:
     # No narrated copy for a plain tool call: the CLI renderer prints non-empty
     # status lines and already headers the call from the ``tool_call`` event.
     assert [e.content for e in statuses] == ["", ""]
-    assert all((e.metadata or {}).get("tool_name") == "exec" for e in statuses)
+    assert all((e.metadata or {}).get("tool_name") == "code_execution" for e in statuses)
 
 
 @pytest.mark.asyncio
@@ -200,17 +201,17 @@ async def test_retrieve_tool_keeps_its_labelled_variant() -> None:
 @pytest.mark.asyncio
 async def test_raising_tool_emits_terminal_error() -> None:
     events = await _run_dispatch(
-        [{"id": "c1", "name": "exec", "arguments": json.dumps({"command": "true"})}],
+        [{"id": "c1", "name": "code_execution", "arguments": json.dumps({"command": "true"})}],
         registry=_RaisingRegistry(),
     )
 
     assert _call_states(events) == ["running", "error"]
     terminal = _status_events(events)[-1]
     assert (terminal.metadata or {}).get("error") == "boom"
-    assert terminal.content == "exec failed: boom"
+    assert terminal.content == "code_execution failed: boom"
     # The model still reads the same result text as before.
     results = [e for e in events if e.type == StreamEventType.TOOL_RESULT]
-    assert results[0].content == "Error executing exec: boom"
+    assert results[0].content == "Error executing code_execution: boom"
 
 
 @pytest.mark.asyncio
@@ -219,11 +220,12 @@ async def test_one_failed_tool_does_not_raise_a_turn_level_error() -> None:
 
     A partner turn collects ERROR events and, when the turn produced no text,
     re-runs the whole thing on its backup model — re-executing side-effecting
-    tools (``exec``, file and notebook writes). Terminality therefore rides on
-    ``call_state``, which is all the frontend reads, on a PROGRESS event.
+    tools (code_execution, file and notebook writes). Terminality therefore
+    rides on ``call_state``, which is all the frontend reads, on a PROGRESS
+    event.
     """
     events = await _run_dispatch(
-        [{"id": "c1", "name": "exec", "arguments": json.dumps({"command": "true"})}],
+        [{"id": "c1", "name": "code_execution", "arguments": json.dumps({"command": "true"})}],
         registry=_RaisingRegistry(),
     )
 
@@ -282,7 +284,7 @@ async def test_unknown_tool_name_emits_terminal_error() -> None:
 async def test_parallel_calls_get_their_own_status_pair() -> None:
     events = await _run_dispatch(
         [
-            {"id": "c1", "name": "exec", "arguments": json.dumps({"command": "one"})},
+            {"id": "c1", "name": "code_execution", "arguments": json.dumps({"command": "one"})},
             {"id": "c2", "name": "read_source", "arguments": json.dumps({"index": 1})},
         ],
         registry=_Registry(),
@@ -298,7 +300,7 @@ async def test_parallel_calls_get_their_own_status_pair() -> None:
 @pytest.mark.asyncio
 async def test_intermediate_progress_from_non_retrieve_tool_reaches_stream() -> None:
     events = await _run_dispatch(
-        [{"id": "c1", "name": "exec", "arguments": json.dumps({"command": "true"})}],
+        [{"id": "c1", "name": "code_execution", "arguments": json.dumps({"command": "true"})}],
         registry=_ProgressRegistry(),
     )
 

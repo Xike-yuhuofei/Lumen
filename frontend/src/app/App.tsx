@@ -27,7 +27,6 @@ import {
   SkillDetailModal,
 } from './pages'
 import { listToggleableTools, setEnabledOptionalTools, type ToolItem } from '../api/tools'
-import { speakReply, stopSpeech } from '../api/voice'
 import { UnifiedWSClient, type StreamEvent } from '../api/ws'
 import { AssistantMarkdown } from './AssistantMarkdown'
 import { PRODUCT_NAME } from './brand'
@@ -37,7 +36,6 @@ import {
   LS_CHAT_TIMEOUT,
   LS_LANGUAGE,
   LS_RESPONSE_LANGUAGE,
-  LS_VOICE_AUTOPLAY,
   LanguageId,
   clampChatTimeout,
   loadRuntimeUiSettings,
@@ -2578,7 +2576,6 @@ export default function App() {
   const [responseLanguage, setResponseLanguage] = useState<LanguageId>(() => (
     readStrLs(LS_RESPONSE_LANGUAGE, readStrLs(LS_LANGUAGE, 'zh')) === 'en' ? 'en' : 'zh'
   ))
-  const [voiceAutoplay, setVoiceAutoplay] = useState(() => readBoolLs(LS_VOICE_AUTOPLAY, false))
   const [chatTimeout, setChatTimeout] = useState(() => {
     const raw = parseInt(readStrLs(LS_CHAT_TIMEOUT, String(DEFAULT_CHAT_TIMEOUT)), 10)
     return clampChatTimeout(Number.isNaN(raw) ? DEFAULT_CHAT_TIMEOUT : raw)
@@ -2597,10 +2594,6 @@ export default function App() {
     try { localStorage.setItem(LS_RESPONSE_LANGUAGE, responseLanguage) } catch { /* ignore */ }
   }, [responseLanguage])
   useEffect(() => {
-    try { localStorage.setItem(LS_VOICE_AUTOPLAY, voiceAutoplay ? '1' : '0') } catch { /* ignore */ }
-    if (!voiceAutoplay) stopSpeech()
-  }, [voiceAutoplay])
-  useEffect(() => {
     try { localStorage.setItem(LS_CHAT_TIMEOUT, String(chatTimeout)) } catch { /* ignore */ }
   }, [chatTimeout])
   useEffect(() => {
@@ -2610,7 +2603,6 @@ export default function App() {
       if (ui.response_language === 'zh' || ui.response_language === 'en') {
         setResponseLanguage(ui.response_language)
       }
-      if (typeof ui.voice_autoplay === 'boolean') setVoiceAutoplay(ui.voice_autoplay)
       if (typeof ui.chat_response_timeout === 'number') {
         setChatTimeout(clampChatTimeout(ui.chat_response_timeout))
       }
@@ -2777,14 +2769,12 @@ export default function App() {
   const selectedToolsRef = useRef(selectedTools)
   const attachmentsRef = useRef(attachments)
   const responseLanguageRef = useRef(responseLanguage)
-  const voiceAutoplayRef = useRef(voiceAutoplay)
   const chatTimeoutRef = useRef(chatTimeout)
   const turnIdleTimerRef = useRef<number | null>(null)
   useEffect(() => { capabilityRef.current = capability }, [capability])
   useEffect(() => { selectedToolsRef.current = selectedTools }, [selectedTools])
   useEffect(() => { attachmentsRef.current = attachments }, [attachments])
   useEffect(() => { responseLanguageRef.current = responseLanguage }, [responseLanguage])
-  useEffect(() => { voiceAutoplayRef.current = voiceAutoplay }, [voiceAutoplay])
   useEffect(() => { chatTimeoutRef.current = chatTimeout }, [chatTimeout])
 
   const clearTurnIdleTimer = useCallback(() => {
@@ -2849,10 +2839,6 @@ export default function App() {
       turn.blocks = eventsToBlocks(turn.events, '')
       patchAssistantBlocks(turn.sessionId, turn.assistantId, turn.blocks)
       setStreaming(false)
-      if (voiceAutoplayRef.current) {
-        const spoken = visibleAnswerFromEvents(turn.events)
-        if (spoken.trim()) void speakReply(spoken)
-      }
       return
     }
     turn.events.push(event)
@@ -2875,7 +2861,6 @@ export default function App() {
     client.connect()
     return () => {
       clearTurnIdleTimer()
-      stopSpeech()
       client.disconnect()
       wsRef.current = null
     }
@@ -3017,7 +3002,6 @@ export default function App() {
     }
     setStreaming(true)
     setConnectError('')
-    stopSpeech()
     armTurnIdleTimer()
 
     const sent = wsRef.current?.send({
@@ -3046,7 +3030,6 @@ export default function App() {
     const turnId = turnRef.current?.turnId
     if (turnId) wsRef.current?.send({ type: 'cancel_turn', turn_id: turnId })
     clearTurnIdleTimer()
-    stopSpeech()
     setStreaming(false)
   }, [clearTurnIdleTimer])
 
@@ -3376,8 +3359,6 @@ export default function App() {
         onLanguageChange={setLanguage}
         responseLanguage={responseLanguage}
         onResponseLanguageChange={setResponseLanguage}
-        voiceAutoplay={voiceAutoplay}
-        onVoiceAutoplayChange={setVoiceAutoplay}
         chatTimeout={chatTimeout}
         onChatTimeoutChange={setChatTimeout}
         tools={tools}

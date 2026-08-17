@@ -77,13 +77,11 @@ def test_run_command_json_mode(monkeypatch) -> None:
 def test_builtin_capability_aliases_resolve_to_canonical_names() -> None:
     runtime = DeepTutorApp()
 
-    assert runtime.resolve_capability("solve") == "deep_solve"
-    assert runtime.resolve_capability("quiz") == "deep_question"
-    assert runtime.resolve_capability("research") == "deep_research"
-    assert runtime.resolve_capability("viz") == "visualize"
     assert runtime.resolve_capability("mastery") == "mastery_path"
     with pytest.raises(ValueError, match="Unknown capability `auto`"):
         runtime.resolve_capability("auto")
+    with pytest.raises(ValueError, match="Unknown capability `quiz`"):
+        runtime.resolve_capability("quiz")
 
 
 def test_run_command_rejects_removed_auto_capability() -> None:
@@ -103,30 +101,6 @@ def test_run_command_rich_mode(monkeypatch) -> None:
     assert result.exit_code == 0, result.output
     assert "response body" in result.output
     assert captured_requests[0].capability == "chat"
-
-
-def test_run_command_with_config(monkeypatch) -> None:
-    captured_requests: list[TurnRequest] = []
-    _install_fake_runtime(monkeypatch, captured_requests)
-
-    result = runner.invoke(
-        app,
-        [
-            "run",
-            "deep_research",
-            "compare retrieval stacks",
-            "--config-json",
-            '{"mode":"report","depth":"deep"}',
-        ],
-    )
-
-    assert result.exit_code == 0, result.output
-    request = captured_requests[0]
-    assert request.capability == "deep_research"
-    assert request.config == {
-        "mode": "report",
-        "depth": "deep",
-    }
 
 
 def test_chat_repl_config_commands_match_docs_syntax(monkeypatch) -> None:

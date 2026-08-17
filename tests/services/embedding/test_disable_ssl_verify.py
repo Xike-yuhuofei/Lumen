@@ -1,7 +1,6 @@
 """DISABLE_SSL_VERIFY coverage for embedding adapters that use raw httpx.
 
-Companion to ``tests/services/llm/test_openai_http_client.py`` (SDK clients) and
-``tests/services/llm/test_codex_disable_ssl_verify.py`` (codex retry path).
+Companion to ``tests/services/llm/test_openai_http_client.py`` (SDK clients).
 Each adapter constructs ``httpx.AsyncClient`` directly; this asserts the
 ``verify`` kwarg flips to ``False`` when ``DISABLE_SSL_VERIFY`` is set, and
 defaults to ``True`` otherwise.

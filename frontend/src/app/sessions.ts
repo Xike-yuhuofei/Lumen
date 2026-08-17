@@ -13,10 +13,6 @@ const LS_SELECTED = 'deeptutor:selectedSession'
 
 export const CAPABILITIES = [
   { id: 'chat', label: '对话' },
-  { id: 'deep_solve', label: '深度求解' },
-  { id: 'deep_question', label: '出题' },
-  { id: 'deep_research', label: '深度研究' },
-  { id: 'visualize', label: '可视化' },
   { id: 'mastery_path', label: '引导学习' },
 ] as const
 

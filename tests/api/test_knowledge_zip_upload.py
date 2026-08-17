@@ -22,11 +22,6 @@ from deeptutor.api.routers.knowledge import _save_uploaded_files
 ALLOWED = {".txt", ".md", ".pdf", ".zip"}
 
 
-@pytest.fixture(autouse=True)
-def _disable_pocketbase(monkeypatch):
-    monkeypatch.setattr("deeptutor.services.pocketbase_client.is_pocketbase_enabled", lambda: False)
-
-
 def _zip_upload(filename: str, entries: list[tuple[str, bytes]]) -> UploadFile:
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w") as zf:

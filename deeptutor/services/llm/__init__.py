@@ -5,9 +5,9 @@ LLM Service
 Unified LLM service for all DeepTutor modules.
 
 Architecture:
-    Agents (ChatAgent, SolveAgent, etc.)
+    Agentic loop (core.agentic)
               ↓
-         BaseAgent.call_llm() / stream_llm()
+         run_labeled_step / AgentLoop LLM call
               ↓
          LLM Factory (complete / stream)
               ↓
@@ -47,8 +47,6 @@ Usage:
     from deeptutor.services.llm import sanitize_url, is_local_llm_server
 """
 
-# Note: cloud_provider and local_provider are lazy-loaded via __getattr__
-# to avoid importing optional heavy dependencies at module load time
 from .capabilities import (
     DEFAULT_CAPABILITIES,
     MODEL_OVERRIDES,
@@ -149,9 +147,6 @@ __all__ = [
     "DEFAULT_MAX_RETRIES",
     "DEFAULT_RETRY_DELAY",
     "DEFAULT_EXPONENTIAL_BACKOFF",
-    # Providers (lazy loaded)
-    "cloud_provider",
-    "local_provider",
     # Utils
     "sanitize_url",
     "is_local_llm_server",
@@ -160,14 +155,3 @@ __all__ = [
     "clean_thinking_tags",
     "extract_response_content",
 ]
-
-
-def __getattr__(name: str):
-    """Lazy import for provider modules that depend on heavy libraries."""
-    from importlib import import_module
-
-    if name == "cloud_provider":
-        return import_module("deeptutor.services.llm.cloud_provider")
-    if name == "local_provider":
-        return import_module("deeptutor.services.llm.local_provider")
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

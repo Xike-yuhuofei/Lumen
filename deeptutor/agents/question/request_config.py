@@ -1,8 +1,7 @@
 """Runtime config builder for ``QuestionPipeline``.
 
-Mirrors the shape used by :mod:`deeptutor.agents.research.request_config`,
-but with a much smaller surface — the question pipeline only needs a
-handful of knobs out of the service config:
+The question pipeline only needs a handful of knobs out of the service
+config:
 
 * ``exploring.max_iterations`` (int, default 8) — agentic-loop cap for the
   Explore phase.

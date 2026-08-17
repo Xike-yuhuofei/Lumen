@@ -220,22 +220,6 @@ def test_thinking_chunks_collapse_to_single_indicator(monkeypatch) -> None:
     assert "should" not in result.output
 
 
-def test_legacy_capability_content_still_renders(monkeypatch) -> None:
-    events = [
-        {"type": "stage_start", "stage": "planning", "source": "deep_research"},
-        {"type": "content", "content": "Plan text here."},
-        {"type": "stage_end", "stage": "planning", "source": "deep_research"},
-        {"type": "done"},
-    ]
-    _install_fake_runtime(monkeypatch, events)
-
-    result = runner.invoke(app, ["run", "deep_research", "question"])
-
-    assert result.exit_code == 0, result.output
-    assert "▶ planning" in result.output
-    assert "Plan text here." in result.output
-
-
 def _ask_user_events() -> list[dict[str, Any]]:
     return [
         {"type": "stage_start", "stage": "responding", "source": "chat"},

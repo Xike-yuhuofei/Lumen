@@ -57,9 +57,6 @@ deeptutor run <capability> <message> [options]
 | Capability | 说明 |
 |------------|------|
 | `chat` | 对话（默认，可挂载工具） |
-| `deep_solve` | 多阶段深度解题 |
-| `deep_question` | 智能出题 |
-| `deep_research` | 多 agent 深度研究 |
 | `visualize` | 生成图表、图解、Mermaid 或 HTML 可视化 |
 | `mastery_path` | 掌握式学习路径与测评循环 |
 
@@ -67,7 +64,7 @@ deeptutor run <capability> <message> [options]
 
 | 选项 | 缩写 | 说明 |
 |------|------|------|
-| `--tool` | `-t` | 启用工具（可多次指定）：`rag`, `web_search`, `code_execution`, `reason`, `brainstorm`, `paper_search`, `geogebra_analysis` |
+| `--tool` | `-t` | 启用工具（可多次指定）：`rag`, `web_search`, `code_execution`, `reason`, `brainstorm` |
 | `--kb` | | 挂载知识库 |
 | `--language` | `-l` | 回复语言（默认 `en`） |
 | `--session` | | 继续已有会话 |
@@ -83,21 +80,8 @@ deeptutor run <capability> <message> [options]
 # 对话
 deeptutor run chat "什么是傅里叶变换？" -l zh
 
-# 深度解题
-deeptutor run deep_solve "证明 n^3-n 能被 6 整除" -t rag --kb math-textbook
-
-# 简要回答
-deeptutor run deep_solve "求 sin(x) 的导数" --config detailed_answer=false
-
-# 智能出题
-deeptutor run deep_question "线性代数" --config num_questions=5 --config difficulty=hard
-
-# 仿真出题
-deeptutor run deep_question "模拟考试" --config mode=mimic --config paper_path=exam.json
-
-# 深度研究
-deeptutor run deep_research "Transformer 最新进展" \
-  --config-json '{"mode":"report","depth":"deep","sources":["web","papers"]}'
+# 掌握式学习（含测评循环）
+deeptutor run mastery_path "线性代数" --kb math-textbook -l zh
 
 # 可视化
 deeptutor run visualize "画出注意力机制的数据流图" --config render_mode=mermaid
@@ -106,7 +90,7 @@ deeptutor run visualize "画出注意力机制的数据流图" --config render_m
 deeptutor run mastery_path "带我系统掌握特征值和特征向量"
 
 # JSON 输出（适合 agent 解析）
-deeptutor run deep_solve "求解 x^2=4" -f json
+deeptutor run mastery_path "线性代数基础" --kb math-textbook -f json
 ```
 
 ---
@@ -183,17 +167,9 @@ deeptutor config show
 ```bash
 # 1. 在 Web 界面创建知识库 calculus（或使用已有知识库）
 
-# 2. 用知识库解题
-deeptutor run deep_solve "求 ∫sin(x)cos(x)dx" -t rag --kb calculus -l zh
+# 2. 掌握式学习（含测评）
+deeptutor run mastery_path "微积分" --kb calculus -l zh
 
-# 3. 基于知识库出题
-deeptutor run deep_question "微积分" --kb calculus \
-  --config num_questions=5 --config difficulty=medium -l zh
-
-# 4. 深度研究某课题
-deeptutor run deep_research "注意力机制演进" \
-  --config-json '{"mode":"report","depth":"deep","sources":["papers","web"]}' -l zh
-
-# 5. 查看会话记录
+# 3. 查看会话记录
 deeptutor session list
 ```

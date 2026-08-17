@@ -38,11 +38,11 @@ class BaseCapability(ABC):
 
     Example::
 
-        class MySolverCapability(BaseCapability):
+        class MyCapability(BaseCapability):
             manifest = CapabilityManifest(
-                name="deep_solve",
-                description="Multi-agent problem solving.",
-                stages=["planning", "reasoning", "writing"],
+                name="chat",
+                description="Conversational learning.",
+                stages=["exploring", "responding"],
                 tools_used=["rag", "web_search", "code_execution"],
             )
 

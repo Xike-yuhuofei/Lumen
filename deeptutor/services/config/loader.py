@@ -71,9 +71,6 @@ def _inject_runtime_paths(config: dict[str, Any]) -> dict[str, Any]:
         "user_log_dir": str(path_service.get_logs_dir()),
         "performance_log_dir": str(path_service.get_logs_dir() / "performance"),
         "question_output_dir": str(path_service.get_chat_feature_dir("deep_question")),
-        "research_output_dir": str(path_service.get_research_dir()),
-        "research_reports_dir": str(path_service.get_research_reports_dir()),
-        "solve_output_dir": str(path_service.get_chat_feature_dir("deep_solve")),
     }
     return normalized
 
@@ -209,7 +206,6 @@ def get_agent_params(module_name: str) -> dict:
     Args:
         module_name: Module name, one of:
             - "solve": Solve module agents
-            - "research": Research module agents
             - "question": Question module agents
             - "brainstorm": Brainstorm tool settings
             - "narrator": Narrator agent (independent, for TTS)
@@ -230,12 +226,8 @@ def get_agent_params(module_name: str) -> dict:
         "max_tokens": 4096,
     }
     section_map = {
-        "solve": ("capabilities", "solve"),
-        "research": ("capabilities", "research"),
         "question": ("capabilities", "question"),
-        "visualize": ("capabilities", "visualize"),
         "brainstorm": ("tools", "brainstorm"),
-        "vision_solver": ("plugins", "vision_solver"),
         "llm_probe": ("diagnostics", "llm_probe"),
     }
     path = get_runtime_settings_dir(PROJECT_ROOT) / "agents.yaml"

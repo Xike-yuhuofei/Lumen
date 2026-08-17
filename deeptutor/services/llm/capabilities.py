@@ -29,11 +29,6 @@ PROVIDER_CAPABILITIES: dict[str, dict[str, object]] = {
         "system_in_messages": True,  # System prompt goes in messages array
         "newer_models_use_max_completion_tokens": True,
     },
-    # Codex uses OpenAI's Responses API and converts image_url message parts
-    # into native input_image blocks before sending the request.
-    "openai_codex": {
-        "supports_vision": True,
-    },
     # Custom / user-defined OpenAI-compatible endpoints
     "custom": {
         "supports_response_format": True,
@@ -88,14 +83,6 @@ PROVIDER_CAPABILITIES: dict[str, dict[str, object]] = {
         "supports_vision": True,
         "vision_url_supported": False,
         "system_in_messages": False,
-        "has_thinking_tags": False,
-    },
-    "codebuddy": {
-        "supports_response_format": False,
-        "supports_streaming": True,
-        "supports_tools": True,
-        "supports_vision": False,
-        "system_in_messages": True,
         "has_thinking_tags": False,
     },
     # DeepSeek
@@ -579,7 +566,7 @@ def get_effective_temperature(
 #: supplies, so each request carries the turn's own session id. Stated here
 #: rather than tested inline: the chat loop and the explore capability both
 #: need it, and neither should have to name a provider to run a turn.
-SESSION_SCOPED_BINDINGS: frozenset[str] = frozenset({"codebuddy"})
+SESSION_SCOPED_BINDINGS: frozenset[str] = frozenset()
 
 
 def threads_session_id(binding: str | None) -> bool:

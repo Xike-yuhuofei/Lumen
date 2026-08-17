@@ -23,7 +23,7 @@ async def rag_search(
     """Retrieve passages from ``kb_name`` and synthesise an answer.
 
     ``kb_name`` must match a knowledge base the current user can access;
-    multi-user routing is delegated to :func:`resolve_for_rag` when no
+    routing is delegated to :func:`resolve_for_rag` when no
     explicit ``kb_base_dir`` is given.
     """
     query = query.strip() if isinstance(query, str) else ""
@@ -34,7 +34,7 @@ async def rag_search(
         raise ValueError("RAG requires an explicit kb_name.")
 
     if kb_base_dir is None:
-        from deeptutor.multi_user.knowledge_access import resolve_for_rag
+        from deeptutor.services.user import resolve_for_rag
 
         resource = resolve_for_rag(kb_name)
         if resource is None:

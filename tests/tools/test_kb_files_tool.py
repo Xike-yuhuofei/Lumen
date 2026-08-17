@@ -49,7 +49,7 @@ def _stub_resolver(monkeypatch: pytest.MonkeyPatch, kb_dir: Path | None) -> list
         )
 
     monkeypatch.setattr(
-        "deeptutor.multi_user.knowledge_access.resolve_kb_manifest", _resolve, raising=False
+        "deeptutor.services.user.resolve_kb_manifest", _resolve, raising=False
     )
     return calls
 

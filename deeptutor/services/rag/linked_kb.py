@@ -24,7 +24,7 @@ from typing import Any, Optional
 # Optional ops-set allowlist of filesystem roots a linked folder must live
 # under, as an ``os.pathsep``-separated list. Unset (the default) means no
 # restriction, which is correct for the local/self-hosted single-trust-domain
-# deployments this feature targets. Shared multi-user servers should set it so a
+# deployments this feature targets. Shared servers should set it so a
 # non-admin cannot point a KB at another user's data or system paths.
 LINK_ROOTS_ENV = "DEEPTUTOR_LINKED_FOLDER_ROOTS"
 

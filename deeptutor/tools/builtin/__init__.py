@@ -8,10 +8,9 @@ import logging
 from typing import Any
 
 from deeptutor.capabilities.mastery import MASTERY_TOOL_TYPES
-from deeptutor.capabilities.solve import SOLVE_TOOL_TYPES
 from deeptutor.core.tool_protocol import BaseTool, ToolDefinition, ToolParameter, ToolResult
 from deeptutor.knowledge.manifest import KB_FILES_DEFAULT_LIMIT, KB_FILES_MAX_LIMIT
-from deeptutor.tools.exec_tool import ExecTool
+
 from deeptutor.tools.prompting import load_prompt_hints
 
 logger = logging.getLogger(__name__)
@@ -179,7 +178,7 @@ class KbFilesTool(_PromptHintsMixin, BaseTool):
 
     async def execute(self, **kwargs: Any) -> ToolResult:
         from deeptutor.knowledge.manifest import render_manifest_report
-        from deeptutor.multi_user.knowledge_access import resolve_kb_manifest
+        from deeptutor.services.user import resolve_kb_manifest
 
         kb_name = str(kwargs.get("kb_name") or "").strip()
         if not kb_name:
@@ -265,11 +264,11 @@ class WebSearchTool(_PromptHintsMixin, BaseTool):
 class CodeExecutionTool(_PromptHintsMixin, BaseTool):
     """Compile and run a code snippet inside the execution sandbox.
 
-    A typed front-end over the same sandbox ``exec`` uses: the model passes
+    A typed front-end over the sandbox runner: the model passes
     ready-to-run source as ``code`` + a ``language``; we write it into the
     turn's workspace, build the per-language compile/run command, and execute
     it through :mod:`deeptutor.services.sandbox`. No second LLM call, and the
-    same OS-level isolation + quota as ``exec`` — so it inherits exec's gating
+    same OS-level isolation + quota — so it inherits the sandbox gating
     (unavailable when no sandbox backend is configured).
     """
 
@@ -362,7 +361,7 @@ class CodeExecutionTool(_PromptHintsMixin, BaseTool):
         timeout = max(1, min(timeout, 300))
 
         # ``_sandbox_*`` kwargs are injected server-side by the pipeline; the
-        # LLM never supplies them. Mirror ExecTool's contract.
+        # LLM never supplies them.
         user_id = str(kwargs.get("_sandbox_user_id") or "anonymous")
         workdir = str(kwargs.get("_sandbox_workdir") or "").strip()
         mounts = tuple(kwargs.get("_sandbox_mounts") or ())
@@ -474,195 +473,6 @@ class ReasonTool(_PromptHintsMixin, BaseTool):
             temperature=kwargs.get("temperature"),
         )
         return ToolResult(content=result.get("answer", ""), metadata=result)
-
-
-class PaperSearchToolWrapper(_PromptHintsMixin, BaseTool):
-    def get_definition(self) -> ToolDefinition:
-        return ToolDefinition(
-            name="paper_search",
-            description="Search arXiv preprints by keyword and return concise metadata.",
-            parameters=[
-                ToolParameter(name="query", type="string", description="Search query."),
-                ToolParameter(
-                    name="max_results",
-                    type="integer",
-                    description="Maximum papers to return.",
-                    required=False,
-                    default=3,
-                ),
-                ToolParameter(
-                    name="years_limit",
-                    type="integer",
-                    description="Only include preprints from the last N years.",
-                    required=False,
-                    default=3,
-                ),
-                ToolParameter(
-                    name="sort_by",
-                    type="string",
-                    description="Sort by relevance or submission date.",
-                    required=False,
-                    default="relevance",
-                    enum=["relevance", "date"],
-                ),
-            ],
-        )
-
-    async def execute(self, **kwargs: Any) -> ToolResult:
-        from deeptutor.tools.paper_search_tool import ArxivSearchTool
-
-        try:
-            papers = await ArxivSearchTool().search_papers(
-                query=kwargs.get("query", ""),
-                max_results=kwargs.get("max_results", 3),
-                years_limit=kwargs.get("years_limit", 3),
-                sort_by=kwargs.get("sort_by", "relevance"),
-            )
-        except Exception:
-            return ToolResult(
-                content="arXiv search is temporarily unavailable (rate-limited or network error). Please try again later.",
-                sources=[],
-                metadata={"provider": "arxiv", "papers": [], "error": True},
-            )
-        if not papers:
-            return ToolResult(
-                content="No arXiv preprints found for this query.",
-                sources=[],
-                metadata={"provider": "arxiv", "papers": []},
-            )
-
-        lines: list[str] = []
-        for paper in papers:
-            lines.append(f"**{paper['title']}** ({paper.get('year', '?')})")
-            lines.append(f"Authors: {', '.join(paper.get('authors', []))}")
-            lines.append(f"arXiv: {paper.get('arxiv_id', '')}")
-            lines.append(f"URL: {paper.get('url', '')}")
-            lines.append(f"Abstract: {paper.get('abstract', '')[:400]}")
-            lines.append("")
-
-        return ToolResult(
-            content="\n".join(lines),
-            sources=[
-                {
-                    "type": "paper",
-                    "provider": "arxiv",
-                    "url": paper.get("url", ""),
-                    "title": paper.get("title", ""),
-                    "arxiv_id": paper.get("arxiv_id", ""),
-                }
-                for paper in papers
-            ],
-            metadata={"provider": "arxiv", "papers": papers},
-        )
-
-
-class GeoGebraAnalysisTool(_PromptHintsMixin, BaseTool):
-    """Analyze a math-problem image and generate GeoGebra visualization commands."""
-
-    def get_definition(self) -> ToolDefinition:
-        return ToolDefinition(
-            name="geogebra_analysis",
-            description=(
-                "Analyze a math problem image, detect geometric elements, "
-                "and generate validated GeoGebra commands for visualization. "
-                "Requires an attached image."
-            ),
-            parameters=[
-                ToolParameter(
-                    name="question",
-                    type="string",
-                    description="The math problem text to analyze.",
-                ),
-                ToolParameter(
-                    name="image_base64",
-                    type="string",
-                    description="Base64-encoded image (data URI or raw). Injected from attachments when called via function-calling.",
-                    required=False,
-                    default="",
-                ),
-            ],
-        )
-
-    async def execute(self, **kwargs: Any) -> ToolResult:
-        from deeptutor.agents.vision_solver.vision_solver_agent import VisionSolverAgent
-        from deeptutor.services.llm.config import get_llm_config
-
-        question = kwargs.get("question", "")
-        image_base64 = kwargs.get("image_base64", "")
-        # language is server-injected from the user's session setting by the
-        # chat pipeline; never accept an LLM-provided override.
-        language = kwargs.get("language") or "zh"
-
-        if not image_base64:
-            return ToolResult(
-                content="No image provided. This tool requires an image attachment.",
-                success=False,
-            )
-
-        # VisionSolverAgent expects a fully-qualified ``data:image/<fmt>;base64,…``
-        # URI for the OpenAI image_url shape. The chat pipeline injects this
-        # form already, but defensively normalize for any other caller (or a
-        # hallucinated kwarg) so we don't silently fall through 4 empty stages.
-        if not image_base64.startswith("data:"):
-            image_base64 = f"data:image/png;base64,{image_base64}"
-
-        llm_config = get_llm_config()
-        agent = VisionSolverAgent(
-            api_key=llm_config.api_key,
-            base_url=llm_config.base_url,
-            language=language,
-        )
-
-        try:
-            result = await agent.process(
-                question_text=question,
-                image_base64=image_base64,
-            )
-        except Exception as exc:
-            logger.exception("GeoGebra analysis pipeline failed")
-            return ToolResult(content=f"Analysis pipeline error: {exc}", success=False)
-
-        if not result.get("has_image"):
-            return ToolResult(content="No image was processed.", success=False)
-
-        final_commands = result.get("final_ggb_commands", [])
-        ggb_block = agent.format_ggb_block(final_commands)
-
-        analysis = result.get("analysis_output") or {}
-        constraints = analysis.get("constraints", [])
-        relations = analysis.get("geometric_relations", [])
-        summary_parts: list[str] = []
-        if constraints:
-            summary_parts.append(
-                f"Constraints ({len(constraints)}): {json.dumps(constraints[:5], ensure_ascii=False)}"
-            )
-        if relations:
-            relation_descriptions = [
-                relation.get("description", str(relation))
-                if isinstance(relation, dict)
-                else str(relation)
-                for relation in relations[:5]
-            ]
-            summary_parts.append(
-                f"Relations ({len(relations)}): {json.dumps(relation_descriptions, ensure_ascii=False)}"
-            )
-
-        content_parts: list[str] = []
-        if summary_parts:
-            content_parts.append("\n".join(summary_parts))
-        content_parts.append(ggb_block or "(No GeoGebra commands generated.)")
-
-        return ToolResult(
-            content="\n\n".join(content_parts),
-            metadata={
-                "has_image": True,
-                "commands_count": len(final_commands),
-                "final_ggb_commands": final_commands,
-                "image_is_reference": result.get("image_is_reference", False),
-                "constraints_count": len(constraints),
-                "relations_count": len(relations),
-            },
-        )
 
 
 class ReadSourceTool(_PromptHintsMixin, BaseTool):
@@ -1104,69 +914,6 @@ class WriteNoteTool(_PromptHintsMixin, BaseTool):
         )
 
 
-class GithubTool(_PromptHintsMixin, BaseTool):
-    """Read-only GitHub queries via `gh`. Always auto-mounted; the
-    underlying call gracefully reports "gh unavailable" when the CLI
-    isn't installed on the server."""
-
-    _ALLOWED_QUERY_TYPES = ("pr", "issue", "run", "repo", "api")
-
-    def get_definition(self) -> ToolDefinition:
-        return ToolDefinition(
-            name="github",
-            description=(
-                "Read-only queries against GitHub PRs / issues / repos / "
-                "CI runs via the gh CLI. This tool cannot write — no "
-                "comments, no closes, no merges."
-            ),
-            parameters=[
-                ToolParameter(
-                    name="query_type",
-                    type="string",
-                    description=("One of 'pr', 'issue', 'run', 'repo', 'api'."),
-                    enum=list(_ALLOWED_QUERY_TYPES := ("pr", "issue", "run", "repo", "api")),
-                ),
-                ToolParameter(
-                    name="target",
-                    type="string",
-                    description=(
-                        "owner/repo[#number] or full URL for pr/issue; "
-                        "owner/repo for run/repo; gh-api relative path "
-                        "for api."
-                    ),
-                ),
-            ],
-        )
-
-    async def execute(self, **kwargs: Any) -> ToolResult:
-        from deeptutor.tools.github_query import run_github_query
-
-        outcome = await run_github_query(
-            query_type=str(kwargs.get("query_type") or ""),
-            target=str(kwargs.get("target") or ""),
-        )
-        if not outcome.ok:
-            return ToolResult(
-                content=outcome.error,
-                success=False,
-                metadata={"query_type": outcome.query_type, "target": outcome.target},
-            )
-        return ToolResult(
-            content=outcome.output,
-            sources=[
-                {
-                    "type": "github",
-                    "query_type": outcome.query_type,
-                    "target": outcome.target,
-                }
-            ],
-            metadata={
-                "query_type": outcome.query_type,
-                "target": outcome.target,
-            },
-        )
-
-
 class AskUserTool(_PromptHintsMixin, BaseTool):
     """Pause the turn mid-loop to ask the user a clarifying question.
 
@@ -1311,148 +1058,6 @@ class AskUserTool(_PromptHintsMixin, BaseTool):
         )
 
 
-class ReadSkillTool(_PromptHintsMixin, BaseTool):
-    """Read a skill package's SKILL.md or one of its reference files.
-
-    The system prompt carries only a one-line manifest per skill; this tool
-    is how the model pulls the full playbook on demand (progressive
-    disclosure). Multi-user-safe: skills resolve via the active user's
-    workspace (user layer shadows builtin), plus admin-assigned skills for
-    non-admin users.
-    """
-
-    def get_definition(self) -> ToolDefinition:
-        return ToolDefinition(
-            name="read_skill",
-            description=(
-                "Read a skill's full playbook (SKILL.md) or one of its "
-                "reference files. Call this BEFORE attempting a task that "
-                "matches a skill listed in the Skills section, then follow "
-                "the returned instructions."
-            ),
-            parameters=[
-                ToolParameter(
-                    name="name",
-                    type="string",
-                    description="Skill name exactly as listed in the Skills section.",
-                ),
-                ToolParameter(
-                    name="file",
-                    type="string",
-                    description=(
-                        "Optional file inside the skill package (e.g. "
-                        "'references/api.md'). Defaults to SKILL.md."
-                    ),
-                    required=False,
-                ),
-            ],
-        )
-
-    async def execute(self, **kwargs: Any) -> ToolResult:
-        from deeptutor.services.skill import get_skill_service
-        from deeptutor.services.skill.service import (
-            InvalidSkillNameError,
-            InvalidSkillPathError,
-            SkillNotFoundError,
-            SkillService,
-        )
-
-        name = str(kwargs.get("name") or "").strip()
-        rel_path = str(kwargs.get("file") or "SKILL.md").strip() or "SKILL.md"
-        if not name:
-            raise ValueError("read_skill requires a skill name.")
-
-        services: list[SkillService] = [get_skill_service()]
-        try:
-            from deeptutor.multi_user.context import get_current_user
-            from deeptutor.multi_user.paths import get_admin_path_service
-            from deeptutor.multi_user.skill_access import assigned_skill_ids
-
-            user = get_current_user()
-            if not user.is_admin and name in assigned_skill_ids(user.id):
-                services.append(
-                    SkillService(root=get_admin_path_service().get_workspace_dir() / "skills")
-                )
-        except Exception:
-            logger.debug("read_skill: assigned-skill scope unavailable", exc_info=True)
-
-        for service in services:
-            try:
-                content = service.read_skill_file(name, rel_path)
-            except SkillNotFoundError:
-                continue
-            except (InvalidSkillNameError, InvalidSkillPathError) as exc:
-                return ToolResult(content=f"(read_skill error: {exc})", success=False)
-            return ToolResult(
-                content=content,
-                metadata={"skill": name, "file": rel_path, "char_count": len(content)},
-            )
-        return ToolResult(
-            content=(
-                f"(skill not found: {name!r} — use a name exactly as listed in the Skills section)"
-            ),
-            success=False,
-        )
-
-
-class LoadToolsTool(_PromptHintsMixin, BaseTool):
-    """Load deferred (Extended) tools' schemas into the current session.
-
-    The ``_tool_loader`` kwarg is injected server-side by the chat pipeline
-    (a per-turn :class:`DeferredToolLoader`); the LLM only supplies
-    ``names``.
-    """
-
-    def get_definition(self) -> ToolDefinition:
-        return ToolDefinition(
-            name="load_tools",
-            description=(
-                "Load one or more Extended Tools (listed in the Extended "
-                "Tools section) so they become callable. Call this BEFORE "
-                "using any extended tool; loaded tools stay available for "
-                "the rest of the session."
-            ),
-            parameters=[
-                ToolParameter(
-                    name="names",
-                    type="array",
-                    description=(
-                        "Exact tool names to load, as listed in the Extended Tools section."
-                    ),
-                    items={"type": "string"},
-                ),
-            ],
-        )
-
-    async def execute(self, **kwargs: Any) -> ToolResult:
-        loader = kwargs.get("_tool_loader")
-        names = kwargs.get("names")
-        if loader is None:
-            return ToolResult(
-                content="(load_tools is unavailable in this context)",
-                success=False,
-            )
-        if not isinstance(names, list) or not names:
-            raise ValueError("load_tools requires a non-empty `names` array.")
-        outcome = loader.load(names)
-        parts: list[str] = []
-        if outcome["loaded"]:
-            parts.append("Loaded (now callable): " + ", ".join(outcome["loaded"]))
-        if outcome["already_loaded"]:
-            parts.append("Already loaded: " + ", ".join(outcome["already_loaded"]))
-        if outcome["unknown"]:
-            parts.append(
-                "Unknown: "
-                + ", ".join(outcome["unknown"])
-                + " (use exact names from the Extended Tools section)"
-            )
-        return ToolResult(
-            content="\n".join(parts) or "(nothing to load)",
-            success=not outcome["unknown"] or bool(outcome["loaded"]),
-            metadata=outcome,
-        )
-
-
 class CronTool(_PromptHintsMixin, BaseTool):
     """Schedule, list, and cancel timed tasks for the current conversation.
 
@@ -1557,22 +1162,15 @@ BUILTIN_TOOL_TYPES: tuple[type[BaseTool], ...] = (
     WebSearchTool,
     CodeExecutionTool,
     ReasonTool,
-    PaperSearchToolWrapper,
     ReadSourceTool,
     ReadMemoryTool,
     WriteMemoryTool,
-    ReadSkillTool,
-    LoadToolsTool,
-    ExecTool,
     WebFetchTool,
     ListNotebookTool,
     WriteNoteTool,
-    GithubTool,
     AskUserTool,
     CronTool,
-    GeoGebraAnalysisTool,
     *MASTERY_TOOL_TYPES,
-    *SOLVE_TOOL_TYPES,
 )
 
 # No tools are parked right now. When a tool's implementation is being
@@ -1595,9 +1193,7 @@ COMING_SOON_TOOL_NAMES: tuple[str, ...] = tuple(
 USER_TOGGLEABLE_TOOL_NAMES: tuple[str, ...] = (
     "brainstorm",
     "web_search",
-    "paper_search",
     "reason",
-    "geogebra_analysis",
 )
 
 # Built-in tools the chat agent loop auto-mounts under context gates (a KB
@@ -1616,13 +1212,9 @@ CONFIGURABLE_BUILTIN_TOOL_NAMES: tuple[str, ...] = (
     "read_source",
     "read_memory",
     "write_memory",
-    "read_skill",
     "list_notebook",
     "write_note",
     "web_fetch",
-    "github",
-    "exec",
-    "load_tools",
     "cron",
     "ask_user",
 )
@@ -1646,16 +1238,10 @@ __all__ = [
     "AskUserTool",
     "BrainstormTool",
     "CodeExecutionTool",
-    "ExecTool",
-    "GeoGebraAnalysisTool",
-    "GithubTool",
     "KbFilesTool",
     "ListNotebookTool",
-    "PaperSearchToolWrapper",
     "RAGTool",
-    "LoadToolsTool",
     "ReadMemoryTool",
-    "ReadSkillTool",
     "ReadSourceTool",
     "ReasonTool",
     "WebFetchTool",

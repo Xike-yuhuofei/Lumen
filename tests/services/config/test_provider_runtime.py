@@ -257,27 +257,6 @@ def test_llm_ollama_binding_uses_local_default_endpoint() -> None:
     assert resolved.api_key == "sk-no-key-required"
 
 
-def test_llm_codebuddy_resolves_without_endpoint() -> None:
-    catalog = _build_catalog(
-        llm_profile={
-            "id": "llm-p",
-            "name": "CodeBuddy",
-            "binding": "codebuddy",
-            "base_url": "",
-            "api_key": "",
-            "api_version": "",
-            "extra_headers": {},
-            "models": [{"id": "llm-m", "name": "CodeBuddy Default", "model": "codebuddy/default"}],
-        }
-    )
-
-    resolved = resolve_llm_runtime_config(catalog=catalog)
-
-    assert resolved.provider_name == "codebuddy"
-    assert resolved.provider_mode == "oauth"
-    assert resolved.effective_url is None
-
-
 def test_llm_context_window_passes_through_from_catalog() -> None:
     catalog = _build_catalog(
         llm_profile={

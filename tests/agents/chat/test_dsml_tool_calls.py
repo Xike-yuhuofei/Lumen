@@ -12,7 +12,7 @@ from deeptutor.agents.chat.dsml_tool_calls import (
 
 # The exact markup from the issue report — fullwidth ｜ special-token bars.
 _ISSUE_PAYLOAD = (
-    '<｜｜DSML｜｜tool_calls> <｜｜DSML｜｜invoke name="exec"> '
+    '<｜｜DSML｜｜tool_calls> <｜｜DSML｜｜invoke name="code_execution"> '
     '<｜｜DSML｜｜parameter name="command" string="true">'
     "python -c \"from pptx import Presentation; prs=Presentation(); prs.save('test.pptx')\""
     "</｜｜DSML｜｜parameter> </｜｜DSML｜｜invoke> </｜｜DSML｜｜tool_calls>"
@@ -22,7 +22,7 @@ _ISSUE_PAYLOAD = (
 def test_extracts_issue_payload_into_tool_call() -> None:
     calls, cleaned = extract_dsml_tool_calls(_ISSUE_PAYLOAD)
     assert len(calls) == 1
-    assert calls[0]["name"] == "exec"
+    assert calls[0]["name"] == "code_execution"
     args = json.loads(calls[0]["arguments"])
     assert args["command"].startswith("python -c")
     # All markup consumed — nothing left to masquerade as the answer.
@@ -49,15 +49,15 @@ def test_extracts_mastery_grade_payload_from_issue_672() -> None:
 def test_multiple_invokes_and_leading_prose() -> None:
     text = (
         "Let me run two steps.\n"
-        '<｜DSML｜invoke name="exec">'
+        '<｜DSML｜invoke name="code_execution">'
         '<｜DSML｜parameter name="command" string="true">echo one</｜DSML｜parameter>'
         "</｜DSML｜invoke>"
-        '<｜DSML｜invoke name="read_skill">'
+        '<｜DSML｜invoke name="list_notebook">'
         '<｜DSML｜parameter name="name" string="true">pptx</｜DSML｜parameter>'
         "</｜DSML｜invoke>"
     )
     calls, cleaned = extract_dsml_tool_calls(text)
-    assert [c["name"] for c in calls] == ["exec", "read_skill"]
+    assert [c["name"] for c in calls] == ["code_execution", "list_notebook"]
     assert json.loads(calls[1]["arguments"]) == {"name": "pptx"}
     # Leading prose is preserved; only the markup is stripped.
     assert cleaned == "Let me run two steps."
@@ -170,7 +170,7 @@ def test_prose_mentioning_tool_calls_is_not_a_false_positive() -> None:
 def test_malformed_envelope_without_close_yields_no_calls() -> None:
     # Signal present but no well-formed invoke block → treat as not-a-DSML-round
     # so the caller falls through unchanged rather than losing the text.
-    text = '<｜DSML｜invoke name="exec"> unterminated ...'
+    text = '<｜DSML｜invoke name="code_execution"> unterminated ...'
     calls, cleaned = extract_dsml_tool_calls(text)
     assert calls == []
     assert cleaned == text
@@ -197,7 +197,7 @@ class TestDSMLStreamFilter:
     def test_handles_every_split_boundary(self) -> None:
         text = (
             "Before "
-            '<｜｜DSML｜｜tool_calls><｜｜DSML｜｜invoke name="exec">'
+            '<｜｜DSML｜｜tool_calls><｜｜DSML｜｜invoke name="code_execution">'
             '<｜｜DSML｜｜parameter name="command" string="true">echo hi'
             "</｜｜DSML｜｜parameter></｜｜DSML｜｜invoke>"
             "</｜｜DSML｜｜tool_calls> after"
@@ -210,7 +210,7 @@ class TestDSMLStreamFilter:
         assert self._run(tiny_chunks) == "Before  after"
 
     def test_incomplete_invoke_is_not_silently_discarded(self) -> None:
-        text = '<｜DSML｜invoke name="exec">unterminated'
+        text = '<｜DSML｜invoke name="code_execution">unterminated'
         assert self._run([text[:8], text[8:]]) == text
 
     def test_malformed_envelope_is_not_partially_discarded(self) -> None:
@@ -218,7 +218,7 @@ class TestDSMLStreamFilter:
         assert self._run([text[:20], text[20:]]) == text
 
     def test_envelope_without_close_still_cleans_complete_invoke(self) -> None:
-        text = 'before <｜DSML｜tool_calls><｜DSML｜invoke name="exec"></｜DSML｜invoke> after'
+        text = 'before <｜DSML｜tool_calls><｜DSML｜invoke name="code_execution"></｜DSML｜invoke> after'
         assert self._run([text[:20], text[20:]]) == "before  after"
 
     def test_plain_angle_brackets_are_untouched(self) -> None:

@@ -103,10 +103,9 @@ export async function mockDialogApi(page: Page, opts?: {
         tools: [
           { name: 'brainstorm', toggleable: true, enabled: true, description_i18n: { zh: '头脑风暴', en: 'Brainstorm' } },
           { name: 'web_search', toggleable: true, enabled: true, description_i18n: { zh: '网页搜索', en: 'Web search' } },
-          { name: 'paper_search', toggleable: true, enabled: true, description_i18n: { zh: '论文搜索', en: 'Paper search' } },
           { name: 'reason', toggleable: true, enabled: true, description_i18n: { zh: '深度推理', en: 'Reason' } },
         ],
-        enabled_optional_tools: ['brainstorm', 'web_search', 'paper_search', 'reason'],
+        enabled_optional_tools: ['brainstorm', 'web_search', 'reason'],
       }),
     })
   })
@@ -118,10 +117,6 @@ export async function mockDialogApi(page: Page, opts?: {
       contentType: 'application/json',
       body: JSON.stringify({ enabled_optional_tools: body?.enabled_tools ?? [] }),
     })
-  })
-
-  await page.route('**/api/v1/settings/voice-autoplay', async (route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ voice_autoplay: true }) })
   })
 
   await page.route('**/api/v1/settings/chat-response-timeout', async (route) => {

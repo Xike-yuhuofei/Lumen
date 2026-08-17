@@ -100,9 +100,9 @@ test.describe('sidebar hover and composer menus', () => {
     expect(Math.abs((listBox!.x + listBox!.width) - (triggerBox!.x + triggerBox!.width))).toBeLessThan(4)
     expect(triggerBox!.y - (listBox!.y + listBox!.height)).toBeGreaterThanOrEqual(2)
     await expect(list.getByRole('option', { name: '对话' })).toBeVisible()
-    await list.getByRole('option', { name: '深度求解' }).click()
+    await list.getByRole('option', { name: '引导学习' }).click()
     await expect(model).toHaveAttribute('aria-expanded', 'false')
-    await expect(model).toContainText('深度求解')
+    await expect(model).toContainText('引导学习')
 
     const mic = page.locator('.messageInputChatInputHome .rtcVoicePluginButton')
     await mic.hover()
