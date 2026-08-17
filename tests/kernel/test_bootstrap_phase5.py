@@ -299,10 +299,20 @@ async def test_boot_lumen_convenience():
 
 
 @pytest.mark.asyncio
-async def test_lifecycle_boot_run_dispose_roundtrip(tmp_path):
+async def test_lifecycle_boot_run_dispose_roundtrip(tmp_path, monkeypatch):
     """Full lifecycle: boot → start learner → turn → state → dispose."""
+    from deeptutor.agents.chat.agentic_pipeline import AgenticChatPipeline
     from deeptutor.core.context import UnifiedContext
     from deeptutor.core.stream_bus import StreamBus
+    from tests.kernel.bakeoff_fakes import ScriptedOpenAIClient
+
+    # handle_turn drives the real injected agent loop, whose turn executes a
+    # live LLM call. The lifecycle roundtrip must stay hermetic (CI has no API
+    # key), so stub the pipeline's client + tool seams: the loop then consumes
+    # a scripted plain answer and finishes without touching the network.
+    scripted = ScriptedOpenAIClient(["Lesson started."])
+    monkeypatch.setattr(AgenticChatPipeline, "_build_openai_client", lambda self: scripted)
+    monkeypatch.setattr(AgenticChatPipeline, "_compose_enabled_tools", lambda self, ctx: [])
 
     bootstrap = LumenBootstrap()
     root = await bootstrap.boot()
@@ -312,10 +322,6 @@ async def test_lifecycle_boot_run_dispose_roundtrip(tmp_path):
         state = await mode_learn.get_state("algebra-basics")
         assert state["book_id"] == "algebra-basics"
 
-        # The turn flows through the injected agent loop; a fake LLM is not
-        # required here because handle_turn only wires the pipeline — the
-        # actual LLM call happens inside the loop's turn execution, which we
-        # don't drive in this unit test.
         ctx = UnifiedContext(session_id="algebra-basics", user_message="start lesson")
         bus = StreamBus()
         await mode_learn.handle_turn(ctx, bus)
