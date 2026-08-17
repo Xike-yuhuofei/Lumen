@@ -76,20 +76,12 @@ async def _execute_chat_job(job: CronJob) -> tuple[str, str | None]:
     originating session, so the result is waiting in their chat history."""
     from deeptutor.core.context import UnifiedContext
     from deeptutor.core.stream import StreamEventType
-    from deeptutor.multi_user.models import CurrentUser
-    from deeptutor.multi_user.paths import local_admin_user, scope_for_user, user_context
+    from deeptutor.services.user import local_admin_user, user_context
     from deeptutor.runtime.orchestrator import ChatOrchestrator
     from deeptutor.services.session import get_sqlite_session_store
 
-    if job.owner.is_admin:
-        user = local_admin_user()
-    else:
-        user = CurrentUser(
-            id=job.owner.user_id,
-            username=job.owner.user_id,
-            role="user",
-            scope=scope_for_user(job.owner.user_id, is_admin=False),
-        )
+    # Single-user mode: every cron job runs in the local admin's scope.
+    user = local_admin_user()
 
     prompt = _reminder_prompt(job)
     with user_context(user):

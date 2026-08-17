@@ -86,7 +86,7 @@ test.describe('通用设置', () => {
       responseLanguage: 'zh',
       autoplay: false,
       timeout: 180,
-      tools: ['brainstorm', 'web_search', 'paper_search', 'reason'],
+      tools: ['brainstorm', 'web_search', 'reason'],
     }
     await page.route('**/api/v1/settings/ui', async (route) => {
       if (route.request().method() === 'PUT') {
@@ -129,7 +129,6 @@ test.describe('通用设置', () => {
       const catalog = [
         { name: 'brainstorm', zh: '头脑风暴' },
         { name: 'web_search', zh: '网页搜索' },
-        { name: 'paper_search', zh: '论文搜索' },
         { name: 'reason', zh: '深度推理' },
       ]
       await route.fulfill({

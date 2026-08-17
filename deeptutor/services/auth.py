@@ -28,7 +28,7 @@ from datetime import datetime, timedelta, timezone
 import logging
 from typing import Any
 
-from deeptutor.services.config import load_auth_settings, load_integrations_settings
+from deeptutor.services.config import load_auth_settings
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,6 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 _AUTH_SETTINGS = load_auth_settings()
-_INTEGRATIONS_SETTINGS = load_integrations_settings()
 
 AUTH_ENABLED: bool = bool(_AUTH_SETTINGS["enabled"])
 AUTH_USERNAME: str = str(_AUTH_SETTINGS["username"])
@@ -45,17 +44,11 @@ AUTH_PASSWORD_HASH: str = str(_AUTH_SETTINGS["password_hash"])
 AUTH_SECRET: str = ""
 TOKEN_EXPIRE_HOURS: int = int(_AUTH_SETTINGS["token_expire_hours"])
 
-# PocketBase auth mode — active when integrations.pocketbase_url is set and auth is enabled.
-# When enabled, login/register proxy to PocketBase and token validation uses
-# PocketBase's auth-refresh endpoint (cached in memory — no static secret needed).
-POCKETBASE_BASE_URL: str = str(_INTEGRATIONS_SETTINGS["pocketbase_url"]).rstrip("/")
-POCKETBASE_ENABLED: bool = bool(POCKETBASE_BASE_URL) and AUTH_ENABLED
-
 _ALGORITHM = "HS256"
 
 
-if AUTH_ENABLED and not POCKETBASE_ENABLED and not AUTH_SECRET:
-    from deeptutor.multi_user.identity import load_or_create_auth_secret
+if AUTH_ENABLED and not AUTH_SECRET:
+    from deeptutor.services.user import load_or_create_auth_secret
 
     AUTH_SECRET = load_or_create_auth_secret()
 
@@ -97,13 +90,13 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# User store — multi-user JSON store plus optional auth.json bootstrap user
+# User store — JSON store plus optional auth.json bootstrap user
 # ---------------------------------------------------------------------------
 
 
 def _make_user_record(hashed: str, role: str = "user", created_at: str = "") -> dict[str, Any]:
     """Build a canonical user record dict for legacy callers/tests."""
-    from deeptutor.multi_user.identity import new_user_id
+    from deeptutor.services.user import new_user_id
 
     return {
         "id": new_user_id(),
@@ -120,13 +113,13 @@ def _load_users() -> dict[str, dict]:
     Load the user store, migrating old flat format if needed.
 
     Priority:
-      1. multi-user identity store
-      2. auth.json username + password_hash — single-user bootstrap user
+      1. identity store (JSON user records)
+      2. auth.json username + password_hash — bootstrap admin user
 
     Old format: {"alice": "$2b$12$..."}
     New format: {"alice": {"hash": "...", "role": "admin", "created_at": "..."}}
     """
-    from deeptutor.multi_user.identity import load_users
+    from deeptutor.services.user import load_users
 
     return load_users(AUTH_USERNAME, AUTH_PASSWORD_HASH)
 
@@ -146,7 +139,7 @@ def add_user(username: str, plain_password: str, role: str = "user") -> None:
 
     Creates the file (and parent directories) if they don't exist.
     """
-    from deeptutor.multi_user.identity import save_user
+    from deeptutor.services.user import save_user
 
     record = save_user(username, hash_password(plain_password), role=role)  # type: ignore[arg-type]
     logger.info("User '%s' saved with role=%r", username, record.get("role", "user"))
@@ -154,7 +147,7 @@ def add_user(username: str, plain_password: str, role: str = "user") -> None:
 
 def list_users() -> list[dict]:
     """Return a list of user info dicts (username, role, created_at) — no hashes."""
-    from deeptutor.multi_user.identity import list_user_info
+    from deeptutor.services.user import list_user_info
 
     return list_user_info(AUTH_USERNAME, AUTH_PASSWORD_HASH)
 
@@ -164,7 +157,7 @@ def delete_user(username: str) -> bool:
     Remove a user from the store. Returns True if the user existed.
 
     """
-    from deeptutor.multi_user.identity import delete_user as _delete_user
+    from deeptutor.services.user import delete_user as _delete_user
 
     if not _delete_user(username):
         return False
@@ -181,7 +174,7 @@ def set_role(username: str, role: str) -> bool:
     if role not in ("admin", "user"):
         raise ValueError(f"Invalid role: {role!r}. Must be 'admin' or 'user'.")
 
-    from deeptutor.multi_user.identity import set_role as _set_role
+    from deeptutor.services.user import set_role as _set_role
 
     if not _set_role(username, role):  # type: ignore[arg-type]
         return False
@@ -196,7 +189,7 @@ def set_avatar(username: str, avatar: str) -> bool:
     The marker is either '' (deterministic fallback), 'icon:<name>:<color>',
     or 'img:<version>' (managed by the avatar upload endpoint).
     """
-    from deeptutor.multi_user.identity import set_avatar as _set_avatar
+    from deeptutor.services.user import set_avatar as _set_avatar
 
     if not _set_avatar(username, avatar):
         return False
@@ -239,26 +232,10 @@ def decode_token(token: str) -> TokenPayload | None:
     """
     Validate a token and return a TokenPayload, or None if invalid.
 
-    - PocketBase mode: calls PocketBase's auth-refresh endpoint (cached in
-      memory for 60 s, so only the first request per token per minute makes
-      a network call). No static JWT secret required.
-    - Standard mode: local in-memory jwt.decode() using AUTH_SECRET — zero
-      network calls, same as before.
+    Local in-memory jwt.decode() using AUTH_SECRET — zero network calls.
     """
     if not token:
         return None
-
-    if POCKETBASE_ENABLED:
-        from deeptutor.services.pocketbase_client import validate_pb_token
-
-        payload = validate_pb_token(token)
-        if payload is None:
-            return None
-        return TokenPayload(
-            username=payload["username"],
-            role=payload.get("role", "user"),
-            user_id=str(payload.get("id") or payload.get("uid") or payload.get("user_id") or ""),
-        )
 
     # Standard JWT + bcrypt mode
     from jose import JWTError, jwt
@@ -277,68 +254,6 @@ def decode_token(token: str) -> TokenPayload | None:
             user_id = str(record.get("id") or "")
         return TokenPayload(username=username, role=payload.get("role", "user"), user_id=user_id)
     except JWTError:
-        return None
-
-
-# ---------------------------------------------------------------------------
-# PocketBase auth helpers
-# ---------------------------------------------------------------------------
-
-
-def authenticate_pb(username: str, password: str) -> tuple[TokenPayload, str] | None:
-    """
-    Authenticate against PocketBase and return (TokenPayload, raw_pb_token).
-
-    Only called when POCKETBASE_ENABLED=True.
-    Returns None on failure.
-    The raw token is the PocketBase JWT string to be stored in the cookie.
-
-    PocketBase requires an email address; plain usernames are mapped to
-    <username>@deeptutor.local to match the email used at registration.
-    """
-    try:
-        from deeptutor.services.pocketbase_client import get_pb_client
-
-        pb = get_pb_client()
-        result = pb.collection("users").auth_with_password(username, password)
-        token: str = result.token
-        record = result.record
-        username = (
-            getattr(record, "email", None)
-            or getattr(record, "name", None)
-            or getattr(record, "id", "unknown")
-        )
-        # PocketBase has no built-in "role" field by default; treat all as "user".
-        # Admins authenticated via PocketBase admin panel use a separate endpoint.
-        role = getattr(record, "role", "user") or "user"
-        user_id = str(getattr(record, "id", "") or "")
-        return TokenPayload(username=str(username), role=str(role), user_id=user_id), token
-    except Exception as exc:
-        logger.warning(f"PocketBase authentication failed: {exc}")
-        return None
-
-
-def register_pb(username: str, email: str, password: str) -> dict | None:
-    """
-    Create a new user in PocketBase.
-
-    Returns the created user record dict or None on failure.
-    """
-    try:
-        from deeptutor.services.pocketbase_client import get_pb_client
-
-        pb = get_pb_client()
-        record = pb.collection("users").create(
-            {
-                "username": username,
-                "email": email,
-                "password": password,
-                "passwordConfirm": password,
-            }
-        )
-        return {"id": record.id, "username": username, "email": email}
-    except Exception as exc:
-        logger.warning(f"PocketBase registration failed: {exc}")
         return None
 
 

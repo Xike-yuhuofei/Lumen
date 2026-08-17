@@ -13,12 +13,10 @@ data/user/
     ├── notebook/
     ├── co-writer/
     ├── book/
-    └── chat/
-        ├── chat/
-        ├── deep_solve/
-        ├── deep_question/
-        ├── deep_research/
-        └── _detached_code_execution/
+    ├── chat/
+    │   ├── chat/
+    │   ├── deep_question/
+    │   └── _detached_code_execution/
 """
 
 from pathlib import Path
@@ -27,10 +25,8 @@ from typing import Literal, cast
 from deeptutor.runtime.home import PACKAGE_ROOT, get_runtime_data_root
 
 AgentModule = Literal[
-    "solve",
     "chat",
     "question",
-    "research",
     "co-writer",
     "run_code_workspace",
     "logs",
@@ -38,9 +34,7 @@ AgentModule = Literal[
 
 ChatWorkspaceFeature = Literal[
     "chat",
-    "deep_solve",
     "deep_question",
-    "deep_research",
     "_detached_code_execution",
 ]
 
@@ -57,17 +51,15 @@ class PathService:
     """Runtime path manager rooted at a workspace root.
 
     The default root is the historical ``data/`` directory.  The optional
-    multi-user layer instantiates this class with ``data/users/<uid>/`` so the
+    per-user layer instantiates this class with ``data/users/<uid>/`` so the
     public API can stay the same while disk writes become scoped per user.
     """
 
     _instance: "PathService | None" = None
 
     _AGENT_TO_WORKSPACE: dict[str, tuple[str, str | None]] = {
-        "solve": ("chat", "deep_solve"),
         "chat": ("chat", "chat"),
         "question": ("chat", "deep_question"),
-        "research": ("chat", "deep_research"),
         "co-writer": ("co-writer", None),
         "run_code_workspace": ("chat", "_detached_code_execution"),
     }
@@ -157,17 +149,7 @@ class PathService:
         if parts[:3] == ("workspace", "co-writer", "audio"):
             return candidate
 
-        if (
-            len(parts) >= 5
-            and parts[:3] == ("workspace", "chat", "deep_solve")
-            and "artifacts" in parts[4:]
-        ):
-            return candidate
-
         if len(parts) >= 5 and parts[:2] == ("workspace", "chat") and "code_runs" in parts[3:]:
-            return candidate
-
-        if len(parts) >= 5 and parts[:3] == ("workspace", "chat", "chat") and parts[4] == "exec":
             return candidate
 
         # Files a CLI app produced. One directory per turn shared by every app,
@@ -221,9 +203,7 @@ class PathService:
     def _resolve_feature_root(self, feature: str) -> Path:
         if feature in {
             "chat",
-            "deep_solve",
             "deep_question",
-            "deep_research",
             "_detached_code_execution",
         }:
             return self.get_chat_feature_dir(cast(ChatWorkspaceFeature, feature))
@@ -270,15 +250,6 @@ class PathService:
                         shutil.copy2(f, target)
         return new_dir
 
-    def get_solve_dir(self) -> Path:
-        return self.get_chat_feature_dir("deep_solve")
-
-    def get_solve_session_file(self) -> Path:
-        return self.get_session_file("solve")
-
-    def get_solve_task_dir(self, task_id: str) -> Path:
-        return self.get_task_dir("solve", task_id)
-
     def get_chat_dir(self) -> Path:
         return self.get_chat_feature_dir("chat")
 
@@ -290,12 +261,6 @@ class PathService:
 
     def get_question_batch_dir(self, batch_id: str) -> Path:
         return self.get_task_dir("question", batch_id)
-
-    def get_research_dir(self) -> Path:
-        return self.get_chat_feature_dir("deep_research")
-
-    def get_research_reports_dir(self) -> Path:
-        return self.get_research_dir() / "reports"
 
     def get_co_writer_dir(self) -> Path:
         return self.get_workspace_feature_dir("co-writer")
@@ -409,28 +374,25 @@ class PathService:
             tuple[ChatWorkspaceFeature, ...],
             (
                 "chat",
-                "deep_solve",
                 "deep_question",
-                "deep_research",
                 "_detached_code_execution",
             ),
         ):
             self.get_chat_feature_dir(chat_feature).mkdir(parents=True, exist_ok=True)
         self.get_co_writer_tool_calls_dir().mkdir(parents=True, exist_ok=True)
         self.get_co_writer_audio_dir().mkdir(parents=True, exist_ok=True)
-        self.get_research_reports_dir().mkdir(parents=True, exist_ok=True)
 
 
 def get_path_service() -> PathService:
     try:
-        from deeptutor.multi_user.paths import get_current_path_service
+        from deeptutor.services.user import get_current_path_service
 
         return get_current_path_service()
     except Exception:
         import logging as _logging
 
         _logging.getLogger(__name__).warning(
-            "get_path_service() fell back to default instance; multi-user path resolution failed",
+            "get_path_service() fell back to default instance; path resolution failed",
             exc_info=True,
         )
         return PathService.get_instance()

@@ -93,18 +93,6 @@ def test_documented_deeptutor_subcommands_exist() -> None:
         assert tokens[1] in top_level, command
 
 
-def test_deep_research_examples_include_required_config() -> None:
-    examples = [
-        command for command in _deeptutor_commands() if "deeptutor run deep_research" in command
-    ]
-
-    assert examples, "docs should include at least one deep_research example"
-    for command in examples:
-        has_json_config = "--config-json" in command
-        has_pair_config = "--config mode=" in command and "--config depth=" in command
-        assert has_json_config or has_pair_config, command
-
-
 def test_docs_do_not_advertise_removed_cli_forms() -> None:
     text = _docs_text()
 

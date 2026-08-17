@@ -99,6 +99,28 @@ def test_successors_recursive_and_direct() -> None:
     assert set(g.successors("A", recursive=True)) == {"B", "M1", "C"}
 
 
+def test_requires_is_an_ordering_relation() -> None:
+    """``requires`` is a structural ordering relation: teaching a target must be
+    gated behind the knowledge it requires (A --requires--> B means A must be
+    learned before B). The engine's prerequisite gate and the graph's closure
+    both rely on ORDERING_RELATIONS, so REQUIRES must participate."""
+    model = TeachingKnowledgeModel(
+        nodes=[
+            TeachingNode(id="P", title="Principle", type=TeachingNodeType.PRINCIPLE),
+            TeachingNode(
+                id="O", title="Objective", type=TeachingNodeType.LEARNING_OBJECTIVE
+            ),
+        ],
+        edges=[
+            TeachingEdge(source="P", target="O", relation=TeachingRelationType.REQUIRES)
+        ],
+    )
+    g = TeachingKnowledgeGraph(model)
+    # the objective's prerequisites include the requiring principle
+    assert g.prerequisites("O", recursive=False) == ["P"]
+    assert g.topological_order()[0] == "P"
+
+
 # ── cycle detection / topological order ─────────────────────────────────
 
 

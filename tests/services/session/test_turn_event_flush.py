@@ -1,107 +1,24 @@
-"""Post-stream turn-event flush: batching, workspace mirror, PocketBase upload.
+"""Post-stream turn-event flush: batching and workspace mirror.
 
 The turn runtime buffers every live event in memory and persists the whole
 batch after the stream drains, right before publishing DONE. Everything on
 that path must stay O(1) round-trips w.r.t. the event count — per-event
-commits/opens/POSTs sat between the last streamed token and the client's
-spinner clearing (the "stuck on generating" report).
+commits/opens sat between the last streamed token and the client's spinner
+clearing (the "stuck on generating" report).
 """
 
 from __future__ import annotations
 
 import asyncio
-from contextlib import contextmanager
 import json
 from pathlib import Path
-import re
 
 import pytest
 
-from deeptutor.multi_user.context import reset_current_user, set_current_user
-from deeptutor.multi_user.models import CurrentUser, UserScope
-from deeptutor.services.session.pocketbase_store import PocketBaseSessionStore
 from deeptutor.services.session.sqlite_store import SQLiteSessionStore
 from deeptutor.services.session.turn_runtime import TurnRuntimeManager, _TurnExecution
 
 pytestmark = pytest.mark.asyncio
-
-_CLAUSE = re.compile(r'(\w+)\s*=\s*"([^"]*)"')
-
-
-# ---------------------------------------------------------------------------
-# Fake PocketBase SDK (same shape as test_pocketbase_isolation.py)
-# ---------------------------------------------------------------------------
-
-
-class _Record:
-    def __init__(self, pb_id: str, data: dict) -> None:
-        self.id = pb_id
-        for key, value in data.items():
-            setattr(self, key, value)
-
-
-class _Collection:
-    def __init__(self) -> None:
-        self._rows: list[_Record] = []
-        self._seq = 0
-
-    def _matches(self, record: _Record, query_params: dict | None) -> bool:
-        flt = (query_params or {}).get("filter") or ""
-        for field, expected in _CLAUSE.findall(flt):
-            if str(getattr(record, field, "")) != expected:
-                return False
-        return True
-
-    def create(self, data: dict) -> _Record:
-        self._seq += 1
-        record = _Record(f"pb{self._seq:04d}", data)
-        self._rows.append(record)
-        return record
-
-    def get_full_list(self, query_params: dict | None = None) -> list[_Record]:
-        return [r for r in self._rows if self._matches(r, query_params)]
-
-    def update(self, pb_id: str, data: dict) -> _Record:
-        record = next(r for r in self._rows if r.id == pb_id)
-        for key, value in data.items():
-            setattr(record, key, value)
-        return record
-
-
-class _FakeClient:
-    def __init__(self) -> None:
-        self._collections: dict[str, _Collection] = {}
-
-    def collection(self, name: str) -> _Collection:
-        return self._collections.setdefault(name, _Collection())
-
-
-@pytest.fixture
-def fake_pb(monkeypatch):
-    client = _FakeClient()
-    monkeypatch.setattr(
-        "deeptutor.services.pocketbase_client.get_pb_client", lambda: client, raising=True
-    )
-    return client
-
-
-@contextmanager
-def as_user(uid: str):
-    scope = UserScope(kind="user", user_id=uid, root=Path("/tmp") / uid)  # noqa: S108
-    token = set_current_user(CurrentUser(id=uid, username=uid, role="user", scope=scope))
-    try:
-        yield
-    finally:
-        reset_current_user(token)
-
-
-async def _drain_uploads(store: PocketBaseSessionStore) -> None:
-    """Wait for the store's background turn-event uploads to finish."""
-    tasks = list(store._event_upload_tasks)
-    if tasks:
-        await asyncio.gather(*tasks, return_exceptions=True)
-        # Let the done-callbacks (set discard) run before returning.
-        await asyncio.sleep(0)
 
 
 def _buffered(session_id: str, turn_id: str, count: int) -> list[dict]:
@@ -119,11 +36,6 @@ def _buffered(session_id: str, turn_id: str, count: int) -> list[dict]:
         }
         for i in range(count)
     ]
-
-
-# ---------------------------------------------------------------------------
-# SQLite path: batch DB append + single-write workspace mirror
-# ---------------------------------------------------------------------------
 
 
 @pytest.fixture
@@ -217,59 +129,3 @@ async def test_flush_survives_turn_deleted_mid_drain(tmp_path, stub_workspace) -
     await store.delete_session(session["id"])
 
     await runtime._flush_buffered_events(execution)  # must not raise
-
-
-# ---------------------------------------------------------------------------
-# PocketBase path: background upload, no rglob, no update_turn_status hook
-# ---------------------------------------------------------------------------
-
-
-async def test_pb_append_turn_events_uploads_in_background(fake_pb) -> None:
-    store = PocketBaseSessionStore()
-    with as_user("alice"):
-        events = _buffered("s1", "turn_1", 4)
-        persisted = await store.append_turn_events("turn_1", events)
-
-        # Annotated payloads come back synchronously with their seqs intact —
-        # the runtime mirrors these to events.jsonl without waiting on HTTP.
-        assert [payload["seq"] for payload in persisted] == [1, 2, 3, 4]
-
-        await _drain_uploads(store)
-        rows = fake_pb.collection("turn_events").get_full_list()
-        assert sorted(int(row.seq) for row in rows) == [1, 2, 3, 4]
-        assert all(row.turn_id == "turn_1" for row in rows)
-        assert all(row.session_id == "s1" for row in rows)
-
-
-async def test_pb_append_turn_event_single_delegates_to_batch(fake_pb) -> None:
-    store = PocketBaseSessionStore()
-    with as_user("alice"):
-        payload = await store.append_turn_event("turn_9", {"type": "content", "content": "x"})
-        assert payload["turn_id"] == "turn_9"
-        assert payload["seq"]  # fallback seq assigned
-        await _drain_uploads(store)
-        rows = fake_pb.collection("turn_events").get_full_list()
-        assert len(rows) == 1
-
-
-async def test_pb_update_turn_status_no_longer_flushes_events(fake_pb) -> None:
-    """Finalising a turn only updates the row — the old events.jsonl rglob +
-    per-event POST flush is gone (events flow through append_turn_events)."""
-    store = PocketBaseSessionStore()
-    with as_user("alice"):
-        await store.create_session(title="t", session_id="s_flush")
-        turn = await store.create_turn("s_flush", capability="chat")
-        assert await store.update_turn_status(turn["turn_id"], "completed") is True
-        await _drain_uploads(store)
-        assert fake_pb.collection("turn_events").get_full_list() == []
-
-
-async def test_pb_add_message_returns_real_record_id(fake_pb) -> None:
-    store = PocketBaseSessionStore()
-    with as_user("alice"):
-        await store.create_session(title="t", session_id="s_ids")
-        message_id = await store.add_message("s_ids", "assistant", "hello")
-        messages = await store.get_messages("s_ids")
-        # The id handed back (and forwarded to the frontend via the DONE
-        # reconcile metadata) must be the same id get_messages serves.
-        assert message_id == messages[0]["id"]

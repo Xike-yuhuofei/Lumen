@@ -50,9 +50,7 @@ _CONDITIONAL_MOUNT_FLAGS: dict[str, str] = {
     "read_memory": "has_memory",
     "list_notebook": "has_notebooks",
     "write_note": "has_notebooks",
-    "read_skill": "has_skills",
     "load_tools": "has_deferred_tools",
-    "exec": "has_exec",
     "code_execution": "has_code",
 }
 
@@ -91,9 +89,7 @@ class ToolMountFlags:
     has_sources: bool = False
     has_memory: bool = False
     has_notebooks: bool = False
-    has_skills: bool = False
     has_deferred_tools: bool = False
-    has_exec: bool = False
     has_code: bool = False
 
 
@@ -120,8 +116,8 @@ def compose_enabled_tools(
        KB is attached, ``read_source`` if a source index exists, …).
     3. Active loop capabilities' *owned* tools (``capability_owned``) — the
        capability's own tools, added on top.
-    4. Always-on auto-mounts (``write_memory`` / ``web_fetch`` / ``github`` /
-       ``ask_user`` / ``cron``).
+   # 4. Always-on auto-mounts (``write_memory`` / ``web_fetch`` /
+    # ``ask_user`` / ``cron``).
 
     A loop capability (solve, mastery) reuses the *full* chat surface and only
     *adds* its owned tools — it never curates or suppresses the reused
@@ -185,7 +181,7 @@ def compose_enabled_tools(
         if getattr(mount_flags, flag) and _builtin_allowed(tool_name):
             composed.append(tool_name)
     composed.extend(str(name) for name in capability_owned if str(name).strip())
-    for always_on in ("write_memory", "web_fetch", "github", "ask_user", "cron"):
+    for always_on in ("write_memory", "web_fetch", "ask_user", "cron"):
         if _builtin_allowed(always_on):
             composed.append(always_on)
     return _finalize(composed, forced, suppressed)
@@ -214,7 +210,7 @@ def user_has_memory() -> bool:
     """Whether the active user has any L3 memory content.
 
     Drives the auto-mount of ``read_memory``. Per-user paths resolve via
-    the multi-user ContextVars the runtime sets up. Fails closed (returns
+    the ContextVars the runtime sets up. Fails closed (returns
     ``False``) on any error so a broken memory directory doesn't surface
     a tool with no payload to read.
     """

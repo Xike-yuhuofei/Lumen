@@ -41,7 +41,7 @@ class StreamEvent:
 
     Attributes:
         type: The semantic kind of this event.
-        source: Which tool / capability / plugin produced it (e.g. "deep_solve").
+        source: Which tool / capability / plugin produced it (e.g. "chat").
         stage: Current stage within the source (e.g. "planning").
         content: Human-readable text payload.
         metadata: Arbitrary structured data (tool args, sources, metrics, …).

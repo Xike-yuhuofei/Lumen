@@ -22,7 +22,8 @@ class ToolScope:
     #: current user id": owner-keyed state (a caller's own MCP servers, their
     #: secrets) is addressed by this, and reading it under one identity while
     #: writing it under another is how one account's servers become invisible to
-    #: itself. Comes from ``multi_user.paths.current_owner_id``.
+    #: itself. Comes from ``deeptutor.services.user.current_owner_id()``
+    #: (single-user: the local admin).
     owner_id: str = ""
     #: A partner is a synthetic non-admin user anchored to an owner's
     #: workspace; its own configured filter is the authority for its surface,

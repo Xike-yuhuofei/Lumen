@@ -48,14 +48,6 @@ DEFAULT_MAIN_SETTINGS = {
             "max_rounds": 12,
             "max_replans": 2,
         },
-        "research": {
-            "researching": {
-                "note_agent_mode": "auto",
-                "tool_timeout": 60,
-                "tool_max_retries": 2,
-                "paper_search_years_limit": 3,
-            },
-        },
         "question": {
             "exploring": {
                 "max_iterations": 8,
@@ -70,10 +62,7 @@ DEFAULT_MAIN_SETTINGS = {
 
 DEFAULT_AGENTS_SETTINGS = {
     "capabilities": {
-        "solve": {"temperature": 0.3, "max_tokens": 8192},
-        "research": {"temperature": 0.5, "max_tokens": 12000},
         "question": {"temperature": 0.7, "max_tokens": 4096},
-        "visualize": {"temperature": 0.4, "max_tokens": 16384},
         "chat": {
             "temperature": 0.2,
             "responding": {"max_tokens": 8000},
@@ -84,9 +73,6 @@ DEFAULT_AGENTS_SETTINGS = {
     },
     "services": {
         "personalization": {"temperature": 0.5, "max_tokens": 8192},
-    },
-    "plugins": {
-        "vision_solver": {"temperature": 0.3, "max_tokens": 12000},
     },
 }
 
@@ -129,9 +115,7 @@ def init_user_directories(project_root: Path | None = None) -> None:
         ├── book/
         └── chat/
             ├── chat/
-            ├── deep_solve/
             ├── deep_question/
-            ├── deep_research/
             └── _detached_code_execution/
 
     Args:
@@ -181,7 +165,7 @@ def _seed_default_personas() -> None:
     Best-effort — never blocks startup.
     """
     try:
-        from deeptutor.multi_user.paths import get_admin_path_service
+        from deeptutor.services.user import get_admin_path_service
         from deeptutor.services.persona.service import PersonaService
 
         admin_personas = get_admin_path_service().get_workspace_dir() / "personas"

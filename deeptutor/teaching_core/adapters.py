@@ -14,7 +14,6 @@ pure read of the current ``LearningProgress``.
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING
 
 from deeptutor.learning.models import (
     KnowledgePoint,
@@ -36,9 +35,6 @@ from .models import (
     TeachingActionType,
     TeachingNodeType,
 )
-
-if TYPE_CHECKING:
-    from deeptutor.teaching_extraction.schemas import SourceAnchor
 
 
 def learner_state_from_progress(
@@ -182,16 +178,6 @@ def assessment_result_from_attempt(
     )
 
 
-def source_reference_from_anchor(anchor: "SourceAnchor") -> dict:
-    """Map an extraction SourceAnchor into a teaching-node source reference."""
-    return {
-        "source_id": anchor.source_id,
-        "locator": anchor.locator,
-        "heading": anchor.heading,
-        "ref": anchor.ref(),
-    }
-
-
 # ── TeachingAction -> mastery-tool orchestration ──────────────────────────
 
 
@@ -309,6 +295,5 @@ __all__ = [
     "evidence_bundle_from_progress",
     "mastery_estimate_from_progress",
     "assessment_result_from_attempt",
-    "source_reference_from_anchor",
     "action_instruction",
 ]

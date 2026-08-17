@@ -19,9 +19,6 @@ def test_retained_core_providers_resolve() -> None:
         "azure_openai",
         "openai",
         "anthropic",
-        "openai_codex",
-        "github_copilot",
-        "codebuddy",
         "deepseek",
         "gemini",
         "dashscope",
@@ -57,23 +54,3 @@ def test_pruned_providers_no_longer_resolve() -> None:
     assert find_gateway(api_key="sk-orca-test-key") is None
     # OpenRouter keys still resolve to the retained gateway.
     assert find_gateway(api_key="sk-or-v1-abcdef").name == "openrouter"
-
-
-def test_openai_codex_is_not_detected_from_api_base() -> None:
-    assert find_gateway(api_base="https://codex.example.com/v1") is None
-
-
-def test_openai_codex_provider_is_oauth_backed() -> None:
-    spec = find_by_name("openai_codex")
-
-    assert spec is not None
-    assert spec.auth_mode == "oauth"
-    assert spec.env_key == ""
-
-
-def test_github_copilot_is_oauth_backed() -> None:
-    spec = find_by_name("github_copilot")
-
-    assert spec is not None
-    assert spec.auth_mode == "oauth"
-    assert spec.env_key == ""

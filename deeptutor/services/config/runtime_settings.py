@@ -22,11 +22,12 @@ DEFAULT_SYSTEM_SETTINGS: dict[str, Any] = {
     "cors_origins": [],
     "disable_ssl_verify": False,
     "chat_attachment_dir": "",
-    # Enable the restricted-subprocess code-execution sandbox (the `exec` /
-    # `code_execution` tools the office skills — docx/pdf/pptx/xlsx — run on).
+    # Enable the restricted-subprocess code-execution sandbox (the
+    # `code_execution` tool and office skills — docx/pdf/pptx/xlsx — run on).
     # Default on so document generation works out of the box across all
     # deployment shapes; a stronger backend (runner sidecar / bwrap) still
-    # takes precedence when available. Set false to disable host-side exec.
+    # takes precedence when available. Set false to disable host-side
+    # subprocess execution.
     "sandbox_allow_subprocess": True,
     # Chat attachment policy. Size caps gate what the composer accepts and
     # what the turn runtime / partner upload endpoints extract; the char
@@ -59,11 +60,6 @@ DEFAULT_AUTH_SETTINGS: dict[str, Any] = {
 
 DEFAULT_INTEGRATIONS_SETTINGS: dict[str, Any] = {
     "version": 1,
-    "pocketbase_url": "",
-    "pocketbase_port": 8090,
-    "pocketbase_external_url": "",
-    "pocketbase_admin_email": "",
-    "pocketbase_admin_password": "",
 }
 
 # Document parsing settings. The parse layer (deeptutor/services/parsing)
@@ -359,13 +355,12 @@ class RuntimeSettingsService:
         return payload
 
     def load_integrations(self, *, include_process_overrides: bool = True) -> dict[str, Any]:
+        del include_process_overrides  # integrations.json has no process-env overrides today
         payload = self._load_or_create(
             "integrations",
             DEFAULT_INTEGRATIONS_SETTINGS,
             self._normalize_integrations,
         )
-        if include_process_overrides:
-            payload = self._apply_integrations_process_overrides(payload)
         return payload
 
     def save_integrations(self, settings: dict[str, Any]) -> dict[str, Any]:
@@ -448,7 +443,6 @@ class RuntimeSettingsService:
         """Render non-model settings into process env names for subprocesses."""
         system = self.load_system()
         auth = self.load_auth()
-        integrations = self.load_integrations()
         return {
             "BACKEND_PORT": str(system["backend_port"]),
             "FRONTEND_PORT": str(system["frontend_port"]),
@@ -484,11 +478,6 @@ class RuntimeSettingsService:
                 or f"http://127.0.0.1:{system['backend_port']}"
             ),
             "DEEPTUTOR_AUTH_ENABLED": _bool_env(auth["enabled"]),
-            "POCKETBASE_URL": integrations["pocketbase_url"],
-            "POCKETBASE_PORT": str(integrations["pocketbase_port"]),
-            "POCKETBASE_EXTERNAL_URL": integrations["pocketbase_external_url"],
-            "POCKETBASE_ADMIN_EMAIL": integrations["pocketbase_admin_email"],
-            "POCKETBASE_ADMIN_PASSWORD": integrations["pocketbase_admin_password"],
         }
 
     def export_environment(self, *, overwrite: bool = True) -> dict[str, str]:
@@ -603,20 +592,6 @@ class RuntimeSettingsService:
         if value := self._process_env_value("AUTH_COOKIE_SECURE"):
             payload["cookie_secure"] = value
         return self._normalize_auth(payload)
-
-    def _apply_integrations_process_overrides(self, settings: dict[str, Any]) -> dict[str, Any]:
-        payload = dict(settings)
-        if value := self._process_env_value("POCKETBASE_URL"):
-            payload["pocketbase_url"] = value
-        if value := self._process_env_value("POCKETBASE_PORT"):
-            payload["pocketbase_port"] = value
-        if value := self._process_env_value("POCKETBASE_EXTERNAL_URL"):
-            payload["pocketbase_external_url"] = value
-        if value := self._process_env_value("POCKETBASE_ADMIN_EMAIL"):
-            payload["pocketbase_admin_email"] = value
-        if value := self._process_env_value("POCKETBASE_ADMIN_PASSWORD"):
-            payload["pocketbase_admin_password"] = value
-        return self._normalize_integrations(payload)
 
     def _apply_mineru_process_overrides(self, settings: dict[str, Any]) -> dict[str, Any]:
         payload = dict(settings)
@@ -846,11 +821,6 @@ class RuntimeSettingsService:
     def _normalize_integrations(self, settings: dict[str, Any]) -> dict[str, Any]:
         return {
             "version": 1,
-            "pocketbase_url": _string(settings.get("pocketbase_url")).rstrip("/"),
-            "pocketbase_port": _coerce_port(settings.get("pocketbase_port"), 8090),
-            "pocketbase_external_url": _string(settings.get("pocketbase_external_url")).rstrip("/"),
-            "pocketbase_admin_email": _string(settings.get("pocketbase_admin_email")),
-            "pocketbase_admin_password": _string(settings.get("pocketbase_admin_password")),
         }
 
 
@@ -860,7 +830,7 @@ def _bool_env(value: Any) -> str:
 
 def _global_settings_dir() -> Path:
     try:
-        from deeptutor.multi_user.paths import get_admin_path_service
+        from deeptutor.services.user import get_admin_path_service
 
         return get_admin_path_service().get_settings_dir()
     except Exception:

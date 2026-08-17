@@ -1,18 +1,10 @@
 """Per-kind authorisation for external-provider tools.
 
-One function per provider kind, on purpose. The two kinds do not share an
-authorisation rule:
-
-* **MCP** is granted per *tool name* (``grant.mcp_tools``) for deployment
-  servers, and by *ownership* for servers a user configured themselves;
-* **CLI apps** will be granted per *app id* (``grant.cli_apps``) and are
-  installed by an administrator, never self-service.
-
-Collapsing both into one "allowed set" is what makes a CLI app accidentally
-governed by an MCP whitelist. Keeping them as two named functions over the
-same :class:`~deeptutor.runtime.providers.allowlist.Allowlist` type keeps the
-shared plumbing (the deferred-tool manifest, the loader, the session's loaded
-names) shared without pretending the policies are one policy.
+MCP tools are granted per *tool name* (``grant.mcp_tools``) for deployment
+servers, and by *ownership* for servers a user configured themselves.
+Authorisation is expressed as an :class:`~deeptutor.runtime.providers.allowlist.Allowlist`
+so the shared plumbing (the deferred-tool manifest, the loader, the session's
+loaded names) is shared without pretending different policies are one policy.
 """
 
 from __future__ import annotations

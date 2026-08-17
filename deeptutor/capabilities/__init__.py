@@ -1,7 +1,7 @@
 """Turn-scoped chat-loop capabilities.
 
 Each loop capability lives in its own subpackage under
-:mod:`deeptutor.capabilities` (``solve``, ``mastery``). The chat loop imports
+:mod:`deeptutor.capabilities` (``mastery``). The chat loop imports
 only the generic registry/protocol from this package; feature-specific prompts,
 tools, and kwargs injection stay inside each capability subpackage.
 

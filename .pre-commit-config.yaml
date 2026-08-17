@@ -18,10 +18,10 @@ repos:
     hooks:
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
-        exclude: ^(assets/roster/.*\.svg|.*\.min\.(js|css)|.*\.lock|.*\.log|.*\.pdf|.*\.zip|.*\.tar\.gz)
+        exclude: ^(.*\.min\.(js|css)|.*\.lock|.*\.log|.*\.pdf|.*\.zip|.*\.tar\.gz)
 
       - id: end-of-file-fixer
-        exclude: ^(assets/roster/.*\.svg|.*\.min\.(js|css)|.*\.lock|.*\.log|.*\.pdf|.*\.zip|.*\.tar\.gz)
+        exclude: ^(.*\.min\.(js|css)|.*\.lock|.*\.log|.*\.pdf|.*\.zip|.*\.tar\.gz)
 
       - id: check-yaml
         args: [--unsafe]

@@ -258,25 +258,8 @@ def _add_fresh(
             )
         )
 
-    # Books: split the cumulative ``build_book_context`` output by the
-    # ``---`` section separator so each book gets its own ``bk-{book_id}``
-    # sid. The order in ``book_references`` matches the order
-    # ``build_book_context`` produces sections in, so we can zip them.
-    book_sections = _split_book_sections(book_context_text)
-    for ref, section in zip(book_references, book_sections, strict=False):
-        book_id = str(ref.get("book_id") or "").strip()
-        if not book_id or not section.strip():
-            continue
-        inv.add(
-            SourceEntry(
-                sid=f"bk-{book_id}",
-                kind="book",
-                name=_extract_book_title(section, fallback=f"Book {book_id}"),
-                full_text=section,
-                fresh=True,
-                first_seen_turn=current_turn_ordinal,
-            )
-        )
+    # Books: no longer resolved (book module removed).
+    pass
 
     for record in attachment_records:
         if str(record.get("type", "")).lower() == "image":
@@ -565,48 +548,14 @@ async def _load_lineage(
     return chain
 
 
-# ----- Per-type resolvers shared by fresh + historical paths --------------
-
-
-def _split_book_sections(book_context_text: str) -> list[str]:
-    """Split the output of ``build_book_context`` back into per-book
-    sections. ``build_book_context`` joins sections with ``"\\n\\n---\\n\\n"``;
-    we split on the same separator. Returns an empty list when input is
-    empty."""
-    if not book_context_text.strip():
-        return []
-    return [seg for seg in book_context_text.split("\n\n---\n\n") if seg.strip()]
-
-
-def _extract_book_title(section: str, *, fallback: str) -> str:
-    """``_serialize_book_header`` prefixes every section with
-    ``# Book: <title>`` — extract that here for the manifest's name field."""
-    first_line = section.lstrip().split("\n", 1)[0]
-    prefix = "# Book: "
-    if first_line.startswith(prefix):
-        return first_line[len(prefix) :].strip() or fallback
-    return fallback
-
-
 def _resolve_book_section(book_reference: dict[str, Any]) -> tuple[str, str]:
     """Resolve a single book reference into its serialized section + title.
-
-    Used by the historical-collection path where each past turn's book
-    reference is rendered independently (so the per-book ``bk-{book_id}``
-    source id stays stable). Returns ``("", "")`` on failure.
+    Returns ``("", "")`` when the book module is unavailable.
     """
-    from deeptutor.book.context import build_book_context
+    return "", ""
 
-    try:
-        result = build_book_context([book_reference])
-    except Exception:
-        logger.debug("Failed to resolve historical book reference", exc_info=True)
-        return "", ""
-    text = (result.text or "").strip()
-    if not text:
-        return "", ""
-    name = _extract_book_title(text, fallback=f"Book {book_reference.get('book_id', '?')}")
-    return text, name
+
+# ----- Per-type resolvers shared by fresh + historical paths --------------
 
 
 # Human labels for the external agents a session can be imported from. The
@@ -614,7 +563,6 @@ def _resolve_book_section(book_reference: dict[str, Any]) -> tuple[str, str]:
 # (see ``deeptutor/api/routers/imports.py``).
 _EXTERNAL_AGENT_LABELS: dict[str, str] = {
     "claude_code": "Claude Code",
-    "codex": "Codex",
 }
 
 

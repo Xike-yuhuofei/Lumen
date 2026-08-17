@@ -591,11 +591,6 @@ async def fetch_models(
     base_url: str = "",
     api_key: str | None = None,
 ) -> list[str]:
-    if canonical_provider_name(binding) == "codebuddy":
-        from .provider_core.codebuddy_models import fetch_codebuddy_models
-
-        return await fetch_codebuddy_models(api_key)
-
     if is_local_llm_server(base_url):
         from . import local_provider
 

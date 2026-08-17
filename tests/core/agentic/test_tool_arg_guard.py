@@ -2,10 +2,10 @@
 
 Under a large tool surface and long history, providers intermittently emit a
 function call whose ``arguments`` is ``{}`` even though the schema marks
-fields required. The tool used to be the one to reject it — ``exec`` raised
-``exec requires a non-empty command``, ``write_note`` answered ``Unknown mode
-''`` — neither of which reads as "an argument is missing", so the model
-re-emitted the same empty call until the loop budget ran out.
+fields required. The tool used to be the one to reject it — ``code_execution``
+raised ``code_execution requires a non-empty command``, ``write_note`` answered
+``Unknown mode ''`` — neither of which reads as "an argument is missing", so
+the model re-emitted the same empty call until the loop budget ran out.
 
 Two things are pinned here: the guard's rules (what counts as missing, and
 what must NOT be treated as missing so working calls keep working), and that
@@ -75,9 +75,9 @@ def test_required_param_with_a_default_is_satisfiable_without_the_model() -> Non
 
 def test_blank_string_counts_as_missing() -> None:
     """How providers serialise "the model left this out" in practice —
-    ``exec``'s empty ``command`` arrived this way."""
+    ``code_execution``'s empty ``command`` arrived this way."""
     definition = ToolDefinition(
-        name="exec",
+        name="code_execution",
         description="",
         parameters=[ToolParameter(name="command", type="string")],
     )

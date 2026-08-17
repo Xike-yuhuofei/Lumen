@@ -4,12 +4,10 @@ from __future__ import annotations
 
 from deeptutor.capabilities.mastery import MasteryLoopCapability
 from deeptutor.capabilities.protocol import LoopCapability
-from deeptutor.capabilities.solve import SolveLoopCapability
 from deeptutor.core.context import UnifiedContext
 
 LOOP_CAPABILITIES: tuple[LoopCapability, ...] = (
     MasteryLoopCapability(),
-    SolveLoopCapability(),
 )
 
 

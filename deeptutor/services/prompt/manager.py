@@ -27,12 +27,10 @@ class PromptManager:
 
     # Supported modules
     MODULES = [
-        "research",
         "solve",
         "question",
         "book",
         "notebook",
-        "visualize",
         "chat",
     ]
 

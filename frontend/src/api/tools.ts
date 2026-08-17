@@ -3,15 +3,12 @@ import { apiFetch, apiUrl, expectJson } from './http'
 export const TOOL_SHORT_LABELS: Record<string, { zh: string; en: string }> = {
   brainstorm: { zh: '头脑风暴', en: 'Brainstorm' },
   web_search: { zh: '网页搜索', en: 'Web search' },
-  paper_search: { zh: '论文搜索', en: 'Paper search' },
   reason: { zh: '深度推理', en: 'Deep reason' },
-  geogebra_analysis: { zh: 'GeoGebra 分析', en: 'GeoGebra analysis' },
 }
 
 export const FALLBACK_TOGGLEABLE_TOOLS = [
   { name: 'brainstorm', label: '头脑风暴', labels: TOOL_SHORT_LABELS.brainstorm },
   { name: 'web_search', label: '网页搜索', labels: TOOL_SHORT_LABELS.web_search },
-  { name: 'paper_search', label: '论文搜索', labels: TOOL_SHORT_LABELS.paper_search },
   { name: 'reason', label: '深度推理', labels: TOOL_SHORT_LABELS.reason },
 ] as const
 

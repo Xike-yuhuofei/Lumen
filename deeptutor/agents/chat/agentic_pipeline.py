@@ -45,7 +45,6 @@ from deeptutor.runtime.providers import ToolScope
 from deeptutor.runtime.providers.view import ProviderToolView, build_tool_view
 from deeptutor.runtime.registry.deferred_tools import DeferredToolLoader
 from deeptutor.runtime.registry.tool_registry import get_tool_registry
-from deeptutor.services.cli_apps.models import TOOL_PREFIX as CLI_APP_TOOL_PREFIX
 from deeptutor.services.config import get_chat_params
 from deeptutor.services.llm import (
     get_llm_config,
@@ -199,8 +198,8 @@ class AgenticChatPipeline:
         self._respond_max_tokens = _read_int(
             chat_cfg.get("responding"), key="max_tokens", default=8000
         )
-        # Per-capability overrides (e.g. deep solve forwards its own round
-        # budget / temperature / answer-token cap, read from the solve
+        # Per-capability overrides (e.g. mastery path forwards its own round
+        # budget / temperature / answer-token cap, read from the mastery
         # settings). Chat itself passes none and keeps the chat_cfg values.
         if max_rounds is not None:
             self._max_rounds = max(1, int(max_rounds))
@@ -499,22 +498,23 @@ class AgenticChatPipeline:
 
             # A partner turn runs as a synthetic non-admin user but IS the admin
             # owner's extension (partners are anchored to the admin workspace), so
-            # exec follows the owner's authority — not the partner's "user" role.
-            # The owner still gates exec per-partner via the builtin-tool whitelist.
+            # code-execution follows the owner's authority — not the partner's
+            # "user" role.
+            # The owner still gates code-execution per-partner via the builtin-tool whitelist.
             is_partner = self._is_partner_turn(context)
 
             level = await get_sandbox_service().isolation_level()
             if level is IsolationLevel.SYSTEM:
                 # Admin can switch exec off per user (grant v2). ``None``
                 # follows the policy: SYSTEM isolation serves everyone.
-                from deeptutor.multi_user.tool_access import exec_override
+                from deeptutor.services.user import exec_override
 
                 return exec_override() is not False
             if level is IsolationLevel.APPLICATION:
                 if is_partner:
                     return True
                 try:
-                    from deeptutor.multi_user.context import get_current_user
+                    from deeptutor.services.user import get_current_user
 
                     return bool(get_current_user().is_admin)
                 except Exception:
@@ -523,7 +523,7 @@ class AgenticChatPipeline:
                     return True
             return False
         except Exception:
-            logger.warning("exec policy gate failed; disabling exec", exc_info=True)
+            logger.warning("code-exec policy gate failed; disabling", exc_info=True)
             return False
 
     def _compose_enabled_tools(self, context: UnifiedContext) -> list[str]:
@@ -536,9 +536,7 @@ class AgenticChatPipeline:
                 has_sources=True,
                 has_memory=user_has_memory(),
                 has_notebooks=user_has_notebooks(),
-                has_skills=bool(context.skills_manifest),
                 has_deferred_tools=getattr(self, "_deferred_loader", None) is not None,
-                has_exec=getattr(self, "_exec_enabled", False),
                 has_code=getattr(self, "_exec_enabled", False),
             ),
             capability_owned=self._capability_owned_tools(context),
@@ -635,11 +633,6 @@ class AgenticChatPipeline:
                     properties["query"].setdefault("minLength", 1)
                 if isinstance(properties.get("kb_name"), dict):
                     properties["kb_name"]["enum"] = kb_choices
-            if function.get("name") == "geogebra_analysis" and isinstance(properties, dict):
-                properties.pop("image_base64", None)
-                required = parameters.get("required")
-                if isinstance(required, list):
-                    parameters["required"] = [n for n in required if n != "image_base64"]
             if (
                 function.get("name") in {"list_notebook", "write_note"}
                 and isinstance(properties, dict)
@@ -845,7 +838,6 @@ class AgenticChatPipeline:
         task_dir = (
             get_path_service().get_task_workspace("chat", workspace_key) if workspace_key else None
         )
-        exec_dir = task_dir / "exec" if task_dir is not None else None
         if tool_name == "rag":
             kwargs.setdefault("mode", "hybrid")
         elif tool_name == "kb_files":
@@ -855,32 +847,6 @@ class AgenticChatPipeline:
             kwargs["language"] = context.language or "en"
         elif tool_name == "load_tools":
             kwargs["_tool_loader"] = self._deferred_loader
-        elif tool_name == "exec":
-            from deeptutor.services.sandbox import Mount
-
-            kwargs["_sandbox_user_id"] = self._current_user_id()
-            if exec_dir is not None:
-                exec_dir.mkdir(parents=True, exist_ok=True)
-                kwargs["_sandbox_workdir"] = str(exec_dir)
-                kwargs["_sandbox_mounts"] = (
-                    Mount(host_path=str(exec_dir), sandbox_path=str(exec_dir), read_only=False),
-                )
-        elif tool_name.startswith(CLI_APP_TOOL_PREFIX):
-            # A CLI app runs like exec, and for the same reason gets its workdir
-            # from here rather than choosing one: one directory per turn shared by
-            # every app, so the model can render with one and post-process with
-            # another, and the files land where /api/outputs will serve them
-            # (``PathService.is_public_output_path`` has the matching branch).
-            from deeptutor.services.sandbox import Mount
-
-            kwargs["_sandbox_user_id"] = self._current_user_id()
-            cli_dir = task_dir / "cli" if task_dir is not None else None
-            if cli_dir is not None:
-                cli_dir.mkdir(parents=True, exist_ok=True)
-                kwargs["_sandbox_workdir"] = str(cli_dir)
-                kwargs["_sandbox_mounts"] = (
-                    Mount(host_path=str(cli_dir), sandbox_path=str(cli_dir), read_only=False),
-                )
         elif tool_name == "code_execution":
             from deeptutor.services.sandbox import Mount
 
@@ -912,7 +878,7 @@ class AgenticChatPipeline:
                     "language": context.language or "en",
                 }
             else:
-                from deeptutor.multi_user.context import get_current_user
+                from deeptutor.services.user import get_current_user
 
                 user = get_current_user()
                 kwargs["_cron_owner"] = {
@@ -924,10 +890,6 @@ class AgenticChatPipeline:
                 }
         elif tool_name in {"reason", "brainstorm"}:
             kwargs.setdefault("context", context.user_message)
-        elif tool_name == "paper_search":
-            kwargs.setdefault("max_results", 3)
-            kwargs.setdefault("years_limit", 3)
-            kwargs.setdefault("sort_by", "relevance")
         elif tool_name == "web_search":
             kwargs.setdefault("query", context.user_message)
             if task_dir is not None:
@@ -935,23 +897,6 @@ class AgenticChatPipeline:
         elif tool_name == "write_note":
             kwargs["conversation_history"] = list(context.conversation_history or [])
             kwargs["current_user_message"] = context.user_message or ""
-        elif tool_name == "geogebra_analysis":
-            first_image = next(
-                (
-                    att
-                    for att in (context.attachments or [])
-                    if getattr(att, "type", "") == "image" and getattr(att, "base64", "")
-                ),
-                None,
-            )
-            if first_image is not None:
-                raw_b64 = first_image.base64
-                if raw_b64.startswith("data:"):
-                    kwargs["image_base64"] = raw_b64
-                else:
-                    mime = getattr(first_image, "mime_type", "") or "image/png"
-                    kwargs["image_base64"] = f"data:{mime};base64,{raw_b64}"
-            kwargs["language"] = context.language or "zh"
         for cap in self._active_loop_capabilities(context):
             kwargs = cap.augment_kwargs(tool_name, kwargs, context)
         return kwargs
@@ -1222,7 +1167,7 @@ class AgenticChatPipeline:
     @staticmethod
     def _current_user_id() -> str:
         try:
-            from deeptutor.multi_user.context import get_current_user
+            from deeptutor.services.user import get_current_user
 
             return str(get_current_user().id or "anonymous")
         except Exception:
@@ -1239,7 +1184,7 @@ class AgenticChatPipeline:
         written under one name and read under another.
         """
         try:
-            from deeptutor.multi_user.paths import current_owner_id
+            from deeptutor.services.user import current_owner_id
 
             return current_owner_id()
         except Exception:
@@ -1305,7 +1250,7 @@ class AgenticChatPipeline:
 
     @staticmethod
     def _collect_kb_manifests(kbs: list[str]) -> list[KbManifest]:
-        from deeptutor.multi_user.knowledge_access import resolve_kb_manifest
+        from deeptutor.services.user import resolve_kb_manifest
 
         manifests: list[KbManifest] = []
         for kb in kbs:
@@ -1331,32 +1276,32 @@ class AgenticChatPipeline:
         try:
             from deeptutor.services.path_service import get_path_service
 
-            exec_dir = (
+            code_dir = (
                 get_path_service().get_task_workspace(
                     "chat",
                     self._workspace_key(context),
                 )
-                / "exec"
+                / "code_runs"
             )
         except Exception:
             return ""
         if self.language == "zh":
             return (
                 "[本轮工作区]\n"
-                f"脚本和临时文件应写入：{exec_dir}\n"
+                f"脚本和临时文件应写入：{code_dir}\n"
                 "相对路径会解析到这个目录。需要创建 PDF、图片、表格或其他下载文件时，"
-                "直接通过 exec 写入并运行脚本（如 heredoc：python - <<'PY' … PY，"
+                "直接通过 code_execution 写入并运行脚本（如 heredoc：python - <<'PY' … PY，"
                 "或 cat > gen.py <<'EOF' … EOF 后再运行）。生成的文件会自动以可下载"
                 "卡片呈现给用户——在回答里描述你做了什么即可，不要粘贴原始 URL。"
             )
         return (
             "[Turn workspace]\n"
-            f"Scripts and temporary files should be written under: {exec_dir}\n"
+            f"Scripts and temporary files should be written under: {code_dir}\n"
             "Relative paths resolve to this directory. When creating PDFs, images, "
             "spreadsheets, or other downloadable files, write and run scripts directly "
-            "through exec (e.g. a heredoc: python - <<'PY' … PY, or cat > gen.py <<'EOF' "
-            "… EOF then run it). Generated files are shown to the user automatically as "
-            "downloadable cards — describe what you made, do not paste raw URLs."
+            "through code_execution (e.g. a heredoc: python - <<'PY' … PY, or cat > gen.py "
+            "<<'EOF' … EOF then run it). Generated files are shown to the user automatically "
+            "as downloadable cards — describe what you made, do not paste raw URLs."
         )
 
     def _t(self, key: str, default: str = "", **kwargs: Any) -> str:

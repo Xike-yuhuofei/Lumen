@@ -16,11 +16,6 @@ const proxy = {
     changeOrigin: true,
     ws: true,
   },
-  '/auth/callback': {
-    target: apiTarget,
-    changeOrigin: true,
-    rewrite: () => '/api/v1/auth/openai-codex/callback',
-  },
 }
 
 export default defineConfig({

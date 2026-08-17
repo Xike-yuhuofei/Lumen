@@ -12,7 +12,7 @@ from openai import AsyncOpenAI, BadRequestError
 
 from deeptutor.services.llm.capabilities import disable_response_format_at_runtime
 from deeptutor.services.llm.openai_http_client import openai_client_kwargs
-from deeptutor.services.llm.provider_registry import find_by_name, strip_provider_prefix
+from deeptutor.services.provider_registry import find_by_name, strip_provider_prefix
 from deeptutor.services.llm.reasoning_params import default_reasoning_effort_for
 
 from .config import get_token_limit_kwargs

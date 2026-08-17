@@ -1,8 +1,8 @@
 """ToolRegistry.execute: tool-name arg must not collide with a tool's own params.
 
-Regression for the ``read_skill(name=...)`` dispatch bug: the registry takes
+Regression for the ``MCP tool(name=...)`` dispatch bug: the registry takes
 the tool *name* as its first parameter, which collided with any tool whose
-schema declares a ``name`` argument (read_skill, and potentially MCP tools).
+schema declares a ``name`` argument (MCP tools, and others).
 The fix makes the tool-name parameter positional-only.
 """
 

@@ -1,7 +1,5 @@
 <div align="center">
 
-<p align="center"><img src="assets/figs/logo/logo.png" alt="Lumen logo" height="56" style="vertical-align: middle;">&nbsp;<img src="assets/figs/logo/banner.png" alt="Lumen" height="48" style="vertical-align: middle;"></p>
-
 # Lumen: Lifelong Personalized Tutoring
 
 <p align="center">
@@ -14,19 +12,7 @@
   <a href="https://trendshift.io/repositories/17099?utm_source=trendshift-badge&amp;utm_medium=badge&amp;utm_campaign=badge-trendshift-17099" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/17099/weekly?language=Python" alt="HKUDS%2FDeepTutor | Trendshift" width="250" height="55"/></a>
 </p>
 
-<p align="center">
-  <a href="README.md"><img alt="English" height="40" src="https://img.shields.io/badge/English-BCDCF7"></a>&nbsp;
-  <a href="assets/README/README_CN.md"><img alt="简体中文" height="40" src="https://img.shields.io/badge/简体中文-CDCFD4"></a>&nbsp;
-  <a href="assets/README/README_JA.md"><img alt="日本語" height="40" src="https://img.shields.io/badge/日本語-CDCFD4"></a>&nbsp;
-  <a href="assets/README/README_ES.md"><img alt="Español" height="40" src="https://img.shields.io/badge/Español-CDCFD4"></a>&nbsp;
-  <a href="assets/README/README_FR.md"><img alt="Français" height="40" src="https://img.shields.io/badge/Français-CDCFD4"></a>&nbsp;
-  <a href="assets/README/README_AR.md"><img alt="Arabic" height="40" src="https://img.shields.io/badge/Arabic-CDCFD4"></a>&nbsp;
-  <a href="assets/README/README_RU.md"><img alt="Русский" height="40" src="https://img.shields.io/badge/Русский-CDCFD4"></a>&nbsp;
-  <a href="assets/README/README_HI.md"><img alt="Hindi" height="40" src="https://img.shields.io/badge/Hindi-CDCFD4"></a>&nbsp;
-  <a href="assets/README/README_PT.md"><img alt="Português" height="40" src="https://img.shields.io/badge/Português-CDCFD4"></a>&nbsp;
-  <a href="assets/README/README_TH.md"><img alt="Thai" height="40" src="https://img.shields.io/badge/Thai-CDCFD4"></a>&nbsp;
-  <a href="assets/README/README_PL.md"><img alt="Polski" height="40" src="https://img.shields.io/badge/Polski-CDCFD4"></a>
-</p>
+
 
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/downloads/)
 [![Vite](https://img.shields.io/badge/Vite-6-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vite.dev/)
@@ -392,9 +378,9 @@ deeptutor chat
 
 ```bash
 deeptutor chat                                          # interactive REPL
-deeptutor chat --capability deep_solve --tool rag --kb my-kb
+deeptutor chat --capability mastery_path --tool rag --kb my-kb
 deeptutor run chat "Explain Fourier transform"
-deeptutor run deep_solve "Solve x^2 = 4" --tool rag --kb my-kb
+deeptutor run mastery_path "Master calculus" --kb math-textbook
 deeptutor config show
 ```
 
@@ -451,16 +437,12 @@ Project-root `.env` is **not** read as an application config file. For a minimal
 
 Start with the main surfaces you will use day to day: Chat, Partners, My Agents, Co-Writer, Book, Knowledge Center, Learning Space, Memory, and Settings. The tour then covers Multi-User deployments for shared, isolated workspaces.
 
-<div align="center">
-<img src="assets/figs/web-1.4.6+/OVERVIEW.png" alt="Lumen home — the Chat workspace with every surface in the sidebar" width="900">
-</div>
+
 
 <details>
 <summary><b>🏗️ System architecture</b></summary>
 
-<div align="center">
-<img src="assets/figs/system/system%20architecture.png" alt="Lumen system architecture" width="900">
-</div>
+
 
 </details>
 
@@ -469,42 +451,32 @@ Start with the main surfaces you will use day to day: Chat, Partners, My Agents,
 
 Chat is the default capability and where most work begins. A single thread can talk normally, call tools, ground itself in selected knowledge bases, read attachments, generate images, consult subagents, write notebook records, and continue with the same context across turns.
 
-<div align="center">
-<img src="assets/figs/web-1.4.6+/home/00-overview.png" alt="Lumen chat workspace" width="900">
-</div>
+
 
 The loop is deliberately simple: the model thinks in rounds, calls tools when useful, observes the results, and finishes with a tool-free message. `ask_user` is special — instead of guessing, the agent can pause the turn, ask a structured clarifying question, and resume once you answer.
 
-<div align="center">
-<img src="assets/figs/system/chat-agent-loop.png" alt="Lumen chat agent loop" width="900">
-</div>
 
-User-toggleable tools are `brainstorm`, `web_search`, `paper_search`, `reason`, and `geogebra_analysis`. Contextual tools such as `rag`, `kb_files`, `read_source`, `read_memory`, `write_memory`, `read_skill`, `load_tools`, `exec`, `web_fetch`, `ask_user`, `list_notebook`, `write_note`, and `github` mount automatically when the turn has the right context.
+
+User-toggleable tools are `brainstorm`, `web_search`, and `reason`. Contextual tools such as `rag`, `kb_files`, `read_source`, `read_memory`, `write_memory`, `read_skill`, `load_tools`, `exec`, `web_fetch`, `ask_user`, `list_notebook`, `write_note`, and `github` mount automatically when the turn has the right context.
 
 Context comes in two kinds: **sticky session context** (knowledge bases, persona, model, voice) lives on the composer toolbar and persists across turns; **one-time references** (files, chat history, books, notebooks, question bank) come from the `+` menu for a single turn.
 
-Chat is also the launch point for deeper capabilities: **Quiz** for question generation, **Research** for cited reports, **Visualize** for charts / diagrams / animations, and — under *More Capabilities* — **Solve** for worked reasoning and **Mastery Path** for learning-plan flows.
+Chat is also the launch point for deeper capabilities: **Quiz** for question generation, **Visualize** for charts / diagrams / animations, and — under *More Capabilities* — **Mastery Path** for learning-plan flows.
 
 </details>
 
 <details>
 <summary><b>🤝 Partner — Persistent Companions on the Same Brain</b></summary>
 
-<div align="center">
-<img src="assets/figs/web-1.4.6+/partners/00-partners%20overview.png" alt="Lumen partners workspace" width="900">
-</div>
+
 
 Partners are persistent companions with their own soul, model policy, library, memory, and channels. They are not a separate bot engine: every inbound web or IM message becomes a normal `ChatOrchestrator` turn inside a partner-scoped workspace. A partner is "a chat that has a personality and a phone number."
 
-<div align="center">
-<img src="assets/figs/system/partners-architecture.png" alt="Lumen partners architecture" width="900">
-</div>
+
 
 Each partner has a `SOUL.md`, model selection, channels, tool policy, and assigned library. Knowledge bases, skills, and notebooks are copied into `data/partners/<id>/workspace/`, so the same RAG, skill, notebook, and memory tools work without special cases. A partner reads its owner's memory but writes only its own.
 
-<div align="center">
-<img src="assets/figs/web-1.4.6+/partners/02-IM%20config%20for%20each%20partner.png" alt="Per-partner IM channel configuration" width="900">
-</div>
+
 
 The channel layer is schema-driven and can connect to IM platforms such as Feishu, Telegram, Slack, Discord, DingTalk, QQ/NapCat, WeCom, WhatsApp, Zulip, Mattermost, Matrix, Mochat, and Microsoft Teams depending on installed extras and configured credentials.
 
@@ -513,15 +485,11 @@ The channel layer is schema-driven and can connect to IM platforms such as Feish
 <details>
 <summary><b>✍️ Co-Writer — Selection-Aware Markdown Drafting</b></summary>
 
-<div align="center">
-<img src="assets/figs/web-1.4.6+/co-writer/00-overview.png" alt="Lumen Co-Writer workspace" width="900">
-</div>
+
 
 Co-Writer is a split-view Markdown workspace for reports, tutorials, notes, and long-form learning artifacts. Documents autosave and render a live preview (KaTeX math, diagram fences), and can be saved back into notebooks when a draft becomes reusable context.
 
-<div align="center">
-<img src="assets/figs/web-1.4.6+/co-writer/01-edit%20panel.png" alt="Co-Writer editor with live preview" width="900">
-</div>
+
 
 Its defining idea is **surgical editing**: select a span and ask Lumen to rewrite, expand, or shorten it. The edit agent can ground the change in a knowledge base or web evidence, keeps a trace of its tool calls, and shows every change as an accept/reject diff — so nothing lands until you approve it.
 
@@ -530,17 +498,11 @@ Its defining idea is **surgical editing**: select a span and ask Lumen to rewrit
 <details>
 <summary><b>📖 Book — Living Books from Your Materials</b></summary>
 
-<div align="center">
-<img src="assets/figs/web-1.4.6+/book/00-book_overview.png" alt="Lumen book library" width="900">
-</div>
+
 
 Book turns selected sources into an interactive **living book** — not a static PDF, but a reading environment built from typed blocks. A book can start from knowledge bases, notebooks, question banks, or chat history; the creation flow proposes a chapter outline before content is generated, so you review the shape instead of accepting a blind one-shot output.
 
-<p align="center">
-<img src="assets/figs/web-1.4.6+/book/01-book-demo-quiz%20card.png" alt="Book quiz block" width="31%">
-&nbsp;
-<img src="assets/figs/web-1.4.6+/book/03-book-demo%20interactive%20module.png" alt="Book interactive widget block" width="31%">
-</p>
+
 
 Each chapter compiles into typed blocks — text, callouts, quizzes, flash cards, timelines, code, figures, interactive HTML, concept graphs, deep dives, and user notes — and every page has its own Page Chat. Blocks are editable: insert, move, regenerate, or switch a block's type without rewriting the chapter. Maintenance commands such as `deeptutor book health` and `deeptutor book refresh-fingerprints` help detect when source knowledge has drifted from compiled pages.
 
@@ -549,15 +511,11 @@ Each chapter compiles into typed blocks — text, callouts, quizzes, flash cards
 <details>
 <summary><b>📚 Knowledge Center — Multi-Engine RAG Libraries</b></summary>
 
-<div align="center">
-<img src="assets/figs/web-1.4.6+/knowledge/00-overview.png" alt="Lumen Knowledge Center" width="900">
-</div>
+
 
 Knowledge bases are the document collections behind RAG — they ground Chat turns, Co-Writer edits, Book generation, and Partner conversations. What's distinctive is a **choice of retrieval engines**: **LlamaIndex** (the default, local vector + BM25), **PageIndex** (hosted, reasoning retrieval with page-level citations), **GraphRAG** and **LightRAG** (knowledge-graph retrieval), **LightRAG Server** (retrieval offloaded to an external LightRAG instance you connect over HTTP), **Tencent IMA** (a library you curate in IMA, searched over its OpenAPI), or a linked **Obsidian** vault the tutor reads and writes in place. Each KB is bound to one engine.
 
-<div align="center">
-<img src="assets/figs/web-1.4.6+/knowledge/01-create%20knowledge%20base.png" alt="Create a knowledge base" width="900">
-</div>
+
 
 Creating a KB, you either **create new** (upload documents and build a fresh index) or **link existing** (reuse an index built elsewhere, read in place with no re-index). Re-indexing writes a new flat `version-N` directory and keeps prior ones, so a working index is never destroyed mid-rebuild. A single document can be removed even from an **error**-state base — dropping a file that failed to parse without a full delete-and-rebuild. Document parsing — Text-only, MinerU, Docling, markitdown, PyMuPDF4LLM, or LiteParse — is chosen in **Settings → Knowledge Base**, with local model downloads off by default. The CLI mirrors the lifecycle with `deeptutor kb list`, `info`, `create`, `add`, `search`, `set-default`, and `delete`.
 
@@ -566,15 +524,11 @@ Creating a KB, you either **create new** (upload documents and build a fresh ind
 <details>
 <summary><b>🌐 Learning Space — Skills, Personas, and Reusable Context</b></summary>
 
-<div align="center">
-<img src="assets/figs/web-1.4.6+/learning-space/00-overview.png" alt="Lumen Learning Space hub" width="900">
-</div>
+
 
 Learning Space is the library and personalization layer — where the things that persist live. **Conversations & Materials** holds your chat history, notebooks, and a question bank (each saved question keeps your answer, the reference answer, and an explanation). **Personalization** holds mastery paths, personas (behavior presets such as *peer*, *research-assistant*, *teacher*), skills (`SKILL.md` playbooks the model reads on demand), **MCP Services** — a curated store of hosted MCP servers you install for yourself in one click, plus any remote server you configure by URL — and **CLI Apps**, command-line tools from the [CLI-Anything](https://github.com/HKUDS/CLI-Anything) catalog that the chat agent calls directly, with each app's own usage guide loaded on demand. Everything here can be reused from Chat, Partners, Co-Writer, and Book.
 
-<div align="center">
-<img src="assets/figs/web-1.4.6+/learning-space/07-%20download%20skills%20from%20eduhub.png" alt="Import skills from EduHub" width="900">
-</div>
+
 
 You don't have to write every skill yourself — **Import from EduHub** browses the community catalog and downloads a skill straight into your library through a security gate (see [Ecosystem](#-ecosystem--eduhub--the-skills-community)).
 
@@ -583,15 +537,11 @@ You don't have to write every skill yourself — **Import from EduHub** browses 
 <details>
 <summary><b>🧠 Memory — Inspectable Personalization</b></summary>
 
-<div align="center">
-<img src="assets/figs/web-1.4.6+/memory/00-overview.png" alt="Lumen memory overview" width="900">
-</div>
+
 
 Memory is a file-backed, three-layer system you can read, curate, and audit — deliberately *not* a hidden vector store. **L1** is the workspace mirror plus an append-only event trace (`trace/<surface>/<date>.jsonl`); **L2** is per-surface curated facts (`L2/<surface>.md`); **L3** is cross-surface synthesis (`L3/<profile|recent|scope|preferences>.md`). Because L2 cites L1 and L3 cites L2, nothing in your profile is unaccountable.
 
-<div align="center">
-<img src="assets/figs/web-1.4.6+/memory/01-3%20layer%20memory%20graph.png" alt="Lumen memory graph" width="900">
-</div>
+
 
 The Memory Graph shows the whole pyramid — L3 synthesis at the centre, L2 in the middle ring, L1 traces on the outside — so you can trace any synthesized claim back to the exact raw event behind it. Memory is tracked across `chat`, `notebook`, `quiz`, `kb`, `book`, partner, and `cowriter` surfaces; the consolidator's Update / Audit / Dedup budgets are tuned in **Settings → Memory**.
 
@@ -600,15 +550,11 @@ The Memory Graph shows the whole pyramid — L3 synthesis at the centre, L2 in t
 <details>
 <summary><b>⚙️ Settings — One Control Plane</b></summary>
 
-<div align="center">
-<img src="assets/figs/web-1.4.6+/settings/00-setting%20overview.png" alt="Lumen settings hub" width="900">
-</div>
+
 
 Settings is the operational control plane, with a live status strip (backend health and resident memory across the process tree) and one card per area: **Appearance** (theme, interface and model output language, code-block styling), **Network** (API base, ports, CORS), **Models** (LLM, Embedding, Search, Text-to-Speech, Speech-to-Text, Image Generation, Video Generation), **Knowledge Base** (document parsing engine), **Chat** (tools, per-capability parameters, attachment caps), **Partners & Agents** (the subagents you can consult from a turn), and **Memory** (the consolidator's budgets).
 
-<div align="center">
-<img src="assets/figs/web-1.4.6+/settings/01-appearance%20settings.png" alt="Lumen appearance settings and themes" width="900">
-</div>
+
 
 Most sections use a draft-and-apply flow, so you can test a provider before committing it. Four themes ship in the box — Default, Cream, Dark, and Glass. Project-root `.env` files are intentionally ignored; runtime configuration lives under `data/user/settings/*.json` unless `DEEPTUTOR_HOME` or `deeptutor start --home` points the app elsewhere.
 
@@ -669,10 +615,10 @@ One `deeptutor` binary, two ways in: an interactive **REPL** for people who live
 
 ```bash
 deeptutor chat                                              # interactive REPL
-deeptutor chat --capability deep_solve --kb my-kb --tool rag
+deeptutor chat --capability visualize --kb my-kb --tool rag
 deeptutor run chat "Explain the Fourier transform" --tool rag --kb textbook
-deeptutor run deep_research "Survey 2026 papers on RAG" \
-  --config mode=report --config depth=standard
+deeptutor run visualize "Draw an attention mechanism dataflow" \
+  --config render_mode=mermaid
 ```
 
 Everything the Web app does is here too — knowledge bases (`kb`), sessions (`session`), partners (`partner`), skills (`skill`), notebooks, memory, and config. Full list below.
@@ -686,13 +632,12 @@ Lumen is built to be *operated by another agent*. Add `--format json` to any `ru
 
 ```bash
 # One shot, machine-readable
-deeptutor run deep_solve "Find d/dx[sin(x^2)]" --tool reason --format json
+deeptutor run mastery_path "Master calculus" --kb math-textbook --format json
 
 # Chain turns in one stateful session — capture the id, reuse it
-SID=$(deeptutor run deep_research "Survey 2026 papers on RAG" \
-  --config mode=report --config depth=standard --format json \
+SID=$(deeptutor run visualize "Draw a sine wave animation" --format json \
   | jq -r 'select(.type=="done").session_id')
-deeptutor run deep_question "Quiz me on that survey" --session "$SID" --format json
+deeptutor run chat "Summarize that visualization" --session "$SID" --format json
 ```
 
 The repo ships a root [`SKILL.md`](SKILL.md) — a ~150-line handover doc that teaches any tool-using LLM the whole surface in one read. Hand it to Claude Code, Codex, or OpenCode (they pick up `SKILL.md` automatically), or wrap `deeptutor run` as a tool in a LangChain / AutoGen loop. Full recipes: [Agent Handoff](https://deeptutor.info/docs/cli/agent-handoff/).
@@ -707,7 +652,7 @@ The repo ships a root [`SKILL.md`](SKILL.md) — a ~150-line handover doc that t
 | `deeptutor init` | Create or update `data/user/settings` for the current workspace |
 | `deeptutor start [--home PATH] [--dev]` | Launch backend + frontend together; `--dev` enables frontend HMR |
 | `deeptutor serve [--port PORT]` | Start only the FastAPI backend |
-| `deeptutor run <capability> <message>` | Run a single capability turn (`chat`, `deep_solve`, `deep_question`, `deep_research`, `visualize`, `mastery_path`); add `--format json` for NDJSON output |
+| `deeptutor run <capability> <message>` | Run a single capability turn (`chat`, `visualize`, `mastery_path`); add `--format json` for NDJSON output |
 | `deeptutor chat` | Interactive REPL with capability, tool, KB, notebook, and history controls |
 | `deeptutor session list/show/open/rename/delete` | Manage shared sessions |
 | `deeptutor config show` | Print configuration summary |
@@ -768,16 +713,6 @@ Add more registries in `settings/skill_hubs.json`: a `type: "clawhub"` entry poi
 </details>
 
 ## 🤝 Open Source Partners
-
-<p align="center">
-  <a href="https://github.com/VectifyAI/PageIndex" target="_blank">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="assets/figs/partners/pageindex-mark-dark.svg">
-      <source media="(prefers-color-scheme: light)" srcset="assets/figs/partners/pageindex-mark.svg">
-      <img src="assets/figs/partners/pageindex-mark.svg" alt="PageIndex" height="38">
-    </picture>
-  </a>
-</p>
 
 <p align="center">
   Using code: <b><code>DEEPTUTOR20</code></b> — get $20 off for your first <a href="https://developer.pageindex.ai/">PageIndex subscription</a>!

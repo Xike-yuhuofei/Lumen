@@ -6,7 +6,7 @@
 
 Use this skill when the user wants to:
 - Set up or configure Lumen
-- Chat with Lumen or run a capability (deep solve, quiz generation, deep research, visualize, mastery path)
+- Chat with Lumen or run a capability (quiz generation, deep research, visualize, mastery path)
 - Create, manage, or search knowledge bases
 - Create, manage, or run Partners (IM-connected companions)
 - Search, install, or manage skills from a hub (ClawHub)
@@ -27,17 +27,14 @@ Use this skill when the user wants to:
 ```bash
 # Interactive REPL
 deeptutor chat
-deeptutor chat --capability deep_solve --kb my-kb --tool rag --tool web_search
+deeptutor chat --capability visualize --kb my-kb --tool rag --tool web_search
 
 # One-shot capability execution
 deeptutor run chat "Explain Fourier transform"
-deeptutor run deep_solve "Solve x^2 = 4" --tool rag --kb textbook
-deeptutor run deep_question "Linear algebra" --config num_questions=5
-deeptutor run deep_research "Attention mechanisms" --kb papers --config mode=report --config depth=standard
 deeptutor run visualize "Plot the unit circle"
 
 # Capabilities accepted by `run` / `chat -c`:
-#   chat, deep_solve, deep_question, deep_research, visualize, mastery_path
+#   chat, visualize, mastery_path
 
 # Options for `run`:
 #   --session <id>         Resume existing session
@@ -53,7 +50,7 @@ deeptutor run visualize "Plot the unit circle"
 
 `deeptutor chat` accepts the same `--session / --tool / --kb / --notebook-ref / --history-ref / --language / --config / --config-json` options, plus `--capability/-c <name>` to set the initial capability.
 
-**Tools** for `--tool` / `-t`: user-toggleable tools are `brainstorm`, `web_search`, `paper_search`, `reason`, and `geogebra_analysis`. Context-gated tools (`rag`, `code_execution`, `read_source`, `web_fetch`, `github`, `ask_user`, …) auto-mount when their context is present, but can also be force-enabled with `--tool`. The full registered set is shown in the Web UI under **Settings → Tools**.
+**Tools** for `--tool` / `-t`: user-toggleable tools are `brainstorm`, `web_search`, `reason`. Context-gated tools (`rag`, `code_execution`, `read_source`, `web_fetch`, `github`, `ask_user`, …) auto-mount when their context is present, but can also be force-enabled with `--tool`. The full registered set is shown in the Web UI under **Settings → Tools**.
 
 ### Sessions
 
@@ -113,9 +110,9 @@ deeptutor chat --kb textbook --tool rag --tool web_search
 deeptutor run chat "Explain Newton's third law" --kb physics --tool rag
 ```
 
-**Generate quiz questions:**
+**Generate quiz questions via Mastery Path:**
 ```bash
-deeptutor run deep_question "Thermodynamics" --kb physics --config num_questions=5
+deeptutor run mastery_path "Thermodynamics" --kb physics
 ```
 
 **Run the full Web app locally:**

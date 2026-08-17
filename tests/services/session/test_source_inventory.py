@@ -378,14 +378,14 @@ def test_serialize_imported_transcript_frames_as_external_agent() -> None:
 
 def test_serialize_imported_transcript_zh_labels_and_framing() -> None:
     meta = {
-        "session_id": "imported_codex_x",
-        "preferences": {"import": {"source": "codex"}},
+        "session_id": "imported_ext_x",
+        "preferences": {"import": {"source": "external"}},
     }
     out = serialize_referenced_transcript(
         meta, [{"role": "assistant", "content": "done"}], language="zh"
     )
-    assert "Codex" in out
-    assert "## Codex" in out
+    assert "外部 AI 助手" in out
+    assert "## 外部 AI 助手" in out
     assert "第三方" in out or "不是你" in out
 
 

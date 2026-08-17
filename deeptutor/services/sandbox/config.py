@@ -8,11 +8,11 @@ shape without per-user config:
 * else on Linux with a functional ``bwrap`` ⇒ bwrap (bare-metal);
 * else, only when ``DEEPTUTOR_SANDBOX_ALLOW_SUBPROCESS=1`` ⇒ restricted
   subprocess (admin-opt-in local dev — APPLICATION isolation only);
-* else ⇒ no sandbox (exec disabled).
+* else ⇒ no sandbox (code_execution disabled).
 
-``exec`` is offered to ordinary users only when the active backend reaches
-SYSTEM isolation; APPLICATION isolation is admin-opt-in (see
-:mod:`deeptutor.tools.exec_tool`). Per-user quotas live in
+Sandboxed code execution is available to ordinary users only when the
+active backend reaches SYSTEM isolation; APPLICATION isolation is
+admin-opt-in. Per-user quotas live in
 :mod:`deeptutor.services.sandbox.quota`.
 """
 

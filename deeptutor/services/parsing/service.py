@@ -35,7 +35,7 @@ class ParseService:
         if self._cache_root_override is not None:
             return self._cache_root_override
         # Resolve lazily per call so the cache root tracks the active
-        # user/workspace (multi-user safety), like get_path_service().
+        # user/workspace safety, like get_path_service().
         from deeptutor.services.path_service import get_path_service
 
         return get_path_service().get_parse_cache_root()

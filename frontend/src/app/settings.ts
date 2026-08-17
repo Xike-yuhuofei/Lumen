@@ -21,7 +21,6 @@ export type GeneralSettings = {
 
 export const LS_LANGUAGE = 'trae:language'
 export const LS_RESPONSE_LANGUAGE = 'deeptutor:response-language'
-export const LS_VOICE_AUTOPLAY = 'deeptutor:voice-autoplay'
 export const LS_CHAT_TIMEOUT = 'deeptutor:chat-timeout'
 export const LS_GENERAL = 'deeptutor:general-settings'
 
@@ -87,15 +86,6 @@ export function persistInterfaceSettings(patch: {
   }).catch(() => { /* backend optional for the shell */ })
 }
 
-export function persistVoiceAutoplay(voiceAutoplay: boolean): void {
-  try { localStorage.setItem(LS_VOICE_AUTOPLAY, voiceAutoplay ? '1' : '0') } catch { /* ignore */ }
-  apiFetch('/api/v1/settings/voice-autoplay', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ voice_autoplay: voiceAutoplay }),
-  }).catch(() => { /* backend optional for the shell */ })
-}
-
 export function persistChatTimeout(seconds: number): void {
   const value = clampChatTimeout(seconds)
   try { localStorage.setItem(LS_CHAT_TIMEOUT, String(value)) } catch { /* ignore */ }
@@ -110,7 +100,6 @@ export type RuntimeUiSettings = {
   theme?: string
   language?: LanguageId
   response_language?: LanguageId
-  voice_autoplay?: boolean
   chat_response_timeout?: number
 }
 

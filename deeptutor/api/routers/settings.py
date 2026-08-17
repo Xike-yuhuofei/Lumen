@@ -20,14 +20,8 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger(__name__)
 
 from deeptutor.brand import PRODUCT_NAME
-from deeptutor.multi_user.context import get_current_user
-from deeptutor.multi_user.model_access import allowed_llm_options
-from deeptutor.services.codebuddy_auth import get_codebuddy_auth_service
-from deeptutor.services.codex_auth import (
-    CodexAuthError,
-    get_codex_oauth_service,
-    reconcile_codex_catalog_update,
-)
+from deeptutor.services.user import get_current_user
+from deeptutor.services.user import allowed_llm_options
 from deeptutor.services.config import (
     get_config_test_runner,
     get_model_catalog_service,
@@ -175,11 +169,6 @@ class EnabledToolsUpdate(BaseModel):
 
 class CatalogPayload(BaseModel):
     catalog: dict[str, Any]
-
-
-class CodexReasoningEffortUpdate(BaseModel):
-    model: str = Field(min_length=1)
-    reasoning_effort: str | None = None
 
 
 class FetchModelsPayload(BaseModel):
@@ -335,7 +324,7 @@ def get_enabled_optional_tools() -> list[str]:
     explicit ``tools`` list. Intersected with the admin grant whitelist so
     a restricted user's saved toggles can't resurrect a revoked tool.
     """
-    from deeptutor.multi_user.tool_access import allowed_optional_tools
+    from deeptutor.services.user import allowed_optional_tools
 
     enabled = _sanitize_enabled_tools(load_ui_settings().get("enabled_optional_tools"))
     allowed = allowed_optional_tools()
@@ -359,37 +348,12 @@ def _require_settings_admin() -> None:
         )
 
 
-def _require_codex_oauth_actor() -> None:
-    """Gate the Codex OAuth lifecycle: personal, not administrative.
-
-    Every one of these endpoints acts on the *caller's own* credentials —
-    ``get_codex_oauth_service()`` resolves the store, the model catalog, and
-    the callback route from owner scope — so requiring an administrator was
-    what left ordinary users unable to use Codex at all: an owner-bound
-    profile is (correctly) never grantable, and they could not sign in for
-    themselves either (#781).
-
-    """
-
-
-def _codex_http_exception(error: CodexAuthError) -> HTTPException:
-    return HTTPException(
-        status_code=error.http_status,
-        detail={
-            "code": error.code,
-            "message": error.public_message,
-        },
-    )
-
-
 def _provider_choices() -> dict[str, list[dict[str, Any]]]:
     """Build dropdown options for provider selection, keyed by service type."""
     from deeptutor.services.config.provider_runtime import (
         DEPRECATED_SEARCH_PROVIDERS,
         EMBEDDING_PROVIDERS,
         SEARCH_PROVIDERS,
-        STT_PROVIDERS,
-        TTS_PROVIDERS,
     )
     from deeptutor.services.provider_registry import PROVIDERS
 
@@ -455,37 +419,10 @@ def _provider_choices() -> dict[str, list[dict[str, Any]]]:
         }
         for name in sorted(DEPRECATED_SEARCH_PROVIDERS)
     ]
-    tts = sorted(
-        [
-            {
-                "value": name,
-                "label": spec.label,
-                "base_url": spec.default_api_base,
-                "default_model": spec.default_model,
-                "default_voice": spec.default_voice,
-            }
-            for name, spec in TTS_PROVIDERS.items()
-        ],
-        key=lambda p: p["label"].lower(),
-    )
-    stt = sorted(
-        [
-            {
-                "value": name,
-                "label": spec.label,
-                "base_url": spec.default_api_base,
-                "default_model": spec.default_model,
-            }
-            for name, spec in STT_PROVIDERS.items()
-        ],
-        key=lambda p: p["label"].lower(),
-    )
     return {
         "llm": llm,
         "embedding": embedding,
         "search": search,
-        "tts": tts,
-        "stt": stt,
     }
 
 
@@ -553,94 +490,6 @@ async def get_settings():
         "catalog": get_model_catalog_service().load(),
         "providers": _provider_choices(),
     }
-
-
-@router.post("/providers/openai-codex/oauth/start")
-async def start_openai_codex_oauth() -> dict[str, Any]:
-    _require_codex_oauth_actor()
-    try:
-        return await get_codex_oauth_service().start_login()
-    except CodexAuthError as exc:
-        raise _codex_http_exception(exc) from None
-
-
-@router.get("/providers/openai-codex/oauth/status")
-async def get_openai_codex_oauth_status() -> dict[str, Any]:
-    _require_codex_oauth_actor()
-    try:
-        return get_codex_oauth_service().public_status()
-    except CodexAuthError as exc:
-        raise _codex_http_exception(exc) from None
-
-
-@router.post("/providers/openai-codex/oauth/cancel")
-async def cancel_openai_codex_oauth() -> dict[str, Any]:
-    _require_codex_oauth_actor()
-    try:
-        return await get_codex_oauth_service().cancel_login()
-    except CodexAuthError as exc:
-        raise _codex_http_exception(exc) from None
-
-
-@router.post("/providers/openai-codex/oauth/logout")
-async def logout_openai_codex_oauth() -> dict[str, Any]:
-    _require_codex_oauth_actor()
-    try:
-        return await get_codex_oauth_service().logout()
-    except CodexAuthError as exc:
-        raise _codex_http_exception(exc) from None
-
-
-@router.post("/providers/openai-codex/models/refresh")
-async def refresh_openai_codex_models() -> dict[str, Any]:
-    _require_codex_oauth_actor()
-    try:
-        return await get_codex_oauth_service().refresh_models()
-    except CodexAuthError as exc:
-        raise _codex_http_exception(exc) from None
-
-
-@router.get("/providers/codebuddy/auth/status")
-async def get_codebuddy_auth_status() -> dict[str, Any]:
-    _require_settings_admin()
-    return await get_codebuddy_auth_service().status()
-
-
-@router.post("/providers/codebuddy/auth/start")
-async def start_codebuddy_auth() -> dict[str, Any]:
-    _require_settings_admin()
-    return await get_codebuddy_auth_service().start_login()
-
-
-@router.post("/providers/codebuddy/auth/cancel")
-async def cancel_codebuddy_auth() -> dict[str, Any]:
-    _require_settings_admin()
-    return await get_codebuddy_auth_service().cancel_login()
-
-
-@router.post("/providers/codebuddy/auth/logout")
-async def logout_codebuddy_auth() -> dict[str, Any]:
-    _require_settings_admin()
-    return await get_codebuddy_auth_service().logout()
-
-
-@router.post("/providers/openai-codex/models/reasoning-effort")
-async def update_openai_codex_reasoning_effort(
-    payload: CodexReasoningEffortUpdate,
-) -> dict[str, Any]:
-    _require_codex_oauth_actor()
-    try:
-        status_payload = await get_codex_oauth_service().set_reasoning_effort(
-            payload.model,
-            payload.reasoning_effort,
-        )
-    except CodexAuthError as exc:
-        raise _codex_http_exception(exc) from None
-    # This writes the catalog the runtime resolves against, like every other
-    # catalog write here — without it the next turn keeps the old effort until
-    # something else happens to invalidate.
-    _invalidate_runtime_caches()
-    return status_payload
 
 
 @router.get("/catalog")
@@ -1091,7 +940,7 @@ async def get_llm_options():
 async def update_catalog(payload: CatalogPayload):
     _require_settings_admin()
     service = get_model_catalog_service()
-    proposed = reconcile_codex_catalog_update(service.load(), payload.catalog)
+    proposed = payload.catalog
     catalog = service.save(proposed)
     _invalidate_runtime_caches()
     return {"catalog": catalog}
@@ -1103,7 +952,7 @@ async def apply_catalog(payload: CatalogPayload | None = None):
     service = get_model_catalog_service()
     current = service.load()
     catalog = (
-        reconcile_codex_catalog_update(current, payload.catalog) if payload is not None else current
+        payload.catalog if payload is not None else current
     )
     applied = service.apply(catalog)
     _invalidate_runtime_caches()
@@ -1127,7 +976,7 @@ async def fetch_models_from_provider(payload: FetchModelsPayload):
 
     base_url = (payload.base_url or "").strip()
     binding = (payload.binding or "").strip().lower() or "openai"
-    if not base_url and binding != "codebuddy":
+    if not base_url:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="base_url is required for this provider.",

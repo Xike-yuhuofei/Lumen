@@ -41,11 +41,9 @@ def _serve_backend() -> tuple[ThreadingHTTPServer, str]:
     return server, f"http://{host}:{port}"
 
 
-def test_backend_path_rewrites_codex_callback() -> None:
-    assert spa_server.backend_path("/auth/callback") == spa_server.CODEX_CALLBACK_API_PATH
+def test_backend_path_passes_through() -> None:
     assert spa_server.backend_path("/api/v1/sessions") == "/api/v1/sessions"
     assert spa_server.is_proxied_path("/api/v1/ws")
-    assert spa_server.is_proxied_path("/auth/callback")
     assert not spa_server.is_proxied_path("/")
 
 
@@ -89,10 +87,6 @@ def test_http_proxy_forwards_api_and_callback(tmp_path: Path) -> None:
             payload = sessions.json()
             assert payload["path"] == "/api/v1/sessions"
             assert payload["cookie"] == "dt_token=abc"
-
-            callback = client.get("/auth/callback?code=1")
-            assert callback.status_code == 200
-            assert callback.json()["path"] == "/api/v1/auth/openai-codex/callback?code=1"
     finally:
         server.shutdown()
         server.server_close()

@@ -13,7 +13,6 @@ import {
   loadGeneralSettings,
   persistChatTimeout,
   persistInterfaceSettings,
-  persistVoiceAutoplay,
   saveGeneralSettings,
   timeoutSelectOptions,
 } from './settings'
@@ -289,8 +288,6 @@ export function SettingsModal({
   onLanguageChange,
   responseLanguage,
   onResponseLanguageChange,
-  voiceAutoplay,
-  onVoiceAutoplayChange,
   chatTimeout,
   onChatTimeoutChange,
   tools,
@@ -306,8 +303,6 @@ export function SettingsModal({
   onLanguageChange: (language: LanguageId) => void
   responseLanguage: LanguageId
   onResponseLanguageChange: (language: LanguageId) => void
-  voiceAutoplay: boolean
-  onVoiceAutoplayChange: (value: boolean) => void
   chatTimeout: number
   onChatTimeoutChange: (seconds: number) => void
   tools: ToolItem[]
@@ -361,10 +356,6 @@ export function SettingsModal({
   const setReplyLanguage = (next: LanguageId) => {
     onResponseLanguageChange(next)
     persistInterfaceSettings({ response_language: next })
-  }
-  const setAutoplay = (next: boolean) => {
-    onVoiceAutoplayChange(next)
-    persistVoiceAutoplay(next)
   }
   const setTimeoutSeconds = (next: string) => {
     const seconds = Number(next)
@@ -545,17 +536,6 @@ export function SettingsModal({
                       { value: 'zh', label: copy.zh },
                       { value: 'en', label: copy.en },
                     ]}
-                  />
-                </div>
-                <div className="dtSettingsRow">
-                  <div className="dtSettingsRowCopy">
-                    <div className="dtSettingsRowTitle">{copy.autoplay}</div>
-                    <div className="dtSettingsRowHint">{copy.autoplayHint}</div>
-                  </div>
-                  <SettingsSwitch
-                    checked={voiceAutoplay}
-                    label={copy.autoplay}
-                    onChange={() => setAutoplay(!voiceAutoplay)}
                   />
                 </div>
                 <div className="dtSettingsRow">
