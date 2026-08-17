@@ -39,17 +39,6 @@ from deeptutor.knowledge.kb_types import is_connected_kb, supports_local_raw_fil
 from deeptutor.knowledge.manager import KnowledgeBaseManager
 from deeptutor.knowledge.naming import validate_knowledge_base_name
 from deeptutor.knowledge.progress_tracker import ProgressStage, ProgressTracker
-from deeptutor.services.user import get_current_user
-from deeptutor.services.user import (
-    assert_writable,
-    current_kb_base_dir,
-    current_kb_manager,
-    manager_for_resource,
-    resolve_kb,
-)
-from deeptutor.services.user import (
-    list_visible_knowledge_bases as list_visible_kb_access,
-)
 from deeptutor.services.config import PROJECT_ROOT, load_config_with_main
 from deeptutor.services.file_io import atomic_write_json
 from deeptutor.services.rag.factory import (
@@ -63,13 +52,24 @@ from deeptutor.services.rag.linked_kb import (
     assert_path_allowed,
     probe_linked_folder,
 )
+from deeptutor.services.user import (
+    assert_writable,
+    current_kb_base_dir,
+    current_kb_manager,
+    get_current_user,
+    manager_for_resource,
+    resolve_kb,
+)
+from deeptutor.services.user import (
+    list_visible_knowledge_bases as list_visible_kb_access,
+)
 from deeptutor.utils.document_extractor import (
     MAX_EXTRACTED_CHARS_PER_DOC,
     DocumentExtractionError,
     extract_text_from_path,
 )
-from deeptutor.utils.document_validator import DocumentValidator
-from deeptutor.utils.error_utils import format_exception_message
+from lumen.shared._util.document_validator import DocumentValidator
+from lumen.shared._util.error_utils import format_exception_message
 
 # Initialize logger with config
 config = load_config_with_main("main.yaml", PROJECT_ROOT)

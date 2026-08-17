@@ -10,7 +10,6 @@ from typing import Any
 from deeptutor.capabilities.mastery import MASTERY_TOOL_TYPES
 from deeptutor.core.tool_protocol import BaseTool, ToolDefinition, ToolParameter, ToolResult
 from deeptutor.knowledge.manifest import KB_FILES_DEFAULT_LIMIT, KB_FILES_MAX_LIMIT
-
 from deeptutor.tools.prompting import load_prompt_hints
 
 logger = logging.getLogger(__name__)

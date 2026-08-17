@@ -7,10 +7,6 @@ _CAPABILITY_DESCRIPTIONS: dict[str, dict[str, str]] = {
         "en": "Default agentic chat with tools, retrieval, memory, and attachments.",
         "zh": "默认智能聊天，支持工具、检索、记忆和附件。",
     },
-    "mastery_path": {
-        "en": "Structured mastery-based learning with spaced repetition.",
-        "zh": "结构化掌握式学习，结合间隔复习。",
-    },
 }
 
 _TOOL_DESCRIPTIONS: dict[str, dict[str, str]] = {

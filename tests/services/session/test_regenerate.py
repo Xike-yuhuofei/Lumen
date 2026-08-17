@@ -305,16 +305,19 @@ class TestRegenerateLastTurn:
 
         responses = iter(["original answer", "regenerated answer"])
 
-        class FakeOrchestrator:
-            async def handle(self, _context):
-                yield StreamEvent(
+        class FakePipeline:
+            def __init__(self, *args, **kwargs):
+                pass
+
+            async def run(self, _context, stream):
+                await stream.emit(StreamEvent(
                     type=StreamEventType.CONTENT,
                     source="chat",
                     stage="responding",
                     content=next(responses),
                     metadata={"call_kind": "llm_final_response"},
-                )
-                yield StreamEvent(type=StreamEventType.DONE, source="chat")
+                ))
+                await stream.emit(StreamEvent(type=StreamEventType.DONE, source="chat"))
 
         refresh_calls: list[Any] = []
 
@@ -328,7 +331,9 @@ class TestRegenerateLastTurn:
             "deeptutor.services.session.context_builder.ContextBuilder",
             FakeContextBuilder,
         )
-        monkeypatch.setattr("deeptutor.runtime.orchestrator.ChatOrchestrator", FakeOrchestrator)
+        monkeypatch.setattr(
+            "deeptutor.agents.chat.agentic_pipeline.AgenticChatPipeline", FakePipeline
+        )
         monkeypatch.setattr(
             "deeptutor.services.memory.get_memory_store",
             lambda: SimpleNamespace(

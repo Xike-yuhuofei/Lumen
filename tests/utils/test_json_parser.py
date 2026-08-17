@@ -95,7 +95,7 @@ class TestParseJsonResponseRepair:
         assert isinstance(result, dict)
 
     def test_repair_unavailable_returns_fallback(self) -> None:
-        with patch("deeptutor.utils.json_parser.repair_json", None):
+        with patch("lumen.shared._util.json_parser.repair_json", None):
             result = parse_json_response("{bad json", fallback={"err": True})
             assert result == {"err": True}
 

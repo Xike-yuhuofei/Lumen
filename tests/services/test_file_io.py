@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from deeptutor.services import file_io
 from deeptutor.services.file_io import atomic_write_json, atomic_write_text
+import lumen.shared._util.file_io as _file_io_impl
 
 
 def test_atomic_write_json_creates_parent_and_replaces_content(tmp_path: Path) -> None:
@@ -31,7 +31,7 @@ def test_atomic_write_json_cleans_up_temporary_file_on_failure(
     def fail_dump(*_args: object, **_kwargs: object) -> None:
         raise RuntimeError("serialization failed")
 
-    monkeypatch.setattr(file_io.json, "dump", fail_dump)
+    monkeypatch.setattr(_file_io_impl.json, "dump", fail_dump)
 
     with pytest.raises(RuntimeError, match="serialization failed"):
         atomic_write_json(path, {"value": 1})

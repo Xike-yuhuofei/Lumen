@@ -43,20 +43,20 @@ CONFIG_DRIFT_ERROR_TEMPLATE = (
 
 def validate_tool_consistency():
     """
-    Validate that capability manifests only reference tools that are actually
-    registered in the runtime ``ToolRegistry``.
+    Validate that the generic chat capability only references tools that are
+    actually registered in the runtime ``ToolRegistry``.
+
+    ``chat`` is the only capability; its tool surface is the canonical
+    ``CHAT_OPTIONAL_TOOLS`` set.
     """
     try:
-        from deeptutor.runtime.registry.capability_registry import get_capability_registry
+        from deeptutor.agents.chat.agentic_pipeline import CHAT_OPTIONAL_TOOLS
         from deeptutor.runtime.registry.tool_registry import get_tool_registry
 
-        capability_registry = get_capability_registry()
         tool_registry = get_tool_registry()
         available_tools = set(tool_registry.list_tools())
 
-        referenced_tools = set()
-        for manifest in capability_registry.get_manifests():
-            referenced_tools.update(manifest.get("tools_used", []) or [])
+        referenced_tools = set(CHAT_OPTIONAL_TOOLS)
 
         drift = referenced_tools - available_tools
         if drift:
@@ -142,10 +142,47 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"v1 memory migration failed: {e}")
 
+    # The Plugin Kernel is the single formal dependency-assembly entry.
+    # The production Profile (Runtime + Shared + mode.learn) is booted here
+    # and disposed on shutdown.  A boot failure is fatal: without the kernel
+    # there is no runtime to serve turns.
+    lumen_root = None
+    try:
+        from lumen.bootstrap import LumenBootstrap, attach_bootstrap
+        from lumen.profile import PRODUCTION_PLUGINS
+
+        # Keep the booted assembly as the active one so the WS turn runtime
+        # routes Learn requests into mode.learn and generic turns into
+        # runtime.agent_loop.
+        lumen_bootstrap = LumenBootstrap()
+        lumen_root = await lumen_bootstrap.boot()
+        attach_bootstrap(lumen_bootstrap)
+        app.state.lumen_root = lumen_root
+        app.state.lumen_bootstrap = lumen_bootstrap
+        logger.info("Lumen Plugin Kernel booted: %s", [p.manifest.id for p in PRODUCTION_PLUGINS])
+    except Exception:
+        logger.exception("Lumen Plugin Kernel bootstrap failed — refusing to start")
+        raise
+
     yield
 
     # Execute on shutdown
     logger.info("Application shutdown")
+
+    # Phase 5 — dispose the Plugin Kernel assembly (releases service
+    # registrations, background tasks, and registered cleanups).
+    if lumen_root is not None:
+        try:
+            from lumen.bootstrap import detach_bootstrap
+
+            detach_bootstrap()
+            await lumen_root.dispose()
+            logger.info("Lumen Plugin Kernel disposed")
+        except Exception as e:
+            logger.warning(f"Failed to dispose Lumen Plugin Kernel: {e}")
+        finally:
+            app.state.lumen_root = None
+            app.state.lumen_bootstrap = None
 
     # Close pooled LLM SDK clients so their keep-alive sockets and transports
     # are released deterministically instead of waiting for interpreter GC.

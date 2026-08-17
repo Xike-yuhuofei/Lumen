@@ -139,29 +139,8 @@ def sanitize_url(base_url: str, model: str = "") -> str:
     return url
 
 
-def clean_thinking_tags(
-    content: str,
-    binding: str | None = None,
-    model: str | None = None,
-) -> str:
-    """Remove <think> tags from model output."""
-    if not content:
-        return ""
-
-    closed_pattern = re.compile(
-        r"`?<\s*(?P<tag>think(?:ing)?)\b[^>]*>`?.*?`?<\s*/\s*(?P=tag)\s*>`?",
-        re.DOTALL | re.IGNORECASE,
-    )
-    cleaned = re.sub(closed_pattern, "", content)
-    # Streaming providers can surface a final partial block if the request is
-    # interrupted after reasoning has started. Never expose that scratchpad.
-    unclosed_pattern = re.compile(
-        r"`?<\s*think(?:ing)?\b[^>]*>`?.*$",
-        re.DOTALL | re.IGNORECASE,
-    )
-    cleaned = re.sub(unclosed_pattern, "", cleaned)
-    cleaned = re.sub(r"`?<\s*/\s*think(?:ing)?\s*>`?", "", cleaned, flags=re.IGNORECASE)
-    return cleaned.strip()
+# ``clean_thinking_tags`` is a pure helper owned by lumen; re-export for compat.
+from lumen.shared._util.rendering_text import clean_thinking_tags  # noqa: E402
 
 
 def build_chat_url(

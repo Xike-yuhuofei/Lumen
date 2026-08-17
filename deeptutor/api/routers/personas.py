@@ -20,8 +20,6 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from deeptutor.core.i18n import t
-from deeptutor.services.user import get_current_user
-from deeptutor.services.user import get_admin_path_service
 from deeptutor.services.persona import (
     InvalidPersonaNameError,
     PersonaExistsError,
@@ -29,6 +27,7 @@ from deeptutor.services.persona import (
     PersonaService,
     get_persona_service,
 )
+from deeptutor.services.user import get_admin_path_service, get_current_user
 
 router = APIRouter()
 

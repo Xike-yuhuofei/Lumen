@@ -9,7 +9,6 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from deeptutor.core.capability_protocol import BaseCapability, CapabilityManifest
 from deeptutor.core.context import Attachment, UnifiedContext
 from deeptutor.core.stream_bus import StreamBus
 
@@ -131,29 +130,6 @@ def sqlite_store(tmp_db_path: Path):
     from deeptutor.services.session.sqlite_store import SQLiteSessionStore
 
     return SQLiteSessionStore(db_path=tmp_db_path)
-
-
-# ---------------------------------------------------------------------------
-# Fake / stub capability
-# ---------------------------------------------------------------------------
-
-
-class _StubCapability(BaseCapability):
-    """Capability that emits one content event and returns."""
-
-    manifest = CapabilityManifest(
-        name="stub",
-        description="Stub for testing.",
-        stages=["responding"],
-    )
-
-    async def run(self, context: UnifiedContext, stream: StreamBus) -> None:
-        await stream.content("stub response", source=self.name)
-
-
-@pytest.fixture
-def stub_capability() -> _StubCapability:
-    return _StubCapability()
 
 
 # ---------------------------------------------------------------------------

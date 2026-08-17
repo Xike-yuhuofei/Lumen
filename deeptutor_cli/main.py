@@ -45,8 +45,8 @@ def run_capability(
     capability: str = typer.Argument(
         ...,
         help=(
-            "Capability name (e.g. chat, "
-            "mastery_path)."
+            "Capability name (e.g. chat, mode.learn; "
+            "mastery_path is the CLI compatibility name)."
         ),
     ),
     message: str = typer.Argument(..., help="Message to send."),

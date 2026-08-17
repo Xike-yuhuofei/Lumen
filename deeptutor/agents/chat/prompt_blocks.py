@@ -88,8 +88,6 @@ class ChatPromptAssembler:
             blocks.append(PromptBlock("tools", tools))
         elif kb_note:
             blocks.append(PromptBlock("knowledge_base_note", kb_note))
-        if context.skills_manifest:
-            blocks.append(PromptBlock("skills", context.skills_manifest))
         if context.source_manifest:
             blocks.append(PromptBlock("sources", context.source_manifest))
         if deferred_tools_manifest:

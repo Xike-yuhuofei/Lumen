@@ -6,7 +6,7 @@
 
 Use this skill when the user wants to:
 - Set up or configure Lumen
-- Chat with Lumen or run a capability (quiz generation, deep research, visualize, mastery path)
+- Chat with Lumen or run a capability (quiz generation, learning path / mastery)
 - Create, manage, or search knowledge bases
 - Create, manage, or run Partners (IM-connected companions)
 - Search, install, or manage skills from a hub (ClawHub)
@@ -27,14 +27,15 @@ Use this skill when the user wants to:
 ```bash
 # Interactive REPL
 deeptutor chat
-deeptutor chat --capability visualize --kb my-kb --tool rag --tool web_search
+deeptutor chat --capability mastery_path --kb my-kb --tool rag --tool web_search   # Learn (mode.learn)
 
 # One-shot capability execution
 deeptutor run chat "Explain Fourier transform"
-deeptutor run visualize "Plot the unit circle"
+deeptutor run mastery_path "Master a topic" --kb my-kb     # Learn (mode.learn)
 
 # Capabilities accepted by `run` / `chat -c`:
-#   chat, visualize, mastery_path
+#   chat
+#   Learn = `mode.learn` (CLI compatibility name: `mastery_path`, alias `mastery`)
 
 # Options for `run`:
 #   --session <id>         Resume existing session
@@ -110,7 +111,7 @@ deeptutor chat --kb textbook --tool rag --tool web_search
 deeptutor run chat "Explain Newton's third law" --kb physics --tool rag
 ```
 
-**Generate quiz questions via Mastery Path:**
+**Generate quiz questions via Learn (Mastery Path):**
 ```bash
 deeptutor run mastery_path "Thermodynamics" --kb physics
 ```

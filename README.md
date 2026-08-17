@@ -470,7 +470,7 @@ Chat is also the launch point for deeper capabilities: **Quiz** for question gen
 
 
 
-Partners are persistent companions with their own soul, model policy, library, memory, and channels. They are not a separate bot engine: every inbound web or IM message becomes a normal `ChatOrchestrator` turn inside a partner-scoped workspace. A partner is "a chat that has a personality and a phone number."
+Partners are persistent companions with their own soul, model policy, library, memory, and channels. They are not a separate bot engine: every inbound web or IM message becomes a normal agent turn inside a partner-scoped workspace. A partner is "a chat that has a personality and a phone number."
 
 
 
@@ -615,10 +615,9 @@ One `deeptutor` binary, two ways in: an interactive **REPL** for people who live
 
 ```bash
 deeptutor chat                                              # interactive REPL
-deeptutor chat --capability visualize --kb my-kb --tool rag
+deeptutor chat --capability mastery_path --kb my-kb --tool rag   # Learn (mode.learn); CLI compat name mastery_path
 deeptutor run chat "Explain the Fourier transform" --tool rag --kb textbook
-deeptutor run visualize "Draw an attention mechanism dataflow" \
-  --config render_mode=mermaid
+deeptutor run mastery_path "Master a calculus topic" --kb textbook   # Learn (mode.learn)
 ```
 
 Everything the Web app does is here too — knowledge bases (`kb`), sessions (`session`), partners (`partner`), skills (`skill`), notebooks, memory, and config. Full list below.
@@ -631,13 +630,13 @@ Everything the Web app does is here too — knowledge bases (`kb`), sessions (`s
 Lumen is built to be *operated by another agent*. Add `--format json` to any `run` and each turn streams **NDJSON — one event per line** (`content`, `tool_call`, `tool_result`, `done`, …), every line tagged with its `session_id`. Runs are headless-safe: an `ask_user` pause with no TTY auto-resolves with an empty reply instead of hanging.
 
 ```bash
-# One shot, machine-readable
+# One shot, machine-readable — Learn (mode.learn; CLI compat name mastery_path)
 deeptutor run mastery_path "Master calculus" --kb math-textbook --format json
 
 # Chain turns in one stateful session — capture the id, reuse it
-SID=$(deeptutor run visualize "Draw a sine wave animation" --format json \
+SID=$(deeptutor run mastery_path "Master vector calculus" --format json \
   | jq -r 'select(.type=="done").session_id')
-deeptutor run chat "Summarize that visualization" --session "$SID" --format json
+deeptutor run chat "Summarize that session" --session "$SID" --format json
 ```
 
 The repo ships a root [`SKILL.md`](SKILL.md) — a ~150-line handover doc that teaches any tool-using LLM the whole surface in one read. Hand it to Claude Code, Codex, or OpenCode (they pick up `SKILL.md` automatically), or wrap `deeptutor run` as a tool in a LangChain / AutoGen loop. Full recipes: [Agent Handoff](https://deeptutor.info/docs/cli/agent-handoff/).
@@ -652,7 +651,7 @@ The repo ships a root [`SKILL.md`](SKILL.md) — a ~150-line handover doc that t
 | `deeptutor init` | Create or update `data/user/settings` for the current workspace |
 | `deeptutor start [--home PATH] [--dev]` | Launch backend + frontend together; `--dev` enables frontend HMR |
 | `deeptutor serve [--port PORT]` | Start only the FastAPI backend |
-| `deeptutor run <capability> <message>` | Run a single capability turn (`chat`, `visualize`, `mastery_path`); add `--format json` for NDJSON output |
+| `deeptutor run <capability> <message>` | Run a single capability turn (`chat`; Learn = `mode.learn`, CLI compat token `mastery_path`); add `--format json` for NDJSON output |
 | `deeptutor chat` | Interactive REPL with capability, tool, KB, notebook, and history controls |
 | `deeptutor session list/show/open/rename/delete` | Manage shared sessions |
 | `deeptutor config show` | Print configuration summary |

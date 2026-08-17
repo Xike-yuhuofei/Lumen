@@ -24,7 +24,7 @@ from llama_index.core.schema import ImageNode
 from deeptutor.services.embedding import get_embedding_client
 from deeptutor.services.llm.client import get_llm_client
 from deeptutor.services.rag.file_routing import FileTypeRouter
-from deeptutor.utils.document_validator import DocumentValidator
+from lumen.shared._util.document_validator import DocumentValidator
 
 IMAGE_DESCRIPTION_SYSTEM_PROMPT = (
     "You describe images for a retrieval-augmented knowledge base. "

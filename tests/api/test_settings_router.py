@@ -505,8 +505,10 @@ def test_llm_provider_choices_include_dashscope() -> None:
 def test_llm_provider_choices_exclude_pruned_providers() -> None:
     llm = {item["value"]: item for item in settings_router._provider_choices()["llm"]}
 
-    for pruned in ("atlascloud", "novita", "edenai", "zhipu", "moonshot", "groq"):
+    for pruned in ("atlascloud", "novita", "edenai", "moonshot", "groq"):
         assert pruned not in llm, pruned
+    # zhipu was re-introduced as a supported OpenAI-compatible provider.
+    assert "zhipu" in llm
 
 
 @pytest.mark.asyncio

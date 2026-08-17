@@ -45,8 +45,12 @@ def test_install_current_user_maps_none_to_local_admin() -> None:
     that ``get_current_path_service()`` resolves to the admin workspace
     rather than silently falling back through the None path."""
     from deeptutor.api.routers.auth import _install_current_user
-    from deeptutor.services.user import get_current_user_or_none, reset_current_user
-    from deeptutor.services.user import LOCAL_ADMIN_ID, LOCAL_ADMIN_USERNAME
+    from deeptutor.services.user import (
+        LOCAL_ADMIN_ID,
+        LOCAL_ADMIN_USERNAME,
+        get_current_user_or_none,
+        reset_current_user,
+    )
 
     token = _install_current_user(None)
     try:
@@ -68,9 +72,13 @@ def test_install_current_user_maps_payload_to_local_admin() -> None:
     user (id/username/role and an ``admin`` scope), never a per-user scope.
     """
     from deeptutor.api.routers.auth import _install_current_user
-    from deeptutor.services.user import get_current_user_or_none, reset_current_user
-    from deeptutor.services.user import LOCAL_ADMIN_ID, LOCAL_ADMIN_USERNAME
     from deeptutor.services.auth import TokenPayload
+    from deeptutor.services.user import (
+        LOCAL_ADMIN_ID,
+        LOCAL_ADMIN_USERNAME,
+        get_current_user_or_none,
+        reset_current_user,
+    )
 
     token = _install_current_user(TokenPayload(username="alice", role="user", user_id="u_alice"))
     try:
@@ -90,8 +98,7 @@ def test_local_admin_token_payload_matches_local_admin_user() -> None:
     ``local_admin_user()`` — drift between the two reintroduces the kind
     of dual-source-of-truth bug that #481 lived in."""
     from deeptutor.api.routers.auth import _local_admin_token_payload
-    from deeptutor.services.user import LOCAL_ADMIN_ID, LOCAL_ADMIN_USERNAME
-    from deeptutor.services.user import local_admin_user
+    from deeptutor.services.user import LOCAL_ADMIN_ID, LOCAL_ADMIN_USERNAME, local_admin_user
 
     tp = _local_admin_token_payload()
     user = local_admin_user()
@@ -105,9 +112,12 @@ def test_require_auth_propagates_contextvar_to_endpoint(monkeypatch) -> None:
     current user visible to the endpoint, even when the token says
     ``role="user"`` — single-user mode maps it to the local admin."""
     from deeptutor.api.routers import auth as auth_router
-    from deeptutor.services.user import get_current_user_or_none
-    from deeptutor.services.user import LOCAL_ADMIN_ID, LOCAL_ADMIN_USERNAME
     from deeptutor.services.auth import TokenPayload
+    from deeptutor.services.user import (
+        LOCAL_ADMIN_ID,
+        LOCAL_ADMIN_USERNAME,
+        get_current_user_or_none,
+    )
 
     monkeypatch.setattr(auth_router, "AUTH_ENABLED", True)
     monkeypatch.setattr(
@@ -143,8 +153,8 @@ def test_require_auth_propagates_contextvar_to_endpoint(monkeypatch) -> None:
 
 def test_require_auth_propagates_admin_contextvar_to_endpoint(monkeypatch) -> None:
     from deeptutor.api.routers import auth as auth_router
-    from deeptutor.services.user import get_current_user_or_none
     from deeptutor.services.auth import TokenPayload
+    from deeptutor.services.user import get_current_user_or_none
 
     monkeypatch.setattr(auth_router, "AUTH_ENABLED", True)
     monkeypatch.setattr(
