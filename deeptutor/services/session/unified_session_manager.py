@@ -2,7 +2,7 @@
 Unified Session Manager
 =======================
 
-Single session manager that handles all conversation types (chat, deep_solve,
+Single session manager that handles all conversation types (chat,
 deep_question, etc.) via a ``mode`` field in the session data.
 """
 
@@ -22,7 +22,7 @@ class UnifiedSessionManager(BaseSessionManager):
         {
             "session_id": "unified_<uuid>",
             "title": "...",
-            "mode": "chat" | "deep_solve" | "deep_question" | ...,
+            "mode": "chat" | "deep_question" | ...,
             "enabled_tools": ["rag", "web_search"],
             "knowledge_bases": ["math-kb"],
             "messages": [ {role, content, ...}, ... ],

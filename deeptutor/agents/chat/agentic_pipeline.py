@@ -45,7 +45,6 @@ from deeptutor.runtime.providers import ToolScope
 from deeptutor.runtime.providers.view import ProviderToolView, build_tool_view
 from deeptutor.runtime.registry.deferred_tools import DeferredToolLoader
 from deeptutor.runtime.registry.tool_registry import get_tool_registry
-from deeptutor.services.cli_apps.models import TOOL_PREFIX as CLI_APP_TOOL_PREFIX
 from deeptutor.services.config import get_chat_params
 from deeptutor.services.llm import (
     get_llm_config,
@@ -507,14 +506,14 @@ class AgenticChatPipeline:
             if level is IsolationLevel.SYSTEM:
                 # Admin can switch exec off per user (grant v2). ``None``
                 # follows the policy: SYSTEM isolation serves everyone.
-                from deeptutor.multi_user.tool_access import exec_override
+                from deeptutor.services.user import exec_override
 
                 return exec_override() is not False
             if level is IsolationLevel.APPLICATION:
                 if is_partner:
                     return True
                 try:
-                    from deeptutor.multi_user.context import get_current_user
+                    from deeptutor.services.user import get_current_user
 
                     return bool(get_current_user().is_admin)
                 except Exception:
@@ -635,11 +634,6 @@ class AgenticChatPipeline:
                     properties["query"].setdefault("minLength", 1)
                 if isinstance(properties.get("kb_name"), dict):
                     properties["kb_name"]["enum"] = kb_choices
-            if function.get("name") == "geogebra_analysis" and isinstance(properties, dict):
-                properties.pop("image_base64", None)
-                required = parameters.get("required")
-                if isinstance(required, list):
-                    parameters["required"] = [n for n in required if n != "image_base64"]
             if (
                 function.get("name") in {"list_notebook", "write_note"}
                 and isinstance(properties, dict)
@@ -865,22 +859,6 @@ class AgenticChatPipeline:
                 kwargs["_sandbox_mounts"] = (
                     Mount(host_path=str(exec_dir), sandbox_path=str(exec_dir), read_only=False),
                 )
-        elif tool_name.startswith(CLI_APP_TOOL_PREFIX):
-            # A CLI app runs like exec, and for the same reason gets its workdir
-            # from here rather than choosing one: one directory per turn shared by
-            # every app, so the model can render with one and post-process with
-            # another, and the files land where /api/outputs will serve them
-            # (``PathService.is_public_output_path`` has the matching branch).
-            from deeptutor.services.sandbox import Mount
-
-            kwargs["_sandbox_user_id"] = self._current_user_id()
-            cli_dir = task_dir / "cli" if task_dir is not None else None
-            if cli_dir is not None:
-                cli_dir.mkdir(parents=True, exist_ok=True)
-                kwargs["_sandbox_workdir"] = str(cli_dir)
-                kwargs["_sandbox_mounts"] = (
-                    Mount(host_path=str(cli_dir), sandbox_path=str(cli_dir), read_only=False),
-                )
         elif tool_name == "code_execution":
             from deeptutor.services.sandbox import Mount
 
@@ -912,7 +890,7 @@ class AgenticChatPipeline:
                     "language": context.language or "en",
                 }
             else:
-                from deeptutor.multi_user.context import get_current_user
+                from deeptutor.services.user import get_current_user
 
                 user = get_current_user()
                 kwargs["_cron_owner"] = {
@@ -924,10 +902,6 @@ class AgenticChatPipeline:
                 }
         elif tool_name in {"reason", "brainstorm"}:
             kwargs.setdefault("context", context.user_message)
-        elif tool_name == "paper_search":
-            kwargs.setdefault("max_results", 3)
-            kwargs.setdefault("years_limit", 3)
-            kwargs.setdefault("sort_by", "relevance")
         elif tool_name == "web_search":
             kwargs.setdefault("query", context.user_message)
             if task_dir is not None:
@@ -935,23 +909,6 @@ class AgenticChatPipeline:
         elif tool_name == "write_note":
             kwargs["conversation_history"] = list(context.conversation_history or [])
             kwargs["current_user_message"] = context.user_message or ""
-        elif tool_name == "geogebra_analysis":
-            first_image = next(
-                (
-                    att
-                    for att in (context.attachments or [])
-                    if getattr(att, "type", "") == "image" and getattr(att, "base64", "")
-                ),
-                None,
-            )
-            if first_image is not None:
-                raw_b64 = first_image.base64
-                if raw_b64.startswith("data:"):
-                    kwargs["image_base64"] = raw_b64
-                else:
-                    mime = getattr(first_image, "mime_type", "") or "image/png"
-                    kwargs["image_base64"] = f"data:{mime};base64,{raw_b64}"
-            kwargs["language"] = context.language or "zh"
         for cap in self._active_loop_capabilities(context):
             kwargs = cap.augment_kwargs(tool_name, kwargs, context)
         return kwargs
@@ -1222,7 +1179,7 @@ class AgenticChatPipeline:
     @staticmethod
     def _current_user_id() -> str:
         try:
-            from deeptutor.multi_user.context import get_current_user
+            from deeptutor.services.user import get_current_user
 
             return str(get_current_user().id or "anonymous")
         except Exception:
@@ -1239,7 +1196,7 @@ class AgenticChatPipeline:
         written under one name and read under another.
         """
         try:
-            from deeptutor.multi_user.paths import current_owner_id
+            from deeptutor.services.user import current_owner_id
 
             return current_owner_id()
         except Exception:
@@ -1305,7 +1262,7 @@ class AgenticChatPipeline:
 
     @staticmethod
     def _collect_kb_manifests(kbs: list[str]) -> list[KbManifest]:
-        from deeptutor.multi_user.knowledge_access import resolve_kb_manifest
+        from deeptutor.services.user import resolve_kb_manifest
 
         manifests: list[KbManifest] = []
         for kb in kbs:

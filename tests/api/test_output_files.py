@@ -12,29 +12,27 @@ import pytest
 from deeptutor.services.auth import TokenPayload
 from deeptutor.services.path_service import PathService
 
-OutputAppFactory = Callable[[dict[str, TokenPayload | None], bool], tuple[TestClient, Path, Path]]
+OutputAppFactory = Callable[[dict[str, TokenPayload | None], bool], tuple[TestClient, Path]]
 
 
 @pytest.fixture
 def output_app(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> OutputAppFactory:
     from deeptutor.api.routers import auth as auth_router
     from deeptutor.api.routers import outputs
-    from deeptutor.multi_user import paths as multi_user_paths
+    import deeptutor.services.user as multi_user_paths
 
     admin_root = tmp_path / "data"
-    users_root = admin_root / "users"
     monkeypatch.setattr(multi_user_paths, "ADMIN_WORKSPACE_ROOT", admin_root)
-    monkeypatch.setattr(multi_user_paths, "USERS_ROOT", users_root)
     monkeypatch.setattr(multi_user_paths, "_path_services", {})
 
     def make_app(
         tokens: dict[str, TokenPayload | None], auth_enabled: bool = True
-    ) -> tuple[TestClient, Path, Path]:
+    ) -> tuple[TestClient, Path]:
         monkeypatch.setattr(auth_router, "AUTH_ENABLED", auth_enabled)
         monkeypatch.setattr(auth_router, "decode_token", lambda token: tokens.get(token))
         app = FastAPI()
         app.include_router(outputs.router, prefix="/api/outputs")
-        return TestClient(app), admin_root, users_root
+        return TestClient(app), admin_root
 
     return make_app
 
@@ -56,8 +54,8 @@ def _write_output(workspace_root: Path, relative_path: str, contents: bytes) -> 
 def test_authenticated_user_downloads_own_output(output_app, headers, cookie) -> None:
     relative_path = "workspace/chat/chat/session-1/code_runs/report.pdf"
     alice = TokenPayload(username="alice", role="user", user_id="u_alice")
-    client, _admin_root, users_root = output_app({"alice-token": alice})
-    _write_output(users_root / "u_alice", relative_path, b"alice report")
+    client, admin_root = output_app({"alice-token": alice})
+    _write_output(admin_root, relative_path, b"alice report")
 
     with client:
         if cookie:
@@ -69,36 +67,10 @@ def test_authenticated_user_downloads_own_output(output_app, headers, cookie) ->
     assert response.headers["content-type"] == "application/pdf"
 
 
-def test_same_output_url_is_isolated_between_users(output_app) -> None:
-    relative_path = "workspace/chat/chat/session-1/code_runs/report.docx"
-    tokens = {
-        "alice-token": TokenPayload(username="alice", role="user", user_id="u_alice"),
-        "bob-token": TokenPayload(username="bob", role="user", user_id="u_bob"),
-        "carol-token": TokenPayload(username="carol", role="user", user_id="u_carol"),
-    }
-    client, _admin_root, users_root = output_app(tokens)
-    _write_output(users_root / "u_alice", relative_path, b"alice document")
-    _write_output(users_root / "u_bob", relative_path, b"bob document")
-
-    with client:
-        client.cookies.set("dt_token", "alice-token")
-        alice = client.get(f"/api/outputs/{relative_path}")
-        client.cookies.set("dt_token", "bob-token")
-        bob = client.get(f"/api/outputs/{relative_path}")
-        client.cookies.set("dt_token", "carol-token")
-        carol = client.get(f"/api/outputs/{relative_path}")
-
-    assert alice.content == b"alice document"
-    assert bob.content == b"bob document"
-    assert carol.status_code == 404
-    assert "u_alice" not in carol.text
-    assert "u_bob" not in carol.text
-
-
 @pytest.mark.parametrize("token", [None, "malformed-token", "expired-token"])
 def test_invalid_auth_never_falls_back_to_admin_output(output_app, token) -> None:
     relative_path = "workspace/chat/chat/session-1/code_runs/admin.pdf"
-    client, admin_root, _users_root = output_app({"malformed-token": None, "expired-token": None})
+    client, admin_root = output_app({"malformed-token": None, "expired-token": None})
     _write_output(admin_root, relative_path, b"admin-only output")
     headers = {} if token is None else {"Authorization": f"Bearer {token}"}
 
@@ -112,7 +84,7 @@ def test_invalid_auth_never_falls_back_to_admin_output(output_app, token) -> Non
 
 def test_auth_disabled_reads_local_admin_output(output_app) -> None:
     relative_path = "workspace/chat/chat/session-1/code_runs/local.pdf"
-    client, admin_root, _users_root = output_app({}, auth_enabled=False)
+    client, admin_root = output_app({}, auth_enabled=False)
     _write_output(admin_root, relative_path, b"local output")
 
     with client:
@@ -125,8 +97,8 @@ def test_auth_disabled_reads_local_admin_output(output_app) -> None:
 def test_private_suffix_is_rejected(output_app) -> None:
     relative_path = "workspace/chat/chat/session-1/code_runs/private.json"
     alice = TokenPayload(username="alice", role="user", user_id="u_alice")
-    client, _admin_root, users_root = output_app({"alice-token": alice})
-    _write_output(users_root / "u_alice", relative_path, b'{"secret": true}')
+    client, admin_root = output_app({"alice-token": alice})
+    _write_output(admin_root, relative_path, b'{"secret": true}')
 
     with client:
         client.cookies.set("dt_token", "alice-token")
@@ -138,8 +110,8 @@ def test_private_suffix_is_rejected(output_app) -> None:
 
 def test_path_traversal_is_rejected(output_app) -> None:
     alice = TokenPayload(username="alice", role="user", user_id="u_alice")
-    client, _admin_root, users_root = output_app({"alice-token": alice})
-    _write_output(users_root / "u_alice", "secret.pdf", b"outside public allowlist")
+    client, admin_root = output_app({"alice-token": alice})
+    _write_output(admin_root, "secret.pdf", b"outside public allowlist")
 
     with client:
         client.cookies.set("dt_token", "alice-token")
@@ -152,10 +124,10 @@ def test_path_traversal_is_rejected(output_app) -> None:
 def test_symlink_outside_user_root_is_rejected(output_app, tmp_path: Path) -> None:
     relative_path = "workspace/chat/chat/session-1/code_runs/escape.pdf"
     alice = TokenPayload(username="alice", role="user", user_id="u_alice")
-    client, _admin_root, users_root = output_app({"alice-token": alice})
+    client, admin_root = output_app({"alice-token": alice})
     external = tmp_path / "external.pdf"
     external.write_bytes(b"other user's data")
-    link = _write_output(users_root / "u_alice", relative_path, b"placeholder")
+    link = _write_output(admin_root, relative_path, b"placeholder")
     link.unlink()
     link.symlink_to(external)
 
@@ -168,7 +140,7 @@ def test_symlink_outside_user_root_is_rejected(output_app, tmp_path: Path) -> No
 
 
 def test_absolute_parent_and_symlink_escapes_are_rejected(tmp_path: Path) -> None:
-    workspace_root = tmp_path / "data" / "users" / "u_alice"
+    workspace_root = tmp_path / "data"
     service = PathService(workspace_root=workspace_root)
     public_root = service.get_public_outputs_root()
     external = workspace_root / "external.pdf"

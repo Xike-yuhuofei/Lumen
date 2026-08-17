@@ -13,8 +13,8 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from deeptutor.multi_user.context import get_current_user
-from deeptutor.multi_user.skill_access import (
+from deeptutor.services.user import get_current_user
+from deeptutor.services.user import (
     assigned_skill_detail,
     assigned_skill_ids,
     assigned_skill_infos,

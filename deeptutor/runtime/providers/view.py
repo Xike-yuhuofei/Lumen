@@ -96,8 +96,7 @@ async def _build(
 ) -> ProviderToolView:
     shared_pool = list(base_registry.deferred_tools())
     owned_pool: list[BaseTool] = []
-    cli_pool = _cli_app_tools(scope)
-    if not shared_pool and not owned_pool and not cli_pool:
+    if not shared_pool and not owned_pool:
         return ProviderToolView.empty(base_registry)
 
     implicit_names = {
@@ -112,16 +111,15 @@ async def _build(
         implicit_names=implicit_names,
         owned_names=[tool.get_definition().name for tool in owned_pool],
     )
-    allowed = allowed.widen(tool.get_definition().name for tool in cli_pool)
 
     pool = tuple(
         tool
-        for tool in (*shared_pool, *owned_pool, *cli_pool)
+        for tool in (*shared_pool, *owned_pool)
         if allowed.allows(tool.get_definition().name)
     )
     registry = ScopedToolRegistry(
         base=base_registry,
-        overlay=[*owned_pool, *cli_pool],
+        overlay=[*owned_pool],
         allowed=allowed,
         refusal_message=refusal_message,
     )
@@ -142,34 +140,6 @@ async def _build(
     return ProviderToolView(registry=registry, loader=loader, pool=pool, manifest=manifest)
 
 
-def _cli_app_tools(scope: ToolScope) -> list[BaseTool]:
-    """Installed CLI apps this caller may invoke, as tools.
-
-    Synchronous and cheap on purpose — it reads two small JSON files. Unlike the
-    MCP side there is nothing to connect, so there is no timeout to bound and no
-    reason for this to be on the turn's critical path as an awaited task.
-
-    An exclusive knowledge capability replaces the tool surface entirely, so it
-    gets none of these (the same rule ``authorize_mcp_tools`` applies to MCP).
-    """
-    if scope.exclusive_capability:
-        return []
-    try:
-        from deeptutor.multi_user.tool_access import allowed_cli_apps, exec_override
-        from deeptutor.services.cli_apps.provider import authorized_apps, build_app_tools
-
-        access = authorized_apps(
-            owner_id=scope.owner_id,
-            is_partner=scope.is_partner,
-            granted=allowed_cli_apps(),
-            exec_allowed=exec_override(),
-        )
-        return build_app_tools(access.apps)
-    except Exception:
-        logger.warning("CLI app tools unavailable this turn; continuing", exc_info=True)
-        return []
-
-
 def _user_grant(scope: ToolScope) -> Allowlist:
     """The caller's ``grant.mcp_tools``, or unrestricted for a partner turn.
 
@@ -179,7 +149,7 @@ def _user_grant(scope: ToolScope) -> Allowlist:
     """
     if scope.is_partner:
         return Allowlist.unrestricted()
-    from deeptutor.multi_user.tool_access import allowed_mcp_tools
+    from deeptutor.services.user import allowed_mcp_tools
 
     return Allowlist.of(allowed_mcp_tools())
 

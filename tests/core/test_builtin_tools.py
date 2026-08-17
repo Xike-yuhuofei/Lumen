@@ -17,8 +17,6 @@ from deeptutor.tools.builtin import (
     BrainstormTool,
     CodeExecutionTool,
     ExecTool,
-    GeoGebraAnalysisTool,
-    PaperSearchToolWrapper,
     RAGTool,
     ReasonTool,
     WebSearchTool,
@@ -331,77 +329,6 @@ async def test_reason_tool_passes_llm_arguments(monkeypatch: pytest.MonkeyPatch)
     assert result.content == "reasoned"
     assert captured["model"] == "gpt-test"
     assert captured["context"] == "prior work"
-
-
-@pytest.mark.asyncio
-async def test_paper_search_tool_formats_papers(monkeypatch: pytest.MonkeyPatch) -> None:
-    class FakeArxivSearchTool:
-        async def search_papers(self, **kwargs: Any) -> list[dict[str, Any]]:
-            assert kwargs["query"] == "graph learning"
-            return [
-                {
-                    "title": "Graph Learning 101",
-                    "year": 2024,
-                    "authors": ["Ada", "Grace"],
-                    "arxiv_id": "1234.5678",
-                    "url": "https://arxiv.org/abs/1234.5678",
-                    "abstract": "A compact abstract.",
-                }
-            ]
-
-    _install_module(
-        monkeypatch,
-        "deeptutor.tools.paper_search_tool",
-        ArxivSearchTool=FakeArxivSearchTool,
-    )
-
-    result = await PaperSearchToolWrapper().execute(query="graph learning")
-
-    assert "Graph Learning 101" in result.content
-    assert result.sources[0]["provider"] == "arxiv"
-
-
-@pytest.mark.asyncio
-async def test_geogebra_analysis_tool_handles_success(monkeypatch: pytest.MonkeyPatch) -> None:
-    class FakeVisionSolverAgent:
-        def __init__(self, **kwargs: Any) -> None:
-            self.kwargs = kwargs
-
-        async def process(self, **kwargs: Any) -> dict[str, Any]:
-            assert kwargs["question_text"] == "analyze this"
-            return {
-                "has_image": True,
-                "final_ggb_commands": ["A=(0,0)", "B=(1,0)"],
-                "analysis_output": {
-                    "constraints": ["AB = 1"],
-                    "geometric_relations": [{"description": "A and B are on x-axis"}],
-                },
-                "image_is_reference": False,
-            }
-
-        def format_ggb_block(self, commands: list[str]) -> str:
-            return "\n".join(commands)
-
-    _install_module(
-        monkeypatch,
-        "deeptutor.agents.vision_solver.vision_solver_agent",
-        VisionSolverAgent=FakeVisionSolverAgent,
-    )
-    _install_module(
-        monkeypatch,
-        "deeptutor.services.llm.config",
-        get_llm_config=lambda: SimpleNamespace(api_key="k", base_url="u"),
-    )
-
-    result = await GeoGebraAnalysisTool().execute(
-        question="analyze this",
-        image_base64="ZmFrZQ==",
-        language="en",
-    )
-
-    assert result.success is True
-    assert "A=(0,0)" in result.content
-    assert result.metadata["commands_count"] == 2
 
 
 @pytest.mark.asyncio

@@ -42,9 +42,7 @@ async def test_list_builtin_tools_marks_toggleable_set(
     assert toggleable_names == {
         "brainstorm",
         "web_search",
-        "paper_search",
         "reason",
-        "geogebra_analysis",
     }
 
     # Locked-on (non-toggleable, non-coming-soon) tools always report
@@ -63,7 +61,7 @@ async def test_list_builtin_tools_marks_toggleable_set(
 async def test_list_builtin_tools_marks_capability_owned_tools(
     monkeypatch: pytest.MonkeyPatch, tmp_path
 ) -> None:
-    """Capability-owned tools (solve_*, mastery_*) report their owning
+    """Capability-owned tools (mastery_*) report their owning
     capability so the /settings/tools UI groups them below the built-ins;
     plain system built-ins report ``capability=None``."""
     settings_file = tmp_path / "interface.json"
@@ -72,12 +70,11 @@ async def test_list_builtin_tools_marks_capability_owned_tools(
     response = await tools_router.list_builtin_tools()
     by_name = {tool.name: tool for tool in response.tools}
 
-    assert by_name["solve_plan"].capability == "solve"
     assert by_name["mastery_status"].capability == "mastery"
     assert by_name["web_fetch"].capability is None
     # Capability tools stay locked-on (not user-toggleable).
-    assert by_name["solve_plan"].toggleable is False
-    assert by_name["solve_plan"].enabled is True
+    assert by_name["mastery_status"].toggleable is False
+    assert by_name["mastery_status"].enabled is True
 
 
 @pytest.mark.asyncio
@@ -99,7 +96,6 @@ async def test_list_builtin_tools_reflects_user_toggle(
     assert by_name["web_search"].enabled is True
     assert by_name["reason"].enabled is True
     assert by_name["brainstorm"].enabled is False
-    assert by_name["paper_search"].enabled is False
     # Locked-on tools stay on regardless (code_execution is now auto-mounted,
     # gated by sandbox availability rather than a user toggle).
     assert by_name["code_execution"].enabled is True

@@ -20,10 +20,6 @@ python-multipart>=0.0.6
 bcrypt>=4.0.0
 python-jose[cryptography]>=3.3.0
 
-# --- PocketBase (optional sidecar backend) ---
-# Only used when integrations.pocketbase_url is configured.
-pocketbase>=0.12.0
-
 # --- LLM provider runtime (unconditionally imported by provider_core) ---
 loguru>=0.7.3,<1.0.0
 json-repair>=0.57.0,<1.0.0

@@ -7,18 +7,6 @@ _CAPABILITY_DESCRIPTIONS: dict[str, dict[str, str]] = {
         "en": "Default agentic chat with tools, retrieval, memory, and attachments.",
         "zh": "默认智能聊天，支持工具、检索、记忆和附件。",
     },
-    "deep_solve": {
-        "en": "Multi-step problem solving with planning, reasoning, and final writing.",
-        "zh": "多步骤解题，包含规划、推理和最终作答。",
-    },
-    "deep_question": {
-        "en": "Generate high-quality questions from templates, sources, or learning goals.",
-        "zh": "基于模板、资料或学习目标生成高质量题目。",
-    },
-    "deep_research": {
-        "en": "Iterative deep research that decomposes a topic and writes a report.",
-        "zh": "迭代式深度研究，分解主题并生成研究报告。",
-    },
     "mastery_path": {
         "en": "Structured mastery-based learning with spaced repetition.",
         "zh": "结构化掌握式学习，结合间隔复习。",
@@ -45,10 +33,6 @@ _TOOL_DESCRIPTIONS: dict[str, dict[str, str]] = {
     "kb_files": {
         "en": "List the documents a knowledge base holds, with the total count.",
         "zh": "列出知识库中的文档清单与总数。",
-    },
-    "paper_search": {
-        "en": "Search arXiv preprints and return paper metadata.",
-        "zh": "搜索 arXiv 预印本并返回论文元数据。",
     },
     "reason": {
         "en": "Use a dedicated reasoning model call for hard reasoning tasks.",

@@ -79,7 +79,7 @@ class TestUnifiedContext:
             user_message="hello",
             conversation_history=[{"role": "user", "content": "hi"}],
             enabled_tools=["rag", "web_search"],
-            active_capability="deep_solve",
+            active_capability="chat",
             knowledge_bases=["kb1"],
             attachments=[att],
             config_overrides={"temperature": 0.5},
@@ -89,7 +89,7 @@ class TestUnifiedContext:
             metadata={"turn_id": "t1"},
         )
         assert ctx.session_id == "s1"
-        assert ctx.active_capability == "deep_solve"
+        assert ctx.active_capability == "chat"
         assert len(ctx.attachments) == 1
         assert ctx.attachments[0].type == "image"
         assert ctx.language == "zh"

@@ -1561,10 +1561,6 @@ class QuestionPipeline:
             kwargs.setdefault("query", context.user_message)
             if task_dir is not None:
                 kwargs.setdefault("output_dir", str(task_dir / "web_search"))
-        elif tool_name == "paper_search":
-            kwargs.setdefault("max_results", 3)
-            kwargs.setdefault("years_limit", 3)
-            kwargs.setdefault("sort_by", "relevance")
         elif tool_name == "read_source":
             kwargs["source_index"] = self._source_index(context)
         elif tool_name == "write_note":

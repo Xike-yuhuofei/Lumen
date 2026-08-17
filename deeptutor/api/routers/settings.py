@@ -20,8 +20,8 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger(__name__)
 
 from deeptutor.brand import PRODUCT_NAME
-from deeptutor.multi_user.context import get_current_user
-from deeptutor.multi_user.model_access import allowed_llm_options
+from deeptutor.services.user import get_current_user
+from deeptutor.services.user import allowed_llm_options
 from deeptutor.services.codebuddy_auth import get_codebuddy_auth_service
 from deeptutor.services.codex_auth import (
     CodexAuthError,
@@ -335,7 +335,7 @@ def get_enabled_optional_tools() -> list[str]:
     explicit ``tools`` list. Intersected with the admin grant whitelist so
     a restricted user's saved toggles can't resurrect a revoked tool.
     """
-    from deeptutor.multi_user.tool_access import allowed_optional_tools
+    from deeptutor.services.user import allowed_optional_tools
 
     enabled = _sanitize_enabled_tools(load_ui_settings().get("enabled_optional_tools"))
     allowed = allowed_optional_tools()

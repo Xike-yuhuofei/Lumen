@@ -39,15 +39,15 @@ from deeptutor.knowledge.kb_types import is_connected_kb, supports_local_raw_fil
 from deeptutor.knowledge.manager import KnowledgeBaseManager
 from deeptutor.knowledge.naming import validate_knowledge_base_name
 from deeptutor.knowledge.progress_tracker import ProgressStage, ProgressTracker
-from deeptutor.multi_user.context import get_current_user
-from deeptutor.multi_user.knowledge_access import (
+from deeptutor.services.user import get_current_user
+from deeptutor.services.user import (
     assert_writable,
     current_kb_base_dir,
     current_kb_manager,
     manager_for_resource,
     resolve_kb,
 )
-from deeptutor.multi_user.knowledge_access import (
+from deeptutor.services.user import (
     list_visible_knowledge_bases as list_visible_kb_access,
 )
 from deeptutor.services.config import PROJECT_ROOT, load_config_with_main
@@ -332,23 +332,17 @@ def _save_uploaded_files(
     files: list[UploadFile],
     target_dir: Path,
     allowed_extensions: set[str] | None = None,
-    kb_name: str | None = None,
     rel_paths: list[str] | None = None,
 ) -> tuple[list[str], list[str]]:
     """
     Save uploaded files to the local raw/ directory.
 
-    When PocketBase is enabled and ``kb_name`` is supplied, each file is also
-    uploaded to the PocketBase knowledge_bases record as a file attachment
-    (best-effort — local write is always the primary path).
+    ``.zip`` archives are expanded in place; every extracted member is
+    registered instead of the archive itself.
     """
     uploaded_files: list[str] = []
     uploaded_file_paths: list[str] = []
     written_file_paths: list[Path] = []
-
-    from deeptutor.services.pocketbase_client import is_pocketbase_enabled
-
-    _pb_sync = is_pocketbase_enabled() and bool(kb_name)
 
     try:
         for idx, file in enumerate(files):
@@ -385,15 +379,6 @@ def _save_uploaded_files(
                         written_file_paths.append(dest)
                         uploaded_files.append(dest.relative_to(target_dir).as_posix())
                         uploaded_file_paths.append(str(dest))
-                        if _pb_sync and kb_name:
-                            try:
-                                _upload_file_to_pb(kb_name, dest.name, dest)
-                            except Exception as pb_exc:
-                                logger.debug(
-                                    "PocketBase file upload failed for '%s': %s",
-                                    dest.name,
-                                    pb_exc,
-                                )
                     continue
 
                 file_path = dest_dir / sanitized_filename
@@ -421,17 +406,6 @@ def _save_uploaded_files(
                 written_file_paths.append(file_path)
                 uploaded_files.append(rel_name)
                 uploaded_file_paths.append(str(file_path))
-
-                # Mirror file to PocketBase when enabled (best-effort, non-blocking).
-                if _pb_sync and kb_name:
-                    try:
-                        _upload_file_to_pb(kb_name, sanitized_filename, file_path)
-                    except Exception as pb_exc:
-                        logger.debug(
-                            "PocketBase file upload failed for '%s': %s",
-                            sanitized_filename,
-                            pb_exc,
-                        )
             except Exception as e:
                 if file_path and file_path.exists():
                     try:
@@ -458,14 +432,12 @@ async def _save_uploaded_files_off_loop(
     files: list[UploadFile],
     target_dir: Path,
     allowed_extensions: set[str] | None = None,
-    kb_name: str | None = None,
     rel_paths: list[str] | None = None,
 ) -> tuple[list[str], list[str]]:
     """:func:`_save_uploaded_files` on a worker thread.
 
-    That function blocks end to end — a chunked write of every uploaded byte,
-    zip extraction for archive members, and (when PocketBase is enabled) one
-    synchronous HTTP upload per file. Called inline from an ``async def``
+    That function blocks end to end — a chunked write of every uploaded byte
+    and zip extraction for archive members. Called inline from an ``async def``
     route it held the event loop for the whole batch, so every other request
     — chat WebSockets included — stalled until the upload finished (#777).
 
@@ -477,7 +449,6 @@ async def _save_uploaded_files_off_loop(
         files,
         target_dir,
         allowed_extensions=allowed_extensions,
-        kb_name=kb_name,
         rel_paths=rel_paths,
     )
 
@@ -546,29 +517,6 @@ def _validate_upload_batch(
         )
 
     return validated
-
-
-def _upload_file_to_pb(kb_name: str, filename: str, file_path: Path) -> None:
-    """Upload a single file to the PocketBase knowledge_bases record."""
-    try:
-        from deeptutor.services.pocketbase_client import get_pb_client
-
-        pb = get_pb_client()
-        records = pb.collection("knowledge_bases").get_full_list(
-            query_params={"filter": f'kb_name="{kb_name}"'}
-        )
-        if not records:
-            logger.debug(f"PocketBase KB record not found for '{kb_name}', skipping file upload")
-            return
-        with open(file_path, "rb") as fh:
-            pb.collection("knowledge_bases").update(
-                records[0].id,
-                body={"kb_name": kb_name},
-                files={"raw_files": (filename, fh)},
-            )
-        logger.debug(f"Uploaded '{filename}' to PocketBase KB '{kb_name}'")
-    except Exception as exc:
-        logger.debug(f"_upload_file_to_pb failed: {exc}")
 
 
 def _task_log(task_id: str, message: str, level: str = "info") -> None:
@@ -2278,7 +2226,7 @@ async def clear_progress(kb_name: str):
 async def websocket_progress(websocket: WebSocket, kb_name: str):
     """WebSocket endpoint for real-time progress updates"""
     from deeptutor.api.routers.auth import ws_auth_failed, ws_require_auth
-    from deeptutor.multi_user.context import reset_current_user
+    from deeptutor.services.user import reset_current_user
 
     user_token = await ws_require_auth(websocket)
     if user_token is ws_auth_failed:

@@ -395,7 +395,7 @@ def get_cron_service() -> CronService:
     """Process-wide cron service, anchored at the admin workspace."""
     global _service
     if _service is None:
-        from deeptutor.multi_user.paths import get_admin_path_service
+        from deeptutor.services.user import get_admin_path_service
         from deeptutor.services.cron.executor import execute_job
 
         store = get_admin_path_service().workspace_root / "cron" / "jobs.json"

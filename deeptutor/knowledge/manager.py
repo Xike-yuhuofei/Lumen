@@ -246,13 +246,6 @@ class KnowledgeBaseManager:
         self.config_file = self.base_dir / "kb_config.json"
         self.config = self._load_config()
 
-        # PocketBase sync — enabled when integrations.pocketbase_url is set.
-        # The local JSON file stays the source of truth; PocketBase gets a
-        # mirrored copy for admin-panel visibility and future multi-user access.
-        from deeptutor.services.pocketbase_client import is_pocketbase_enabled
-
-        self._pb_enabled = is_pocketbase_enabled()
-
     def _load_config(self) -> dict:
         """Load knowledge base configuration from the canonical kb_config.json file."""
         if self.config_file.exists():
@@ -343,35 +336,6 @@ class KnowledgeBaseManager:
         """
         atomic_write_json(self.config_file, self.config)
 
-    def _sync_kb_to_pb(self, name: str, kb_entry: dict) -> None:
-        """
-        Mirror a KB metadata entry to PocketBase (best-effort, non-blocking).
-        Called after every local config save when PocketBase is enabled.
-        """
-        if not self._pb_enabled:
-            return
-        try:
-            from deeptutor.services.pocketbase_client import get_pb_client
-
-            pb = get_pb_client()
-            records = pb.collection("knowledge_bases").get_full_list(
-                query_params={"filter": f'kb_name="{name}"'}
-            )
-            payload = {
-                "kb_name": name,
-                "description": kb_entry.get("description", f"Knowledge base: {name}"),
-                "rag_provider": kb_entry.get("rag_provider", "llamaindex"),
-                "needs_reindex": bool(kb_entry.get("needs_reindex", False)),
-                "status": kb_entry.get("status", "unknown"),
-                "kb_created_at": kb_entry.get("created_at", ""),
-            }
-            if records:
-                pb.collection("knowledge_bases").update(records[0].id, payload)
-            else:
-                pb.collection("knowledge_bases").create(payload)
-        except Exception as exc:
-            logger.debug(f"PocketBase KB sync failed for '{name}': {exc}")
-
     def update_kb_status(
         self,
         name: str,
@@ -380,9 +344,6 @@ class KnowledgeBaseManager:
     ):
         """
         Update knowledge base status and progress in kb_config.json.
-
-        When PocketBase is enabled, the updated entry is also mirrored to the
-        PocketBase knowledge_bases collection (best-effort).
 
         Args:
             name: Knowledge base name
@@ -480,7 +441,6 @@ class KnowledgeBaseManager:
                 pass
 
         self._save_config()
-        self._sync_kb_to_pb(name, kb_config)
 
     def get_kb_entry(self, name: str) -> dict | None:
         """The KB's raw ``kb_config.json`` record, or ``None`` if unregistered.

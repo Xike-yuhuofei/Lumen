@@ -138,14 +138,6 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Failed to start cron service: {e}")
 
-    # Ping PocketBase if configured — logs a warning (not an error) if unreachable
-    try:
-        from deeptutor.services.pocketbase_client import ping_pocketbase
-
-        await ping_pocketbase()
-    except Exception as e:
-        logger.warning(f"PocketBase startup check failed: {e}")
-
     # Migrate any v1 memory files (PROFILE.md / SUMMARY.md) into a
     # backup folder so the v2 three-layer subsystem starts clean.
     try:
@@ -281,14 +273,12 @@ from deeptutor.api.routers import (
     attachments,
     auth,
     book,
-    chat,
     knowledge,
     mastery_path,
     memory,
     notebook,
     outputs,
     personas,
-    question,
     sessions,
     settings,
     skills,
@@ -298,7 +288,6 @@ from deeptutor.api.routers import (
 from deeptutor.api.routers import (
     tools as tools_router,
 )
-from deeptutor.multi_user.router import router as multi_user_router  # noqa: E402
 
 # Auth router is public — login/logout/register/status require no token
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
@@ -311,17 +300,6 @@ from deeptutor.api.routers.auth import require_admin, require_auth  # noqa: E402
 _auth = [Depends(require_auth)]
 _admin = [Depends(require_admin)]
 
-app.include_router(
-    multi_user_router,
-    prefix="/api/v1/multi-user",
-    tags=["multi-user"],
-    dependencies=_auth,
-)
-
-app.include_router(chat.router, prefix="/api/v1", tags=["chat"], dependencies=_auth)
-app.include_router(
-    question.router, prefix="/api/v1/question", tags=["question"], dependencies=_auth
-)
 app.include_router(
     knowledge.router, prefix="/api/v1/knowledge", tags=["knowledge"], dependencies=_auth
 )

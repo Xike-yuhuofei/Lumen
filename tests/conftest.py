@@ -28,17 +28,11 @@ def _tree_snapshot(root: Path) -> frozenset[str]:
 #: guard below always watches the developer's real tree, whatever a test does.
 _REAL_OWNER_SECRET_TREES: tuple[Path, ...] = ()
 try:  # pragma: no cover - import-time wiring
-    from deeptutor.multi_user.paths import ADMIN_WORKSPACE_ROOT as _REAL_ADMIN_ROOT
-    from deeptutor.multi_user.paths import SYSTEM_ROOT as _REAL_SYSTEM_ROOT
+    from deeptutor.services.user import SYSTEM_ROOT as _REAL_SYSTEM_ROOT
 
     _REAL_OWNER_SECRET_TREES = (
         _REAL_SYSTEM_ROOT / "user-secrets",
         _REAL_SYSTEM_ROOT / "user-mcp",
-        _REAL_SYSTEM_ROOT / "user-cli-apps",
-        # Not per-owner, but the same failure: a test that forgets to redirect
-        # the roots would record installs the developer's running instance then
-        # offers to a chat turn, for apps that are not on disk.
-        _REAL_ADMIN_ROOT / "cli-apps",
     )
 except Exception:  # pragma: no cover
     pass
@@ -48,12 +42,11 @@ except Exception:  # pragma: no cover
 def _guard_real_owner_secrets():
     """A test must never write into the real per-account state trees.
 
-    These hold OAuth refresh tokens, MCP credentials, and which CLI apps are
-    installed. A test that redirects ``ADMIN_WORKSPACE_ROOT`` but forgets
-    ``SYSTEM_ROOT`` — or that calls ``monkeypatch.undo()`` and so reverts a
-    fixture's redirection — lands here, and without this guard the failure is
-    silent: the test passes while the developer's tree quietly grows files named
-    after fixture users.
+    These hold OAuth refresh tokens and MCP credentials. A test that redirects
+    ``ADMIN_WORKSPACE_ROOT`` but forgets ``SYSTEM_ROOT`` — or that calls
+    ``monkeypatch.undo()`` and so reverts a fixture's redirection — lands here,
+    and without this guard the failure is silent: the test passes while the
+    developer's tree quietly grows files named after fixture users.
     """
     before = {root: _tree_snapshot(root) for root in _REAL_OWNER_SECRET_TREES}
     yield
@@ -68,25 +61,6 @@ def _guard_real_owner_secrets():
                 "paths.ADMIN_WORKSPACE_ROOT (see "
                 "tests/services/codex_auth/test_credential_location.py)."
             )
-
-
-@pytest.fixture(autouse=True)
-def _guard_legacy_multi_user_migration(monkeypatch):
-    """Tests must never migrate the developer's real ``multi-user/`` tree.
-
-    ``migrate_legacy_multi_user_tree`` runs on the auth/grants/workspace read
-    paths, so any test that exercises those without full path isolation would
-    otherwise move a real sibling ``multi-user/`` into ``data/``. Point the
-    legacy root at a path that cannot exist and reset the once-flag;
-    migration tests opt back in by patching the constants themselves.
-    """
-    from deeptutor.multi_user import paths
-
-    monkeypatch.setattr(
-        paths, "LEGACY_MULTI_USER_ROOT", Path("/nonexistent/deeptutor-legacy-multi-user")
-    )
-    monkeypatch.setattr(paths, "_legacy_migration_done", False)
-    yield
 
 
 @pytest.fixture(autouse=True)
@@ -152,7 +126,7 @@ def rich_context() -> UnifiedContext:
             {"role": "assistant", "content": "AI is..."},
         ],
         enabled_tools=["rag", "web_search"],
-        active_capability="deep_solve",
+        active_capability="chat",
         knowledge_bases=["my-kb"],
         attachments=[Attachment(type="image", url="https://img.png")],
         config_overrides={"temperature": 0.7},

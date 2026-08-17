@@ -31,9 +31,9 @@ WsCallback = Callable[[dict[str, Any]], Awaitable[None] | None]
 class AgentCoordinator:
     """Legacy facade backed by :class:`QuestionPipeline`.
 
-    New code should prefer ``DeepQuestionCapability`` or ``QuestionPipeline``
-    directly. This class exists so older WebSocket routes and the
-    ``tools.question.exam_mimic`` helper keep importing and running.
+    New code should prefer ``QuestionPipeline``
+    directly. This class exists so the BookEngine quiz block and
+    older entry points keep importing and running.
     """
 
     def __init__(

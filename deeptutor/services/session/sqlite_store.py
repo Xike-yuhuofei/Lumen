@@ -903,9 +903,8 @@ class SQLiteSessionStore:
         events: list[dict[str, Any]] | None = None,
         attachments: list[dict[str, Any]] | None = None,
         metadata: dict[str, Any] | None = None,
-        # ``str`` satisfies SessionStoreProtocol (PocketBase parents are string
-        # record ids); on the SQLite backend a non-None parent is always the
-        # integer rowid this store itself returned.
+        # A non-None parent is always the integer rowid this store itself
+        # returned (``str`` is accepted to satisfy SessionStoreProtocol).
         parent_message_id: int | str | None | _Unset = _PARENT_AUTO,
     ) -> int:
         return await self._run(

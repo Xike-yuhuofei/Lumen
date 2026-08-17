@@ -11,11 +11,8 @@ from typing import Any
 import pytest
 
 from deeptutor.agents.chat.capability import ChatCapability
-from deeptutor.agents.question.capability import DeepQuestionCapability
-from deeptutor.agents.research.capability import DeepResearchCapability
 from deeptutor.agents.visualize.capability import VisualizeCapability
 import deeptutor.agents.visualize.pipeline as visualize_pipeline
-from deeptutor.capabilities.solve.capability import DeepSolveCapability
 from deeptutor.core.context import Attachment, UnifiedContext
 from deeptutor.core.stream import StreamEvent, StreamEventType
 from deeptutor.core.stream_bus import StreamBus
@@ -69,16 +66,13 @@ async def _collect_events(run_coro) -> list[StreamEvent]:
 def test_builtin_capability_registry_covers_documented_capabilities() -> None:
     assert set(BUILTIN_CAPABILITY_CLASSES) == {
         "chat",
-        "deep_solve",
-        "deep_question",
-        "deep_research",
         "visualize",
         "mastery_path",
     }
 
 
 @pytest.mark.asyncio
-async def test_chat_capability_streams_content_and_geogebra_context(
+async def test_chat_capability_streams_content_and_tool_context(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     captured: dict[str, Any] = {}
@@ -89,12 +83,12 @@ async def test_chat_capability_streams_content_and_geogebra_context(
 
         async def run(self, context: UnifiedContext, stream: StreamBus) -> None:
             captured["process"] = {
-                "message": f"{context.user_message}\nGGB commands",
+                "message": f"{context.user_message}\nWeb fetch result",
                 "enabled_tools": list(context.enabled_tools or []),
             }
             await stream.tool_call(
-                "geogebra_analysis",
-                {"image_name": "img.png"},
+                "web_fetch",
+                {"url": "https://example.com"},
                 source="chat",
                 stage="acting",
             )
@@ -112,7 +106,7 @@ async def test_chat_capability_streams_content_and_geogebra_context(
 
     context = UnifiedContext(
         user_message="analyze triangle",
-        enabled_tools=["rag", "web_search", "geogebra_analysis"],
+        enabled_tools=["rag", "web_search", "web_fetch"],
         knowledge_bases=["demo-kb"],
         language="en",
         attachments=[Attachment(type="image", base64="ZmFrZQ==", filename="img.png")],
@@ -127,47 +121,7 @@ async def test_chat_capability_streams_content_and_geogebra_context(
         event.type == StreamEventType.CONTENT and "assistant output" in event.content
         for event in events
     )
-    assert "GGB commands" in captured["process"]["message"]
-
-
-@pytest.mark.asyncio
-async def test_deep_solve_capability_runs_chat_loop_in_solve_mode(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """The deep_solve capability is a thin shim: it marks the turn
-    ``solve_mode`` and resolves a session id, then runs the standard agentic
-    chat pipeline. The solve loop capability supplies the tools + playbook."""
-    captured: dict[str, Any] = {}
-
-    class FakePipeline:
-        def __init__(self, *, language: str = "en", **_kwargs: Any) -> None:
-            captured["language"] = language
-
-        async def run(self, context: UnifiedContext, stream: StreamBus) -> None:
-            captured["solve_mode"] = context.metadata.get("solve_mode")
-            captured["solve_session_id"] = context.metadata.get("solve_session_id")
-            captured["attachments"] = list(context.attachments or [])
-            await stream.content("final solution", source="chat", stage="responding")
-
-    monkeypatch.setattr("deeptutor.capabilities.solve.capability.AgenticChatPipeline", FakePipeline)
-
-    context = UnifiedContext(
-        user_message="solve x^2=4",
-        language="en",
-        metadata={"turn_id": "turn-xyz"},
-        attachments=[Attachment(type="image", base64="ZmFrZQ==", filename="graph.png")],
-    )
-    capability = DeepSolveCapability()
-    events = await _collect_events(lambda bus: capability.run(context, bus))
-
-    assert captured["solve_mode"] is True
-    assert captured["solve_session_id"] == "turn-xyz"
-    # Attachments flow through unmodified for the loop's multimodal handling.
-    assert captured["attachments"][0].filename == "graph.png"
-    assert any(
-        event.type == StreamEventType.CONTENT and "final solution" in event.content
-        for event in events
-    )
+    assert "Web fetch result" in captured["process"]["message"]
 
 
 # Legacy tests for the AgentCoordinator-based custom + mimic paths were
@@ -175,195 +129,9 @@ async def test_deep_solve_capability_runs_chat_loop_in_solve_mode(
 # refactor. New-pipeline coverage lives in
 # ``tests/agents/question/test_pipeline.py`` (plan parsing, payload
 # normalization, templates_override / mimic flow, structured emission,
-# tool wiring, history loader, etc.).
-
-
-@pytest.mark.asyncio
-async def test_deep_question_capability_uses_single_call_followup_agent(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    captured: dict[str, Any] = {}
-
-    class FakeCoordinator:
-        def __init__(self, **_kwargs: Any) -> None:
-            raise AssertionError("Coordinator should not be constructed for follow-up mode")
-
-    class FakeFollowupAgent:
-        def __init__(self, **kwargs: Any) -> None:
-            captured["init"] = kwargs
-            self._trace_callback = None
-
-        def set_trace_callback(self, callback) -> None:
-            self._trace_callback = callback
-
-        async def process(self, **kwargs: Any) -> str:
-            captured["process"] = kwargs
-            assert self._trace_callback is not None
-            await self._trace_callback(
-                {
-                    "event": "llm_call",
-                    "state": "running",
-                    "label": "Answer follow-up for Question 3",
-                    "phase": "generation",
-                    "call_id": "quiz-followup-q_3",
-                }
-            )
-            await self._trace_callback(
-                {
-                    "event": "llm_call",
-                    "state": "complete",
-                    "response": "You missed the key distinction between density and coverage.",
-                    "phase": "generation",
-                    "call_id": "quiz-followup-q_3",
-                }
-            )
-            return "You missed the key distinction between density and coverage."
-
-    _install_module(
-        monkeypatch,
-        "deeptutor.agents.question.coordinator",
-        AgentCoordinator=FakeCoordinator,
-    )
-    _install_module(
-        monkeypatch,
-        "deeptutor.agents.question.agents.followup_agent",
-        FollowupAgent=FakeFollowupAgent,
-    )
-    _install_module(
-        monkeypatch,
-        "deeptutor.services.llm.config",
-        get_llm_config=lambda: SimpleNamespace(api_key="k", base_url="u", api_version="v1"),
-    )
-
-    context = UnifiedContext(
-        user_message="Why was my answer wrong?",
-        language="en",
-        metadata={
-            "conversation_context_text": "User previously asked for a simpler explanation.",
-            "question_followup_context": {
-                "question_id": "q_3",
-                "question": "What does density mean in win-rate comparison?",
-                "question_type": "written",
-                "user_answer": "coverage",
-                "correct_answer": "relevant information without redundancy",
-                "is_correct": False,
-                "explanation": "Density is about relevant content without redundancy.",
-            },
-        },
-    )
-    capability = DeepQuestionCapability()
-    events = await _collect_events(lambda bus: capability.run(context, bus))
-
-    assert captured["process"]["user_message"] == "Why was my answer wrong?"
-    assert (
-        captured["process"]["history_context"] == "User previously asked for a simpler explanation."
-    )
-    assert captured["process"]["question_context"]["question_id"] == "q_3"
-    assert any(
-        event.type == StreamEventType.CONTENT
-        and "key distinction between density and coverage" in event.content
-        for event in events
-    )
-    result_event = next(event for event in events if event.type == StreamEventType.RESULT)
-    assert result_event.metadata["mode"] == "followup"
-    assert result_event.metadata["question_id"] == "q_3"
-
-
-@pytest.mark.asyncio
-async def test_deep_research_capability_delegates_to_pipeline(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """The capability shim validates the request config, normalises
-    KB-without-KB, builds a runtime config, and hands the heavy lifting
-    to :class:`ResearchPipeline`. We mock the pipeline at its import site
-    in the capability module so we can assert what it was called with
-    without spinning up real LLM I/O.
-    """
-    import deeptutor.agents.research.capability as deep_research_mod
-    import deeptutor.agents.research.request_config  # noqa: F401
-
-    captured: dict[str, Any] = {}
-
-    class FakeResearchPipeline:
-        def __init__(self, **kwargs: Any) -> None:
-            captured["pipeline_init"] = kwargs
-
-        async def run(self, **kwargs: Any) -> dict[str, Any]:
-            captured["pipeline_run"] = kwargs
-            return {
-                "response": f"Report about {kwargs['topic']}",
-                "metadata": {"mode": "agentic_research", "block_count": 2},
-            }
-
-    def fake_load_config_with_main(_: str) -> dict[str, Any]:
-        return {
-            "capabilities": {
-                "research": {
-                    "researching": {
-                        "note_agent_mode": "auto",
-                        "tool_timeout": 60,
-                        "tool_max_retries": 2,
-                        "paper_search_years_limit": 3,
-                    },
-                }
-            },
-        }
-
-    monkeypatch.setattr(deep_research_mod, "ResearchPipeline", FakeResearchPipeline)
-    monkeypatch.setattr(deep_research_mod, "load_config_with_main", fake_load_config_with_main)
-
-    context = UnifiedContext(
-        user_message="agent-native tutoring",
-        enabled_tools=["rag", "web_search", "paper_search"],
-        knowledge_bases=["research-kb"],
-        attachments=[Attachment(type="image", base64="ZmFrZQ==", filename="brief.png")],
-        config_overrides={
-            "mode": "report",
-            "depth": "standard",
-            # Provide a confirmed outline so the capability skips the
-            # outline-preview short-circuit and drives the full
-            # research + reporting flow on the pipeline.
-            "confirmed_outline": [
-                {"title": "Background", "overview": "Why this topic matters"},
-                {"title": "Approaches", "overview": "How to do it"},
-            ],
-        },
-        language="en",
-    )
-    capability = DeepResearchCapability()
-    await _collect_events(lambda bus: capability.run(context, bus))
-
-    init_kwargs = captured["pipeline_init"]
-    runtime_cfg = init_kwargs["runtime_config"]
-    assert init_kwargs["kb_name"] == "research-kb"
-    assert init_kwargs["language"] == "en"
-    # ``enabled_tools`` is the user's composer toggles forwarded
-    # unchanged. The pipeline's per-block ``compose_enabled_tools`` call
-    # is what decides what the block loop actually exposes.
-    assert init_kwargs["enabled_tools"] == ["rag", "web_search", "paper_search"]
-    # Runtime config carries the structured policy sub-dicts the
-    # pipeline reads at init time. We only assert the keys the runtime
-    # config builder is contractually responsible for producing.
-    assert "planning" in runtime_cfg
-    assert "researching" in runtime_cfg
-    assert "reporting" in runtime_cfg
-    # Source-derived enable_* flags were removed; the block loop now
-    # composes tools the same way chat does (user toggles + auto-mounts).
-    assert "enable_rag" not in runtime_cfg["researching"]
-    assert "enable_web_search" not in runtime_cfg["researching"]
-    assert "enable_paper_search" not in runtime_cfg["researching"]
-    assert "enable_run_code" not in runtime_cfg["researching"]
-
-    run_kwargs = captured["pipeline_run"]
-    assert run_kwargs["topic"] == "agent-native tutoring"
-    assert run_kwargs["confirmed_outline"] is not None
-    assert [item.title for item in run_kwargs["confirmed_outline"]] == [
-        "Background",
-        "Approaches",
-    ]
-    # Attachments are forwarded verbatim so the rephrase / decompose
-    # prompts can see image evidence.
-    assert run_kwargs["attachments"][0].filename == "brief.png"
+# tool wiring, history loader, etc.). The ``deep_question`` capability
+# itself was pruned in the pre-plugin cleanup — question generation is
+# now driven by the BookEngine quiz block via ``AgentCoordinator``.
 
 
 @pytest.mark.asyncio

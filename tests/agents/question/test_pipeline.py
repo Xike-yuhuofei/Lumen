@@ -750,9 +750,8 @@ def test_render_exploration_trace_empty_inputs_uses_marker() -> None:
 
 def test_runtime_config_overrides_max_iterations_and_summarizer_tokens() -> None:
     """``QuestionPipeline.__init__`` must honor the runtime_config payload
-    that ``DeepQuestionCapability`` builds via
-    ``build_question_runtime_config``. A regression here means the
-    capability's config-driven knobs silently do nothing."""
+    built by ``build_question_runtime_config``. A regression here means the
+    config-driven knobs silently do nothing."""
     pipeline = QuestionPipeline(
         language="en",
         runtime_config={

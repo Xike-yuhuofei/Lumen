@@ -5,9 +5,9 @@ LLM Service
 Unified LLM service for all DeepTutor modules.
 
 Architecture:
-    Agents (ChatAgent, SolveAgent, etc.)
+    Agentic loop (core.agentic)
               ↓
-         BaseAgent.call_llm() / stream_llm()
+         run_labeled_step / AgentLoop LLM call
               ↓
          LLM Factory (complete / stream)
               ↓

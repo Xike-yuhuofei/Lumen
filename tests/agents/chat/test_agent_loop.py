@@ -1266,32 +1266,6 @@ def test_augment_tool_kwargs_injects_mastery_path_id() -> None:
     assert augmented["_mastery_path_id"] == "book-1"
 
 
-def test_augment_tool_kwargs_injects_geogebra_image() -> None:
-    pipeline = AgenticChatPipeline.__new__(AgenticChatPipeline)
-    pipeline.language = "zh"
-    context = UnifiedContext(
-        user_message="solve this triangle",
-        attachments=[
-            Attachment(
-                type="image",
-                base64="REAL_IMG_BYTES",
-                filename="problem.png",
-                mime_type="image/png",
-            ),
-        ],
-        language="zh",
-    )
-
-    augmented = pipeline._augment_tool_kwargs(
-        "geogebra_analysis",
-        {"image_base64": "HALLUCINATED"},
-        context,
-    )
-
-    assert augmented["image_base64"] == "data:image/png;base64,REAL_IMG_BYTES"
-    assert augmented["language"] == "zh"
-
-
 def test_build_llm_tool_schemas_kb_name_enum_matches_attached() -> None:
     pipeline = AgenticChatPipeline.__new__(AgenticChatPipeline)
     pipeline.registry = _Registry()

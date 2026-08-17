@@ -18,9 +18,8 @@ def test_public_output_filter_allows_only_whitelisted_artifacts(tmp_path: Path) 
             service._user_data_dir
             / "workspace"
             / "chat"
-            / "deep_solve"
-            / "solve_1"
-            / "artifacts"
+            / "_detached_code_execution"
+            / "run_1"
             / "plot.png"
         )
         allowed.parent.mkdir(parents=True, exist_ok=True)
@@ -31,7 +30,9 @@ def test_public_output_filter_allows_only_whitelisted_artifacts(tmp_path: Path) 
         denied.write_text("{}", encoding="utf-8")
 
         assert (
-            service.is_public_output_path("workspace/chat/deep_solve/solve_1/artifacts/plot.png")
+            service.is_public_output_path(
+                "workspace/chat/_detached_code_execution/run_1/plot.png"
+            )
             is True
         )
         assert service.is_public_output_path("settings/model_catalog.json") is False

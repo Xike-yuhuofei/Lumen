@@ -35,7 +35,6 @@ dependencies = [
     "typer>=0.9.0",
     "rich>=13.0.0",
     "prompt_toolkit>=3.0.36",
-    "pyte>=0.8.1",  # in-memory terminal emulator: scrape Claude Code's /model TUI on sync
     # Full app dependencies included by default for `pip install deeptutor`.
     "anthropic>=0.30.0",
     "dashscope>=1.14.0",
@@ -64,7 +63,6 @@ dependencies = [
     "python-multipart>=0.0.6",
     "bcrypt>=4.0.0",
     "python-jose[cryptography]>=3.3.0",
-    "pocketbase>=0.12.0",
     "loguru>=0.7.3,<1.0.0",
     "json-repair>=0.57.0,<1.0.0",
     # Process-tree memory readings for /api/v1/system/memory. Soft dependency:
@@ -128,7 +126,6 @@ server = [
     "python-multipart>=0.0.6",
     "bcrypt>=4.0.0",
     "python-jose[cryptography]>=3.3.0",
-    "pocketbase>=0.12.0",
     "loguru>=0.7.3,<1.0.0",
     "json-repair>=0.57.0,<1.0.0",
     "croniter>=6.0.0,<7.0.0",
@@ -196,7 +193,7 @@ include = ["deeptutor*", "deeptutor_cli*"]
 [tool.setuptools.package-data]
 # Runtime data shipped inside the deeptutor package: prompt YAMLs (loaded by
 # PromptManager from PACKAGE_ROOT/deeptutor/.../prompts/*.yaml), markdown
-# templates (builtin SKILL.md files, vision_solver prompts), and helper shell
+# templates (builtin SKILL.md files), and helper shell
 # scripts. Without these, ``pip install deeptutor`` ships a wheel missing
 # every agent prompt and capability fails at first use.
 deeptutor = [

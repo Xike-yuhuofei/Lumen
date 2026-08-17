@@ -1027,7 +1027,7 @@ def _codex_user_root() -> Path:
     This is where the store used to live; :func:`_codex_secrets_root` is where
     it lives now, and this is only the location it is relocated from.
     """
-    from deeptutor.multi_user.paths import get_owner_path_service
+    from deeptutor.services.user import get_owner_path_service
 
     return get_owner_path_service().get_user_root().resolve()
 
@@ -1042,7 +1042,7 @@ def _codex_secrets_root() -> Path:
     is mounted for nobody, so the store now lives under the owner's directory
     there instead, keyed by the same owner resolution as before.
     """
-    from deeptutor.multi_user.paths import get_owner_secrets_dir
+    from deeptutor.services.user import get_owner_secrets_dir
 
     secrets_root = get_owner_secrets_dir()
     key = str(secrets_root)
@@ -1062,8 +1062,7 @@ def _relocate_legacy_store(user_root: Path, secrets_root: Path) -> bool:
     A copy would leave the plaintext refresh token exactly where the exposure
     was, so this relocates the whole store directory or does nothing at all: a
     login already at the safe location wins, and the stale one is reported for
-    an operator to remove by hand, mirroring
-    :func:`~deeptutor.multi_user.paths.migrate_legacy_multi_user_tree`.
+    an operator to remove by hand.
 
     Returns whether the legacy location is now settled — i.e. whether there is
     nothing left to retry.
@@ -1118,7 +1117,7 @@ def _owner_model_catalog_service() -> ModelCatalogService:
     credential store, so a login and its profile can never land in different
     places (#781).
     """
-    from deeptutor.multi_user.personal_models import owner_catalog_service
+    from deeptutor.services.user import owner_catalog_service
 
     return owner_catalog_service()
 

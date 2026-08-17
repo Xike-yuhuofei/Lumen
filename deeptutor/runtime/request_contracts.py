@@ -6,11 +6,6 @@ from typing import Any, Callable, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from deeptutor.agents.research.request_config import (
-    DeepResearchRequestConfig,
-    validate_research_request_config,
-)
-
 _RUNTIME_ONLY_KEYS = {
     "_persist_user_message",
     "followup_question_context",
@@ -19,28 +14,6 @@ _RUNTIME_ONLY_KEYS = {
 
 class ChatRequestConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
-
-
-class DeepSolveRequestConfig(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-
-class DeepQuestionRequestConfig(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    mode: Literal["custom", "mimic"] = "custom"
-    topic: str = ""
-    num_questions: int = Field(default=1, ge=1, le=50)
-    difficulty: str = ""
-    # Allowed-types whitelist. Empty list means "any type — let the
-    # planner pick per question". Frontend sends the user's multi-select.
-    question_types: list[str] = Field(default_factory=list)
-    # Optional per-type quantity targets. When non-empty, sum must equal
-    # ``num_questions`` (frontend keeps them in sync). Empty dict means
-    # "no per-type targets — distribute freely across allowed types".
-    per_type_counts: dict[str, int] = Field(default_factory=dict)
-    paper_path: str = ""
-    max_questions: int = Field(default=10, ge=1, le=100)
 
 
 class VisualizeRequestConfig(BaseModel):
@@ -87,18 +60,6 @@ def validate_chat_request_config(raw_config: dict[str, Any] | None) -> ChatReque
     return _validate_model(ChatRequestConfig, raw_config, label="chat")
 
 
-def validate_deep_solve_request_config(
-    raw_config: dict[str, Any] | None,
-) -> DeepSolveRequestConfig:
-    return _validate_model(DeepSolveRequestConfig, raw_config, label="deep solve")
-
-
-def validate_deep_question_request_config(
-    raw_config: dict[str, Any] | None,
-) -> DeepQuestionRequestConfig:
-    return _validate_model(DeepQuestionRequestConfig, raw_config, label="deep question")
-
-
 def validate_visualize_request_config(
     raw_config: dict[str, Any] | None,
 ) -> VisualizeRequestConfig:
@@ -111,17 +72,11 @@ def build_request_schema(model_type: type[BaseModel]) -> dict[str, Any]:
 
 CAPABILITY_CONFIG_VALIDATORS: dict[str, Callable[[dict[str, Any] | None], Any]] = {
     "chat": validate_chat_request_config,
-    "deep_solve": validate_deep_solve_request_config,
-    "deep_question": validate_deep_question_request_config,
-    "deep_research": validate_research_request_config,
     "visualize": validate_visualize_request_config,
 }
 
 CAPABILITY_REQUEST_SCHEMAS: dict[str, dict[str, Any]] = {
     "chat": build_request_schema(ChatRequestConfig),
-    "deep_solve": build_request_schema(DeepSolveRequestConfig),
-    "deep_question": build_request_schema(DeepQuestionRequestConfig),
-    "deep_research": build_request_schema(DeepResearchRequestConfig),
     "visualize": build_request_schema(VisualizeRequestConfig),
 }
 
@@ -146,14 +101,10 @@ __all__ = [
     "CAPABILITY_CONFIG_VALIDATORS",
     "CAPABILITY_REQUEST_SCHEMAS",
     "ChatRequestConfig",
-    "DeepQuestionRequestConfig",
-    "DeepSolveRequestConfig",
     "VisualizeRequestConfig",
     "build_request_schema",
     "get_capability_request_schema",
     "validate_capability_config",
     "validate_chat_request_config",
-    "validate_deep_question_request_config",
-    "validate_deep_solve_request_config",
     "validate_visualize_request_config",
 ]

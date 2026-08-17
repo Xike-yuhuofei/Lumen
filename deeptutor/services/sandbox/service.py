@@ -81,7 +81,7 @@ class SandboxService:
         # when the grant denies it, but any path that reaches the sandbox
         # directly still answers to the same policy.
         try:
-            from deeptutor.multi_user.tool_access import exec_override
+            from deeptutor.services.user import exec_override
 
             if exec_override() is False:
                 return ExecResult(error=t("sandbox.disabled_for_account"))

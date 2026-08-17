@@ -5,7 +5,6 @@ from types import SimpleNamespace
 import pytest
 
 from deeptutor.agents.chat.agentic_pipeline import AgenticChatPipeline
-from deeptutor.agents.chat.chat_agent import ChatAgent
 from deeptutor.agents.chat.prompt_blocks import ChatPromptAssembler
 
 
@@ -75,22 +74,6 @@ def test_mastery_plugin_system_prompt_uses_localized_fallback(
     assert "精通导师模式" in zh_prompt
     assert "## mastery_tutor" in en_prompt
     assert "Mastery Tutor mode" in en_prompt
-
-
-def test_legacy_chat_agent_system_prompt_uses_selected_language() -> None:
-    zh_messages = ChatAgent(language="zh", config={}).build_messages(
-        message="解释梯度下降",
-        history=[],
-    )
-    en_messages = ChatAgent(language="en", config={}).build_messages(
-        message="Explain gradient descent",
-        history=[],
-    )
-
-    assert "你是 Lumen" in zh_messages[0]["content"]
-    assert "请严格使用中文" in zh_messages[0]["content"]
-    assert "You are Lumen" in en_messages[0]["content"]
-    assert "Write ALL reader-facing text" in en_messages[0]["content"]
 
 
 def test_prompt_blocks_include_localized_optional_context() -> None:

@@ -56,7 +56,7 @@ def _stub_resolver(
         return manifests.get(kb_ref)
 
     monkeypatch.setattr(
-        "deeptutor.multi_user.knowledge_access.resolve_kb_manifest", _resolve, raising=False
+        "deeptutor.services.user.resolve_kb_manifest", _resolve, raising=False
     )
     return asked
 
@@ -149,7 +149,7 @@ async def test_unreadable_kb_costs_the_manifest_not_the_turn(
         return _manifest(kb_ref, "a.pdf")
 
     monkeypatch.setattr(
-        "deeptutor.multi_user.knowledge_access.resolve_kb_manifest", _boom, raising=False
+        "deeptutor.services.user.resolve_kb_manifest", _boom, raising=False
     )
     context = UnifiedContext(
         session_id="s1", user_message="how many?", knowledge_bases=["broken", "course"]

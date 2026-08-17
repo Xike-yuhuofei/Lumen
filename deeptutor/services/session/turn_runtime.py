@@ -740,7 +740,7 @@ class TurnRuntimeManager:
             raise RuntimeError(str(exc)) from exc
         if llm_selection:
             try:
-                from deeptutor.multi_user.model_access import apply_allowed_llm_selection
+                from deeptutor.services.user import apply_allowed_llm_selection
 
                 llm_selection = apply_allowed_llm_selection(llm_selection) or {}
             except PermissionError as exc:
@@ -750,8 +750,8 @@ class TurnRuntimeManager:
             # never silently fall through to the global LLM client (which is
             # configured from admin runtime settings). Admin keeps the existing behavior
             # (None llm_selection → default config from admin scope).
-            from deeptutor.multi_user.context import get_current_user
-            from deeptutor.multi_user.model_access import (
+            from deeptutor.services.user import get_current_user
+            from deeptutor.services.user import (
                 has_capability_access,
                 redacted_model_access,
             )
@@ -776,7 +776,7 @@ class TurnRuntimeManager:
                     "model_id": assigned_llms[0].get("model_id"),
                 }
         if llm_selection:
-            from deeptutor.multi_user.personal_models import merge_personal_llm_profiles
+            from deeptutor.services.user import merge_personal_llm_profiles
             from deeptutor.services.config import get_model_catalog_service
             from deeptutor.services.model_selection import (
                 LLMSelection,
@@ -811,7 +811,7 @@ class TurnRuntimeManager:
         # back-fill so explicit caller lists and settings defaults pass the
         # same gate; this is the single enforcement point for every
         # capability's turn.
-        from deeptutor.multi_user.tool_access import allowed_optional_tools
+        from deeptutor.services.user import allowed_optional_tools
 
         allowed_tools = allowed_optional_tools()
         if allowed_tools is not None:
@@ -1401,9 +1401,9 @@ class TurnRuntimeManager:
             # token). Resolution: the user's own workspace first; non-admin
             # users fall back to admin-authored presets (personas carry no
             # privileged workflow, so no grant gate applies).
-            from deeptutor.multi_user.context import get_current_user
-            from deeptutor.multi_user.paths import get_admin_path_service
-            from deeptutor.multi_user.skill_access import assigned_skill_ids
+            from deeptutor.services.user import get_current_user
+            from deeptutor.services.user import get_admin_path_service
+            from deeptutor.services.user import assigned_skill_ids
             from deeptutor.services.persona import PersonaService, get_persona_service
             from deeptutor.services.skill.service import SkillService, render_skills_manifest
 
@@ -1612,9 +1612,9 @@ class TurnRuntimeManager:
             conversation_history = list(history_result.conversation_history)
             conversation_context_text = history_result.context_text
 
-            # SQLite returns integer rowids; PocketBase returns its string
-            # record ids. Both are opaque to this layer — they only flow into
-            # ``parent_message_id`` chaining and the DONE reconcile metadata.
+            # The store returns the message id (integer rowid on SQLite).
+            # It flows into ``parent_message_id`` chaining and the DONE
+            # reconcile metadata.
             new_user_message_id: int | str | None = None
             if persist_user_message:
                 # Pass parent explicitly only when the FE pinned it (covers
