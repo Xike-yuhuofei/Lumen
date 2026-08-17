@@ -344,7 +344,7 @@ class TeachingEngine:
             expected_evidence=EvidenceType.QUIZ_ANSWER,
             success_condition=(
                 f"The learner completes scaffolded practice on {target_id} with "
-                f"accuracy at or above {goal.mastery_threshold:.2f}."
+                f"accuracy at or above {goal.threshold_for(target_id):.2f}."
             ),
             reason=(
                 f"Repeated difficulty on {target_id!r} (attempts={attempts}); "
@@ -376,7 +376,7 @@ class TeachingEngine:
             expected_evidence=EvidenceType.QUIZ_ANSWER,
             success_condition=(
                 f"Assessment of {target_id} is correct and mastery reaches "
-                f"{goal.mastery_threshold:.2f}."
+                f"{goal.threshold_for(target_id):.2f}."
             ),
             reason="The target is partially learned; gather evidence against the mastery gate.",
             resources=graph.resources_for(target_id, TeachingRelationType.ASSESSES),
@@ -440,6 +440,6 @@ class TeachingEngine:
         learner: LearnerState,
     ) -> str | None:
         for node_id in goal.target_node_ids:
-            if learner.mastery.get(node_id, 0.0) < goal.mastery_threshold:
+            if learner.mastery.get(node_id, 0.0) < goal.threshold_for(node_id):
                 return node_id
         return None

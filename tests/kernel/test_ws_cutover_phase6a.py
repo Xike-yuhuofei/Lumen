@@ -73,8 +73,8 @@ class _FakeLearnService:
         self.captured["context"] = context
         self.captured["stream"] = stream
         context.metadata["mastery_mode"] = True
-        context.metadata["mastery_path_id"] = (
-            context.metadata.get("mastery_path_id") or str(context.session_id)
+        context.metadata["mastery_path_id"] = context.metadata.get("mastery_path_id") or str(
+            context.session_id
         )
         await stream.content(
             "Lesson content",
@@ -110,13 +110,15 @@ class _ProbePipeline:
 
     async def run(self, context, stream) -> None:
         self.calls.append(context)
-        await stream.emit(StreamEvent(
-            type=StreamEventType.CONTENT,
-            source="chat",
-            stage="responding",
-            content="Chat reply",
-            metadata={"call_kind": "llm_final_response"},
-        ))
+        await stream.emit(
+            StreamEvent(
+                type=StreamEventType.CONTENT,
+                source="chat",
+                stage="responding",
+                content="Chat reply",
+                metadata={"call_kind": "llm_final_response"},
+            )
+        )
         await stream.emit(StreamEvent(type=StreamEventType.DONE, source="chat"))
 
 
@@ -158,9 +160,7 @@ def _attach_bootstrap(bootstrap: Any | None = None) -> Any | None:
 def _patch_legacy_runtime(monkeypatch: pytest.MonkeyPatch) -> None:
     """Patch the legacy services the turn runtime still touches, so the
     test drives the routing without a live LLM / store backend."""
-    monkeypatch.setattr(
-        "deeptutor.services.llm.config.get_llm_config", lambda: SimpleNamespace()
-    )
+    monkeypatch.setattr("deeptutor.services.llm.config.get_llm_config", lambda: SimpleNamespace())
     monkeypatch.setattr(
         "deeptutor.services.session.context_builder.ContextBuilder", _FakeContextBuilder
     )
@@ -171,9 +171,7 @@ def _patch_legacy_runtime(monkeypatch: pytest.MonkeyPatch) -> None:
             emit=_noop_async,
         ),
     )
-    monkeypatch.setattr(
-        "deeptutor.services.persona.get_persona_service", _fake_persona_service
-    )
+    monkeypatch.setattr("deeptutor.services.persona.get_persona_service", _fake_persona_service)
 
 
 async def _wait_for_reply_queue(

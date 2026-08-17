@@ -156,6 +156,23 @@ def find_knowledge_point(
     return None, "", ""
 
 
+def goal_scope(progress: LearningProgress) -> set[str] | None:
+    """The set of objective ids that gate completion, or ``None`` when the
+    goal covers the whole path (the default). Unknown ids are dropped — a
+    stale scope entry must never silently keep the path incomplete."""
+    if not progress.goal_kp_ids:
+        return None
+    known = {kp.id for module in progress.modules for kp in module.knowledge_points}
+    scope = {kp_id for kp_id in progress.goal_kp_ids if kp_id in known}
+    return scope or None
+
+
+def in_goal_scope(progress: LearningProgress, kp: KnowledgePoint) -> bool:
+    """Whether *kp* counts toward the learning goal's completion condition."""
+    scope = goal_scope(progress)
+    return scope is None or kp.id in scope
+
+
 def _gate_kind(kp: KnowledgePoint) -> str:
     return "qualitative" if kp.type in QUALITATIVE_TYPES else "quantitative"
 
@@ -167,7 +184,11 @@ def next_objective(progress: LearningProgress, *, now: float | None = None) -> N
     2. a due spaced-repetition review (don't let mastered ground decay);
     3. the first not-yet-mastered objective in module/KP order (the gate IS
        the cursor — mastered objectives are skipped);
-    4. otherwise the path is complete.
+    4. otherwise the goal is complete.
+
+    Only objectives inside the learning goal's scope (``goal_kp_ids``, empty
+    = everything) gate completion — the same scope the Teaching Engine's
+    LearningGoal uses, so both decision authorities agree.
     """
     pending = progress.pending_question
     if pending is not None:
@@ -208,6 +229,8 @@ def next_objective(progress: LearningProgress, *, now: float | None = None) -> N
 
     for module in sorted(progress.modules, key=lambda m: m.order):
         for kp in module.knowledge_points:
+            if not in_goal_scope(progress, kp):
+                continue
             if is_mastered(progress, kp):
                 continue
             status = objective_status(progress, kp)
@@ -236,13 +259,19 @@ def next_objective(progress: LearningProgress, *, now: float | None = None) -> N
                 ),
             )
 
-    return NextStep(action="complete", reason="All objectives are mastered and no reviews are due.")
+    return NextStep(
+        action="complete",
+        reason="Every objective in the learning goal is mastered and no reviews are due.",
+    )
 
 
 def map_summary(progress: LearningProgress, *, now: float | None = None) -> dict:
     """A compact, render-ready snapshot of the whole path for the tutor's
-    ``mastery_status`` tool and the dashboard."""
+    ``mastery_status`` tool and the dashboard. Completion is judged against
+    the learning goal's scope (every objective when no scope is set)."""
+    scope = goal_scope(progress)
     counts = {"mastered": 0, "learning": 0, "new": 0, "total": 0}
+    goal_counts = {"mastered": 0, "total": 0}
     modules_out: list[dict] = []
     for module in sorted(progress.modules, key=lambda m: m.order):
         kps_out: list[dict] = []
@@ -253,6 +282,10 @@ def map_summary(progress: LearningProgress, *, now: float | None = None) -> dict
             counts["total"] += 1
             if status == "mastered":
                 mastered += 1
+            if scope is None or kp.id in scope:
+                goal_counts["total"] += 1
+                if status == "mastered":
+                    goal_counts["mastered"] += 1
             kps_out.append(
                 {
                     "id": kp.id,
@@ -274,8 +307,13 @@ def map_summary(progress: LearningProgress, *, now: float | None = None) -> dict
         )
     return {
         "counts": counts,
+        "goal": {
+            "name": progress.goal_name,
+            "mastered": goal_counts["mastered"],
+            "total": goal_counts["total"],
+        },
         "due_reviews": len(due_reviews(progress, now=now)),
-        "complete": counts["total"] > 0 and counts["mastered"] == counts["total"],
+        "complete": (goal_counts["total"] > 0 and goal_counts["mastered"] == goal_counts["total"]),
         "modules": modules_out,
     }
 
@@ -290,6 +328,8 @@ __all__ = [
     "objective_status",
     "due_reviews",
     "find_knowledge_point",
+    "goal_scope",
+    "in_goal_scope",
     "next_objective",
     "map_summary",
 ]

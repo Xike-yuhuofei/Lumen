@@ -5,6 +5,7 @@ an attempt is never recorded correct without a stored expected answer.  The
 pending-question module projects the persisted ``PendingQuestion`` into the
 learner-facing contract (never exposing ``expected_answer``).
 """
+
 from lumen.modes.learn.assessment.grading import classify_error, grade_answer
 from lumen.modes.learn.assessment.pending import (
     OPTION_PREFIX_RE,

@@ -310,13 +310,15 @@ class TestRegenerateLastTurn:
                 pass
 
             async def run(self, _context, stream):
-                await stream.emit(StreamEvent(
-                    type=StreamEventType.CONTENT,
-                    source="chat",
-                    stage="responding",
-                    content=next(responses),
-                    metadata={"call_kind": "llm_final_response"},
-                ))
+                await stream.emit(
+                    StreamEvent(
+                        type=StreamEventType.CONTENT,
+                        source="chat",
+                        stage="responding",
+                        content=next(responses),
+                        metadata={"call_kind": "llm_final_response"},
+                    )
+                )
                 await stream.emit(StreamEvent(type=StreamEventType.DONE, source="chat"))
 
         refresh_calls: list[Any] = []

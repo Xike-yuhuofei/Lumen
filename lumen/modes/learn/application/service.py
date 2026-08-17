@@ -114,6 +114,8 @@ class LearningService:
                     )
                 )
                 existing.status = "retrying"
+                if attempt.misconception_node_id:
+                    existing.misconception_node_id = attempt.misconception_node_id
             else:
                 record = ErrorRecord(
                     id=uuid.uuid4().hex,
@@ -122,6 +124,7 @@ class LearningService:
                     module_id=attempt.module_id,
                     error_type=attempt.error_type,
                     self_attribution=attempt.self_attribution,
+                    misconception_node_id=attempt.misconception_node_id,
                     status="active",
                 )
                 progress.error_records.append(record)
@@ -170,6 +173,7 @@ class LearningService:
         question_type: str = "short",
         self_attribution: str = "",
         scheduler: SpacedRepetitionScheduler | None = None,
+        misconception_node_id: str = "",
     ) -> bool:
         """Grade one answer and fold it through the full post-answer pipeline.
 
@@ -177,7 +181,8 @@ class LearningService:
         state -> rebuild the review queue -> persist. This is the single source
         of truth for what happens when a student answers, shared by every
         interactive stage. Grading is fail-closed: with no stored expected
-        answer the attempt is recorded wrong, never right.
+        answer the attempt is recorded wrong, never right. A server-matched
+        ``misconception_node_id`` (wrong answers only) rides along as evidence.
         """
         is_correct = bool(expected_answer) and grade_answer(
             user_answer, expected_answer, question_type
@@ -192,6 +197,7 @@ class LearningService:
                 user_answer=user_answer,
                 self_attribution=self_attribution,
                 error_type=None if is_correct else classify_error(user_answer),
+                misconception_node_id="" if is_correct else misconception_node_id,
             ),
         )
         if knowledge_point_id:
@@ -230,17 +236,45 @@ class LearningService:
         *,
         passed: bool,
         evidence: str = "",
+        scheduler: SpacedRepetitionScheduler | None = None,
     ) -> None:
         """Record the qualitative (CONCEPT / DESIGN) gate outcome.
 
         The boolean is the gate of record; ``mastery_levels`` is nudged only so
-        the map's colour matches the gate (full on pass, capped on fail).
+        the map's colour matches the gate (full on pass, capped on fail). A
+        pass also graduates the objective's active error records — the learner
+        has just re-articulated the idea correctly, so any matched
+        misconception is resolved (otherwise remediation would block forever).
+        It also (re)seeds the spaced-repetition state so conceptual
+        understanding is checked for retention like every other objective —
+        without this, CONCEPT / DESIGN objectives never re-enter the review
+        queue and "mastered" concepts silently decay.
         """
         progress.qualitative_mastery[kp_id] = bool(passed)
         current = progress.mastery_levels.get(kp_id, 0.0)
         progress.mastery_levels[kp_id] = max(current, 1.0) if passed else min(current, 0.4)
         if evidence:
             progress.feynman_explanations[kp_id] = evidence
+        if passed:
+            for rec in progress.error_records:
+                if rec.knowledge_point_id == kp_id and rec.status in ("active", "retrying"):
+                    rec.retry_history.append(
+                        RetryAttempt(
+                            timestamp=time.time(),
+                            is_correct=True,
+                            attempt_number=len(rec.retry_history) + 1,
+                        )
+                    )
+                    rec.status = "graduated"
+            if scheduler is not None:
+                kp_type = progress.knowledge_types.get(kp_id)
+                if kp_type is not None:
+                    state = progress.repetition_states.get(kp_id) or scheduler.get_initial_state(
+                        kp_type
+                    )
+                    progress.repetition_states[kp_id] = state
+                    scheduler.schedule_next(state, kp_type, is_correct=True)
+                    progress.review_queue = scheduler.build_review_queue(progress)
         progress.updated_at = time.time()
         self.save(progress)
 

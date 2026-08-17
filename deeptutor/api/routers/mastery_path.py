@@ -83,6 +83,21 @@ async def _cancel_active_learning_turn(book_id: str) -> None:
         await runtime.cancel_turn(active_turn["id"])
 
 
+def _rebuild_teaching_graph(book_id: str) -> None:
+    """Keep the persisted teaching graph in sync after any module change so
+    teaching_plan always decides against the current objective tree."""
+    import logging
+
+    try:
+        from lumen.modes.learn.application.teaching_service import TeachingService
+
+        TeachingService().rebuild_graph(book_id)
+    except Exception:
+        logging.getLogger(__name__).warning(
+            "Failed to rebuild teaching graph for %s", book_id, exc_info=True
+        )
+
+
 # ── Request models ───────────────────────────────────────────────────────────
 
 
@@ -143,6 +158,7 @@ async def init_modules(book_id: str, body: InitModulesRequest):
     progress.current_module_id = modules[0].id
     progress.current_kp_index = 0
     service.save(progress)
+    _rebuild_teaching_graph(book_id)
     return {"status": "ok", "module_count": len(modules)}
 
 
@@ -177,6 +193,7 @@ async def import_from_book(book_id: str, body: ImportFromBookRequest):
     progress.current_module_id = modules[0].id
     progress.current_kp_index = 0
     service.save(progress)
+    _rebuild_teaching_graph(book_id)
     return {"status": "ok", "module_count": len(modules)}
 
 
@@ -301,6 +318,7 @@ async def generate_from_notebook(book_id: str, body: GenerateFromNotebookRequest
     progress.current_module_id = modules[0].id
     progress.current_kp_index = 0
     service.save(progress)
+    _rebuild_teaching_graph(book_id)
     return {
         "status": "ok",
         "module_count": len(modules),

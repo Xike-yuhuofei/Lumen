@@ -113,9 +113,7 @@ async def _build(
     )
 
     pool = tuple(
-        tool
-        for tool in (*shared_pool, *owned_pool)
-        if allowed.allows(tool.get_definition().name)
+        tool for tool in (*shared_pool, *owned_pool) if allowed.allows(tool.get_definition().name)
     )
     registry = ScopedToolRegistry(
         base=base_registry,

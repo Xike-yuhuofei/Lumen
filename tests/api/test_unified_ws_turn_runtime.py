@@ -120,13 +120,15 @@ async def test_turn_runtime_replays_events_and_materializes_messages(
             captured["user_message"] = context.user_message
             captured["metadata"] = context.metadata
             captured["source_manifest"] = context.source_manifest
-            await stream.emit(StreamEvent(
-                type=StreamEventType.CONTENT,
-                source="chat",
-                stage="responding",
-                content="Hello Frank",
-                metadata={"call_kind": "llm_final_response"},
-            ))
+            await stream.emit(
+                StreamEvent(
+                    type=StreamEventType.CONTENT,
+                    source="chat",
+                    stage="responding",
+                    content="Hello Frank",
+                    metadata={"call_kind": "llm_final_response"},
+                )
+            )
             await stream.emit(StreamEvent(type=StreamEventType.DONE, source="chat"))
 
     monkeypatch.setattr("deeptutor.services.llm.config.get_llm_config", lambda: SimpleNamespace())
@@ -252,13 +254,15 @@ async def test_turn_runtime_persists_llm_selection_in_turn_snapshot(
 
         async def run(self, context, stream):
             captured["metadata"] = context.metadata
-            await stream.emit(StreamEvent(
-                type=StreamEventType.CONTENT,
-                source="chat",
-                stage="responding",
-                content="Alt reply",
-                metadata={"call_kind": "llm_final_response"},
-            ))
+            await stream.emit(
+                StreamEvent(
+                    type=StreamEventType.CONTENT,
+                    source="chat",
+                    stage="responding",
+                    content="Alt reply",
+                    metadata={"call_kind": "llm_final_response"},
+                )
+            )
             await stream.emit(StreamEvent(type=StreamEventType.DONE, source="chat"))
 
     def fake_activate(selection):
@@ -290,7 +294,7 @@ async def test_turn_runtime_persists_llm_selection_in_turn_snapshot(
             emit=_noop_async,
         ),
     )
-    
+
     monkeypatch.setattr("deeptutor.services.persona.get_persona_service", _fake_persona_service)
 
     selection = {"profile_id": "p-alt", "model_id": "m-alt"}
@@ -352,13 +356,15 @@ async def test_turn_runtime_session_persona_persists_falls_back_and_clears(
             pass
 
         async def run(self, context, stream):
-            await stream.emit(StreamEvent(
-                type=StreamEventType.CONTENT,
-                source="chat",
-                stage="responding",
-                content="ok",
-                metadata={"call_kind": "llm_final_response"},
-            ))
+            await stream.emit(
+                StreamEvent(
+                    type=StreamEventType.CONTENT,
+                    source="chat",
+                    stage="responding",
+                    content="ok",
+                    metadata={"call_kind": "llm_final_response"},
+                )
+            )
             await stream.emit(StreamEvent(type=StreamEventType.DONE, source="chat"))
 
     monkeypatch.setattr("deeptutor.services.llm.config.get_llm_config", lambda: SimpleNamespace())
@@ -370,7 +376,7 @@ async def test_turn_runtime_session_persona_persists_falls_back_and_clears(
         "deeptutor.services.memory.get_memory_store",
         lambda: SimpleNamespace(read_l3_concat=lambda: "", emit=_noop_async),
     )
-    
+
     monkeypatch.setattr("deeptutor.services.persona.get_persona_service", _fake_persona_service)
 
     async def run_turn(session_id, extra):
@@ -471,13 +477,15 @@ async def test_turn_runtime_allows_model_switching_within_same_session(
 
         async def run(self, context, stream):
             metadata_seen.append(context.metadata)
-            await stream.emit(StreamEvent(
-                type=StreamEventType.CONTENT,
-                source="chat",
-                stage="responding",
-                content=f"Reply from {context.metadata['llm_model']}",
-                metadata={"call_kind": "llm_final_response"},
-            ))
+            await stream.emit(
+                StreamEvent(
+                    type=StreamEventType.CONTENT,
+                    source="chat",
+                    stage="responding",
+                    content=f"Reply from {context.metadata['llm_model']}",
+                    metadata={"call_kind": "llm_final_response"},
+                )
+            )
             await stream.emit(StreamEvent(type=StreamEventType.DONE, source="chat"))
 
     def fake_activate(selection):
@@ -514,7 +522,7 @@ async def test_turn_runtime_allows_model_switching_within_same_session(
             emit=_noop_async,
         ),
     )
-    
+
     monkeypatch.setattr("deeptutor.services.persona.get_persona_service", _fake_persona_service)
 
     first_selection = {"profile_id": "p-default", "model_id": "m-default"}
@@ -645,13 +653,15 @@ async def test_turn_runtime_bootstraps_question_followup_context_once(
             captured["conversation_history"] = context.conversation_history
             captured["config_overrides"] = context.config_overrides
             captured["metadata"] = context.metadata
-            await stream.emit(StreamEvent(
-                type=StreamEventType.CONTENT,
-                source="chat",
-                stage="responding",
-                content="Let's discuss this question.",
-                metadata={"call_kind": "llm_final_response"},
-            ))
+            await stream.emit(
+                StreamEvent(
+                    type=StreamEventType.CONTENT,
+                    source="chat",
+                    stage="responding",
+                    content="Let's discuss this question.",
+                    metadata={"call_kind": "llm_final_response"},
+                )
+            )
             await stream.emit(StreamEvent(type=StreamEventType.DONE, source="chat"))
 
     monkeypatch.setattr("deeptutor.services.llm.config.get_llm_config", lambda: SimpleNamespace())
@@ -666,7 +676,7 @@ async def test_turn_runtime_bootstraps_question_followup_context_once(
             emit=_noop_async,
         ),
     )
-    
+
     monkeypatch.setattr("deeptutor.services.persona.get_persona_service", _fake_persona_service)
 
     session, turn = await runtime.start_turn(
@@ -756,13 +766,15 @@ async def test_turn_runtime_injects_memory_and_refreshes_after_completion(
             captured["conversation_context_text"] = context.metadata.get(
                 "conversation_context_text"
             )
-            await stream.emit(StreamEvent(
-                type=StreamEventType.CONTENT,
-                source="chat",
-                stage="responding",
-                content="Stored reply",
-                metadata={"call_kind": "llm_final_response"},
-            ))
+            await stream.emit(
+                StreamEvent(
+                    type=StreamEventType.CONTENT,
+                    source="chat",
+                    stage="responding",
+                    content="Stored reply",
+                    metadata={"call_kind": "llm_final_response"},
+                )
+            )
             await stream.emit(StreamEvent(type=StreamEventType.DONE, source="chat"))
 
     emit_calls: list[object] = []
@@ -783,7 +795,7 @@ async def test_turn_runtime_injects_memory_and_refreshes_after_completion(
             emit=fake_emit,
         ),
     )
-    
+
     monkeypatch.setattr("deeptutor.services.persona.get_persona_service", _fake_persona_service)
 
     _session, turn = await runtime.start_turn(

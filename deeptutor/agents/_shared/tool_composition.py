@@ -107,49 +107,49 @@ def compose_enabled_tools(
 ) -> list[str]:
     """Compose the per-turn enabled-tool list.
 
-    Order:
+     Order:
 
-    1. User-toggled tools (filtered through ``get_enabled`` so unknown tools
-       never sneak in, intersected with ``optional_whitelist`` so only
-       legitimate composer toggles are respected).
-    2. Conditional auto-mounts (:data:`_CONDITIONAL_MOUNT_FLAGS`: ``rag`` if a
-       KB is attached, ``read_source`` if a source index exists, …).
-    3. Active loop capabilities' *owned* tools (``capability_owned``) — the
-       capability's own tools, added on top.
-   # 4. Always-on auto-mounts (``write_memory`` / ``web_fetch`` /
-    # ``ask_user`` / ``cron``).
+     1. User-toggled tools (filtered through ``get_enabled`` so unknown tools
+        never sneak in, intersected with ``optional_whitelist`` so only
+        legitimate composer toggles are respected).
+     2. Conditional auto-mounts (:data:`_CONDITIONAL_MOUNT_FLAGS`: ``rag`` if a
+        KB is attached, ``read_source`` if a source index exists, …).
+     3. Active loop capabilities' *owned* tools (``capability_owned``) — the
+        capability's own tools, added on top.
+    # 4. Always-on auto-mounts (``write_memory`` / ``web_fetch`` /
+     # ``ask_user`` / ``cron``).
 
-    A loop capability (solve, mastery) reuses the *full* chat surface and only
-    *adds* its owned tools — it never curates or suppresses the reused
-    built-ins, so a capability turn respects the user's composer toggles
-    exactly as a chat turn does.
+     A loop capability (solve, mastery) reuses the *full* chat surface and only
+     *adds* its owned tools — it never curates or suppresses the reused
+     built-ins, so a capability turn respects the user's composer toggles
+     exactly as a chat turn does.
 
-    ``exclusive=True`` flips that for an exclusive-capability turn: the turn
-    runs on ``capability_owned`` plus the ``ask_user`` floor — no other
-    built-ins, no composer toggles. The one exception is ``rag`` when
-    ``mount_flags.has_kb`` is set: it serves co-selected KBs the capability
-    does not own, so it coexists with the owned surface instead of being
-    dropped (issue #650). The capability otherwise owns the surface.
+     ``exclusive=True`` flips that for an exclusive-capability turn: the turn
+     runs on ``capability_owned`` plus the ``ask_user`` floor — no other
+     built-ins, no composer toggles. The one exception is ``rag`` when
+     ``mount_flags.has_kb`` is set: it serves co-selected KBs the capability
+     does not own, so it coexists with the owned surface instead of being
+     dropped (issue #650). The capability otherwise owns the surface.
 
-    ``builtin_whitelist`` gates the *built-in* auto-mounts (steps 2 and 4 —
-    the :data:`AUTO_MOUNTED_TOOLS` members). ``None`` (the product-chat default)
-    means "no gating": every built-in mounts under its usual context condition,
-    exactly as before. A set restricts which built-ins may mount — partners use
-    this so an owner can deny e.g. ``read_memory`` to an IM-facing companion.
-    It never *adds* tools (a built-in still needs its context gate); it only
-    subtracts. User-toggled tools (step 1) and capability-owned tools (step 3)
-    are unaffected — they have their own gates.
+     ``builtin_whitelist`` gates the *built-in* auto-mounts (steps 2 and 4 —
+     the :data:`AUTO_MOUNTED_TOOLS` members). ``None`` (the product-chat default)
+     means "no gating": every built-in mounts under its usual context condition,
+     exactly as before. A set restricts which built-ins may mount — partners use
+     this so an owner can deny e.g. ``read_memory`` to an IM-facing companion.
+     It never *adds* tools (a built-in still needs its context gate); it only
+     subtracts. User-toggled tools (step 1) and capability-owned tools (step 3)
+     are unaffected — they have their own gates.
 
-    ``forced`` tools are appended unconditionally — they bypass both the
-    ``builtin_whitelist`` and the context gates (used by the partner runtime to
-    mandate ``partner_read`` / ``partner_memorize`` / ``partner_search``).
-    ``suppressed`` tools are removed from the final list regardless of how they
-    got there (the partner runtime suppresses chat's ``read_memory`` /
-    ``write_memory`` in favour of the partner variants). Both apply in the
-    ``exclusive`` branch too.
+     ``forced`` tools are appended unconditionally — they bypass both the
+     ``builtin_whitelist`` and the context gates (used by the partner runtime to
+     mandate ``partner_read`` / ``partner_memorize`` / ``partner_search``).
+     ``suppressed`` tools are removed from the final list regardless of how they
+     got there (the partner runtime suppresses chat's ``read_memory`` /
+     ``write_memory`` in favour of the partner variants). Both apply in the
+     ``exclusive`` branch too.
 
-    The result is ordered and deduplicated. ``optional_whitelist`` is still
-    expected to exclude ``AUTO_MOUNTED_TOOLS`` via :func:`default_optional_tools`.
+     The result is ordered and deduplicated. ``optional_whitelist`` is still
+     expected to exclude ``AUTO_MOUNTED_TOOLS`` via :func:`default_optional_tools`.
     """
     if exclusive:
         owned = [str(name) for name in capability_owned if str(name).strip()]

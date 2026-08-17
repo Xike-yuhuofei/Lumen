@@ -29,9 +29,7 @@ KERNEL_DIR = LUMEN_ROOT / "kernel"
 MODE_LEARN_DIR = LUMEN_ROOT / "modes" / "learn"
 
 # A compiled matcher for python import/from lines.
-_IMPORT_LINE = re.compile(
-    r"^\s*(?:import\s+([\w.]+)|from\s+([\w.]+)\s+import)\b"
-)
+_IMPORT_LINE = re.compile(r"^\s*(?:import\s+([\w.]+)|from\s+([\w.]+)\s+import)\b")
 
 
 def _rel(file: Path) -> str:
@@ -92,9 +90,7 @@ def test_mode_learn_does_not_import_concrete_provider_implementations() -> None:
     violations: list[str] = []
     for py in sorted(MODE_LEARN_DIR.rglob("*.py")):
         violations += _forbidden(_import_targets(py), MODE_FORBIDDEN_PROVIDER_IMPORTS)
-    assert (
-        not violations
-    ), "mode.learn imports a concrete provider:\n" + "\n".join(violations)
+    assert not violations, "mode.learn imports a concrete provider:\n" + "\n".join(violations)
 
 
 def test_mode_learn_does_not_import_other_plugins_providers() -> None:
@@ -114,9 +110,7 @@ def test_mode_learn_does_not_import_other_plugins_providers() -> None:
                 if _is_private_util(parts[2:]):
                     continue
                 violations.append(t)
-    assert not violations, "mode.learn imports another plugin's provider:\n" + "\n".join(
-        violations
-    )
+    assert not violations, "mode.learn imports another plugin's provider:\n" + "\n".join(violations)
 
 
 def _is_private_util(rest: list[str]) -> bool:
@@ -232,8 +226,11 @@ def test_shared_does_not_import_modes_or_runtime_providers() -> None:
 # the ``runtime.agent_loop`` contract.  The only product mode directory is
 # ``learn`` (future: news / review).
 
+
 def test_no_chat_mode_exists() -> None:
-    mode_dirs = sorted(p.name for p in MODES_DIR.iterdir() if p.is_dir() and not p.name.startswith("."))
+    mode_dirs = sorted(
+        p.name for p in MODES_DIR.iterdir() if p.is_dir() and not p.name.startswith(".")
+    )
     assert "chat" not in mode_dirs, "mode.chat must never exist — generic turns belong to Runtime"
     assert mode_dirs == ["learn"], f"unexpected mode directories: {mode_dirs}"
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Compatibility facade — real implementation now in ``lumen.shared._util.json_parser``."""
+
 from __future__ import annotations
 
 from lumen.shared._util.json_parser import (  # noqa: F401

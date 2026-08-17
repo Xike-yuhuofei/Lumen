@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from typing import TYPE_CHECKING, Any
 import uuid
 
@@ -41,6 +42,7 @@ from deeptutor.learning.models import (
     KnowledgeType,
     LearningModule,
     LearningProgress,
+    Misconception,
     PendingQuestion,
 )
 from deeptutor.learning.pending import public_pending_question
@@ -66,6 +68,7 @@ MASTERY_TOOL_NAMES: tuple[str, ...] = (
     "mastery_grade",
     "mastery_assess",
     "mastery_build",
+    "mastery_goal",
 )
 
 _QUESTION_TYPES = ("choice", "short", "open")
@@ -99,6 +102,64 @@ def _question_bank_type(question_type: str) -> str:
     if qtype == "open":
         return "written"
     return "short_answer"
+
+
+def _match_misconception(progress: LearningProgress, kp_id: str, statement: str) -> str:
+    """Match a tutor-supplied misconception statement against the ones
+    registered on *kp_id* and return the deterministic misconception node id
+    (``{kp_id}__mis{i}``), or ``""`` when nothing matches.
+
+    The model never supplies node ids — it describes the belief it observed;
+    the server decides which registered misconception (if any) that is.
+    """
+    from difflib import SequenceMatcher
+
+    text = " ".join(str(statement or "").strip().lower().split())
+    if not text:
+        return ""
+    registered: list[tuple[str, str]] = []
+    for module in progress.modules:
+        for kp in module.knowledge_points:
+            if kp.id == kp_id:
+                registered = [
+                    (" ".join(m.statement.lower().split()), m.statement) for m in kp.misconceptions
+                ]
+    if not registered:
+        return ""
+    best_index, best_score = -1, 0.0
+    for i, (normalized, _original) in enumerate(registered):
+        score = SequenceMatcher(None, text, normalized).ratio()
+        if normalized in text or text in normalized:
+            score = max(score, 0.9)
+        if score > best_score:
+            best_index, best_score = i, score
+    if best_index < 0 or best_score < 0.55:
+        return ""
+    return f"{kp_id}__mis{best_index}"
+
+
+def _node_payload(graph: Any, node_id: str) -> dict[str, Any]:
+    """Grounding payload for a teaching node: title, content and source refs
+    from the teaching graph (falls back to the bare id)."""
+    if not node_id:
+        return {"node_id": "", "title": ""}
+    payload: dict[str, Any] = {"node_id": node_id, "title": node_id}
+    try:
+        if graph is not None and graph.has_node(node_id):
+            node = graph.node(node_id)
+            payload["title"] = node.title
+            if node.content:
+                payload["content"] = node.content
+            if node.source_refs:
+                payload["source_refs"] = list(node.source_refs)
+            if node.type == "misconception" or getattr(node.type, "value", "") == "misconception":
+                payload["type"] = "misconception"
+                correction = node.metadata.get("correction", "")
+                if correction:
+                    payload["correction"] = correction
+    except Exception:
+        logger.warning("Failed to build node payload for %s", node_id, exc_info=True)
+    return payload
 
 
 def _normalize_quiz_contract(
@@ -288,12 +349,27 @@ class TeachingPlanTool(BaseTool):
         action = teaching.decide(path_id)
         node_title = _node_title(teaching, progress, action.focus_node_id)
         instruction = action_instruction(action, node_title=node_title)
+        try:
+            graph = teaching.get_graph(progress.book_id)
+        except Exception:
+            logger.warning("Failed to load teaching graph for grounding", exc_info=True)
+            graph = None
+        focus_payload = _node_payload(graph, action.focus_node_id)
+        resources = [_node_payload(graph, rid) for rid in action.resource_node_ids]
+        misconception = None
+        if focus_payload.get("type") == "misconception":
+            misconception = {
+                "statement": focus_payload.get("content", node_title),
+                "correction": focus_payload.get("correction", ""),
+            }
         return _json_result(
             {
                 "status": "active",
                 "decision": action.to_dict(),
                 "instruction": instruction,
-                "focus": {"node_id": action.focus_node_id, "title": node_title},
+                "focus": focus_payload,
+                "misconception": misconception,
+                "resources": resources,
                 "map": map_summary(progress),
             },
             meta_key="teaching_plan",
@@ -507,6 +583,17 @@ class MasteryGradeTool(BaseTool):
                     ),
                     required=False,
                 ),
+                ToolParameter(
+                    name="misconception",
+                    type="string",
+                    description=(
+                        "When the answer is wrong AND matches a misconception "
+                        "registered on this objective (see mastery_build), pass "
+                        "that misconception's statement here; the engine records "
+                        "it and remediates it before any new teaching. Optional."
+                    ),
+                    required=False,
+                ),
             ],
         )
 
@@ -544,6 +631,12 @@ class MasteryGradeTool(BaseTool):
             )
             answer_for_grading = resolve_choice_submission(answer, choice_options) or answer
 
+        # Server-side misconception match: the tutor describes the belief it
+        # observed; only registered misconceptions can ever be recorded.
+        misconception_node_id = _match_misconception(
+            progress, pending.knowledge_point_id, str(kwargs.get("misconception") or "")
+        )
+
         is_correct = service.grade_and_record(
             progress,
             question_id=pending.question_id,
@@ -553,6 +646,7 @@ class MasteryGradeTool(BaseTool):
             expected_answer=expected_answer,
             question_type=pending.question_type,
             scheduler=scheduler,
+            misconception_node_id=misconception_node_id,
         )
         await _sync_mastery_attempt_to_question_bank(
             session_id=_resolve_session_id(kwargs),
@@ -572,6 +666,7 @@ class MasteryGradeTool(BaseTool):
             "mastery": round(display_mastery(progress, kp), 3) if kp else 0.0,
             "threshold": round(gate_threshold(kp.type), 3) if kp else 0.0,
             "mastered": mastered,
+            "misconception_recorded": bool(misconception_node_id and not is_correct),
             "next": next_objective(progress).to_dict(),
         }
         return _json_result(payload, meta_key="mastery_grade")
@@ -637,7 +732,15 @@ class MasteryAssessTool(BaseTool):
                 ),
                 success=False,
             )
-        service.record_qualitative(progress, kp_id, passed=passed, evidence=feedback)
+        from deeptutor.learning.scheduler import SpacedRepetitionScheduler
+
+        service.record_qualitative(
+            progress,
+            kp_id,
+            passed=passed,
+            evidence=feedback,
+            scheduler=SpacedRepetitionScheduler(),
+        )
         payload = {
             "knowledge_point_id": kp_id,
             "passed": passed,
@@ -660,8 +763,12 @@ class MasteryBuildTool(BaseTool):
                 "read_source first when materials are attached) and pass them "
                 "here. Each knowledge point needs a 'type': memory (facts), "
                 "procedure (step-by-step skills), concept (ideas to understand), "
-                "or design (open-ended judgement). Use mode='replace' to start "
-                "fresh or 'append' to add to an existing path."
+                "or design (open-ended judgement). Optionally ground each point "
+                "with a short 'description' and a 'source_ref' locator into the "
+                "material, and register the 'misconceptions' learners commonly "
+                "hold about it ({statement, correction}) so wrong answers can be "
+                "diagnosed and remediated. Use mode='replace' to start fresh or "
+                "'append' to add to an existing path."
             ),
             parameters=[
                 ToolParameter(
@@ -669,7 +776,9 @@ class MasteryBuildTool(BaseTool):
                     type="array",
                     description=(
                         "Ordered modules: each {name, knowledge_points: [{name, "
-                        "type}]}. type is one of memory/procedure/concept/design."
+                        "type, description?, source_ref?, misconceptions?: "
+                        "[{statement, correction}]}]}. type is one of "
+                        "memory/procedure/concept/design."
                     ),
                     items={
                         "type": "object",
@@ -684,6 +793,19 @@ class MasteryBuildTool(BaseTool):
                                         "type": {
                                             "type": "string",
                                             "enum": sorted(_ALLOWED_KP_TYPES),
+                                        },
+                                        "description": {"type": "string"},
+                                        "source_ref": {"type": "string"},
+                                        "misconceptions": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "statement": {"type": "string"},
+                                                    "correction": {"type": "string"},
+                                                },
+                                                "required": ["statement"],
+                                            },
                                         },
                                     },
                                     "required": ["name"],
@@ -726,6 +848,7 @@ class MasteryBuildTool(BaseTool):
             progress.current_module_id = combined[0].id
             progress.current_kp_index = 0
         service.save(progress)
+        self._rebuild_teaching_graph(path_id)
         kp_count = sum(len(m.knowledge_points) for m in new_modules)
         return _json_result(
             {
@@ -738,6 +861,18 @@ class MasteryBuildTool(BaseTool):
             meta_key="mastery_build",
         )
 
+    @staticmethod
+    def _rebuild_teaching_graph(path_id: str) -> None:
+        """Rebuild the persisted teaching graph so teaching_plan decisions
+        always reflect the current module tree (a stale graph would keep
+        deciding against removed / renamed objectives)."""
+        try:
+            from deeptutor.teaching_core.teaching_service import TeachingService
+
+            TeachingService().rebuild_graph(path_id)
+        except Exception:
+            logger.warning("Failed to rebuild teaching graph for %s", path_id, exc_info=True)
+
 
 def _parse_modules(
     raw_modules: Any, path_id: str, offset: int
@@ -746,6 +881,8 @@ def _parse_modules(
 
     Ids are generated server-side (``<path>_m<i>_kp<j>``) so the model never
     controls storage keys; unknown knowledge types fall back to 'concept'.
+    Optional grounding (description / source_ref) and registered
+    misconceptions ride along onto the knowledge points.
     """
     if not isinstance(raw_modules, list) or not raw_modules:
         return [], "mastery_build needs a non-empty 'modules' array."
@@ -768,12 +905,28 @@ def _parse_modules(
             kp_type = str(raw_kp.get("type") or "concept").strip().lower()
             if kp_type not in _ALLOWED_KP_TYPES:
                 kp_type = "concept"
+            misconceptions: list[Misconception] = []
+            for raw_mis in raw_kp.get("misconceptions") or []:
+                if not isinstance(raw_mis, dict):
+                    continue
+                statement = str(raw_mis.get("statement") or "").strip()[:500]
+                if len(statement) < 3:
+                    continue
+                misconceptions.append(
+                    Misconception(
+                        statement=statement,
+                        correction=str(raw_mis.get("correction") or "").strip()[:1000],
+                    )
+                )
             kps.append(
                 KnowledgePoint(
                     id=f"{module_id}_kp{j}",
                     name=kp_name,
                     type=KnowledgeType(kp_type),
                     module_id=module_id,
+                    description=str(raw_kp.get("description") or "").strip()[:1000],
+                    source_ref=str(raw_kp.get("source_ref") or "").strip()[:200],
+                    misconceptions=misconceptions,
                 )
             )
         if not kps:
@@ -784,6 +937,94 @@ def _parse_modules(
     return modules, None
 
 
+class MasteryGoalTool(BaseTool):
+    """Set / inspect the learner's explicit learning goal (scope + name)."""
+
+    def get_definition(self) -> ToolDefinition:
+        return ToolDefinition(
+            name="mastery_goal",
+            description=(
+                "Set or inspect the learner's explicit learning goal: which "
+                "objectives count toward completion and what the learner is "
+                "aiming for. Call this when the learner states an intent like "
+                "'I only need chapter 3 for the exam' or 'I want to finish "
+                "everything'. Without a scope every objective gates completion."
+            ),
+            parameters=[
+                ToolParameter(
+                    name="name",
+                    type="string",
+                    description="The learner-facing goal intent (e.g. 'pass the midterm').",
+                    required=False,
+                ),
+                ToolParameter(
+                    name="scope_kp_ids",
+                    type="array",
+                    description=(
+                        "Objective ids (verbatim from mastery_status) that gate "
+                        "completion. Omit or pass [] to target the whole path. "
+                        "Prerequisites of scoped objectives still gate teaching "
+                        "order."
+                    ),
+                    required=False,
+                    items={"type": "string"},
+                ),
+                ToolParameter(
+                    name="clear",
+                    type="boolean",
+                    description="Reset the goal to the whole path (ignores name/scope).",
+                    required=False,
+                ),
+            ],
+        )
+
+    async def execute(self, **kwargs: Any) -> ToolResult:
+        path_id = _resolve_path_id(kwargs)
+        if not path_id:
+            return _no_path_result()
+        service = _new_service()
+        progress = service.get_or_create(path_id)
+        known = {kp.id for module in progress.modules for kp in module.knowledge_points}
+
+        if bool(kwargs.get("clear")):
+            progress.goal_name = ""
+            progress.goal_kp_ids = []
+        else:
+            name = str(kwargs.get("name") or "").strip()[:200]
+            if name:
+                progress.goal_name = name
+            raw_scope = kwargs.get("scope_kp_ids")
+            if raw_scope is not None:
+                if not isinstance(raw_scope, list) or any(
+                    not isinstance(item, str) for item in raw_scope
+                ):
+                    return ToolResult(
+                        content="mastery_goal.scope_kp_ids must be an array of objective ids.",
+                        success=False,
+                    )
+                scope = [kp_id.strip() for kp_id in raw_scope if kp_id.strip() in known]
+                dropped = len(raw_scope) - len(scope)
+                progress.goal_kp_ids = scope
+                if dropped:
+                    logger.warning(
+                        "mastery_goal dropped %d unknown objective ids for %s", dropped, path_id
+                    )
+        progress.updated_at = time.time()
+        service.save(progress)
+
+        scope = progress.goal_kp_ids
+        payload = {
+            "status": "set" if not kwargs.get("clear") else "cleared",
+            "goal": {
+                "name": progress.goal_name,
+                "scope_kp_ids": list(scope),
+                "scope": "all" if not scope else "subset",
+            },
+            "map": map_summary(progress),
+        }
+        return _json_result(payload, meta_key="mastery_goal")
+
+
 MASTERY_TOOL_TYPES: tuple[type[BaseTool], ...] = (
     TeachingPlanTool,
     MasteryStatusTool,
@@ -791,6 +1032,7 @@ MASTERY_TOOL_TYPES: tuple[type[BaseTool], ...] = (
     MasteryGradeTool,
     MasteryAssessTool,
     MasteryBuildTool,
+    MasteryGoalTool,
 )
 
 
@@ -803,4 +1045,5 @@ __all__ = [
     "MasteryGradeTool",
     "MasteryAssessTool",
     "MasteryBuildTool",
+    "MasteryGoalTool",
 ]

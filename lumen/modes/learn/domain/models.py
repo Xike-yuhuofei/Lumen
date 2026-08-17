@@ -77,6 +77,21 @@ class LearningStage(str, Enum):
         return cls(mapped) if mapped else None
 
 
+class Misconception(BaseModel):
+    """A known misconception attached to a knowledge point.
+
+    Authored by the tutor at build time from the material (or teaching
+    experience); ``statement`` is the wrong belief in the learner's voice and
+    ``correction`` is the canonical correction. The teaching graph materialises
+    each entry as a MISCONCEPTION node the engine can remediate.
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    statement: str
+    correction: str = ""
+
+
 class KnowledgePoint(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
@@ -84,6 +99,11 @@ class KnowledgePoint(BaseModel):
     name: str
     type: KnowledgeType
     module_id: str
+    # Source grounding: a short description of what this objective covers and
+    # a locator into the learner's material (e.g. "book#ch2.3").
+    description: str = ""
+    source_ref: str = ""
+    misconceptions: list[Misconception] = Field(default_factory=list)
 
 
 class LearningModule(BaseModel):
@@ -115,6 +135,9 @@ class QuizAttempt(BaseModel):
     error_type: ErrorType | None = None
     self_attribution: str = ""
     mastery_estimate: float = 0.0
+    # When a wrong answer matched a registered misconception, the graph node
+    # id of that misconception (else ""). Server-matched, never model-forged.
+    misconception_node_id: str = ""
     timestamp: float = Field(default_factory=time.time)
 
 
@@ -136,6 +159,9 @@ class ErrorRecord(BaseModel):
     error_type: ErrorType
     self_attribution: str = ""
     ai_confirmation: str = ""
+    # The matched misconception node id (see QuizAttempt.misconception_node_id);
+    # while this record is active/retrying the engine remediates it first.
+    misconception_node_id: str = ""
     retry_history: list[RetryAttempt] = Field(default_factory=list)
     status: Literal["active", "retrying", "review", "graduated"] = "active"
     created_at: float = Field(default_factory=time.time)
@@ -188,6 +214,12 @@ class LearningProgress(BaseModel):
     book_id: str
     diagnostic: DiagnosticResult | None = None
     modules: list[LearningModule] = Field(default_factory=list)
+    # Explicit learning goal (set via mastery_goal / dialogue with the tutor).
+    # An empty ``goal_kp_ids`` means "every knowledge point" (the default);
+    # otherwise only the listed objectives gate completion. ``goal_name`` is
+    # the learner-facing intent ("pass the exam", "read chapter 3", …).
+    goal_name: str = ""
+    goal_kp_ids: list[str] = Field(default_factory=list)
     current_module_id: str = ""
     current_stage: LearningStage = LearningStage.DIAGNOSTIC
     current_kp_index: int = 0
@@ -218,6 +250,7 @@ __all__ = [
     "ErrorType",
     "LearningStage",
     "KnowledgePoint",
+    "Misconception",
     "LearningModule",
     "DiagnosticResult",
     "QuizAttempt",

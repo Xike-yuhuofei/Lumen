@@ -42,9 +42,7 @@ def test_langchain_plugin_manifest():
     m = LangChainAgentLoopPlugin.manifest
     assert m.id == "agent_loop.langchain"
     assert "runtime.agent_loop" in m.provides
-    assert {"runtime.llm", "runtime.tools", "runtime.session", "runtime.prompt"} <= set(
-        m.requires
-    )
+    assert {"runtime.llm", "runtime.tools", "runtime.session", "runtime.prompt"} <= set(m.requires)
     # The plugin must NOT reach into mode.learn / learning / teaching_core.
     assert not {"mode.learn", "learning", "teaching_core"} & set(m.requires)
 
@@ -60,9 +58,7 @@ def test_ab_profiles_identical_except_agent_loop():
 
 @pytest.mark.asyncio
 async def test_langchain_profile_boots_and_provides_agent_loop():
-    root = await Bootstrap(profile=AGENT_LOOP_LANGCHAIN_PROFILE).boot(
-        AGENT_LOOP_LANGCHAIN_PLUGINS
-    )
+    root = await Bootstrap(profile=AGENT_LOOP_LANGCHAIN_PROFILE).boot(AGENT_LOOP_LANGCHAIN_PLUGINS)
     try:
         loop = root.require("runtime.agent_loop")
         assert isinstance(loop, _LangChainAgentLoopAdapter)

@@ -1,5 +1,6 @@
 """Shared services subpackage — contracts and adapter plugins for the
 plugin kernel (knowledge / memory / notebook / rendering)."""
+
 from lumen.shared.knowledge.parsing import (
     KnowledgeParsingPlugin,
     KnowledgeParsingService,
@@ -16,12 +17,18 @@ from lumen.shared.notebook import NotebookPlugin, NotebookService
 from lumen.shared.rendering import RenderingPlugin, RenderingService
 
 __all__ = [
-    "KnowledgeParsingPlugin", "KnowledgeParsingService",
-    "KnowledgeRetrievalPlugin", "KnowledgeRetrievalService",
-    "KnowledgeSourcesPlugin", "KnowledgeSourceService",
-    "MemoryPlugin", "MemoryService",
-    "NotebookPlugin", "NotebookService",
+    "KnowledgeParsingPlugin",
+    "KnowledgeParsingService",
+    "KnowledgeRetrievalPlugin",
+    "KnowledgeRetrievalService",
+    "KnowledgeSourcesPlugin",
+    "KnowledgeSourceService",
+    "MemoryPlugin",
+    "MemoryService",
+    "NotebookPlugin",
+    "NotebookService",
     "ParsedDocument",
-    "RenderingPlugin", "RenderingService",
+    "RenderingPlugin",
+    "RenderingService",
     "RetrievalResult",
 ]

@@ -1,4 +1,5 @@
 """Adapters — persistence, I/O, and projections for the Learn mode."""
+
 from lumen.modes.learn.adapters.graph_repository import (
     JsonTeachingGraphRepository,
     MemoryTeachingGraphRepository,
@@ -18,10 +19,15 @@ from lumen.modes.learn.adapters.storage import LearningStore
 
 __all__ = [
     "LearningStore",
-    "TeachingGraphRepository", "MemoryTeachingGraphRepository",
-    "JsonTeachingGraphRepository", "SQLiteTeachingGraphRepository",
+    "TeachingGraphRepository",
+    "MemoryTeachingGraphRepository",
+    "JsonTeachingGraphRepository",
+    "SQLiteTeachingGraphRepository",
     "default_graph_db_path",
-    "learner_state_from_progress", "goal_from_progress",
-    "evidence_bundle_from_progress", "mastery_estimate_from_progress",
-    "assessment_result_from_attempt", "action_instruction",
+    "learner_state_from_progress",
+    "goal_from_progress",
+    "evidence_bundle_from_progress",
+    "mastery_estimate_from_progress",
+    "assessment_result_from_attempt",
+    "action_instruction",
 ]

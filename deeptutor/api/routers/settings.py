@@ -950,9 +950,7 @@ async def apply_catalog(payload: CatalogPayload | None = None):
     _require_settings_admin()
     service = get_model_catalog_service()
     current = service.load()
-    catalog = (
-        payload.catalog if payload is not None else current
-    )
+    catalog = payload.catalog if payload is not None else current
     applied = service.apply(catalog)
     _invalidate_runtime_caches()
     return {

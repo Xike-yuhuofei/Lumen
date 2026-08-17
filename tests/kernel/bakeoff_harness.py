@@ -116,9 +116,7 @@ def _judge_scenario(result: ScenarioResult) -> bool:
     if scenario == "interrupt_resume":
         # Must have emitted a wait-for-input event and then completed.
         kinds = _event_kinds(result.events)
-        has_pause = any(
-            "pending" in k or "wait_for_input" in k for k in kinds
-        )
+        has_pause = any("pending" in k or "wait_for_input" in k for k in kinds)
         return has_pause and not result.error
     if scenario == "streaming":
         # >1 content events means it actually streamed incrementally.

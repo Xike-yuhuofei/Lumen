@@ -107,13 +107,9 @@ def test_requires_is_an_ordering_relation() -> None:
     model = TeachingKnowledgeModel(
         nodes=[
             TeachingNode(id="P", title="Principle", type=TeachingNodeType.PRINCIPLE),
-            TeachingNode(
-                id="O", title="Objective", type=TeachingNodeType.LEARNING_OBJECTIVE
-            ),
+            TeachingNode(id="O", title="Objective", type=TeachingNodeType.LEARNING_OBJECTIVE),
         ],
-        edges=[
-            TeachingEdge(source="P", target="O", relation=TeachingRelationType.REQUIRES)
-        ],
+        edges=[TeachingEdge(source="P", target="O", relation=TeachingRelationType.REQUIRES)],
     )
     g = TeachingKnowledgeGraph(model)
     # the objective's prerequisites include the requiring principle

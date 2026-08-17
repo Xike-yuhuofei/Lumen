@@ -60,7 +60,12 @@ def build_graph_from_modules(
     still gate progress deterministically.
 
     Node ids equal the knowledge point ids, so the learner model's mastery /
-    attempts map onto the graph with no renaming.
+    attempts map onto the graph with no renaming. Each KP also contributes:
+
+    * its ``description`` / ``source_ref`` as node content / source grounding;
+    * one MISCONCEPTION node per registered misconception, joined by a
+      ``corrects`` edge (KP corrects the misconception) so the engine's
+      remediation policy has real material to remediate with.
     """
     graph = TeachingKnowledgeGraph()
     kp_by_id: dict[str, KnowledgePoint] = {}
@@ -84,6 +89,8 @@ def build_graph_from_modules(
                 id=kp.id,
                 title=kp.name,
                 type=node_type,
+                content=kp.description or "",
+                source_refs=[kp.source_ref] if kp.source_ref else [],
                 metadata={"module_id": module.id, "knowledge_type": kp.type.value},
             )
             if not graph.has_node(kp.id):
@@ -97,6 +104,35 @@ def build_graph_from_modules(
                     weight=1.0,
                 )
             )
+            # registered misconceptions become remediable MISCONCEPTION nodes;
+            # the KP node is the correction resource for each of them.
+            for i, mis in enumerate(kp.misconceptions):
+                statement = mis.statement.strip()
+                if not statement:
+                    continue
+                mis_node_id = f"{kp.id}__mis{i}"
+                if not graph.has_node(mis_node_id):
+                    graph.add_node(
+                        TeachingNode(
+                            id=mis_node_id,
+                            title=statement[:120],
+                            type=TeachingNodeType.MISCONCEPTION,
+                            content=statement,
+                            metadata={
+                                "knowledge_point_id": kp.id,
+                                "correction": mis.correction,
+                                "source": source_id,
+                            },
+                        )
+                    )
+                graph.add_edge(
+                    TeachingEdge(
+                        source=kp.id,
+                        target=mis_node_id,
+                        relation=TeachingRelationType.CORRECTS,
+                        weight=1.0,
+                    )
+                )
             # knowledge points within a module build on each other in order
             if previous_kp_id is not None and previous_kp_id != kp.id:
                 graph.add_edge(

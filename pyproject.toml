@@ -152,6 +152,9 @@ dev = [
     "deeptutor[server]",
     "pytest>=7.0.0",
     "pytest-asyncio>=0.23.0",
+    # LangChain agent-loop provider (bake-off A/B tests in tests/kernel)
+    "langchain-core>=0.3.0,<0.4",
+    "langgraph>=0.3,<0.4",
     "pre-commit>=3.0.0",
     "safety<3.0.0",
     "bandit>=1.8.0",

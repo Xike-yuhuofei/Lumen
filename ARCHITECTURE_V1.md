@@ -244,19 +244,19 @@ class LearnModeService(ABC):
 
 ```python
 PRODUCTION_PLUGINS = [
-    SessionPlugin(),           # runtime.session
-    PromptPlugin(),            # runtime.prompt
-    ToolPlugin(),              # runtime.tools
-    LLMPlugin(),               # runtime.llm
-    AgentPlugin(),             # runtime.agent
-    AgentLoopPlugin(),         # runtime.agent_loop
+    SessionPlugin(),  # runtime.session
+    PromptPlugin(),  # runtime.prompt
+    ToolPlugin(),  # runtime.tools
+    LLMPlugin(),  # runtime.llm
+    AgentPlugin(),  # runtime.agent
+    AgentLoopPlugin(),  # runtime.agent_loop
     KnowledgeSourcesPlugin(),  # knowledge.sources
-    KnowledgeRetrievalPlugin(),# knowledge.retrieval
+    KnowledgeRetrievalPlugin(),  # knowledge.retrieval
     KnowledgeParsingPlugin(),  # knowledge.parsing
-    MemoryPlugin(),            # memory
-    NotebookPlugin(),          # notebook
-    RenderingPlugin(),         # rendering
-    ModeLearnPlugin(),         # mode.learn
+    MemoryPlugin(),  # memory
+    NotebookPlugin(),  # notebook
+    RenderingPlugin(),  # rendering
+    ModeLearnPlugin(),  # mode.learn
 ]
 ```
 
