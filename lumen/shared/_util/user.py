@@ -138,7 +138,7 @@ def local_admin_user() -> CurrentUser:
 
 
 def get_path_service_for_scope(scope: UserScope) -> Any:
-    from deeptutor.services.path_service import PathService
+    from .path_service import PathService
 
     key = scope.cache_key
     service = _path_services.get(key)
@@ -160,7 +160,7 @@ def get_current_path_service() -> Any:
     falls back to the default singleton so callers that patch
     ``PathService.get_instance()`` keep working.
     """
-    from deeptutor.services.path_service import PathService
+    from .path_service import PathService
 
     if get_current_user_or_none() is None:
         return PathService.get_instance()

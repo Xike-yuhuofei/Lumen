@@ -31,7 +31,7 @@ class KnowledgeSourcesPlugin(Plugin):
 
     async def setup(self, ctx: PluginContext) -> None:
         from deeptutor.knowledge.manager import KnowledgeBaseManager
-        from deeptutor.services.path_service import get_path_service
+        from lumen.shared._util.path_service import get_path_service
 
         kb_root = get_path_service().get_knowledge_bases_root()
         manager = KnowledgeBaseManager(base_dir=str(kb_root))

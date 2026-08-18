@@ -383,7 +383,7 @@ class PathService:
 
 def get_path_service() -> PathService:
     try:
-        from deeptutor.services.user import get_current_path_service
+        from .user import get_current_path_service
 
         return get_current_path_service()
     except Exception:
