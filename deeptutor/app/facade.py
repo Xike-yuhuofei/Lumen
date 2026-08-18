@@ -89,7 +89,7 @@ class DeepTutorApp:
         """
         from deeptutor.agents.chat.agentic_pipeline import CHAT_OPTIONAL_TOOLS
         from deeptutor.i18n.metadata_i18n import capability_description_i18n
-        from deeptutor.runtime.request_contracts import get_capability_request_schema
+        from lumen.runtime.request_contracts import get_capability_request_schema
 
         manifest = {
             "name": "chat",

@@ -701,7 +701,7 @@ class TurnRuntimeManager:
             key: raw_config.pop(key) for key in runtime_only_keys if key in raw_config
         }
         try:
-            from deeptutor.runtime.request_contracts import validate_capability_config
+            from lumen.runtime.request_contracts import validate_capability_config
 
             validated_public_config = validate_capability_config(capability, raw_config)
         except ValueError as exc:
@@ -2036,7 +2036,7 @@ class TurnRuntimeManager:
             # A turn may have parsed large attachments or built substantial
             # temporary prompts/results. Reclaim after this coroutine returns,
             # outside the user-visible streaming path.
-            from deeptutor.runtime.memory_reclaim import schedule_memory_reclaim
+            from lumen.runtime.memory_reclaim import schedule_memory_reclaim
 
             schedule_memory_reclaim()
 
