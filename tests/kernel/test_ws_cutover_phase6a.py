@@ -23,9 +23,9 @@ from typing import Any
 
 import pytest
 
-from deeptutor.core.stream import StreamEvent, StreamEventType
 from lumen.runtime.session.sqlite_store import SQLiteSessionStore
 from lumen.runtime.session.turn_runtime import TurnRuntimeManager
+from lumen.runtime.stream.events import StreamEvent, StreamEventType
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Shared fakes
@@ -365,7 +365,7 @@ async def test_ws_chat_turn_boots_kernel_on_demand(
     previous = _attach_bootstrap(None)
     try:
         monkeypatch.setattr(
-            "deeptutor.agents.chat.agentic_pipeline.AgenticChatPipeline", lambda **kw: probe
+            "lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.AgenticChatPipeline", lambda **kw: probe
         )
         _patch_legacy_runtime(monkeypatch)
 

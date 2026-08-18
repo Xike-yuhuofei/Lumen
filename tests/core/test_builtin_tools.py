@@ -9,7 +9,7 @@ from typing import Any
 
 import pytest
 
-from deeptutor.core.tool_protocol import BaseTool, ToolDefinition, ToolParameter, ToolResult
+from lumen.runtime.tool_protocol import BaseTool, ToolDefinition, ToolParameter, ToolResult
 from lumen.runtime.tools.builtin import (
     BrainstormTool,
     CodeExecutionTool,

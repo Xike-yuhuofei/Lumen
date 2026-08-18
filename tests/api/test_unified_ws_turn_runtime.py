@@ -4,9 +4,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from deeptutor.core.stream import StreamEvent, StreamEventType
 from lumen.runtime.session.sqlite_store import SQLiteSessionStore
 from lumen.runtime.session.turn_runtime import TurnRuntimeManager
+from lumen.runtime.stream.events import StreamEvent, StreamEventType
 
 
 async def _noop_async(*_args, **_kwargs):
@@ -135,7 +135,7 @@ async def test_turn_runtime_replays_events_and_materializes_messages(
     monkeypatch.setattr(
         "lumen.runtime.session.context_builder.ContextBuilder", FakeContextBuilder
     )
-    monkeypatch.setattr("deeptutor.agents.chat.agentic_pipeline.AgenticChatPipeline", FakePipeline)
+    monkeypatch.setattr("lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.AgenticChatPipeline", FakePipeline)
     monkeypatch.setattr(
         "lumen.shared._util.memory.get_memory_store",
         lambda: SimpleNamespace(
@@ -286,7 +286,7 @@ async def test_turn_runtime_persists_llm_selection_in_turn_snapshot(
     monkeypatch.setattr(
         "lumen.runtime.session.context_builder.ContextBuilder", FakeContextBuilder
     )
-    monkeypatch.setattr("deeptutor.agents.chat.agentic_pipeline.AgenticChatPipeline", FakePipeline)
+    monkeypatch.setattr("lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.AgenticChatPipeline", FakePipeline)
     monkeypatch.setattr(
         "lumen.shared._util.memory.get_memory_store",
         lambda: SimpleNamespace(
@@ -371,7 +371,7 @@ async def test_turn_runtime_session_persona_persists_falls_back_and_clears(
     monkeypatch.setattr(
         "lumen.runtime.session.context_builder.ContextBuilder", FakeContextBuilder
     )
-    monkeypatch.setattr("deeptutor.agents.chat.agentic_pipeline.AgenticChatPipeline", FakePipeline)
+    monkeypatch.setattr("lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.AgenticChatPipeline", FakePipeline)
     monkeypatch.setattr(
         "lumen.shared._util.memory.get_memory_store",
         lambda: SimpleNamespace(read_l3_concat=lambda: "", emit=_noop_async),
@@ -514,7 +514,7 @@ async def test_turn_runtime_allows_model_switching_within_same_session(
     monkeypatch.setattr(
         "lumen.runtime.session.context_builder.ContextBuilder", FakeContextBuilder
     )
-    monkeypatch.setattr("deeptutor.agents.chat.agentic_pipeline.AgenticChatPipeline", FakePipeline)
+    monkeypatch.setattr("lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.AgenticChatPipeline", FakePipeline)
     monkeypatch.setattr(
         "lumen.shared._util.memory.get_memory_store",
         lambda: SimpleNamespace(
@@ -668,7 +668,7 @@ async def test_turn_runtime_bootstraps_question_followup_context_once(
     monkeypatch.setattr(
         "lumen.runtime.session.context_builder.ContextBuilder", FakeContextBuilder
     )
-    monkeypatch.setattr("deeptutor.agents.chat.agentic_pipeline.AgenticChatPipeline", FakePipeline)
+    monkeypatch.setattr("lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.AgenticChatPipeline", FakePipeline)
     monkeypatch.setattr(
         "lumen.shared._util.memory.get_memory_store",
         lambda: SimpleNamespace(
@@ -787,7 +787,7 @@ async def test_turn_runtime_injects_memory_and_refreshes_after_completion(
     monkeypatch.setattr(
         "lumen.runtime.session.context_builder.ContextBuilder", FakeContextBuilder
     )
-    monkeypatch.setattr("deeptutor.agents.chat.agentic_pipeline.AgenticChatPipeline", FakePipeline)
+    monkeypatch.setattr("lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.AgenticChatPipeline", FakePipeline)
     monkeypatch.setattr(
         "lumen.shared._util.memory.get_memory_store",
         lambda: SimpleNamespace(

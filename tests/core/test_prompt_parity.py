@@ -7,9 +7,12 @@ from typing import Any, Iterable
 import yaml
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-AGENTS_DIR = PROJECT_ROOT / "deeptutor" / "agents"
-# Modules that live outside deeptutor/agents/ but still own prompts.
-EXTRA_PROMPT_MODULE_DIRS = (PROJECT_ROOT / "deeptutor" / "book",)
+# Canonical prompt roots under ``lumen`` — each carries a prompts/{en,zh}/ tree.
+PROMPT_ROOTS = (
+    PROJECT_ROOT / "lumen" / "runtime" / "agent_loop" / "providers" / "legacy",
+    PROJECT_ROOT / "lumen" / "runtime" / "agents" / "notebook",
+    PROJECT_ROOT / "lumen" / "shared" / "memory" / "consolidator",
+)
 
 # Template placeholders are expected to be like {topic}, {knowledge_title}, etc.
 # Avoid false positives from LaTeX (\frac{1}{3}) and Mermaid (B{{Processing}}).
@@ -57,14 +60,12 @@ def _collect_keys(value: Any, prefix: str = "") -> set[str]:
 
 
 def test_prompts_key_and_placeholder_parity():
-    assert AGENTS_DIR.exists(), f"Agents dir not found: {AGENTS_DIR}"
+    module_dirs: list[Path] = sorted(
+        p for p in PROMPT_ROOTS if (p / "prompts" / "en").is_dir()
+    )
+    assert module_dirs, f"No canonical prompt roots found under: {PROMPT_ROOTS}"
 
     failures: list[str] = []
-
-    module_dirs: list[Path] = sorted(
-        [p for p in AGENTS_DIR.iterdir() if p.is_dir() and not p.name.startswith("__")]
-    )
-    module_dirs.extend(p for p in EXTRA_PROMPT_MODULE_DIRS if p.is_dir())
 
     for module_dir in module_dirs:
         prompts_dir = module_dir / "prompts"

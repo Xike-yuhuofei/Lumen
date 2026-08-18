@@ -18,7 +18,8 @@ import json
 
 import pytest
 
-from deeptutor.tools.mastery_tool import (
+from lumen.modes.learn.adapters.storage import LearningStore
+from lumen.modes.learn.chat_tools import (
     MasteryAssessTool,
     MasteryBuildTool,
     MasteryGoalTool,
@@ -26,7 +27,6 @@ from deeptutor.tools.mastery_tool import (
     MasteryQuizTool,
     TeachingPlanTool,
 )
-from lumen.modes.learn.adapters.storage import LearningStore
 
 from .harness import force_reviews_due, owning_kp_id, run_loop
 from .learners import (
@@ -207,7 +207,7 @@ async def test_misconception_learner_detected_remediated_not_stuck(eval_env):
 @pytest.mark.asyncio
 async def test_guessing_learner_mastery_does_not_jump(eval_env):
     path_id = "guessing"
-    from deeptutor.tools.mastery_tool import MasteryBuildTool as Build
+    from lumen.modes.learn.chat_tools import MasteryBuildTool as Build
 
     build = await Build().execute(
         _mastery_path_id=path_id, modules=_single_memory_module(path_id), mode="replace"
@@ -292,7 +292,7 @@ async def test_forgetting_learner_review_failure_demotes_qualitative_mastery(eva
 @pytest.mark.asyncio
 async def test_transfer_evidence_is_tracked_and_affects_mastery(eval_env):
     path_id = "transfer"
-    from deeptutor.tools.mastery_tool import MasteryBuildTool as Build
+    from lumen.modes.learn.chat_tools import MasteryBuildTool as Build
 
     await Build().execute(
         _mastery_path_id=path_id, modules=_single_memory_module(path_id), mode="replace"

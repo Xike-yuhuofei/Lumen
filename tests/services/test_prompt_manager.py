@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from deeptutor.services.prompt import get_prompt_manager
+from lumen.runtime.prompt import get_prompt_manager
 
 
 def test_prompt_manager_loads_prompts_from_deeptutor_tree() -> None:

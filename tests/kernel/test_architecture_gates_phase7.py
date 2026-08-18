@@ -282,7 +282,7 @@ TURN_ENTRY_FILES = (
     "lumen/runtime/session/turn_runtime.py",
     "lumen/app/cron/executor.py",
 )
-DIRECT_PIPELINE_IMPORTS = ("deeptutor.agents.chat.agentic_pipeline",)
+DIRECT_PIPELINE_IMPORTS = ("lumen.runtime.agent_loop.providers.legacy.agentic_pipeline",)
 
 
 @pytest.mark.parametrize("rel", TURN_ENTRY_FILES)
@@ -314,25 +314,18 @@ def test_no_production_import_of_legacy_capability_shell(legacy: str) -> None:
 # ``lumen/**`` is the canonical namespace.  Production code there must never
 # import ``deeptutor.*``: the legacy namespace is only a temporary
 # compatibility facade that is being deleted, so any import would resurrect a
-# dead dependency direction.  (``deeptutor_cli/`` and ``scripts/`` are the
-# remaining App/CLI consumers that still go through ``deeptutor.app`` and
-# ``deeptutor.runtime``; they move to ``lumen`` in the App ownership batch.)
+# dead dependency direction.
 #
-# A small set of runtime contract providers still bridge to legacy
-# implementations during the Runtime ownership migration.  Each entry is the
-# precise remaining debt that must be eliminated; the gate enforces that no
-# *new* ``deeptutor`` dependency is introduced in the meantime.
+# The Runtime ownership batch has been completed — every remaining bridge
+# (agent_loop / agentic_pipeline) is now canonical in ``lumen.runtime`` and
+# no ``lumen -> deeptutor`` import remains.  ``ALLOWED_LEGACY_BRIDGES`` is
+# intentionally empty and exists so the gate degrades to "no bridge allowed".
 
 LUMEN_DIR = LUMEN_ROOT
 
-# file:line → legacy module.  These must be migrated to canonical lumen
-# implementations; the list must shrink to empty before ``deeptutor/`` can be
-# deleted.
-ALLOWED_LEGACY_BRIDGES = {
-    "lumen/runtime/agent_loop/providers/legacy/agent.py": (
-        "deeptutor.agents.chat.agentic_pipeline"
-    ),
-}
+# file:line → legacy module.  Must stay empty: every entry would be a
+# ``lumen -> deeptutor`` dependency that resurrects the legacy namespace.
+ALLOWED_LEGACY_BRIDGES: dict[str, str] = {}
 
 
 def test_lumen_never_imports_deeptutor() -> None:

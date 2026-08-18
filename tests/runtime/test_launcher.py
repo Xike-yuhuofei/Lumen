@@ -342,8 +342,8 @@ def test_start_uses_ipv4_loopback_for_frontend_proxy(
     monkeypatch: pytest.MonkeyPatch,
     resolved_backend_port: int,
 ) -> None:
-    from deeptutor.services import config as config_module
-    from deeptutor.services import setup as setup_module
+    import lumen.app.setup as setup_module
+    import lumen.shared.config as config_module
 
     settings_dir = tmp_path / "data" / "user" / "settings"
     settings = config_module.LaunchSettings(

@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 import pytest
 
-from deeptutor.api.routers.mastery_path import router
+from lumen.app.api.routers.mastery_path import router
 from lumen.modes.learn.adapters.storage import LearningStore
 
 
@@ -20,7 +20,7 @@ def app(tmp_path, monkeypatch):
         return LearningStore(root=tmp_path)
 
     monkeypatch.setattr(
-        "deeptutor.api.routers.mastery_path.LearningStore",
+        "lumen.app.api.routers.mastery_path.LearningStore",
         _make_store_with_tmp,
     )
     app = FastAPI()
@@ -381,7 +381,7 @@ class TestGenerateFromNotebook:
         )
         assert resp.status_code == 502
 
-    @patch("deeptutor.api.routers.mastery_path.get_response_language", return_value="en")
+    @patch("lumen.app.api.routers.mastery_path.get_response_language", return_value="en")
     @patch("lumen.shared._util.llm.complete", new_callable=AsyncMock)
     def test_generate_injection_ignored(self, mock_complete, _mock_language, client):
         """Injection payload in title/output must not alter generation behavior."""
@@ -421,7 +421,7 @@ class TestGenerateFromNotebook:
         sys_prompt = call_args.kwargs.get("system_prompt") or call_args[1].get("system_prompt", "")
         assert "Ignore" in sys_prompt
 
-    @patch("deeptutor.api.routers.mastery_path.get_response_language", return_value="zh")
+    @patch("lumen.app.api.routers.mastery_path.get_response_language", return_value="zh")
     @patch("lumen.shared._util.llm.complete", new_callable=AsyncMock)
     def test_generate_uses_zh_prompt_when_response_language_is_zh(
         self,

@@ -26,7 +26,7 @@ _PYTHON_FLAGS = ("ws_max_size", "timeout_keep_alive")
 _CLI_FLAGS = ("--ws-max-size", "--timeout-keep-alive")
 _LAUNCH_POINTS = [
     ("lumen/app/launcher.py", '"uvicorn",', _CLI_FLAGS),
-    ("deeptutor/api/run_server.py", "uvicorn.run(", _PYTHON_FLAGS),
+    ("lumen/app/api/run_server.py", "uvicorn.run(", _PYTHON_FLAGS),
     ("deeptutor_cli/main.py", "uvicorn.run(", _PYTHON_FLAGS),
 ]
 

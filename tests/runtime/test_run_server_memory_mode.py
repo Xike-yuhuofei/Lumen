@@ -5,7 +5,7 @@ from typing import Any
 
 import pytest
 
-from deeptutor.api import run_server
+from lumen.app.api import run_server
 
 
 @pytest.fixture

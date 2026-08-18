@@ -25,7 +25,7 @@ from typing import Any
 
 import pytest
 
-from deeptutor.api.routers import knowledge as knowledge_router
+from lumen.app.api.routers import knowledge as knowledge_router
 from lumen.shared.knowledge.add_documents import DocumentAdder
 
 

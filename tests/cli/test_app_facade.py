@@ -14,7 +14,7 @@ from typing import Any
 
 import pytest
 
-from deeptutor.app import DeepTutorApp, TurnRequest
+from lumen.app.facade import DeepTutorApp, TurnRequest
 
 
 def _broken_registry():

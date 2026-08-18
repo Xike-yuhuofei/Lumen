@@ -20,5 +20,5 @@ if errorlevel 1 (
 echo Starting DeepTutor Backend Server...
 echo Backend will be available at: http://localhost:8001
 echo Press Ctrl+C to stop the server.
-python -m deeptutor.api.run_server
+python -m lumen.app.api.run_server
 pause

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from deeptutor.core.tool_protocol import BaseTool, ToolDefinition, ToolParameter, ToolResult
+from lumen.runtime.tool_protocol import BaseTool, ToolDefinition, ToolParameter, ToolResult
 from lumen.runtime.tools.registry import ToolRegistry
 
 

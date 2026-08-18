@@ -21,7 +21,8 @@ from pathlib import Path
 import time
 from typing import Any
 
-from deeptutor.tools.mastery_tool import (
+from lumen.modes.learn.adapters.storage import LearningStore
+from lumen.modes.learn.chat_tools import (
     MasteryAssessTool,
     MasteryBuildTool,
     MasteryGoalTool,
@@ -29,7 +30,6 @@ from deeptutor.tools.mastery_tool import (
     MasteryQuizTool,
     TeachingPlanTool,
 )
-from lumen.modes.learn.adapters.storage import LearningStore
 
 from .learners import Learner
 from .materials import BenchmarkMaterial

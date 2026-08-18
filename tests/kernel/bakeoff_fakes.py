@@ -266,7 +266,7 @@ class FakeBakeoffToolService(ToolService):
 def make_calc_tool() -> Any:
     """A deterministic calculator tool with a Lumen ToolDefinition."""
 
-    from deeptutor.core.tool_protocol import BaseTool, ToolDefinition, ToolParameter, ToolResult
+    from lumen.runtime.tool_protocol import BaseTool, ToolDefinition, ToolParameter, ToolResult
 
     class CalcTool(BaseTool):
         def get_definition(self) -> ToolDefinition:
@@ -290,7 +290,7 @@ def make_calc_tool() -> Any:
 def make_ask_tool() -> Any:
     """A deterministic ask_user tool with a Lumen ToolDefinition."""
 
-    from deeptutor.core.tool_protocol import BaseTool, ToolDefinition, ToolParameter, ToolResult
+    from lumen.runtime.tool_protocol import BaseTool, ToolDefinition, ToolParameter, ToolResult
 
     class AskTool(BaseTool):
         def get_definition(self) -> ToolDefinition:

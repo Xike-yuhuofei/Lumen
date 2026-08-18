@@ -17,7 +17,7 @@ import pytest
 pytest.importorskip("fastapi")
 from fastapi import HTTPException, UploadFile
 
-from deeptutor.api.routers.knowledge import _save_uploaded_files
+from lumen.app.api.routers.knowledge import _save_uploaded_files
 
 ALLOWED = {".txt", ".md", ".pdf", ".zip"}
 

@@ -4,7 +4,7 @@ import asyncio
 import json
 from pathlib import Path
 
-from deeptutor.knowledge.add_documents import (
+from lumen.shared.knowledge.add_documents import (
     DocumentAdder,
     RawDocumentRemoval,
     remove_raw_document,

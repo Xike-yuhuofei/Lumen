@@ -28,7 +28,7 @@ from fastapi.testclient import TestClient
 
 
 def test_require_auth_is_async_def() -> None:
-    from deeptutor.api.routers.auth import require_admin, require_auth
+    from lumen.app.api.routers.auth import require_admin, require_auth
 
     assert inspect.iscoroutinefunction(require_auth), (
         "require_auth must be async — a sync dep is run in a threadpool whose "
@@ -44,7 +44,7 @@ def test_install_current_user_maps_none_to_local_admin() -> None:
     for both HTTP and WS deps. It must install the local admin user so
     that ``get_current_path_service()`` resolves to the admin workspace
     rather than silently falling back through the None path."""
-    from deeptutor.api.routers.auth import _install_current_user
+    from lumen.app.api.routers.auth import _install_current_user
     from lumen.shared._util.user import (
         LOCAL_ADMIN_ID,
         LOCAL_ADMIN_USERNAME,
@@ -71,8 +71,8 @@ def test_install_current_user_maps_payload_to_local_admin() -> None:
     account, so a token carrying ``role="user"`` still maps to the admin
     user (id/username/role and an ``admin`` scope), never a per-user scope.
     """
-    from deeptutor.api.routers.auth import _install_current_user
-    from deeptutor.services.auth import TokenPayload
+    from lumen.app.api.routers.auth import _install_current_user
+    from lumen.shared._util.auth import TokenPayload
     from lumen.shared._util.user import (
         LOCAL_ADMIN_ID,
         LOCAL_ADMIN_USERNAME,
@@ -97,7 +97,7 @@ def test_local_admin_token_payload_matches_local_admin_user() -> None:
     AUTH_ENABLED=false must use the same identity constants as
     ``local_admin_user()`` — drift between the two reintroduces the kind
     of dual-source-of-truth bug that #481 lived in."""
-    from deeptutor.api.routers.auth import _local_admin_token_payload
+    from lumen.app.api.routers.auth import _local_admin_token_payload
     from lumen.shared._util.user import LOCAL_ADMIN_ID, LOCAL_ADMIN_USERNAME, local_admin_user
 
     tp = _local_admin_token_payload()
@@ -111,8 +111,8 @@ def test_require_auth_propagates_contextvar_to_endpoint(monkeypatch) -> None:
     """End-to-end: a valid token through require_auth makes the installed
     current user visible to the endpoint, even when the token says
     ``role="user"`` — single-user mode maps it to the local admin."""
-    from deeptutor.api.routers import auth as auth_router
-    from deeptutor.services.auth import TokenPayload
+    from lumen.app.api.routers import auth as auth_router
+    from lumen.shared._util.auth import TokenPayload
     from lumen.shared._util.user import (
         LOCAL_ADMIN_ID,
         LOCAL_ADMIN_USERNAME,
@@ -152,8 +152,8 @@ def test_require_auth_propagates_contextvar_to_endpoint(monkeypatch) -> None:
 
 
 def test_require_auth_propagates_admin_contextvar_to_endpoint(monkeypatch) -> None:
-    from deeptutor.api.routers import auth as auth_router
-    from deeptutor.services.auth import TokenPayload
+    from lumen.app.api.routers import auth as auth_router
+    from lumen.shared._util.auth import TokenPayload
     from lumen.shared._util.user import get_current_user_or_none
 
     monkeypatch.setattr(auth_router, "AUTH_ENABLED", True)

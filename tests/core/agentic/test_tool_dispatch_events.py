@@ -23,12 +23,12 @@ from typing import Any
 
 import pytest
 
-from deeptutor.core.context import UnifiedContext
-from deeptutor.core.stream import StreamEvent, StreamEventType
-from deeptutor.core.tool_protocol import ToolResult
-from deeptutor.core.trace import derive_trace_metadata
 from lumen.runtime.agent_loop.engine.tool_dispatch import dispatch_tool_calls
+from lumen.runtime.context import UnifiedContext
 from lumen.runtime.stream.bus import StreamBus
+from lumen.runtime.stream.events import StreamEvent, StreamEventType
+from lumen.runtime.stream.trace import derive_trace_metadata
+from lumen.runtime.tool_protocol import ToolResult
 from lumen.runtime.tools.registry import ToolRegistry
 from lumen.shared.sandbox import Mount
 

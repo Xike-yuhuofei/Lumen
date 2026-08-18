@@ -14,9 +14,9 @@ from typing import Any
 
 import pytest
 
-from deeptutor.core.stream import StreamEventType
 from lumen.runtime.agent_loop.engine.labeled_step import run_labeled_step
 from lumen.runtime.stream.bus import StreamBus
+from lumen.runtime.stream.events import StreamEventType
 from lumen.shared._util.llm.multimodal import has_image_parts
 
 

@@ -12,7 +12,7 @@ from rich.panel import Panel
 from rich.text import Text
 import typer
 
-from deeptutor.app import DeepTutorApp, TurnRequest
+from lumen.app.facade import DeepTutorApp, TurnRequest
 from lumen.shared._util.brand import PRODUCT_NAME
 
 from .common import (

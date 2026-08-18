@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from deeptutor.api.routers import settings as settings_router
+from lumen.app.api.routers import settings as settings_router
 from lumen.shared._util import tool_preferences
 from lumen.shared._util.embedding import client as embedding_client_module
 from lumen.shared._util.embedding import config as embedding_config_module

@@ -4,7 +4,7 @@ The chat turn runtime writes the bytes of every uploaded attachment here
 *before* the document extractor runs. Once persisted, the URL is recorded on
 the message and the in-memory base64 is dropped (extractor still clears it
 for office docs to save DB space). The frontend later fetches the original
-file via the ``deeptutor.api.routers.attachments`` endpoint to render a
+file via the ``lumen.app.api.routers.attachments`` endpoint to render a
 preview.
 
 Design goals
@@ -46,7 +46,7 @@ logger = logging.getLogger(__name__)
 
 
 _DEFAULT_SUBPATH = ("workspace", "chat", "attachments")
-# Public route prefix served by deeptutor.api.routers.attachments
+# Public route prefix served by lumen.app.api.routers.attachments
 _PUBLIC_URL_PREFIX = "/api/attachments"
 
 _UNSAFE_CHARS = re.compile(r'[<>:"/\\|?*]')

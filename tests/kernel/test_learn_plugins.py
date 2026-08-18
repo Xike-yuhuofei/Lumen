@@ -255,7 +255,7 @@ async def test_handle_turn_sets_mastery_metadata_and_calls_agent_loop():
 
     adapter = _LearnModeServiceAdapter(agent_loop=FakeAgentLoop())
 
-    from deeptutor.core.context import UnifiedContext
+    from lumen.runtime.context import UnifiedContext
     from lumen.runtime.stream.bus import StreamBus
 
     ctx = UnifiedContext(session_id="s1", user_message="Hi")

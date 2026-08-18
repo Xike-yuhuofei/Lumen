@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from deeptutor.knowledge.manager import KnowledgeBaseManager
+from lumen.shared.knowledge.manager import KnowledgeBaseManager
 
 
 class _Signature:
@@ -19,7 +19,7 @@ class _Signature:
 def _patch_active_embedding(
     monkeypatch: pytest.MonkeyPatch, sig_hash: str = "active-signature"
 ) -> None:
-    from deeptutor.knowledge import manager as manager_module
+    from lumen.shared.knowledge import manager as manager_module
     from lumen.shared.knowledge.rag import embedding_signature
 
     monkeypatch.setattr(

@@ -6,8 +6,8 @@ from pathlib import Path
 
 import yaml
 
-from deeptutor.agents.chat.prompt_blocks import ChatPromptAssembler
-from deeptutor.core.context import UnifiedContext
+from lumen.runtime.agent_loop.providers.legacy.prompt_blocks import ChatPromptAssembler
+from lumen.runtime.context import UnifiedContext
 
 PROMPTS = {
     "general": "You are Lumen, an interactive tutor.",
@@ -78,7 +78,10 @@ def test_blank_identity_falls_back_to_product():
 
 
 def test_shipped_yaml_carries_partner_templates():
-    root = Path(__file__).resolve().parents[3] / "deeptutor/agents/chat/prompts"
+    root = (
+        Path(__file__).resolve().parents[3]
+        / "lumen/runtime/agent_loop/providers/legacy/prompts"
+    )
     for lang in ("en", "zh"):
         data = yaml.safe_load((root / lang / "agentic_chat.yaml").read_text())
         assert "{name}" in data["general_partner"]

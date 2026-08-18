@@ -12,6 +12,20 @@ import yaml
 from lumen.shared._util.language import parse_language
 from lumen.shared._util.runtime_home import PACKAGE_ROOT
 
+# Agent modules whose canonical prompts live in ``lumen`` (the only live
+# agent prompt loader today is ``chat``).
+LUMEN_AGENT_PROMPT_ROOTS: dict[str, Path] = {
+    "chat": (
+        PACKAGE_ROOT
+        / "lumen"
+        / "runtime"
+        / "agent_loop"
+        / "providers"
+        / "legacy"
+        / "prompts"
+    ),
+}
+
 
 class PromptManager:
     """Unified prompt manager with singleton pattern and global caching."""
@@ -129,15 +143,14 @@ class PromptManager:
         return list(dict.fromkeys([lang_code, *base_chain, "en"]))
 
     def _candidate_prompt_dirs(self, module_name: str) -> list[Path]:
-        """Return legacy and current prompt roots for a module."""
-        if module_name in self.NON_AGENT_MODULES:
-            legacy_dir = PACKAGE_ROOT / "src" / module_name / "prompts"
-            current_dir = PACKAGE_ROOT / "deeptutor" / module_name / "prompts"
-            return [legacy_dir, current_dir]
+        """Return canonical prompt roots for a module.
 
-        legacy_dir = PACKAGE_ROOT / "src" / "agents" / module_name / "prompts"
-        current_dir = PACKAGE_ROOT / "deeptutor" / "agents" / module_name / "prompts"
-        return [legacy_dir, current_dir]
+        The only live agent prompt loader is ``chat`` (the agentic chat
+        pipeline), whose canonical prompts live under
+        ``lumen/runtime/agent_loop/providers/legacy/prompts``.
+        """
+        lumen_dir = LUMEN_AGENT_PROMPT_ROOTS.get(module_name)
+        return [lumen_dir] if lumen_dir is not None else []
 
     def _resolve_prompt_path(
         self,

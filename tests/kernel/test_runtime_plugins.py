@@ -386,7 +386,7 @@ async def test_pipeline_constructor_accepts_client_factory():
     """The real ``AgenticChatPipeline`` accepts a ``client_factory``
     constructor hook (Phase 3 debt #1/#2: no more monkey-patching)."""
 
-    from deeptutor.agents.chat.agentic_pipeline import AgenticChatPipeline
+    from lumen.runtime.agent_loop.providers.legacy.agentic_pipeline import AgenticChatPipeline
 
     called: list[Any] = []
 

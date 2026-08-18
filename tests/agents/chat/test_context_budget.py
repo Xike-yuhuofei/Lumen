@@ -14,19 +14,19 @@ from typing import Any
 
 import pytest
 
-from deeptutor.agents.chat.agent_loop import MAX_SETTLEMENT_ROUNDS
-from deeptutor.agents.chat.agentic_pipeline import AgenticChatPipeline
-from deeptutor.agents.chat.context_budget import (
+from lumen.runtime.agent_loop.capability import PromptBlock
+from lumen.runtime.agent_loop.providers.legacy.agent_loop import MAX_SETTLEMENT_ROUNDS
+from lumen.runtime.agent_loop.providers.legacy.agentic_pipeline import AgenticChatPipeline
+from lumen.runtime.agent_loop.providers.legacy.context_budget import (
     LLMRequestSnapshot,
     build_context_budget,
     count_conversation_tokens,
     resolve_window_info,
 )
-from deeptutor.core.context import UnifiedContext
-from deeptutor.core.stream import StreamEvent, StreamEventType
-from deeptutor.core.tool_protocol import ToolResult
-from lumen.runtime.agent_loop.capability import PromptBlock
+from lumen.runtime.context import UnifiedContext
 from lumen.runtime.stream.bus import StreamBus
+from lumen.runtime.stream.events import StreamEvent, StreamEventType
+from lumen.runtime.tool_protocol import ToolResult
 
 
 def _chars(text: str) -> int:
@@ -395,7 +395,7 @@ async def _stream(chunks: list[SimpleNamespace]):
 @pytest.mark.asyncio
 async def test_turn_result_carries_the_context_budget(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "deeptutor.agents.chat.agentic_pipeline.get_llm_config",
+        "lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.get_llm_config",
         lambda: SimpleNamespace(
             binding="openai",
             model="gpt-test",
@@ -467,7 +467,7 @@ async def test_forced_finish_still_reports_the_tools_the_turn_carried(
     # available, so the model must keep requesting them to reach the hard
     # finish.
     monkeypatch.setattr(
-        "deeptutor.agents.chat.agentic_pipeline.get_llm_config",
+        "lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.get_llm_config",
         lambda: SimpleNamespace(
             binding="openai",
             model="gpt-test",

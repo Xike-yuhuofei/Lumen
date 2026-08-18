@@ -8,8 +8,8 @@ from typing import Any
 import pytest
 from typer.testing import CliRunner
 
-from deeptutor.app import DeepTutorApp, TurnRequest
 from deeptutor_cli.main import app
+from lumen.app.facade import DeepTutorApp, TurnRequest
 
 runner = CliRunner()
 
@@ -28,8 +28,8 @@ def _install_fake_runtime(monkeypatch, captured_requests: list[TurnRequest]) -> 
         yield {"type": "result", "metadata": {"response": "response body"}}
         yield {"type": "done"}
 
-    monkeypatch.setattr("deeptutor.app.facade.DeepTutorApp.start_turn", _start_turn)
-    monkeypatch.setattr("deeptutor.app.facade.DeepTutorApp.stream_turn", _stream_turn)
+    monkeypatch.setattr("lumen.app.facade.DeepTutorApp.start_turn", _start_turn)
+    monkeypatch.setattr("lumen.app.facade.DeepTutorApp.stream_turn", _stream_turn)
 
 
 def test_run_command_json_mode(monkeypatch) -> None:
@@ -182,7 +182,7 @@ def test_session_list_command_uses_shared_store(monkeypatch) -> None:
             }
         ]
 
-    monkeypatch.setattr("deeptutor.app.facade.DeepTutorApp.list_sessions", _list_sessions)
+    monkeypatch.setattr("lumen.app.facade.DeepTutorApp.list_sessions", _list_sessions)
 
     result = runner.invoke(app, ["session", "list"])
 

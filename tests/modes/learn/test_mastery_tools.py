@@ -9,14 +9,14 @@ import json
 
 import pytest
 
-from deeptutor.tools.mastery_tool import (
+from lumen.modes.learn.adapters.storage import LearningStore
+from lumen.modes.learn.chat_tools import (
     MasteryAssessTool,
     MasteryBuildTool,
     MasteryGradeTool,
     MasteryQuizTool,
     MasteryStatusTool,
 )
-from lumen.modes.learn.adapters.storage import LearningStore
 from lumen.modes.learn.domain.models import PendingQuestion
 from lumen.runtime.session.sqlite_store import SQLiteSessionStore
 

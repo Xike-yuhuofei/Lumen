@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from deeptutor.knowledge.manifest import (
+from lumen.shared.knowledge.manifest import (
     UNAVAILABLE_MISSING,
     build_manifest,
     document_root,

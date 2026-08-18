@@ -19,7 +19,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 if FastAPI is not None and TestClient is not None:
-    knowledge_router_module = importlib.import_module("deeptutor.api.routers.knowledge")
+    knowledge_router_module = importlib.import_module("lumen.app.api.routers.knowledge")
     router = knowledge_router_module.router
 else:  # pragma: no cover - optional dependency in lightweight envs
     knowledge_router_module = None

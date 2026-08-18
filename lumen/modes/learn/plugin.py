@@ -88,6 +88,13 @@ class _LearnModeServiceAdapter(LearnModeService):
         the (deprecated) global registry fallbacks.
         """
         deps: dict[str, Any] = {}
+        # The mode's loop capability (mastery tutor) rides into the pipeline
+        # as data through the ``runtime.agent_loop`` contract — the runtime
+        # never imports ``lumen.modes``, so the concrete capability is
+        # contributed by its owning mode per turn.
+        from lumen.modes.learn.loop_registry import LOOP_CAPABILITIES
+
+        deps["loop_capabilities"] = LOOP_CAPABILITIES
         if self._memory_service is not None:
             deps["memory_service"] = self._memory_service
         if self._notebook_service is not None:

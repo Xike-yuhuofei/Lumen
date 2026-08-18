@@ -332,7 +332,7 @@ def isolated_path(tmp_path, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_tool_loop_diagnoses_misconception_and_plan_remediates(isolated_path):
-    from deeptutor.tools.mastery_tool import (
+    from lumen.modes.learn.chat_tools import (
         MasteryBuildTool,
         MasteryGoalTool,
         MasteryGradeTool,

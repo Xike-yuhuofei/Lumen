@@ -62,7 +62,7 @@ def run_capability(
     fmt: str = typer.Option("rich", "--format", "-f", help="Output format: rich | json."),
 ) -> None:
     """Run any capability in a single turn (agent-first entry point)."""
-    from deeptutor.app import DeepTutorApp
+    from lumen.app.facade import DeepTutorApp
 
     from .common import run_turn_and_render
 
@@ -132,7 +132,7 @@ def serve(
     # ws_max_size tracks the configured chat-attachment total so base64
     # uploads fit in one WS frame (uvicorn defaults to 16MB).
     uvicorn.run(
-        "deeptutor.api.main:app",
+        "lumen.app.api.main:app",
         host=host,
         port=port,
         reload=reload,

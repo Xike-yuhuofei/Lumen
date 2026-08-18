@@ -7,12 +7,12 @@ import zipfile
 
 import pytest
 
-from deeptutor.core.stream import StreamEvent, StreamEventType
 from lumen.runtime.session.artifact_attachments import (
     _resolve_artifact_path,
     artifact_attachments,
     fill_preview_text,
 )
+from lumen.runtime.stream.events import StreamEvent, StreamEventType
 
 # ---------------------------------------------------------------------------
 # artifact_attachments

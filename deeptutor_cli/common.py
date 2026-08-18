@@ -17,7 +17,7 @@ from rich.status import Status
 from rich.table import Table
 from rich.text import Text
 
-from deeptutor.app import DeepTutorApp, TurnRequest
+from lumen.app.facade import DeepTutorApp, TurnRequest
 
 from ._tool_result import ToolResultBuffer, ToolResultEntry
 

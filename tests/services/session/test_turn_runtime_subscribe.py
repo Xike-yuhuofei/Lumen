@@ -4,13 +4,13 @@ import asyncio
 
 import pytest
 
-from deeptutor.core.stream import StreamEvent, StreamEventType
 from lumen.runtime.session.sqlite_store import SQLiteSessionStore
 from lumen.runtime.session.turn_runtime import (
     TurnRuntimeManager,
     _resolve_turn_outcome,
     _TurnExecution,
 )
+from lumen.runtime.stream.events import StreamEvent, StreamEventType
 
 
 def test_terminal_error_marks_turn_failed() -> None:

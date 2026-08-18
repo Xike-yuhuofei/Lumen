@@ -7,8 +7,8 @@ import json
 
 import pytest
 
-from deeptutor.core.stream import StreamEvent, StreamEventType
 from lumen.runtime.stream.bus import StreamBus
+from lumen.runtime.stream.events import StreamEvent, StreamEventType
 
 # ---------------------------------------------------------------------------
 # Basic emit / subscribe

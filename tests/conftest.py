@@ -9,7 +9,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from deeptutor.core.context import Attachment, UnifiedContext
+from lumen.runtime.context import Attachment, UnifiedContext
 from lumen.runtime.stream.bus import StreamBus
 
 # ---------------------------------------------------------------------------

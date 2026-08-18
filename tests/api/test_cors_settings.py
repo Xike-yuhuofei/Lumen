@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
-from deeptutor.api import main as api_main
+from lumen.app.api import main as api_main
 
 
 def test_cors_allows_remote_http_origins_when_auth_disabled(

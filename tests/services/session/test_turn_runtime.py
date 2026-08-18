@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import pytest
 
-from deeptutor.core.stream import StreamEvent, StreamEventType
 from lumen.runtime.session.turn_runtime import (
     _assemble_persisted_answer,
     _clip_text,
@@ -15,6 +14,7 @@ from lumen.runtime.session.turn_runtime import (
     _narration_marker_call_id,
     _should_capture_assistant_content,
 )
+from lumen.runtime.stream.events import StreamEvent, StreamEventType
 
 # ---------------------------------------------------------------------------
 # _should_capture_assistant_content

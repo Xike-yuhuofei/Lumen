@@ -94,7 +94,7 @@ def path(tmp_path, monkeypatch):
 
 
 async def _plan(path_id):
-    from deeptutor.tools.mastery_tool import TeachingPlanTool
+    from lumen.modes.learn.chat_tools import TeachingPlanTool
 
     raw = await TeachingPlanTool().execute(_mastery_path_id=path_id)
     return json.loads(raw.content)
@@ -109,7 +109,7 @@ async def _quiz_and_grade(
     misconception="",
     question_type="short",
 ):
-    from deeptutor.tools.mastery_tool import MasteryGradeTool, MasteryQuizTool
+    from lumen.modes.learn.chat_tools import MasteryGradeTool, MasteryQuizTool
 
     quiz = json.loads(
         (
@@ -135,7 +135,7 @@ async def _quiz_and_grade(
 
 
 async def _assess(path_id, kp_id, passed):
-    from deeptutor.tools.mastery_tool import MasteryAssessTool
+    from lumen.modes.learn.chat_tools import MasteryAssessTool
 
     return json.loads(
         (
@@ -151,7 +151,7 @@ async def _assess(path_id, kp_id, passed):
 
 @pytest.mark.asyncio
 async def test_real_material_full_loop_to_complete(path):
-    from deeptutor.tools.mastery_tool import MasteryBuildTool, MasteryGoalTool
+    from lumen.modes.learn.chat_tools import MasteryBuildTool, MasteryGoalTool
 
     # ── 1. material → teaching knowledge model ───────────────────────────
     build = json.loads(

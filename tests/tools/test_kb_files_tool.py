@@ -13,16 +13,16 @@ from typing import Any
 
 import pytest
 
-from deeptutor.knowledge.manifest import (
-    KB_FILES_DEFAULT_LIMIT,
-    KB_FILES_MAX_LIMIT,
-    build_manifest,
-)
 from lumen.runtime.tools.builtin import BUILTIN_TOOL_NAMES, KbFilesTool
 from lumen.runtime.tools.composition import (
     AUTO_MOUNTED_TOOLS,
     ToolMountFlags,
     compose_enabled_tools,
+)
+from lumen.shared.knowledge.manifest import (
+    KB_FILES_DEFAULT_LIMIT,
+    KB_FILES_MAX_LIMIT,
+    build_manifest,
 )
 
 _READY = {"rag_provider": "llamaindex", "status": "ready"}

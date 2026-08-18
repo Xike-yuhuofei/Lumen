@@ -20,21 +20,21 @@ from typing import Any
 
 import pytest
 
-from deeptutor.core.context import UnifiedContext
-from deeptutor.core.stream import StreamEvent, StreamEventType
-from deeptutor.core.tool_protocol import (
-    BaseTool,
-    ToolDefinition,
-    ToolParameter,
-    ToolResult,
-)
 from lumen.runtime.agent_loop.engine.tool_arg_guard import (
     missing_args_message,
     missing_required_args,
     required_args,
 )
 from lumen.runtime.agent_loop.engine.tool_dispatch import dispatch_tool_calls
+from lumen.runtime.context import UnifiedContext
 from lumen.runtime.stream.bus import StreamBus
+from lumen.runtime.stream.events import StreamEvent, StreamEventType
+from lumen.runtime.tool_protocol import (
+    BaseTool,
+    ToolDefinition,
+    ToolParameter,
+    ToolResult,
+)
 
 
 def _write_note_definition() -> ToolDefinition:

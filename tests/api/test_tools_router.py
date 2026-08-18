@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import pytest
 
-from deeptutor.api.routers import settings as settings_router
-from deeptutor.api.routers import tools as tools_router
+from lumen.app.api.routers import settings as settings_router
+from lumen.app.api.routers import tools as tools_router
+from lumen.modes.learn.chat_tools import MASTERY_TOOL_NAMES
 from lumen.runtime.tools.builtin import (
     BUILTIN_TOOL_NAMES,
     COMING_SOON_TOOL_NAMES,
 )
-from lumen.modes.learn.chat_tools import MASTERY_TOOL_NAMES
 from lumen.shared._util import tool_preferences
 from lumen.shared._util.tool_preferences import USER_TOGGLEABLE_TOOL_NAMES
 

@@ -10,9 +10,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from deeptutor.core.context import UnifiedContext
-from deeptutor.core.stream import StreamEvent, StreamEventType
+from lumen.runtime.context import UnifiedContext
 from lumen.runtime.stream.bus import StreamBus
+from lumen.runtime.stream.events import StreamEvent, StreamEventType
 
 
 @dataclass

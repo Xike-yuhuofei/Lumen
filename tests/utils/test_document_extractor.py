@@ -11,7 +11,8 @@ from pptx import Presentation
 from pptx.util import Inches
 import pytest
 
-from deeptutor.utils.document_extractor import (
+from lumen.shared._util import document_extractor as document_extractor_module
+from lumen.shared._util.document_extractor import (
     MAX_DOC_BYTES,
     MAX_EXTRACTED_CHARS_PER_DOC,
     CorruptDocumentError,
@@ -23,7 +24,6 @@ from deeptutor.utils.document_extractor import (
     extract_text_from_path,
     is_document_extension,
 )
-from lumen.shared._util import document_extractor as document_extractor_module
 
 # ---------------------------------------------------------------------------
 # Fixtures — generate office docs on the fly
