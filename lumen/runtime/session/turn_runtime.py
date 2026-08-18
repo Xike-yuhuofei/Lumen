@@ -1544,8 +1544,8 @@ class TurnRuntimeManager:
             # token). Resolution: the user's own workspace first; non-admin
             # users fall back to admin-authored presets (personas carry no
             # privileged workflow, so no grant gate applies).
-            from lumen.shared._util.user import get_admin_path_service, get_current_user
             from lumen.shared._util.persona import PersonaService, get_persona_service
+            from lumen.shared._util.user import get_admin_path_service, get_current_user
 
             current_user = get_current_user()
             requested_persona = str(payload.get("persona") or "").strip()

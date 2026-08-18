@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
-from deeptutor.services.cron import (
+from lumen.app.cron import (
     CronJob,
     CronOwner,
     CronSchedule,

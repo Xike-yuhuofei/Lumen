@@ -118,8 +118,8 @@ deeptutor start                   # backend + frontend together
 | `lumen/shared/`                            | Shared service contracts + providers (knowledge / memory / notebook / rendering) |
 | `lumen/modes/learn/`                       | `mode.learn` — Learn mode plugin, teaching domain, learner state |
 | `lumen/compat.py`                          | `mastery_path` / `mastery` → `mode.learn` alias mapping |
-| `deeptutor/services/session/turn_runtime.py` | `TurnRuntimeManager` — turn orchestration (WS/CLI/Cron/SDK turns) |
-| `deeptutor/services/cron/executor.py`      | Cron job execution via `runtime.agent_loop` |
+| `lumen/runtime/session/turn_runtime.py`   | `TurnRuntimeManager` — turn orchestration (WS/CLI/Cron/SDK turns) |
+| `lumen/app/cron/executor.py`              | Cron job execution via `runtime.agent_loop` |
 | `deeptutor/agents/chat/`                   | Legacy Agent Loop Provider (`AgenticChatPipeline` — production agent loop) |
 | `lumen/app/launcher.py`                    | Backend + frontend lifecycle / port discovery |
 | `deeptutor/runtime/registry/tool_registry.py` | Tool registry                      |

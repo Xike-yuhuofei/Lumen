@@ -9,7 +9,7 @@ import sys
 from typing import Any
 import uuid
 
-from deeptutor.services.cron.service import CronJob
+from lumen.app.cron.service import CronJob
 from lumen.shared._util.brand import PRODUCT_NAME
 
 logger = logging.getLogger(__name__)
@@ -81,10 +81,10 @@ async def _execute_chat_job(job: CronJob) -> tuple[str, str | None]:
     so Cron generic turns converge on one Runtime contract.  The production
     assembly is booted on demand when none is active yet.
     """
-    from deeptutor.core.context import UnifiedContext
-    from deeptutor.core.stream import StreamEvent, StreamEventType
+    from lumen.runtime.context import UnifiedContext
     from lumen.runtime.session import get_sqlite_session_store
     from lumen.runtime.stream.bus import StreamBus, register_bus, unregister_bus
+    from lumen.runtime.stream.events import StreamEvent, StreamEventType
     from lumen.shared._util.user import local_admin_user, user_context
 
     # Single-user mode: every cron job runs in the local admin's scope.

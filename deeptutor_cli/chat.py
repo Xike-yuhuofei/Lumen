@@ -83,7 +83,7 @@ async def _chat_repl(state: ChatState) -> None:
     client = DeepTutorApp()
     cron_service = None
     try:
-        from deeptutor.services.cron import get_cron_service
+        from lumen.app.cron import get_cron_service
 
         cron_service = get_cron_service()
         await cron_service.start()

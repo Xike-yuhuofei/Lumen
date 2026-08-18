@@ -243,7 +243,7 @@ def test_no_chat_mode_exists() -> None:
 
 TURN_ENTRY_FILES = (
     "lumen/runtime/session/turn_runtime.py",
-    "deeptutor/services/cron/executor.py",
+    "lumen/app/cron/executor.py",
 )
 DIRECT_PIPELINE_IMPORTS = ("deeptutor.agents.chat.agentic_pipeline",)
 

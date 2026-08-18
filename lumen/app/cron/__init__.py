@@ -1,6 +1,6 @@
 """Built-in cron — scheduled tasks for chat and partners."""
 
-from deeptutor.services.cron.service import (
+from lumen.app.cron.service import (
     CronJob,
     CronOwner,
     CronSchedule,

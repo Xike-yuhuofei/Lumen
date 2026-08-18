@@ -6,14 +6,14 @@ import time
 
 import pytest
 
-from deeptutor.services.cron.service import CronService
 from deeptutor.tools.cron_tool import run_cron_action
+from lumen.app.cron.service import CronService
 
 
 @pytest.fixture
 def cron_service(tmp_path, monkeypatch):
-    import deeptutor.services.cron.service as service_mod
     import deeptutor.tools.cron_tool as tool_mod
+    import lumen.app.cron.service as service_mod
 
     service = CronService(store_path=tmp_path / "jobs.json")
     monkeypatch.setattr(service_mod, "_service", service)

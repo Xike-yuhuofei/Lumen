@@ -9,7 +9,7 @@ the store.
 Jobs carry an *owner*: a chat session (the reply is appended to that
 session) or a partner conversation (the prompt is injected into the
 partner's message bus and the reply rides the original IM channel). The
-executor lives in :mod:`deeptutor.services.cron.executor`.
+executor lives in :mod:`lumen.app.cron.executor`.
 """
 
 from __future__ import annotations
@@ -395,7 +395,7 @@ def get_cron_service() -> CronService:
     """Process-wide cron service, anchored at the admin workspace."""
     global _service
     if _service is None:
-        from deeptutor.services.cron.executor import execute_job
+        from lumen.app.cron.executor import execute_job
         from lumen.shared._util.user import get_admin_path_service
 
         store = get_admin_path_service().workspace_root / "cron" / "jobs.json"
