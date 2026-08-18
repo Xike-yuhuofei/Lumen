@@ -24,8 +24,8 @@ from rich.table import Table
 from rich.text import Text
 import typer
 
-from deeptutor.services.provider_registry import PROVIDERS, ProviderSpec, find_by_name
 from lumen.shared._util.llm.config import get_token_limit_kwargs
+from lumen.shared._util.provider_registry import PROVIDERS, ProviderSpec, find_by_name
 from lumen.shared.config.embedding_endpoint import (
     GEMINI_API_HOST,
     SENSITIVE_ENDPOINT_QUERY_KEYS,

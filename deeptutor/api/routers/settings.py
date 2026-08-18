@@ -21,16 +21,16 @@ logger = logging.getLogger(__name__)
 
 from deeptutor.brand import PRODUCT_NAME
 from deeptutor.services.model_selection import list_llm_options
-from deeptutor.services.path_service import get_path_service
 from deeptutor.services.settings.interface_settings import (
     DEFAULT_UI_SETTINGS as INTERFACE_DEFAULTS,
 )
 from deeptutor.services.settings.interface_settings import resolve_languages
-from deeptutor.services.user import allowed_llm_options, get_current_user
 from deeptutor.tools.builtin import USER_TOGGLEABLE_TOOL_NAMES
 from lumen.shared._util.embedding.client import reset_embedding_client
 from lumen.shared._util.llm.client import reset_llm_client
 from lumen.shared._util.llm.config import clear_llm_config_cache
+from lumen.shared._util.path_service import get_path_service
+from lumen.shared._util.user import allowed_llm_options, get_current_user
 from lumen.shared.config import (
     get_config_test_runner,
     get_model_catalog_service,
@@ -329,7 +329,7 @@ def get_enabled_optional_tools() -> list[str]:
     explicit ``tools`` list. Intersected with the admin grant whitelist so
     a restricted user's saved toggles can't resurrect a revoked tool.
     """
-    from deeptutor.services.user import allowed_optional_tools
+    from lumen.shared._util.user import allowed_optional_tools
 
     enabled = _sanitize_enabled_tools(load_ui_settings().get("enabled_optional_tools"))
     allowed = allowed_optional_tools()
@@ -355,7 +355,7 @@ def _require_settings_admin() -> None:
 
 def _provider_choices() -> dict[str, list[dict[str, Any]]]:
     """Build dropdown options for provider selection, keyed by service type."""
-    from deeptutor.services.provider_registry import PROVIDERS
+    from lumen.shared._util.provider_registry import PROVIDERS
     from lumen.shared.config.provider_runtime import (
         DEPRECATED_SEARCH_PROVIDERS,
         EMBEDDING_PROVIDERS,

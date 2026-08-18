@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 import pytest
 
 from deeptutor.services.auth import TokenPayload
-from deeptutor.services.path_service import PathService
+from lumen.shared._util.path_service import PathService
 
 OutputAppFactory = Callable[[dict[str, TokenPayload | None], bool], tuple[TestClient, Path]]
 

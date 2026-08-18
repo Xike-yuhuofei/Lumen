@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from deeptutor.brand import PRODUCT_NAME
 from deeptutor.logging import configure_logging
-from deeptutor.services.path_service import get_path_service
+from lumen.shared._util.path_service import get_path_service
 from lumen.shared.config import (
     ensure_runtime_settings_files,
     export_runtime_settings_to_env,

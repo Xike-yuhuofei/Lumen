@@ -27,7 +27,7 @@ from deeptutor.services.persona import (
     PersonaService,
     get_persona_service,
 )
-from deeptutor.services.user import get_admin_path_service, get_current_user
+from lumen.shared._util.user import get_admin_path_service, get_current_user
 
 router = APIRouter()
 

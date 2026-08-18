@@ -10,7 +10,7 @@ from pathlib import Path
 
 import yaml
 
-from deeptutor.services.path_service import get_path_service
+from lumen.shared._util.path_service import get_path_service
 
 # Initialize logger for setup operations
 _setup_logger = None
@@ -154,7 +154,7 @@ def _seed_default_personas() -> None:
     """
     try:
         from deeptutor.services.persona.service import PersonaService
-        from deeptutor.services.user import get_admin_path_service
+        from lumen.shared._util.user import get_admin_path_service
 
         admin_personas = get_admin_path_service().get_workspace_dir() / "personas"
         seeded = PersonaService(root=admin_personas).seed_presets()

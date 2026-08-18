@@ -48,7 +48,7 @@ _ALGORITHM = "HS256"
 
 
 if AUTH_ENABLED and not AUTH_SECRET:
-    from deeptutor.services.user import load_or_create_auth_secret
+    from lumen.shared._util.user import load_or_create_auth_secret
 
     AUTH_SECRET = load_or_create_auth_secret()
 
@@ -96,7 +96,7 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 def _make_user_record(hashed: str, role: str = "user", created_at: str = "") -> dict[str, Any]:
     """Build a canonical user record dict for legacy callers/tests."""
-    from deeptutor.services.user import new_user_id
+    from lumen.shared._util.user import new_user_id
 
     return {
         "id": new_user_id(),
@@ -119,7 +119,7 @@ def _load_users() -> dict[str, dict]:
     Old format: {"alice": "$2b$12$..."}
     New format: {"alice": {"hash": "...", "role": "admin", "created_at": "..."}}
     """
-    from deeptutor.services.user import load_users
+    from lumen.shared._util.user import load_users
 
     return load_users(AUTH_USERNAME, AUTH_PASSWORD_HASH)
 
@@ -139,7 +139,7 @@ def add_user(username: str, plain_password: str, role: str = "user") -> None:
 
     Creates the file (and parent directories) if they don't exist.
     """
-    from deeptutor.services.user import save_user
+    from lumen.shared._util.user import save_user
 
     record = save_user(username, hash_password(plain_password), role=role)  # type: ignore[arg-type]
     logger.info("User '%s' saved with role=%r", username, record.get("role", "user"))
@@ -147,7 +147,7 @@ def add_user(username: str, plain_password: str, role: str = "user") -> None:
 
 def list_users() -> list[dict]:
     """Return a list of user info dicts (username, role, created_at) — no hashes."""
-    from deeptutor.services.user import list_user_info
+    from lumen.shared._util.user import list_user_info
 
     return list_user_info(AUTH_USERNAME, AUTH_PASSWORD_HASH)
 
@@ -157,7 +157,7 @@ def delete_user(username: str) -> bool:
     Remove a user from the store. Returns True if the user existed.
 
     """
-    from deeptutor.services.user import delete_user as _delete_user
+    from lumen.shared._util.user import delete_user as _delete_user
 
     if not _delete_user(username):
         return False
@@ -174,7 +174,7 @@ def set_role(username: str, role: str) -> bool:
     if role not in ("admin", "user"):
         raise ValueError(f"Invalid role: {role!r}. Must be 'admin' or 'user'.")
 
-    from deeptutor.services.user import set_role as _set_role
+    from lumen.shared._util.user import set_role as _set_role
 
     if not _set_role(username, role):  # type: ignore[arg-type]
         return False
@@ -189,7 +189,7 @@ def set_avatar(username: str, avatar: str) -> bool:
     The marker is either '' (deterministic fallback), 'icon:<name>:<color>',
     or 'img:<version>' (managed by the avatar upload endpoint).
     """
-    from deeptutor.services.user import set_avatar as _set_avatar
+    from lumen.shared._util.user import set_avatar as _set_avatar
 
     if not _set_avatar(username, avatar):
         return False

@@ -27,7 +27,7 @@ def _tree_snapshot(root: Path) -> frozenset[str]:
 #: guard below always watches the developer's real tree, whatever a test does.
 _REAL_OWNER_SECRET_TREES: tuple[Path, ...] = ()
 try:  # pragma: no cover - import-time wiring
-    from deeptutor.services.user import SYSTEM_ROOT as _REAL_SYSTEM_ROOT
+    from lumen.shared._util.user import SYSTEM_ROOT as _REAL_SYSTEM_ROOT
 
     _REAL_OWNER_SECRET_TREES = (
         _REAL_SYSTEM_ROOT / "user-secrets",

@@ -1,4 +1,4 @@
-from deeptutor.services.provider_registry import find_by_name, find_gateway
+from lumen.shared._util.provider_registry import find_by_name, find_gateway
 
 
 def test_openrouter_gateway_detection_by_key_and_base() -> None:

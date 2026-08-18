@@ -1,7 +1,7 @@
 """HTTP endpoint for chat attachment downloads / previews.
 
 The chat turn runtime persists every uploaded attachment to the
-:class:`~deeptutor.services.storage.AttachmentStore` and records the public
+:class:`~lumen.shared._util.storage.AttachmentStore` and records the public
 URL on the message. The frontend preview drawer loads files via this
 router, which only serves paths the store hands back — every component is
 sanitised to defend against directory traversal.
@@ -24,7 +24,7 @@ from urllib.parse import quote
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 
-from deeptutor.services.storage import (
+from lumen.shared._util.storage import (
     LocalDiskAttachmentStore,
     get_attachment_store,
 )

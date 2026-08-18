@@ -17,7 +17,7 @@ import time
 from typing import Any
 import uuid
 
-from deeptutor.services.path_service import get_path_service
+from lumen.shared._util.path_service import get_path_service
 
 
 def _json_dumps(value: Any) -> str:

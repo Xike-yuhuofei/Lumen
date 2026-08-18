@@ -45,7 +45,7 @@ class BaseSessionManager(ABC):
 
     @property
     def path_service(self):
-        from deeptutor.services.path_service import get_path_service
+        from lumen.shared._util.path_service import get_path_service
 
         return get_path_service()
 

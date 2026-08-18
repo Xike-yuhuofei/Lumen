@@ -22,7 +22,7 @@ from typing import Any
 from urllib.parse import unquote
 
 from deeptutor.core.stream import StreamEvent, StreamEventType
-from deeptutor.services.path_service import get_path_service
+from lumen.shared._util.path_service import get_path_service
 
 logger = logging.getLogger(__name__)
 

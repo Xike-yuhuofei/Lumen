@@ -19,7 +19,6 @@ from urllib.parse import quote
 
 import pytest
 
-from deeptutor.services.storage import attachment_store
 from lumen.shared._util.llm.multimodal import (
     has_image_parts,
     prepare_multimodal_messages,
@@ -27,6 +26,7 @@ from lumen.shared._util.llm.multimodal import (
     strip_image_parts,
     strip_image_parts_inplace,
 )
+from lumen.shared._util.storage import attachment_store
 
 
 def _msgs() -> list[dict]:

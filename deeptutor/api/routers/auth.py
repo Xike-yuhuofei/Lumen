@@ -41,7 +41,7 @@ from deeptutor.services.auth import (
     list_users,
     set_avatar,
 )
-from deeptutor.services.user import local_admin_user, set_current_user, user_from_token_payload
+from lumen.shared._util.user import local_admin_user, set_current_user, user_from_token_payload
 
 logger = logging.getLogger(__name__)
 
@@ -345,9 +345,9 @@ def _local_admin_token_payload() -> TokenPayload:
     Mirrors the local admin identity (LOCAL_ADMIN_USERNAME / LOCAL_ADMIN_ID)
     so audit logs and self-reference checks behave the same as in multi-user
     mode. Values are kept aligned with ``local_admin_user()`` in
-    ``deeptutor.services.user``.
+    ``lumen.shared._util.user``.
     """
-    from deeptutor.services.user import LOCAL_ADMIN_ID, LOCAL_ADMIN_USERNAME
+    from lumen.shared._util.user import LOCAL_ADMIN_ID, LOCAL_ADMIN_USERNAME
 
     return TokenPayload(
         username=LOCAL_ADMIN_USERNAME,
@@ -557,7 +557,7 @@ async def update_profile(
     if not set_avatar(current.username, body.avatar):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     # The marker no longer references an uploaded image, so drop the file.
-    from deeptutor.services.user import delete_avatar_file
+    from lumen.shared._util.user import delete_avatar_file
 
     if current.user_id and _USER_ID_RE.match(current.user_id):
         delete_avatar_file(current.user_id)
@@ -597,7 +597,7 @@ async def upload_avatar(
             detail="Avatar must be a PNG, JPEG or WebP image.",
         )
 
-    from deeptutor.services.user import save_avatar_file
+    from lumen.shared._util.user import save_avatar_file
 
     # Bump the version embedded in the marker so clients cache-bust the URL.
     previous = str(info.get("avatar") or "")
@@ -622,7 +622,7 @@ async def remove_avatar(
 ) -> dict:
     """Remove the current user's uploaded avatar image and reset the marker."""
     current = _require_profile_identity(payload)
-    from deeptutor.services.user import delete_avatar_file
+    from lumen.shared._util.user import delete_avatar_file
 
     if current.user_id and _USER_ID_RE.match(current.user_id):
         delete_avatar_file(current.user_id)
@@ -640,7 +640,7 @@ async def get_avatar_image(
     if not _USER_ID_RE.match(user_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Avatar not found")
 
-    from deeptutor.services.user import get_avatar_file
+    from lumen.shared._util.user import get_avatar_file
 
     target = get_avatar_file(user_id)
     if target is None:

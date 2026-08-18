@@ -39,18 +39,6 @@ from deeptutor.knowledge.kb_types import is_connected_kb, supports_local_raw_fil
 from deeptutor.knowledge.manager import KnowledgeBaseManager
 from deeptutor.knowledge.naming import validate_knowledge_base_name
 from deeptutor.knowledge.progress_tracker import ProgressStage, ProgressTracker
-from deeptutor.services.file_io import atomic_write_json
-from deeptutor.services.user import (
-    assert_writable,
-    current_kb_base_dir,
-    current_kb_manager,
-    get_current_user,
-    manager_for_resource,
-    resolve_kb,
-)
-from deeptutor.services.user import (
-    list_visible_knowledge_bases as list_visible_kb_access,
-)
 from deeptutor.utils.document_extractor import (
     MAX_EXTRACTED_CHARS_PER_DOC,
     DocumentExtractionError,
@@ -58,6 +46,18 @@ from deeptutor.utils.document_extractor import (
 )
 from lumen.shared._util.document_validator import DocumentValidator
 from lumen.shared._util.error_utils import format_exception_message
+from lumen.shared._util.file_io import atomic_write_json
+from lumen.shared._util.user import (
+    assert_writable,
+    current_kb_base_dir,
+    current_kb_manager,
+    get_current_user,
+    manager_for_resource,
+    resolve_kb,
+)
+from lumen.shared._util.user import (
+    list_visible_knowledge_bases as list_visible_kb_access,
+)
 from lumen.shared.config import PROJECT_ROOT, load_config_with_main
 from lumen.shared.knowledge.rag.factory import (
     DEFAULT_PROVIDER,
@@ -2228,7 +2228,7 @@ async def clear_progress(kb_name: str):
 async def websocket_progress(websocket: WebSocket, kb_name: str):
     """WebSocket endpoint for real-time progress updates"""
     from deeptutor.api.routers.auth import ws_auth_failed, ws_require_auth
-    from deeptutor.services.user import reset_current_user
+    from lumen.shared._util.user import reset_current_user
 
     user_token = await ws_require_auth(websocket)
     if user_token is ws_auth_failed:

@@ -34,7 +34,7 @@ async def rag_search(
         raise ValueError("RAG requires an explicit kb_name.")
 
     if kb_base_dir is None:
-        from deeptutor.services.user import resolve_for_rag
+        from lumen.shared._util.user import resolve_for_rag
 
         resource = resolve_for_rag(kb_name)
         if resource is None:

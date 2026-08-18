@@ -11,7 +11,6 @@ import pytest
 
 from deeptutor.core.tool_protocol import BaseTool, ToolDefinition, ToolParameter, ToolResult
 from deeptutor.runtime.registry.tool_registry import ToolRegistry
-from deeptutor.services.path_service import PathService
 from deeptutor.services.sandbox.spec import ExecResult
 from deeptutor.tools.builtin import (
     BrainstormTool,
@@ -20,6 +19,7 @@ from deeptutor.tools.builtin import (
     ReasonTool,
     WebSearchTool,
 )
+from lumen.shared._util.path_service import PathService
 
 
 def _install_module(

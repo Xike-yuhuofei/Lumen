@@ -85,7 +85,7 @@ def _log(message: str) -> None:
 def _reset_runtime_singletons() -> None:
     """Make a just-selected DEEPTUTOR_HOME visible to path/config singletons."""
     try:
-        from deeptutor.services.path_service import PathService
+        from lumen.shared._util.path_service import PathService
 
         PathService.reset_instance()
     except Exception:

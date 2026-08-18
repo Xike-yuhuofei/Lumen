@@ -7,7 +7,7 @@ import mimetypes
 from pathlib import Path
 from urllib.parse import quote
 
-from deeptutor.services.path_service import PathService, get_path_service
+from lumen.shared._util.path_service import PathService, get_path_service
 
 
 @dataclass(frozen=True, slots=True)

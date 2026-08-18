@@ -147,7 +147,7 @@ def _user_grant(scope: ToolScope) -> Allowlist:
     """
     if scope.is_partner:
         return Allowlist.unrestricted()
-    from deeptutor.services.user import allowed_mcp_tools
+    from lumen.shared._util.user import allowed_mcp_tools
 
     return Allowlist.of(allowed_mcp_tools())
 

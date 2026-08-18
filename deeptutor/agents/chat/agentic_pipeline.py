@@ -528,14 +528,14 @@ class AgenticChatPipeline:
             if level is IsolationLevel.SYSTEM:
                 # Admin can switch exec off per user (grant v2). ``None``
                 # follows the policy: SYSTEM isolation serves everyone.
-                from deeptutor.services.user import exec_override
+                from lumen.shared._util.user import exec_override
 
                 return exec_override() is not False
             if level is IsolationLevel.APPLICATION:
                 if is_partner:
                     return True
                 try:
-                    from deeptutor.services.user import get_current_user
+                    from lumen.shared._util.user import get_current_user
 
                     return bool(get_current_user().is_admin)
                 except Exception:
@@ -880,7 +880,7 @@ class AgenticChatPipeline:
         args: dict[str, Any],
         context: UnifiedContext,
     ) -> dict[str, Any]:
-        from deeptutor.services.path_service import get_path_service
+        from lumen.shared._util.path_service import get_path_service
 
         kwargs = dict(args)
         turn_id = str(context.metadata.get("turn_id", "") or "").strip()
@@ -928,7 +928,7 @@ class AgenticChatPipeline:
                     "language": context.language or "en",
                 }
             else:
-                from deeptutor.services.user import get_current_user
+                from lumen.shared._util.user import get_current_user
 
                 user = get_current_user()
                 kwargs["_cron_owner"] = {
@@ -1220,7 +1220,7 @@ class AgenticChatPipeline:
     @staticmethod
     def _current_user_id() -> str:
         try:
-            from deeptutor.services.user import get_current_user
+            from lumen.shared._util.user import get_current_user
 
             return str(get_current_user().id or "anonymous")
         except Exception:
@@ -1237,7 +1237,7 @@ class AgenticChatPipeline:
         written under one name and read under another.
         """
         try:
-            from deeptutor.services.user import current_owner_id
+            from lumen.shared._util.user import current_owner_id
 
             return current_owner_id()
         except Exception:
@@ -1303,7 +1303,7 @@ class AgenticChatPipeline:
 
     @staticmethod
     def _collect_kb_manifests(kbs: list[str]) -> list[KbManifest]:
-        from deeptutor.services.user import resolve_kb_manifest
+        from lumen.shared._util.user import resolve_kb_manifest
 
         manifests: list[KbManifest] = []
         for kb in kbs:
@@ -1327,7 +1327,7 @@ class AgenticChatPipeline:
         if not getattr(self, "_exec_enabled", False):
             return ""
         try:
-            from deeptutor.services.path_service import get_path_service
+            from lumen.shared._util.path_service import get_path_service
 
             code_dir = (
                 get_path_service().get_task_workspace(

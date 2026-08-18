@@ -17,7 +17,7 @@ class LoggingConfig:
 
 
 def get_default_log_dir() -> Path:
-    from deeptutor.services.path_service import get_path_service
+    from lumen.shared._util.path_service import get_path_service
 
     return get_path_service().get_logs_dir()
 

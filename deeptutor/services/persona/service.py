@@ -34,7 +34,7 @@ from typing import Any
 
 import yaml
 
-from deeptutor.services.path_service import get_path_service
+from lumen.shared._util.path_service import get_path_service
 
 _FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n?", re.DOTALL)
 _NAME_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")

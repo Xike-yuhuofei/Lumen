@@ -15,13 +15,13 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from deeptutor.core.stream import StreamEvent, StreamEventType
 from deeptutor.core.stream_bus import StreamBus, register_bus, unregister_bus
-from deeptutor.services.path_service import get_path_service
 from deeptutor.services.session.artifact_attachments import (
     artifact_attachments,
     fill_preview_text,
 )
 from deeptutor.services.session.protocol import SessionStoreProtocol
 from lumen.shared._util.llm.utils import clean_thinking_tags
+from lumen.shared._util.path_service import get_path_service
 
 if TYPE_CHECKING:
     from deeptutor.core.context import UnifiedContext
@@ -742,7 +742,7 @@ class TurnRuntimeManager:
             raise RuntimeError(str(exc)) from exc
         if llm_selection:
             try:
-                from deeptutor.services.user import apply_allowed_llm_selection
+                from lumen.shared._util.user import apply_allowed_llm_selection
 
                 llm_selection = apply_allowed_llm_selection(llm_selection) or {}
             except PermissionError as exc:
@@ -752,7 +752,7 @@ class TurnRuntimeManager:
             # never silently fall through to the global LLM client (which is
             # configured from admin runtime settings). Admin keeps the existing behavior
             # (None llm_selection → default config from admin scope).
-            from deeptutor.services.user import (
+            from lumen.shared._util.user import (
                 get_current_user,
                 has_capability_access,
                 redacted_model_access,
@@ -782,7 +782,7 @@ class TurnRuntimeManager:
                 LLMSelection,
                 apply_llm_selection_to_catalog,
             )
-            from deeptutor.services.user import merge_personal_llm_profiles
+            from lumen.shared._util.user import merge_personal_llm_profiles
             from lumen.shared.config import get_model_catalog_service
 
             try:
@@ -813,7 +813,7 @@ class TurnRuntimeManager:
         # back-fill so explicit caller lists and settings defaults pass the
         # same gate; this is the single enforcement point for every
         # capability's turn.
-        from deeptutor.services.user import allowed_optional_tools
+        from lumen.shared._util.user import allowed_optional_tools
 
         allowed_tools = allowed_optional_tools()
         if allowed_tools is not None:
@@ -1430,7 +1430,7 @@ class TurnRuntimeManager:
             import base64 as _b64
             import uuid as _uuid
 
-            from deeptutor.services.storage import get_attachment_store
+            from lumen.shared._util.storage import get_attachment_store
 
             for item in payload.get("attachments", []):
                 record = {
@@ -1545,7 +1545,7 @@ class TurnRuntimeManager:
             # users fall back to admin-authored presets (personas carry no
             # privileged workflow, so no grant gate applies).
             from deeptutor.services.persona import PersonaService, get_persona_service
-            from deeptutor.services.user import get_admin_path_service, get_current_user
+            from lumen.shared._util.user import get_admin_path_service, get_current_user
 
             current_user = get_current_user()
             requested_persona = str(payload.get("persona") or "").strip()

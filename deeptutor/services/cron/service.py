@@ -396,7 +396,7 @@ def get_cron_service() -> CronService:
     global _service
     if _service is None:
         from deeptutor.services.cron.executor import execute_job
-        from deeptutor.services.user import get_admin_path_service
+        from lumen.shared._util.user import get_admin_path_service
 
         store = get_admin_path_service().workspace_root / "cron" / "jobs.json"
         _service = CronService(store_path=store, on_job=execute_job)

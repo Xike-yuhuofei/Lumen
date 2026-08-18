@@ -177,7 +177,7 @@ class KbFilesTool(_PromptHintsMixin, BaseTool):
 
     async def execute(self, **kwargs: Any) -> ToolResult:
         from deeptutor.knowledge.manifest import render_manifest_report
-        from deeptutor.services.user import resolve_kb_manifest
+        from lumen.shared._util.user import resolve_kb_manifest
 
         kb_name = str(kwargs.get("kb_name") or "").strip()
         if not kb_name:
@@ -367,7 +367,7 @@ class CodeExecutionTool(_PromptHintsMixin, BaseTool):
         if not workdir:
             # No pipeline workspace (e.g. direct/tool tests): fall back to the
             # detached code workspace the path service already manages.
-            from deeptutor.services.path_service import get_path_service
+            from lumen.shared._util.path_service import get_path_service
 
             workdir = str(get_path_service().get_run_code_workspace_dir())
             mounts = (Mount(host_path=workdir, sandbox_path=workdir, read_only=False),)

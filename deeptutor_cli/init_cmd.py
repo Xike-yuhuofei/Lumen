@@ -29,7 +29,7 @@ def _reset_runtime_singletons() -> None:
     write to the wrong place if not cleared.
     """
     try:
-        from deeptutor.services.path_service import PathService
+        from lumen.shared._util.path_service import PathService
 
         PathService.reset_instance()
     except Exception:

@@ -20,8 +20,8 @@ from deeptutor.agents.question.pipeline import QuestionPipeline
 from deeptutor.core.context import UnifiedContext
 from deeptutor.core.stream import StreamEvent
 from deeptutor.core.stream_bus import StreamBus
-from deeptutor.services.path_service import get_path_service
 from deeptutor.services.settings.interface_settings import get_response_language
+from lumen.shared._util.path_service import get_path_service
 
 logger = logging.getLogger(__name__)
 

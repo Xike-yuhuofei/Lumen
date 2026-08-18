@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from deeptutor.services.file_io import atomic_write_json, atomic_write_text
 import lumen.shared._util.file_io as _file_io_impl
+from lumen.shared._util.file_io import atomic_write_json, atomic_write_text
 
 
 def test_atomic_write_json_creates_parent_and_replaces_content(tmp_path: Path) -> None:

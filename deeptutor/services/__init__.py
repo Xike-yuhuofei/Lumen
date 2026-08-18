@@ -42,7 +42,7 @@ Usage:
 
 # Keep service package import side-effects minimal.
 # Modules are lazy-loaded in __getattr__ to avoid circular imports.
-from .path_service import PathService, get_path_service
+from lumen.shared._util.path_service import PathService, get_path_service
 
 __all__ = [
     "llm",

@@ -211,7 +211,7 @@ async def list_builtin_tools() -> ToolsListResponse:
     # Toggleable tools outside the user's admin grant don't exist for them:
     # hidden here so the settings page and composer match what turn_runtime
     # will actually allow.
-    from deeptutor.services.user import allowed_optional_tools
+    from lumen.shared._util.user import allowed_optional_tools
 
     allowed = allowed_optional_tools()
     if allowed is not None:
