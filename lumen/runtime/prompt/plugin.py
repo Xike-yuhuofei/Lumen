@@ -18,7 +18,7 @@ class _PromptServiceAdapter(PromptService):
     def _ensure_loaded(self) -> None:
         if self._manager is not None:
             return
-        from deeptutor.services.prompt.manager import get_prompt_manager
+        from .manager import get_prompt_manager
 
         self._manager = get_prompt_manager()
 

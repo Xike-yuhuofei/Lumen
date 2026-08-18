@@ -1,29 +1,19 @@
-"""
-Prompt Service
-==============
+# ruff: noqa: F405
+"""Deprecated compatibility facade — see ``lumen.runtime.prompt``.
 
-Unified prompt management for all DeepTutor modules.
-
-Usage:
-    from deeptutor.services.prompt import get_prompt_manager, PromptManager
-
-    # Get singleton manager
-    pm = get_prompt_manager()
-
-    # Load prompts for an agent
-    prompts = pm.load_prompts("question", "pipeline", language="en")
-
-    # Get specific prompt
-    system_prompt = pm.get_prompt(prompts, "system", "base")
+The prompt manager is owned by ``lumen/runtime/prompt``.  This package
+re-exports it for existing importers and tests only.
 """
 
-from .language import (
+from __future__ import annotations
+
+from lumen.runtime.prompt.manager import PromptManager, get_prompt_manager
+from lumen.shared._util.language import (
     append_language_directive,
     language_directive,
     language_label,
     normalize_language,
 )
-from .manager import PromptManager, get_prompt_manager
 
 __all__ = [
     "PromptManager",
