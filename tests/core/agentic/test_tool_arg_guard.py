@@ -20,11 +20,6 @@ from typing import Any
 
 import pytest
 
-from deeptutor.core.agentic.tool_arg_guard import (
-    missing_args_message,
-    missing_required_args,
-    required_args,
-)
 from deeptutor.core.agentic.tool_dispatch import dispatch_tool_calls
 from deeptutor.core.context import UnifiedContext
 from deeptutor.core.stream import StreamEvent, StreamEventType
@@ -34,6 +29,11 @@ from deeptutor.core.tool_protocol import (
     ToolDefinition,
     ToolParameter,
     ToolResult,
+)
+from lumen.runtime.agent_loop.engine.tool_arg_guard import (
+    missing_args_message,
+    missing_required_args,
+    required_args,
 )
 
 

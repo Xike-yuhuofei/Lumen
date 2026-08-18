@@ -9,8 +9,8 @@ from typing import Any
 
 import yaml
 
+from lumen.shared._util.language import parse_language
 from lumen.shared._util.runtime_home import PACKAGE_ROOT
-from lumen.shared.config import parse_language
 
 
 class PromptManager:

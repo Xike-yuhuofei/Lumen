@@ -2,8 +2,15 @@
 
 from __future__ import annotations
 
-from deeptutor.core.context import Attachment, UnifiedContext
-from deeptutor.core.errors import (
+from lumen.runtime.context import Attachment, UnifiedContext
+from lumen.runtime.stream import StreamEvent, StreamEventType
+from lumen.runtime.stream.trace import (
+    build_trace_metadata,
+    derive_trace_metadata,
+    merge_trace_metadata,
+    new_call_id,
+)
+from lumen.shared._util.errors import (
     ConfigurationError,
     DeepTutorError,
     EnvironmentConfigError,
@@ -11,13 +18,6 @@ from deeptutor.core.errors import (
     LLMServiceError,
     ServiceError,
     ValidationError,
-)
-from deeptutor.core.stream import StreamEvent, StreamEventType
-from deeptutor.core.trace import (
-    build_trace_metadata,
-    derive_trace_metadata,
-    merge_trace_metadata,
-    new_call_id,
 )
 
 # ---------------------------------------------------------------------------
