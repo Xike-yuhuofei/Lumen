@@ -214,7 +214,7 @@ def get_agent_params(module_name: str) -> dict:
     # adding a new capability seeded with non-default tokens (e.g. visualize at
     # 16k) doesn't require existing users to hand-edit their stale agents.yaml.
     # Imported lazily to avoid a circular dependency with services.setup.
-    from deeptutor.services.setup.init import DEFAULT_AGENTS_SETTINGS
+    from lumen.shared.config.agents_defaults import DEFAULT_AGENTS_SETTINGS
 
     seeded: dict[str, Any] = DEFAULT_AGENTS_SETTINGS
     for key in section:

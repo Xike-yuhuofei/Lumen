@@ -78,7 +78,7 @@ def test_process_new_documents_returns_failures_without_marking_processed(
             raise RuntimeError("provider exploded")
 
     monkeypatch.setattr(
-        "deeptutor.knowledge.add_documents.RAGService",
+        "lumen.shared.knowledge.add_documents.RAGService",
         _FailingRagService,
     )
 

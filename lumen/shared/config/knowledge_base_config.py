@@ -5,7 +5,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from deeptutor.services.rag.factory import (
+from lumen.shared.knowledge.rag.factory import (
     DEFAULT_PROVIDER,
     KNOWN_PROVIDERS,
     has_ready_provider_index,

@@ -12,10 +12,10 @@ from typing import Any
 
 import pytest
 
-from deeptutor.services.search.providers.brave import BraveProvider
-from deeptutor.services.search.providers.jina import JinaProvider
-from deeptutor.services.search.providers.serper import SerperProvider
-from deeptutor.services.search.providers.tavily import TavilyProvider
+from lumen.shared._util.search.providers.brave import BraveProvider
+from lumen.shared._util.search.providers.jina import JinaProvider
+from lumen.shared._util.search.providers.serper import SerperProvider
+from lumen.shared._util.search.providers.tavily import TavilyProvider
 
 PROXY = "http://127.0.0.1:7890"
 
@@ -50,7 +50,7 @@ def calls(monkeypatch):
         return _call
 
     for module in ("serper", "tavily", "brave", "jina"):
-        target = f"deeptutor.services.search.providers.{module}.requests"
+        target = f"lumen.shared._util.search.providers.{module}.requests"
 
         class _FakeRequests:
             get = staticmethod(_record("GET"))
@@ -95,7 +95,7 @@ def test_jina_truncates_results_to_max_results(monkeypatch) -> None:
         def get(url: str, **kwargs: Any) -> _FakeResponse:
             return _FakeResponse({"data": rows})
 
-    monkeypatch.setattr("deeptutor.services.search.providers.jina.requests", _FakeRequests)
+    monkeypatch.setattr("lumen.shared._util.search.providers.jina.requests", _FakeRequests)
 
     capped = JinaProvider(api_key="k").search("q", max_results=2)
     assert len(capped.search_results) == 2
@@ -154,7 +154,7 @@ _NEW_PROVIDERS = [
 def _provider_class(module: str, name: str):
     import importlib
 
-    return getattr(importlib.import_module(f"deeptutor.services.search.providers.{module}"), name)
+    return getattr(importlib.import_module(f"lumen.shared._util.search.providers.{module}"), name)
 
 
 @pytest.fixture
@@ -175,7 +175,7 @@ def new_calls(monkeypatch):
             get = staticmethod(_record("GET"))
             post = staticmethod(_record("POST"))
 
-        monkeypatch.setattr(f"deeptutor.services.search.providers.{module}.requests", _FakeRequests)
+        monkeypatch.setattr(f"lumen.shared._util.search.providers.{module}.requests", _FakeRequests)
     return captured
 
 
@@ -251,9 +251,9 @@ def test_doubao_reads_answer_and_citations_off_annotations(monkeypatch) -> None:
         def post(url: str, **kwargs: Any) -> _FakeResponse:
             return _FakeResponse(body)
 
-    monkeypatch.setattr("deeptutor.services.search.providers.doubao.requests", _FakeRequests)
+    monkeypatch.setattr("lumen.shared._util.search.providers.doubao.requests", _FakeRequests)
 
-    from deeptutor.services.search.providers.doubao import DoubaoProvider
+    from lumen.shared._util.search.providers.doubao import DoubaoProvider
 
     result = DoubaoProvider(api_key="k").search("q")
     assert result.answer == "答案。"
@@ -265,7 +265,7 @@ def test_doubao_reads_answer_and_citations_off_annotations(monkeypatch) -> None:
 
 
 def test_doubao_rejects_an_unknown_source() -> None:
-    from deeptutor.services.search.providers.doubao import DoubaoProvider
+    from lumen.shared._util.search.providers.doubao import DoubaoProvider
 
     with pytest.raises(ValueError, match="Doubao source"):
         DoubaoProvider(api_key="k").search("q", sources=["weibo"])
@@ -296,9 +296,9 @@ def test_qianfan_maps_its_native_citation_fields(monkeypatch) -> None:
         def post(url: str, **kwargs: Any) -> _FakeResponse:
             return _FakeResponse(body)
 
-    monkeypatch.setattr("deeptutor.services.search.providers.qianfan.requests", _FakeRequests)
+    monkeypatch.setattr("lumen.shared._util.search.providers.qianfan.requests", _FakeRequests)
 
-    from deeptutor.services.search.providers.qianfan import QianfanProvider
+    from lumen.shared._util.search.providers.qianfan import QianfanProvider
 
     citation = QianfanProvider(api_key="k").search("q").citations[0]
     assert citation.web_anchor == "anchor"
@@ -331,9 +331,9 @@ def test_aliyun_iqs_caps_results_client_side(monkeypatch) -> None:
         def get(url: str, **kwargs: Any) -> _FakeResponse:
             return _FakeResponse(body)
 
-    monkeypatch.setattr("deeptutor.services.search.providers.aliyun_iqs.requests", _FakeRequests)
+    monkeypatch.setattr("lumen.shared._util.search.providers.aliyun_iqs.requests", _FakeRequests)
 
-    from deeptutor.services.search.providers.aliyun_iqs import AliyunIQSProvider
+    from lumen.shared._util.search.providers.aliyun_iqs import AliyunIQSProvider
 
     result = AliyunIQSProvider(api_key="k").search("q", max_results=3)
     assert len(result.search_results) == 3
@@ -348,9 +348,9 @@ def test_bocha_surfaces_an_error_carried_inside_a_200(monkeypatch) -> None:
         def post(url: str, **kwargs: Any) -> _FakeResponse:
             return _FakeResponse({"code": 403, "msg": "quota exhausted"})
 
-    monkeypatch.setattr("deeptutor.services.search.providers.bocha.requests", _FakeRequests)
+    monkeypatch.setattr("lumen.shared._util.search.providers.bocha.requests", _FakeRequests)
 
-    from deeptutor.services.search.providers.bocha import BochaProvider
+    from lumen.shared._util.search.providers.bocha import BochaProvider
 
     with pytest.raises(Exception, match="quota exhausted"):
         BochaProvider(api_key="k").search("q")

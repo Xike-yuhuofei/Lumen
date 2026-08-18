@@ -37,7 +37,7 @@ class SearchProviderSpec:
     This table is the ONE place that decides what a search provider is: which
     connection fields it consumes (``requires_api_key`` / ``requires_base_url``),
     what happens when one is missing (``soft_fallback``), and whether it writes
-    its own answer or needs :mod:`deeptutor.services.search.consolidation` to
+    its own answer or needs :mod:`lumen.shared._util.search.consolidation` to
     synthesize one (``supports_answer``).
 
     ``soft_fallback=False`` marks the paid providers: when their credentials are

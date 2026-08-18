@@ -1,41 +1,17 @@
-"""Unified embedding client and adapters for all DeepTutor modules.
+# ruff: noqa: F405
+"""Deprecated compatibility facade — see ``lumen.shared._util.embedding``.
 
-Supported bindings are resolved by ``services.config.provider_runtime`` and
-currently include openai, custom, azure_openai, cohere, jina, ollama, vllm,
-siliconflow, aliyun, openrouter, plus legacy custom_openai_sdk configs.
+The Embedding service is owned by ``lumen.shared._util.embedding`` (canonical). This
+package re-exports every symbol for existing importers and tests only.
 """
 
-from .adapters import (
-    BaseEmbeddingAdapter,
-    CohereEmbeddingAdapter,
-    DashScopeMultiModalEmbeddingAdapter,
-    EmbeddingProviderError,
-    EmbeddingRequest,
-    EmbeddingResponse,
-    JinaEmbeddingAdapter,
-    OllamaEmbeddingAdapter,
-    OpenAICompatibleEmbeddingAdapter,
-    OpenAISDKEmbeddingAdapter,
-)
-from .client import EmbeddingClient, get_embedding_client, reset_embedding_client
-from .config import EmbeddingConfig, get_embedding_config
-from .validation import validate_embedding_batch
+from __future__ import annotations
 
-__all__ = [
-    "EmbeddingClient",
-    "EmbeddingConfig",
-    "get_embedding_client",
-    "get_embedding_config",
-    "reset_embedding_client",
-    "validate_embedding_batch",
-    "BaseEmbeddingAdapter",
-    "EmbeddingProviderError",
-    "EmbeddingRequest",
-    "EmbeddingResponse",
-    "OpenAICompatibleEmbeddingAdapter",
-    "OpenAISDKEmbeddingAdapter",
-    "DashScopeMultiModalEmbeddingAdapter",
-    "CohereEmbeddingAdapter",
-    "JinaEmbeddingAdapter",
-    "OllamaEmbeddingAdapter",
-]
+import lumen.shared._util.embedding as _canon
+
+
+def __getattr__(name: str):
+    return getattr(_canon, name)
+
+
+__all__ = list(_canon.__all__)

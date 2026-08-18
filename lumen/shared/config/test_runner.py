@@ -148,7 +148,7 @@ class ConfigTestRunner:
         Refreshes the embedding client singleton so subsequent embed calls
         use the new dim.
         """
-        from deeptutor.services.embedding.client import reset_embedding_client
+        from lumen.shared._util.embedding.client import reset_embedding_client
 
         service = get_model_catalog_service()
         if model is None:
@@ -287,8 +287,8 @@ class ConfigTestRunner:
     async def _test_embedding(
         self, run: TestRun, model: dict[str, Any], catalog: dict[str, Any]
     ) -> None:
-        from deeptutor.services.embedding.client import EmbeddingClient
-        from deeptutor.services.embedding.config import EmbeddingConfig
+        from lumen.shared._util.embedding.client import EmbeddingClient
+        from lumen.shared._util.embedding.config import EmbeddingConfig
 
         run.emit("info", "Loading embedding config from the active catalog selection.")
         resolved = resolve_embedding_runtime_config(catalog=catalog)
@@ -415,7 +415,7 @@ class ConfigTestRunner:
         )
 
     def _test_search(self, run: TestRun, catalog: dict[str, Any]) -> None:
-        from deeptutor.services.search import web_search
+        from lumen.shared._util.search import web_search
 
         resolved = resolve_search_runtime_config(catalog=catalog)
         if resolved.provider == "none":
@@ -451,7 +451,7 @@ class ConfigTestRunner:
     async def _test_tts(self, run: TestRun, catalog: dict[str, Any]) -> None:
         import base64
 
-        from deeptutor.services.voice import synthesize_speech
+        from lumen.shared._util.voice import synthesize_speech
         from lumen.shared.config.provider_runtime import resolve_tts_runtime_config
 
         run.emit("info", "Loading TTS config from the active catalog selection.")
@@ -477,7 +477,7 @@ class ConfigTestRunner:
         import io
         import wave
 
-        from deeptutor.services.voice import transcribe_audio
+        from lumen.shared._util.voice import transcribe_audio
         from lumen.shared.config.provider_runtime import resolve_stt_runtime_config
 
         run.emit("info", "Loading STT config from the active catalog selection.")

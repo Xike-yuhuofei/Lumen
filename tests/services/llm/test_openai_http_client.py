@@ -91,7 +91,7 @@ def test_azure_provider_passes_disable_ssl_http_client(monkeypatch: pytest.Monke
 async def test_embedding_sdk_passes_disable_ssl_http_client(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from deeptutor.services.embedding.adapters import openai_sdk as embedding_mod
+    from lumen.shared._util.embedding.adapters import openai_sdk as embedding_mod
 
     clients = _enable_ssl_override(monkeypatch)
     captured = _capture_async_openai(monkeypatch, embedding_mod)

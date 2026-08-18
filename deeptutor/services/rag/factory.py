@@ -1,129 +1,13 @@
-"""RAG pipeline factory.
-
-Selects a KB's index/retrieve engine by provider name. The only pipeline shipped
-today is:
-
-* ``llamaindex`` (default) — local vector retrieval with hybrid BM25 fusion.
-
-A KB is bound to one provider at creation time; later adds and retrieval always
-go through that same pipeline (enforced upstream in the knowledge router)."""
+# ruff: noqa: F405
+"""Deprecated compatibility facade — see ``lumen.shared.knowledge.rag.factory``."""
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
-
-DEFAULT_PROVIDER = "llamaindex"
-
-# Providers the factory can instantiate. Unknown / legacy strings fall back to
-# the default with a re-index hint upstream.
-KNOWN_PROVIDERS = frozenset({DEFAULT_PROVIDER})
-
-# Cached pipeline instances keyed by (kb_base_dir, provider).
-_PIPELINE_CACHE: Dict[Tuple[Optional[str], str], Any] = {}
+import lumen.shared.knowledge.rag.factory as _canon
 
 
-def normalize_provider_name(name: Optional[str] = None) -> str:
-    """Return a known provider name, falling back to the default.
-
-    Unknown / removed provider strings collapse to the default so a stale config
-    never selects a pipeline that no longer exists.
-    """
-    candidate = (name or "").strip().lower()
-    return candidate if candidate in KNOWN_PROVIDERS else DEFAULT_PROVIDER
+def __getattr__(name: str):
+    return getattr(_canon, name)
 
 
-def provider_uses_embedding_versions(provider: Optional[str]) -> bool:
-    """Whether this provider's index versions are keyed by embedding signature.
-
-    Only the default LlamaIndex pipeline uses DeepTutor's active embedding
-    signature to select/read index versions, so it is always keyed by the
-    embedding profile.
-    """
-    return normalize_provider_name(provider) == DEFAULT_PROVIDER
-
-
-def version_matches_provider(entry: dict[str, Any], provider: Optional[str]) -> bool:
-    """Return True when a version-list entry belongs to ``provider``."""
-    entry_provider = str(entry.get("provider") or "").strip().lower()
-    return entry_provider in {"", DEFAULT_PROVIDER}
-
-
-def has_ready_provider_index(kb_dir: str | Path, provider: Optional[str]) -> bool:
-    """Return whether ``kb_dir`` has a ready index for ``provider``."""
-    from .index_probe import has_ready_provider_index as _has_ready_provider_index
-
-    return _has_ready_provider_index(kb_dir, provider)
-
-
-def version_has_provider_output(entry: dict[str, Any], provider: Optional[str]) -> bool:
-    """Return True when a version entry is ready and has real provider output."""
-    from .index_probe import inspect_provider_version
-
-    return inspect_provider_version(entry, provider).ready
-
-
-def provider_failure_summary(
-    kb_dir: str | Path,
-    provider: Optional[str],
-    *,
-    limit: int = 3,
-) -> str:
-    """Return a short provider-specific failure summary, when available."""
-    from .index_probe import provider_failure_summary as _provider_failure_summary
-
-    return _provider_failure_summary(kb_dir, provider, limit=limit)
-
-
-def _build_pipeline(provider: str, kb_base_dir: Optional[str], **kwargs: Any):
-    from .pipelines.llamaindex.pipeline import LlamaIndexPipeline
-
-    if kb_base_dir is not None:
-        kwargs.setdefault("kb_base_dir", kb_base_dir)
-    return LlamaIndexPipeline(**kwargs)
-
-
-def get_pipeline(
-    name: str = DEFAULT_PROVIDER,
-    kb_base_dir: Optional[str] = None,
-    **kwargs: Any,
-):
-    """Return a pipeline instance for ``name`` (cached when no custom kwargs)."""
-    provider = normalize_provider_name(name)
-
-    if kwargs:
-        # Custom kwargs (e.g. an injected client/loader): build a fresh instance
-        # and skip the cache so overrides are honoured.
-        return _build_pipeline(provider, kb_base_dir, **kwargs)
-
-    cache_key = (kb_base_dir, provider)
-    if cache_key not in _PIPELINE_CACHE:
-        _PIPELINE_CACHE[cache_key] = _build_pipeline(provider, kb_base_dir)
-    return _PIPELINE_CACHE[cache_key]
-
-
-def list_pipelines() -> List[Dict[str, Any]]:
-    """Describe the available pipelines for the UI provider picker."""
-    return [
-        {
-            "id": DEFAULT_PROVIDER,
-            "name": "LlamaIndex",
-            "description": "Local vector retrieval with hybrid BM25/vector fusion. Works out of the box.",
-            "configured": True,
-            "requires_api_key": False,
-        },
-    ]
-
-
-__all__ = [
-    "DEFAULT_PROVIDER",
-    "KNOWN_PROVIDERS",
-    "get_pipeline",
-    "has_ready_provider_index",
-    "list_pipelines",
-    "normalize_provider_name",
-    "provider_failure_summary",
-    "provider_uses_embedding_versions",
-    "version_has_provider_output",
-    "version_matches_provider",
-]
+__all__ = list(getattr(_canon, "__all__", ()))

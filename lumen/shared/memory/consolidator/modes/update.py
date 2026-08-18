@@ -93,7 +93,7 @@ async def run_update(
     installed as a scoped LLM config for the duration of the run so
     every internal :func:`call_llm` resolves to the right provider.
     """
-    from deeptutor.services.model_selection.runtime import (
+    from lumen.shared.config.model_selection_runtime import (
         activate_llm_selection,
         reset_llm_selection,
     )

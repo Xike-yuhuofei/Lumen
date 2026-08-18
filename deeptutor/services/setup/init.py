@@ -60,21 +60,9 @@ DEFAULT_MAIN_SETTINGS = {
     },
 }
 
-DEFAULT_AGENTS_SETTINGS = {
-    "capabilities": {
-        "question": {"temperature": 0.7, "max_tokens": 4096},
-        "chat": {
-            "temperature": 0.2,
-            "responding": {"max_tokens": 8000},
-        },
-    },
-    "tools": {
-        "brainstorm": {"temperature": 0.8, "max_tokens": 2048},
-    },
-    "services": {
-        "personalization": {"temperature": 0.5, "max_tokens": 8192},
-    },
-}
+# DEFAULT_AGENTS_SETTINGS is canonical in lumen.shared.config.agents_defaults;
+# keep this name importable here as a compatibility re-export.
+from lumen.shared.config.agents_defaults import DEFAULT_AGENTS_SETTINGS
 
 
 def _get_setup_logger():

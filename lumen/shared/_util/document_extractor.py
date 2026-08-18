@@ -29,7 +29,7 @@ import zipfile
 from defusedxml import ElementTree as DefusedElementTree
 from defusedxml.common import DefusedXmlException
 
-from deeptutor.services.rag.file_routing import FileTypeRouter
+from lumen.shared.knowledge.rag.file_routing import FileTypeRouter
 
 logger = logging.getLogger(__name__)
 

@@ -1,40 +1,17 @@
-"""Embedding adapter implementations and backend registry."""
+# ruff: noqa: F405
+"""Deprecated compatibility facade — see ``lumen.shared._util.embedding.adapters``.
 
-from .base import (
-    BaseEmbeddingAdapter,
-    EmbeddingProviderError,
-    EmbeddingRequest,
-    EmbeddingResponse,
-)
-from .cohere import CohereEmbeddingAdapter
-from .dashscope_native import DashScopeMultiModalEmbeddingAdapter
-from .gemini import GeminiEmbeddingAdapter
-from .jina import JinaEmbeddingAdapter
-from .ollama import OllamaEmbeddingAdapter
-from .openai_compatible import OpenAICompatibleEmbeddingAdapter
-from .openai_sdk import OpenAISDKEmbeddingAdapter
+The Embedding service is owned by ``lumen.shared._util.embedding.adapters`` (canonical). This
+package re-exports every symbol for existing importers and tests only.
+"""
 
-ADAPTER_BACKENDS: dict[str, type[BaseEmbeddingAdapter]] = {
-    "openai_compat": OpenAICompatibleEmbeddingAdapter,
-    "openai_sdk": OpenAISDKEmbeddingAdapter,
-    "cohere": CohereEmbeddingAdapter,
-    "jina": JinaEmbeddingAdapter,
-    "ollama": OllamaEmbeddingAdapter,
-    "dashscope_native": DashScopeMultiModalEmbeddingAdapter,
-    "gemini": GeminiEmbeddingAdapter,
-}
+from __future__ import annotations
 
-__all__ = [
-    "ADAPTER_BACKENDS",
-    "BaseEmbeddingAdapter",
-    "EmbeddingProviderError",
-    "EmbeddingRequest",
-    "EmbeddingResponse",
-    "OpenAICompatibleEmbeddingAdapter",
-    "OpenAISDKEmbeddingAdapter",
-    "DashScopeMultiModalEmbeddingAdapter",
-    "GeminiEmbeddingAdapter",
-    "JinaEmbeddingAdapter",
-    "CohereEmbeddingAdapter",
-    "OllamaEmbeddingAdapter",
-]
+import lumen.shared._util.embedding.adapters as _canon
+
+
+def __getattr__(name: str):
+    return getattr(_canon, name)
+
+
+__all__ = list(_canon.__all__)

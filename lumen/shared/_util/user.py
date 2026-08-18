@@ -266,7 +266,7 @@ DEFAULT_KB_ALIASES = {"", "default", "current", "selected", "默认", "默认知
 
 @lru_cache(maxsize=128)
 def _manager_for(base_dir: str) -> Any:
-    from deeptutor.knowledge.manager import KnowledgeBaseManager
+    from lumen.shared.knowledge.manager import KnowledgeBaseManager
 
     return KnowledgeBaseManager(base_dir=base_dir)
 
@@ -377,7 +377,7 @@ def resolve_kb_manifest(
     pattern: str = "",
 ) -> Any | None:
     """Document inventory for ``kb_ref`` (``None`` if inaccessible)."""
-    from deeptutor.knowledge.manifest import build_manifest
+    from lumen.shared.knowledge.manifest import build_manifest
 
     if not kb_ref:
         return None

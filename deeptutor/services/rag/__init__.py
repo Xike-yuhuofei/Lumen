@@ -1,21 +1,13 @@
-"""RAG service exports."""
+# ruff: noqa: F405
+"""Deprecated compatibility facade — see ``lumen.shared.knowledge.rag``."""
 
-from .factory import (
-    DEFAULT_PROVIDER,
-    get_pipeline,
-    list_pipelines,
-    normalize_provider_name,
-)
-from .file_routing import DocumentType, FileClassification, FileTypeRouter
-from .service import RAGService
+from __future__ import annotations
 
-__all__ = [
-    "RAGService",
-    "FileTypeRouter",
-    "FileClassification",
-    "DocumentType",
-    "get_pipeline",
-    "list_pipelines",
-    "normalize_provider_name",
-    "DEFAULT_PROVIDER",
-]
+import lumen.shared.knowledge.rag as _canon
+
+
+def __getattr__(name: str):
+    return getattr(_canon, name)
+
+
+__all__ = list(getattr(_canon, "__all__", ()))

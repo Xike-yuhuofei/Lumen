@@ -9,7 +9,7 @@ from lumen.shared.knowledge.sources.contract import KnowledgeSourceService
 
 
 class _KnowledgeSourceServiceAdapter(KnowledgeSourceService):
-    """Wraps ``deeptutor.knowledge.manager.KnowledgeBaseManager``."""
+    """Wraps ``lumen.shared.knowledge.manager.KnowledgeBaseManager``."""
 
     def __init__(self, kb_manager: Any) -> None:
         self._kb_manager = kb_manager
@@ -30,7 +30,7 @@ class KnowledgeSourcesPlugin(Plugin):
     manifest = PluginManifest(id="knowledge.sources", provides=["knowledge.sources"])
 
     async def setup(self, ctx: PluginContext) -> None:
-        from deeptutor.knowledge.manager import KnowledgeBaseManager
+        from lumen.shared.knowledge.manager import KnowledgeBaseManager
         from lumen.shared._util.path_service import get_path_service
 
         kb_root = get_path_service().get_knowledge_bases_root()

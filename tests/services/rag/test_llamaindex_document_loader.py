@@ -22,7 +22,7 @@ def _install_stub_parse_service(monkeypatch, results: dict[str, "object"]) -> No
     ``results`` maps a file name to either a ``ParsedDocument`` to return or an
     exception instance to raise (e.g. ``ParserError``).
     """
-    import deeptutor.services.parsing as parsing
+    import lumen.shared.knowledge.parsing as parsing
 
     class _StubService:
         def parse(self, source_path, **_kwargs):
@@ -39,8 +39,8 @@ def test_loader_routes_parser_files_through_active_parse_engine(
 ) -> None:
     pytest.importorskip("llama_index.core")
     from deeptutor.services.parsing.types import ParsedDocument
-    from deeptutor.services.rag.pipelines.llamaindex.document_loader import (
-        LlamaIndexDocumentLoader,
+    from deeptutor.services.rag.pipelines.llamaindex import (
+        document_loader as loader_module,
     )
 
     docx_path = tmp_path / "notes.docx"
@@ -60,7 +60,7 @@ def test_loader_routes_parser_files_through_active_parse_engine(
         },
     )
 
-    documents = asyncio.run(LlamaIndexDocumentLoader().load([str(docx_path), str(pdf_path)]))
+    documents = asyncio.run(loader_module.LlamaIndexDocumentLoader().load([str(docx_path), str(pdf_path)]))
 
     by_name = {doc.metadata["file_name"]: doc.text for doc in documents}
     assert by_name["notes.docx"] == "Docx body text"
@@ -73,8 +73,8 @@ def test_loader_skips_document_when_active_engine_cannot_parse(
 ) -> None:
     pytest.importorskip("llama_index.core")
     from deeptutor.services.parsing.types import ParserError
-    from deeptutor.services.rag.pipelines.llamaindex.document_loader import (
-        LlamaIndexDocumentLoader,
+    from deeptutor.services.rag.pipelines.llamaindex import (
+        document_loader as loader_module,
     )
 
     docx_path = tmp_path / "unsupported.docx"
@@ -86,7 +86,7 @@ def test_loader_skips_document_when_active_engine_cannot_parse(
     )
 
     with caplog.at_level("WARNING"):
-        documents = asyncio.run(LlamaIndexDocumentLoader().load([str(docx_path)]))
+        documents = asyncio.run(loader_module.LlamaIndexDocumentLoader().load([str(docx_path)]))
 
     assert documents == []
     assert "Skipped unsupported.docx" in caplog.text

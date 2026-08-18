@@ -1,6 +1,6 @@
 """Stable identity of a parse configuration.
 
-Mirrors :class:`~deeptutor.services.rag.index_versioning.EmbeddingSignature`:
+Mirrors :class:`~lumen.shared.knowledge.rag.index_versioning.EmbeddingSignature`:
 only the fields that change the produced artifact go into the hash, so
 re-parsing the same bytes with the same config hits cache, while a
 backend/version/knob change yields a fresh signature dir and forces a re-parse.
