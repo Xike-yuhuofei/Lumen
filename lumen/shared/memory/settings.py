@@ -13,7 +13,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field, fields, is_dataclass
 from typing import Any, Literal
 
-from deeptutor.utils.config_manager import ConfigManager
+from lumen.shared._util.config_manager import ConfigManager
 
 _SETTINGS_KEY = "memory"
 

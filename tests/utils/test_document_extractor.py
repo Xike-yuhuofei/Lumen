@@ -1,4 +1,4 @@
-"""Tests for deeptutor.utils.document_extractor."""
+"""Tests for document text extraction (canonical in lumen.shared._util.document_extractor)."""
 
 from __future__ import annotations
 
@@ -11,7 +11,6 @@ from pptx import Presentation
 from pptx.util import Inches
 import pytest
 
-from deeptutor.utils import document_extractor as document_extractor_module
 from deeptutor.utils.document_extractor import (
     MAX_DOC_BYTES,
     MAX_EXTRACTED_CHARS_PER_DOC,
@@ -24,6 +23,7 @@ from deeptutor.utils.document_extractor import (
     extract_text_from_path,
     is_document_extension,
 )
+from lumen.shared._util import document_extractor as document_extractor_module
 
 # ---------------------------------------------------------------------------
 # Fixtures — generate office docs on the fly

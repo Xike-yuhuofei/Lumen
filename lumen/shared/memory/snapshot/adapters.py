@@ -307,7 +307,7 @@ def read_partner_entities() -> list[Entity]:
     when the active scope IS the admin's own memory; a regular user's memory
     view must not see the admin's partner conversations.
     """
-    from deeptutor.services.user import get_admin_path_service
+    from lumen.shared._util.user import get_admin_path_service
 
     admin_root = get_admin_path_service().workspace_root.resolve()
     if get_path_service().workspace_root.resolve() != admin_root:

@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING, Iterator, Literal, get_args
 from lumen.shared._util.runtime_paths import get_path_service
 
 if TYPE_CHECKING:
-    from deeptutor.services.path_service import PathService
+    from lumen.shared._util.path_service import PathService
 
 # When set, memory paths resolve through this PathService instead of the active
 # user's. A partner runtime installs the *owner's* (admin) service for the

@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Callable, Optional
 
-from deeptutor.utils.document_extractor import (
+from lumen.shared._util.document_extractor import (
     SUPPORTED_DOC_EXTENSIONS,
     DocumentExtractionError,
     extract_text_from_path,

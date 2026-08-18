@@ -19,11 +19,11 @@ OutputAppFactory = Callable[[dict[str, TokenPayload | None], bool], tuple[TestCl
 def output_app(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> OutputAppFactory:
     from deeptutor.api.routers import auth as auth_router
     from deeptutor.api.routers import outputs
-    import deeptutor.services.user as multi_user_paths
+    import lumen.shared._util.user as canon_user
 
     admin_root = tmp_path / "data"
-    monkeypatch.setattr(multi_user_paths, "ADMIN_WORKSPACE_ROOT", admin_root)
-    monkeypatch.setattr(multi_user_paths, "_path_services", {})
+    monkeypatch.setattr(canon_user, "ADMIN_WORKSPACE_ROOT", admin_root)
+    monkeypatch.setattr(canon_user, "_path_services", {})
 
     def make_app(
         tokens: dict[str, TokenPayload | None], auth_enabled: bool = True
