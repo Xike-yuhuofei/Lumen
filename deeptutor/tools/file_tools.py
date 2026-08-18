@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from deeptutor.core.tool_protocol import BaseTool, ToolDefinition, ToolParameter, ToolResult
-from deeptutor.tools.prompting import load_prompt_hints
+from lumen.runtime.tools.prompting import load_prompt_hints
 
 
 def _resolve_workspace_path(path: str, workspace: str, allowed_dir: str) -> Path:

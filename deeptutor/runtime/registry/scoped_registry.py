@@ -26,7 +26,7 @@ import logging
 from typing import Any
 
 from deeptutor.core.tool_protocol import BaseTool, ToolDefinition, ToolLookup, ToolResult
-from deeptutor.tools.prompting import compose_prompt_text
+from lumen.runtime.tools.prompting import compose_prompt_text
 from lumen.runtime.tools.providers.allowlist import Allowlist
 
 logger = logging.getLogger(__name__)
