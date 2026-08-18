@@ -276,11 +276,11 @@ async def test_turn_runtime_persists_llm_selection_in_turn_snapshot(
         lambda: SimpleNamespace(load=_model_catalog),
     )
     monkeypatch.setattr(
-        "deeptutor.services.model_selection.runtime.activate_llm_selection",
+        "lumen.shared.config.model_selection_runtime.activate_llm_selection",
         fake_activate,
     )
     monkeypatch.setattr(
-        "deeptutor.services.model_selection.runtime.reset_llm_selection",
+        "lumen.shared.config.model_selection_runtime.reset_llm_selection",
         lambda _token: captured.setdefault("reset_called", True),
     )
     monkeypatch.setattr(
@@ -504,11 +504,11 @@ async def test_turn_runtime_allows_model_switching_within_same_session(
         lambda: SimpleNamespace(load=_model_catalog),
     )
     monkeypatch.setattr(
-        "deeptutor.services.model_selection.runtime.activate_llm_selection",
+        "lumen.shared.config.model_selection_runtime.activate_llm_selection",
         fake_activate,
     )
     monkeypatch.setattr(
-        "deeptutor.services.model_selection.runtime.reset_llm_selection",
+        "lumen.shared.config.model_selection_runtime.reset_llm_selection",
         lambda _token: None,
     )
     monkeypatch.setattr(

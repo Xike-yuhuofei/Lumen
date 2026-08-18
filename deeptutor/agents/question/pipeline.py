@@ -56,7 +56,6 @@ from deeptutor.core.agentic import (
 )
 from deeptutor.core.agentic.labels import find_inline_labels
 from deeptutor.core.agentic.tool_dispatch import MAX_PARALLEL_TOOL_CALLS
-from deeptutor.core.agentic.usage import record_streamed_usage
 from deeptutor.core.context import Attachment, UnifiedContext
 from deeptutor.core.trace import (
     build_trace_metadata,
@@ -69,6 +68,7 @@ from deeptutor.services.prompt import get_prompt_manager
 from deeptutor.services.prompt.language import append_language_directive
 from deeptutor.services.sandbox import exec_capability_available
 from deeptutor.utils.json_parser import parse_json_response
+from lumen.runtime.agent_loop.engine.usage import record_streamed_usage
 from lumen.runtime.stream.bus import StreamBus
 from lumen.shared._util.llm import get_llm_config, prepare_multimodal_messages
 from lumen.shared._util.path_service import get_path_service

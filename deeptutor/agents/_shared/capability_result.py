@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from deeptutor.core.agentic.usage import UsageTracker
+from lumen.runtime.agent_loop.engine.usage import UsageTracker
 from lumen.runtime.stream.bus import StreamBus
 
 

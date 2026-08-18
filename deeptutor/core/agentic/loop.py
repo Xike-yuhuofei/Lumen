@@ -2,7 +2,7 @@
 
 The agentic loop drives a conversation with the LLM until one of the
 caller-declared *terminal labels* fires. Each iteration is one
-:func:`~deeptutor.core.agentic.labeled_step.run_labeled_step` call, after
+:func:`~lumen.runtime.agent_loop.engine.labeled_step.run_labeled_step` call, after
 which the loop:
 
 * validates the protocol (one label, no inline duplicates, tools only with
@@ -28,11 +28,11 @@ from collections.abc import Awaitable
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
-from deeptutor.core.agentic.labeled_step import LabeledStepResult, run_labeled_step
 from deeptutor.core.agentic.labels import LABEL_UNKNOWN, find_inline_labels
 from deeptutor.core.agentic.messages import assistant_message_with_tool_calls
 from deeptutor.core.agentic.tool_dispatch import DispatchOutcome
-from deeptutor.core.agentic.usage import UsageTracker
+from lumen.runtime.agent_loop.engine.labeled_step import LabeledStepResult, run_labeled_step
+from lumen.runtime.agent_loop.engine.usage import UsageTracker
 from lumen.runtime.stream.bus import StreamBus
 
 

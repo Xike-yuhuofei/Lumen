@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from deeptutor.core.agentic.usage import (
+from lumen.runtime.agent_loop.engine.usage import (
     UsageTracker,
     message_content_chars,
     record_streamed_usage,

@@ -19,7 +19,6 @@ from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 
-from deeptutor.services.model_selection import list_llm_options
 from deeptutor.tools.builtin import USER_TOGGLEABLE_TOOL_NAMES
 from lumen.shared._util.brand import PRODUCT_NAME
 from lumen.shared._util.embedding.client import reset_embedding_client
@@ -32,6 +31,7 @@ from lumen.shared.config import (
     get_model_catalog_service,
     get_runtime_settings_service,
 )
+from lumen.shared.config.model_selection import list_llm_options
 from lumen.shared.config.origins import normalize_origins
 from lumen.shared.config.runtime_settings import (
     CHAT_ATTACHMENT_CHARS_RANGE,

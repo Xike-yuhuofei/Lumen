@@ -59,7 +59,7 @@ async def run_dedup(
     llm_selection: dict | None = None,
     on_event: OnEvent | None = None,
 ) -> DedupResult:
-    from deeptutor.services.model_selection.runtime import (
+    from lumen.shared.config.model_selection_runtime import (
         activate_llm_selection,
         reset_llm_selection,
     )

@@ -14,11 +14,13 @@ Layering:
 * :mod:`messages`       — canonical message builders.
 * :mod:`tool_arg_guard` — pre-dispatch validation of model tool arguments.
 * :mod:`client`         — OpenAI-compatible client pool (migrated).
+* :mod:`usage`          — token-usage accumulator shared across steps.
+* :mod:`labeled_step`   — one streaming LLM call with label routing.
 
-The remaining engine modules (``usage`` / ``labeled_step`` /
-``tool_dispatch`` / ``loop``) still live under ``deeptutor.core.agentic``
-until their ``deeptutor.runtime.registry`` / API-router dependencies are
-canonicalized; they import these primitives from this package.
+The remaining engine modules (``tool_dispatch`` / ``loop``) still live under
+``deeptutor.core.agentic`` until their ``deeptutor.runtime.registry`` /
+tool-registry dependencies are canonicalized; they import these primitives
+from this package.
 """
 
 from lumen.runtime.agent_loop.engine.labels import (

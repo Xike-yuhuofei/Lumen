@@ -37,9 +37,9 @@ from deeptutor.agents.chat.context_budget import LLMRequestSnapshot
 from deeptutor.agents.chat.dsml_tool_calls import DSMLStreamFilter, extract_dsml_tool_calls
 from deeptutor.core.agentic.messages import assistant_message_with_tool_calls
 from deeptutor.core.agentic.tool_dispatch import DispatchOutcome
-from deeptutor.core.agentic.usage import message_content_chars, record_streamed_usage
 from deeptutor.core.context import UnifiedContext
 from deeptutor.core.trace import build_trace_metadata, merge_trace_metadata, new_call_id
+from lumen.runtime.agent_loop.engine.usage import message_content_chars, record_streamed_usage
 from lumen.runtime.stream.bus import StreamBus
 from lumen.shared._util.llm import clean_thinking_tags
 from lumen.shared._util.llm.capabilities import threads_session_id

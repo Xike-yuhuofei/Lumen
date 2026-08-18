@@ -202,7 +202,7 @@ def _mastery_path_id(value: Any) -> str:
 
 
 def _llm_selection_dict(value: Any) -> dict[str, str] | None:
-    from deeptutor.services.model_selection import LLMSelection
+    from lumen.shared.config.model_selection import LLMSelection
 
     selection = LLMSelection.from_payload(value)
     return selection.to_dict() if selection else None
@@ -778,12 +778,12 @@ class TurnRuntimeManager:
                     "model_id": assigned_llms[0].get("model_id"),
                 }
         if llm_selection:
-            from deeptutor.services.model_selection import (
+            from lumen.shared._util.user import merge_personal_llm_profiles
+            from lumen.shared.config import get_model_catalog_service
+            from lumen.shared.config.model_selection import (
                 LLMSelection,
                 apply_llm_selection_to_catalog,
             )
-            from lumen.shared._util.user import merge_personal_llm_profiles
-            from lumen.shared.config import get_model_catalog_service
 
             try:
                 # Personal (owner-bound) profiles live in the user's own
@@ -1381,15 +1381,15 @@ class TurnRuntimeManager:
         try:
             from deeptutor.core.context import Attachment, UnifiedContext
             from deeptutor.services.memory import get_memory_store
-            from deeptutor.services.model_selection.runtime import (
-                activate_llm_selection,
-            )
-            from deeptutor.services.model_selection.runtime import (
-                reset_llm_selection as reset_active_llm_selection,
-            )
             from deeptutor.services.notebook import get_notebook_manager
             from deeptutor.services.session.context_builder import ContextBuilder
             from lumen.runtime.agents.notebook import NotebookAnalysisAgent
+            from lumen.shared.config.model_selection_runtime import (
+                activate_llm_selection,
+            )
+            from lumen.shared.config.model_selection_runtime import (
+                reset_llm_selection as reset_active_llm_selection,
+            )
 
             request_config = dict(payload.get("config", {}) or {})
             followup_question_context = _extract_followup_question_context(request_config)
