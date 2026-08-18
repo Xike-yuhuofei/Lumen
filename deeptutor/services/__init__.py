@@ -17,7 +17,7 @@ Usage:
     from lumen.shared.knowledge.rag import RAGService
     from deeptutor.services.prompt import get_prompt_manager
     from lumen.shared._util.search import web_search
-    from deeptutor.services.setup import init_user_directories
+    from lumen.app.setup import init_user_directories
     from lumen.shared.config import load_config_with_main
 
     # LLM
@@ -70,7 +70,7 @@ def __getattr__(name: str):
     if name == "search":
         return importlib.import_module("lumen.shared._util.search")
     if name == "setup":
-        return importlib.import_module("deeptutor.services.setup")
+        return importlib.import_module("lumen.app.setup")
     if name == "session":
         return importlib.import_module("deeptutor.services.session")
     if name == "config":

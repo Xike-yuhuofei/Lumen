@@ -19,9 +19,9 @@ from typing import Callable
 from urllib import error as urlerror
 from urllib import request as urlrequest
 
-from deeptutor.runtime.banner import labels_for, print_banner, resolve_language
-from deeptutor.runtime.home import DEEPTUTOR_HOME_ENV, PACKAGE_ROOT, get_runtime_home
+from lumen.app.banner import labels_for, print_banner, resolve_language
 from lumen.shared._util.brand import PRODUCT_NAME
+from lumen.shared._util.runtime_home import DEEPTUTOR_HOME_ENV, PACKAGE_ROOT, get_runtime_home
 
 # Stamped by the launcher onto every child's environment so the backend can
 # find the root of the DeepTutor process tree.
@@ -500,7 +500,7 @@ def _source_build_fingerprint(source: Path) -> str:
     """Hash source inputs so a production build can be reused."""
 
     digest = hashlib.sha256()
-    version_file = PACKAGE_ROOT / "deeptutor" / "__version__.py"
+    version_file = PACKAGE_ROOT / "lumen" / "__version__.py"
     candidates: list[Path] = []
     for dirpath, dirnames, filenames in os.walk(source):
         dirnames[:] = sorted(
@@ -517,7 +517,7 @@ def _source_build_fingerprint(source: Path) -> str:
         relative = (
             path.relative_to(source).as_posix()
             if path.is_relative_to(source)
-            else f"../deeptutor/{path.name}"
+            else f"../lumen/{path.name}"
         )
         digest.update(relative.encode("utf-8"))
         digest.update(b"\0")
@@ -561,7 +561,7 @@ def _spa_server_command(frontend_port: int) -> list[str]:
         sys.executable,
         "-m",
         "uvicorn",
-        "deeptutor.runtime.spa_server:app",
+        "lumen.app.spa_server:app",
         "--host",
         "0.0.0.0",
         "--port",
@@ -672,7 +672,7 @@ def start(home: str | Path | None = None, *, dev: bool = False) -> None:
     os.environ[DEEPTUTOR_HOME_ENV] = str(runtime_home)
     _reset_runtime_singletons()
 
-    from deeptutor.services.setup import init_user_directories
+    from lumen.app.setup import init_user_directories
     from lumen.shared.config import (
         HTTP_KEEP_ALIVE_TIMEOUT,
         ensure_runtime_settings_files,

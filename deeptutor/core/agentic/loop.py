@@ -33,7 +33,7 @@ from deeptutor.core.agentic.labels import LABEL_UNKNOWN, find_inline_labels
 from deeptutor.core.agentic.messages import assistant_message_with_tool_calls
 from deeptutor.core.agentic.tool_dispatch import DispatchOutcome
 from deeptutor.core.agentic.usage import UsageTracker
-from deeptutor.core.stream_bus import StreamBus
+from lumen.runtime.stream.bus import StreamBus
 
 
 @dataclass(frozen=True)

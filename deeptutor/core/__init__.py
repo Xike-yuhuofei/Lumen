@@ -1,8 +1,9 @@
 """Core contracts shared across runtime, tools, and capabilities."""
 
+from lumen.runtime.stream.bus import StreamBus
+
 from .context import Attachment, UnifiedContext
 from .stream import StreamEvent, StreamEventType
-from .stream_bus import StreamBus
 from .tool_protocol import (
     BaseTool,
     ToolAlias,

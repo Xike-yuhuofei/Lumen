@@ -171,7 +171,7 @@ def _patch_legacy_runtime(monkeypatch: pytest.MonkeyPatch) -> None:
             emit=_noop_async,
         ),
     )
-    monkeypatch.setattr("deeptutor.services.persona.get_persona_service", _fake_persona_service)
+    monkeypatch.setattr("lumen.shared.persona.get_persona_service", _fake_persona_service)
 
 
 async def _wait_for_reply_queue(

@@ -121,7 +121,7 @@ deeptutor start                   # backend + frontend together
 | `deeptutor/services/session/turn_runtime.py` | `TurnRuntimeManager` — turn orchestration (WS/CLI/Cron/SDK turns) |
 | `deeptutor/services/cron/executor.py`      | Cron job execution via `runtime.agent_loop` |
 | `deeptutor/agents/chat/`                   | Legacy Agent Loop Provider (`AgenticChatPipeline` — production agent loop) |
-| `deeptutor/runtime/launcher.py`            | Backend + frontend lifecycle / port discovery |
+| `lumen/app/launcher.py`                    | Backend + frontend lifecycle / port discovery |
 | `deeptutor/runtime/registry/tool_registry.py` | Tool registry                      |
 | `deeptutor/services/config/runtime_settings.py` | JSON settings + process-env overrides |
 | `deeptutor/core/stream.py`, `stream_bus.py` | StreamEvent protocol + async fan-out |

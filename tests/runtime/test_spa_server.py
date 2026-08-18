@@ -8,7 +8,7 @@ import threading
 import pytest
 from starlette.testclient import TestClient
 
-from deeptutor.runtime import spa_server
+from lumen.app import spa_server
 
 
 def _write_spa(root: Path) -> Path:

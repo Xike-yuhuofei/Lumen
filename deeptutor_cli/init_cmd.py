@@ -16,7 +16,7 @@ from typing import Any
 from rich.console import Console
 import typer
 
-from deeptutor.runtime.home import DEEPTUTOR_HOME_ENV, get_runtime_home
+from lumen.shared._util.runtime_home import DEEPTUTOR_HOME_ENV, get_runtime_home
 
 from . import init_wizard as wiz
 
@@ -417,8 +417,8 @@ def run_init(*, cli_only: bool = False, home: str | Path | None = None) -> None:
     os.environ[DEEPTUTOR_HOME_ENV] = str(runtime_home)
     _reset_runtime_singletons()
 
-    from deeptutor.runtime.banner import labels_for, print_banner, resolve_language
-    from deeptutor.services.setup import init_user_directories
+    from lumen.app.banner import labels_for, print_banner, resolve_language
+    from lumen.app.setup import init_user_directories
     from lumen.shared.config import get_model_catalog_service, get_runtime_settings_service
 
     init_user_directories(runtime_home)

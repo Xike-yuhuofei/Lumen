@@ -280,7 +280,7 @@ app.add_middleware(
 
 # Initialize user directories on startup
 try:
-    from deeptutor.services.setup import init_user_directories
+    from lumen.app.setup import init_user_directories
 
     init_user_directories()
 except Exception:

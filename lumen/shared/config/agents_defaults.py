@@ -1,7 +1,7 @@
 """Default agent (capabilities / tools / services) settings.
 
 Canonical home of ``DEFAULT_AGENTS_SETTINGS``, migrated from
-``deeptutor.services.setup.init``.
+``lumen.app.setup.init``.
 """
 
 from __future__ import annotations

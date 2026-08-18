@@ -44,7 +44,7 @@ def test_both_readers_of_interface_json_agree_on_a_legacy_file(
     through one shared helper precisely so a legacy file can't mean different
     things depending on which one asked.
     """
-    from deeptutor.services.settings import interface_settings
+    from lumen.shared.settings import interface_settings
 
     settings_file = tmp_path / "interface.json"
     settings_file.write_text('{"theme": "dark", "language": "zh"}', encoding="utf-8")

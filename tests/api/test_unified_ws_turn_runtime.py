@@ -144,7 +144,7 @@ async def test_turn_runtime_replays_events_and_materializes_messages(
         ),
     )
     monkeypatch.setattr(
-        "deeptutor.services.persona.get_persona_service",
+        "lumen.shared.persona.get_persona_service",
         _fake_persona_service,
     )
 
@@ -295,7 +295,7 @@ async def test_turn_runtime_persists_llm_selection_in_turn_snapshot(
         ),
     )
 
-    monkeypatch.setattr("deeptutor.services.persona.get_persona_service", _fake_persona_service)
+    monkeypatch.setattr("lumen.shared.persona.get_persona_service", _fake_persona_service)
 
     selection = {"profile_id": "p-alt", "model_id": "m-alt"}
     session, turn = await runtime.start_turn(
@@ -377,7 +377,7 @@ async def test_turn_runtime_session_persona_persists_falls_back_and_clears(
         lambda: SimpleNamespace(read_l3_concat=lambda: "", emit=_noop_async),
     )
 
-    monkeypatch.setattr("deeptutor.services.persona.get_persona_service", _fake_persona_service)
+    monkeypatch.setattr("lumen.shared.persona.get_persona_service", _fake_persona_service)
 
     async def run_turn(session_id, extra):
         session, turn = await runtime.start_turn(
@@ -523,7 +523,7 @@ async def test_turn_runtime_allows_model_switching_within_same_session(
         ),
     )
 
-    monkeypatch.setattr("deeptutor.services.persona.get_persona_service", _fake_persona_service)
+    monkeypatch.setattr("lumen.shared.persona.get_persona_service", _fake_persona_service)
 
     first_selection = {"profile_id": "p-default", "model_id": "m-default"}
     second_selection = {"profile_id": "p-alt", "model_id": "m-alt"}
@@ -677,7 +677,7 @@ async def test_turn_runtime_bootstraps_question_followup_context_once(
         ),
     )
 
-    monkeypatch.setattr("deeptutor.services.persona.get_persona_service", _fake_persona_service)
+    monkeypatch.setattr("lumen.shared.persona.get_persona_service", _fake_persona_service)
 
     session, turn = await runtime.start_turn(
         {
@@ -796,7 +796,7 @@ async def test_turn_runtime_injects_memory_and_refreshes_after_completion(
         ),
     )
 
-    monkeypatch.setattr("deeptutor.services.persona.get_persona_service", _fake_persona_service)
+    monkeypatch.setattr("lumen.shared.persona.get_persona_service", _fake_persona_service)
 
     _session, turn = await runtime.start_turn(
         {

@@ -83,8 +83,8 @@ async def _execute_chat_job(job: CronJob) -> tuple[str, str | None]:
     """
     from deeptutor.core.context import UnifiedContext
     from deeptutor.core.stream import StreamEvent, StreamEventType
-    from deeptutor.core.stream_bus import StreamBus, register_bus, unregister_bus
     from deeptutor.services.session import get_sqlite_session_store
+    from lumen.runtime.stream.bus import StreamBus, register_bus, unregister_bus
     from lumen.shared._util.user import local_admin_user, user_context
 
     # Single-user mode: every cron job runs in the local admin's scope.

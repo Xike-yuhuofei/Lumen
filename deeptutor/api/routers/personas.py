@@ -20,14 +20,14 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from deeptutor.core.i18n import t
-from deeptutor.services.persona import (
+from lumen.shared._util.user import get_admin_path_service, get_current_user
+from lumen.shared.persona import (
     InvalidPersonaNameError,
     PersonaExistsError,
     PersonaNotFoundError,
     PersonaService,
     get_persona_service,
 )
-from lumen.shared._util.user import get_admin_path_service, get_current_user
 
 router = APIRouter()
 

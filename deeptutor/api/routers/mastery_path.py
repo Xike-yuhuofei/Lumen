@@ -12,7 +12,6 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from pydantic import ValidationError as PydanticValidationError
 
-from deeptutor.services.settings.interface_settings import get_response_language
 from deeptutor.utils.json_parser import parse_json_response
 from lumen.modes.learn.adapters.storage import LearningStore
 from lumen.modes.learn.application.prompts import default_module_name, notebook_generation_prompts
@@ -24,6 +23,7 @@ from lumen.modes.learn.domain.models import (
     LearningStage,
 )
 from lumen.modes.learn.policy.policy import map_summary, next_objective
+from lumen.shared.settings.interface_settings import get_response_language
 
 router = APIRouter()
 

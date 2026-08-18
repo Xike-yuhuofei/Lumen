@@ -14,7 +14,6 @@ import pytest
 
 from deeptutor.core.context import UnifiedContext
 from deeptutor.core.stream import StreamEventType
-from deeptutor.core.stream_bus import StreamBus
 from lumen.agent_loop_langchain import LangChainAgentLoopPlugin
 from lumen.agent_loop_langchain.plugins import _LangChainAgentLoopAdapter
 from lumen.bakeoff_profiles import (
@@ -25,6 +24,7 @@ from lumen.bakeoff_profiles import (
     non_agent_loop_plugin_ids,
 )
 from lumen.kernel import Bootstrap
+from lumen.runtime.stream.bus import StreamBus
 from tests.kernel.bakeoff_fakes import (
     FakeBakeoffToolService,
     ScriptedLangChainModel,

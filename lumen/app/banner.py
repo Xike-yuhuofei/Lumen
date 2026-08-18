@@ -12,7 +12,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 
-from deeptutor.__version__ import __version__
+from lumen.__version__ import __version__
 from lumen.shared._util.brand import PRODUCT_NAME
 
 _ASCII_LOGO = r""" _     _   _ __  __ _____ _   _
@@ -252,7 +252,7 @@ def resolve_language(default: str = "en") -> str:
     silently falls back to the default.
     """
     try:
-        from deeptutor.services.settings.interface_settings import get_ui_language
+        from lumen.shared.settings.interface_settings import get_ui_language
 
         return _pick_language(get_ui_language(default))
     except Exception:

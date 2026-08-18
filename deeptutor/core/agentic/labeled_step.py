@@ -49,8 +49,8 @@ from deeptutor.core.agentic.usage import (
     message_content_chars,
     record_streamed_usage,
 )
-from deeptutor.core.stream_bus import StreamBus
 from deeptutor.core.trace import merge_trace_metadata
+from lumen.runtime.stream.bus import StreamBus
 from lumen.shared._util.llm import clean_thinking_tags
 from lumen.shared._util.llm.multimodal import should_degrade_to_text, strip_image_parts_inplace
 from lumen.shared._util.llm.request_compat import (

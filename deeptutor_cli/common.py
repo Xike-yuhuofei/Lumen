@@ -501,7 +501,7 @@ class TurnStreamRenderer:
 
     async def _on_wait_for_input(self, item: dict[str, Any]) -> None:
         """Legacy in-band input request (``StreamBus.wait_for_input``)."""
-        from deeptutor.core.stream_bus import get_bus
+        from lumen.runtime.stream.bus import get_bus
 
         self._status_stop()
         bus = get_bus(self.turn_id)

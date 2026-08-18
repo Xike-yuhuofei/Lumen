@@ -16,7 +16,7 @@ import pytest
 
 from deeptutor.core.agentic.labeled_step import run_labeled_step
 from deeptutor.core.stream import StreamEventType
-from deeptutor.core.stream_bus import StreamBus
+from lumen.runtime.stream.bus import StreamBus
 from lumen.shared._util.llm.multimodal import has_image_parts
 
 

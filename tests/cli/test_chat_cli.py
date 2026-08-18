@@ -197,7 +197,7 @@ def test_start_command_delegates_to_runtime_launcher(monkeypatch) -> None:
     def _fake_start(home=None, *, dev=False):  # noqa: ANN001
         calls.append((home, dev))
 
-    monkeypatch.setattr("deeptutor.runtime.launcher.start", _fake_start)
+    monkeypatch.setattr("lumen.app.launcher.start", _fake_start)
 
     result = runner.invoke(app, ["start"])
 

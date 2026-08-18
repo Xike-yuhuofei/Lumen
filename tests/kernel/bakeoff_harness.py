@@ -12,7 +12,7 @@ from typing import Any
 
 from deeptutor.core.context import UnifiedContext
 from deeptutor.core.stream import StreamEvent, StreamEventType
-from deeptutor.core.stream_bus import StreamBus
+from lumen.runtime.stream.bus import StreamBus
 
 
 @dataclass

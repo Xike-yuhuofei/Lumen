@@ -6,8 +6,7 @@ Async event channel that tools / capabilities emit into and consumers
 (CLI renderer, WebSocket pusher, JSON writer) read from.
 
 Owned by ``lumen/runtime/stream`` since Phase 6B2 (Worker A physical
-migration); ``deeptutor.core.stream_bus`` re-exports it for legacy
-importers.
+migration). The legacy ``deeptutor.core.stream_bus`` facade has been removed.
 
 Usage::
 

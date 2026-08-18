@@ -31,7 +31,6 @@ from deeptutor.core.agentic.tool_arg_guard import (
     missing_required_args,
 )
 from deeptutor.core.context import UnifiedContext
-from deeptutor.core.stream_bus import StreamBus
 from deeptutor.core.tool_protocol import ToolLookup, provider_identity
 from deeptutor.core.trace import (
     build_trace_metadata,
@@ -41,6 +40,7 @@ from deeptutor.core.trace import (
 )
 from deeptutor.runtime.registry.tool_registry import get_tool_registry
 from deeptutor.utils.json_parser import parse_json_response
+from lumen.runtime.stream.bus import StreamBus
 
 logger = logging.getLogger(__name__)
 

@@ -10,7 +10,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from deeptutor.core.context import Attachment, UnifiedContext
-from deeptutor.core.stream_bus import StreamBus
+from lumen.runtime.stream.bus import StreamBus
 
 # ---------------------------------------------------------------------------
 # Multi-user legacy migration guard

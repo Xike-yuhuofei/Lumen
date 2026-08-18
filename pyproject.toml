@@ -176,7 +176,7 @@ all = [
 include-package-data = true
 
 [tool.setuptools.dynamic]
-version = {attr = "deeptutor.__version__.__version__"}
+version = {attr = "lumen.__version__.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["."]

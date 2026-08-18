@@ -26,7 +26,7 @@ import pytest
 
 from deeptutor.core.agentic.labeled_step import run_labeled_step
 from deeptutor.core.stream import StreamEventType
-from deeptutor.core.stream_bus import StreamBus
+from lumen.runtime.stream.bus import StreamBus
 
 
 def _chunk(content: str | None = None, tool_calls: Any = None) -> SimpleNamespace:

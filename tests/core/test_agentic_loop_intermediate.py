@@ -18,7 +18,7 @@ import pytest
 
 from deeptutor.core.agentic.loop import LabelProtocol, run_agentic_loop
 from deeptutor.core.agentic.tool_dispatch import DispatchOutcome
-from deeptutor.core.stream_bus import StreamBus
+from lumen.runtime.stream.bus import StreamBus
 
 # --------------------------- scripted LLM client ---------------------------
 

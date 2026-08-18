@@ -19,9 +19,9 @@ from deeptutor.agents.question.mimic_source import parse_exam_paper_to_templates
 from deeptutor.agents.question.pipeline import QuestionPipeline
 from deeptutor.core.context import UnifiedContext
 from deeptutor.core.stream import StreamEvent
-from deeptutor.core.stream_bus import StreamBus
-from deeptutor.services.settings.interface_settings import get_response_language
+from lumen.runtime.stream.bus import StreamBus
 from lumen.shared._util.path_service import get_path_service
+from lumen.shared.settings.interface_settings import get_response_language
 
 logger = logging.getLogger(__name__)
 

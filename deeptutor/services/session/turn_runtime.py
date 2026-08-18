@@ -14,12 +14,12 @@ import logging
 from typing import TYPE_CHECKING, Any, Literal
 
 from deeptutor.core.stream import StreamEvent, StreamEventType
-from deeptutor.core.stream_bus import StreamBus, register_bus, unregister_bus
 from deeptutor.services.session.artifact_attachments import (
     artifact_attachments,
     fill_preview_text,
 )
 from deeptutor.services.session.protocol import SessionStoreProtocol
+from lumen.runtime.stream.bus import StreamBus, register_bus, unregister_bus
 from lumen.shared._util.llm.utils import clean_thinking_tags
 from lumen.shared._util.path_service import get_path_service
 
@@ -684,7 +684,7 @@ class TurnRuntimeManager:
     async def start_turn(self, payload: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
         capability = str(payload.get("capability") or "chat")
         if not payload.get("language"):
-            from deeptutor.services.settings.interface_settings import (
+            from lumen.shared.settings.interface_settings import (
                 get_response_language,
             )
 
@@ -1544,8 +1544,8 @@ class TurnRuntimeManager:
             # token). Resolution: the user's own workspace first; non-admin
             # users fall back to admin-authored presets (personas carry no
             # privileged workflow, so no grant gate applies).
-            from deeptutor.services.persona import PersonaService, get_persona_service
             from lumen.shared._util.user import get_admin_path_service, get_current_user
+            from lumen.shared.persona import PersonaService, get_persona_service
 
             current_user = get_current_user()
             requested_persona = str(payload.get("persona") or "").strip()

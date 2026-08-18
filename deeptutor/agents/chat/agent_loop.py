@@ -39,8 +39,8 @@ from deeptutor.core.agentic.messages import assistant_message_with_tool_calls
 from deeptutor.core.agentic.tool_dispatch import DispatchOutcome
 from deeptutor.core.agentic.usage import message_content_chars, record_streamed_usage
 from deeptutor.core.context import UnifiedContext
-from deeptutor.core.stream_bus import StreamBus
 from deeptutor.core.trace import build_trace_metadata, merge_trace_metadata, new_call_id
+from lumen.runtime.stream.bus import StreamBus
 from lumen.shared._util.llm import clean_thinking_tags
 from lumen.shared._util.llm.capabilities import threads_session_id
 from lumen.shared._util.llm.multimodal import should_degrade_to_text, strip_image_parts_inplace

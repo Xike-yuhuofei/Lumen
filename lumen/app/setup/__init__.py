@@ -7,7 +7,7 @@ System setup and initialization for DeepTutor.
 Port configuration is done via data/user/settings/system.json.
 
 Usage:
-    from deeptutor.services.setup import init_user_directories, get_backend_port
+    from lumen.app.setup import init_user_directories, get_backend_port
 
     # Initialize user directories
     init_user_directories()

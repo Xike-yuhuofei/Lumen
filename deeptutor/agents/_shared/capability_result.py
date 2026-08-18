@@ -18,7 +18,7 @@ from __future__ import annotations
 from typing import Any
 
 from deeptutor.core.agentic.usage import UsageTracker
-from deeptutor.core.stream_bus import StreamBus
+from lumen.runtime.stream.bus import StreamBus
 
 
 async def emit_capability_result(

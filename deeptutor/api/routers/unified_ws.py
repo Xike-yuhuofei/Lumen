@@ -299,7 +299,7 @@ async def unified_websocket(ws: WebSocket) -> None:
                 if not turn_id:
                     await safe_send({"type": "error", "content": "Missing turn_id for user_input."})
                     continue
-                from deeptutor.core.stream_bus import get_bus
+                from lumen.runtime.stream.bus import get_bus
 
                 bus = get_bus(turn_id)
                 if bus is None:

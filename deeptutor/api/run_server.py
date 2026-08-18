@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 import sys
 
-from deeptutor.runtime.home import get_runtime_home
+from lumen.shared._util.runtime_home import get_runtime_home
 
 # Windows: uvicorn defaults to SelectorEventLoop which does not support
 # asyncio.create_subprocess_exec.  Switch to ProactorEventLoop so that
@@ -33,8 +33,8 @@ def main() -> None:
     os.chdir(str(project_root))
 
     # Get port from configuration
-    from deeptutor.runtime.mode import RunMode, set_mode
-    from deeptutor.services.setup import get_backend_port
+    from lumen.app.mode import RunMode, set_mode
+    from lumen.app.setup import get_backend_port
     from lumen.shared._util.logging import configure_logging
     from lumen.shared.config import HTTP_KEEP_ALIVE_TIMEOUT, get_ws_max_size
 

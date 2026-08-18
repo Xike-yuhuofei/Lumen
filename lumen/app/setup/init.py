@@ -153,8 +153,8 @@ def _seed_default_personas() -> None:
     Best-effort — never blocks startup.
     """
     try:
-        from deeptutor.services.persona.service import PersonaService
         from lumen.shared._util.user import get_admin_path_service
+        from lumen.shared.persona.service import PersonaService
 
         admin_personas = get_admin_path_service().get_workspace_dir() / "personas"
         seeded = PersonaService(root=admin_personas).seed_presets()

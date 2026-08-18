@@ -6,7 +6,7 @@ from pathlib import Path
 
 import typer
 
-from deeptutor.runtime.mode import RunMode, set_mode
+from lumen.app.mode import RunMode, set_mode
 from lumen.shared._util.brand import PRODUCT_NAME
 from lumen.shared._util.logging import configure_logging
 
@@ -91,7 +91,7 @@ def start(
     ),
 ) -> None:
     """Launch backend + frontend together. Source installs default to production."""
-    from deeptutor.runtime.launcher import start as start_web
+    from lumen.app.launcher import start as start_web
 
     start_web(home=home, dev=dev)
 
@@ -108,7 +108,7 @@ def serve(
 
     set_mode(RunMode.SERVER)
     if port is None:
-        from deeptutor.services.setup import get_backend_port
+        from lumen.app.setup import get_backend_port
 
         port = get_backend_port()
 

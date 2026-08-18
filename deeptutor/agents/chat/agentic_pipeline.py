@@ -33,7 +33,6 @@ from deeptutor.core.agentic import (
 )
 from deeptutor.core.agentic.tool_dispatch import MAX_PARALLEL_TOOL_CALLS
 from deeptutor.core.context import UnifiedContext
-from deeptutor.core.stream_bus import StreamBus
 from deeptutor.core.tool_protocol import ToolLookup
 from deeptutor.core.trace import (
     build_trace_metadata,
@@ -47,6 +46,7 @@ from deeptutor.runtime.providers.view import ProviderToolView, build_tool_view
 from deeptutor.runtime.registry.deferred_tools import DeferredToolLoader
 from deeptutor.runtime.registry.tool_registry import get_tool_registry
 from deeptutor.services.prompt import get_prompt_manager
+from lumen.runtime.stream.bus import StreamBus
 from lumen.shared._util.llm import (
     get_llm_config,
     get_token_limit_kwargs,  # noqa: F401  (re-exported for tests)
