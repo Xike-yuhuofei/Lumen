@@ -24,7 +24,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from deeptutor.learning.pending import (
+from lumen.modes.learn.assessment.pending import (
     format_options,
     has_option_bodies,
     parse_options,

@@ -23,8 +23,8 @@ def _bind_pending_ask_user_args(kwargs: dict[str, Any], path_id: str) -> dict[st
     if not path_id:
         return kwargs
     try:
-        from deeptutor.learning.pending import public_pending_question
-        from deeptutor.learning.storage import LearningStore
+        from lumen.modes.learn.adapters.storage import LearningStore
+        from lumen.modes.learn.assessment.pending import public_pending_question
 
         progress = LearningStore().load(path_id)
         pending = progress.pending_question if progress is not None else None

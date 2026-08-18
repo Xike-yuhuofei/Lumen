@@ -158,7 +158,7 @@ async def test_mode_learn_turn_runs_through_injected_agent_loop(tmp_path):
     learner state through the existing learning engine."""
     from deeptutor.core.context import UnifiedContext
     from deeptutor.core.stream_bus import StreamBus
-    from deeptutor.learning.storage import LearningStore
+    from lumen.modes.learn.adapters.storage import LearningStore
 
     store = LearningStore(root=tmp_path)
     calls: list[tuple[Any, Any, str, dict[str, Any]]] = []

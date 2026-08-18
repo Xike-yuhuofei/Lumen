@@ -195,7 +195,7 @@ async def test_learn_start_get_state_resume(tmp_path):
     """start() persists a learner path through the real LearningStore;
     get_state() / resume() read it back."""
 
-    from deeptutor.learning.storage import LearningStore
+    from lumen.modes.learn.adapters.storage import LearningStore
 
     store = LearningStore(root=tmp_path)
     from lumen.modes.learn.plugin import _LearnModeServiceAdapter
@@ -221,9 +221,9 @@ async def test_learn_start_get_state_resume(tmp_path):
 async def test_learn_state_is_mutable_through_engine(tmp_path):
     """Updating mastery through the existing engine is reflected in get_state."""
 
-    from deeptutor.learning.mastery import compute_mastery
-    from deeptutor.learning.storage import LearningStore
+    from lumen.modes.learn.adapters.storage import LearningStore
     from lumen.modes.learn.plugin import _LearnModeServiceAdapter
+    from lumen.modes.learn.policy.mastery import compute_mastery
 
     store = LearningStore(root=tmp_path)
     adapter = _LearnModeServiceAdapter(agent_loop=object(), store=store)

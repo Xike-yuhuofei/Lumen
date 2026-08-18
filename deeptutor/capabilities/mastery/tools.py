@@ -1,5 +1,5 @@
 """Mastery Path tools — the seam between the chat-loop tutor and the pure
-mastery engine (:mod:`deeptutor.learning`).
+mastery engine (:mod:`lumen.modes.learn`).
 
 These five tools are auto-mounted only when a mastery path is active on the
 turn (via the chat loop mastery capability). The chat agent loop IS the tutor;
@@ -30,6 +30,7 @@ from deeptutor.capabilities.mastery.choices import (
     resolve_choice_submission,
 )
 from deeptutor.core.tool_protocol import BaseTool, ToolDefinition, ToolParameter, ToolResult
+from lumen.modes.learn.assessment.pending import public_pending_question
 
 # ``learning.models`` and ``learning.policy`` only depend on pydantic — safe to
 # import at module load. ``learning.service`` / ``storage`` / ``scheduler``
@@ -37,7 +38,7 @@ from deeptutor.core.tool_protocol import BaseTool, ToolDefinition, ToolParameter
 # them here would close an import cycle through the built-in registry. They
 # are imported lazily inside the call paths instead (same pattern as the other
 # builtin tools).
-from deeptutor.learning.models import (
+from lumen.modes.learn.domain.models import (
     KnowledgePoint,
     KnowledgeType,
     LearningModule,
@@ -45,8 +46,7 @@ from deeptutor.learning.models import (
     Misconception,
     PendingQuestion,
 )
-from deeptutor.learning.pending import public_pending_question
-from deeptutor.learning.policy import (
+from lumen.modes.learn.policy.policy import (
     QUALITATIVE_TYPES,
     display_mastery,
     find_knowledge_point,
@@ -57,7 +57,7 @@ from deeptutor.learning.policy import (
 )
 
 if TYPE_CHECKING:
-    from deeptutor.learning.service import LearningService
+    from lumen.modes.learn.application.service import LearningService
 
 # Tool names the pipeline mounts together when a mastery path is active. Kept
 # here so the mount policy and the registration list can't disagree.
@@ -81,8 +81,8 @@ logger = logging.getLogger(__name__)
 
 
 def _new_service() -> LearningService:
-    from deeptutor.learning.service import LearningService
-    from deeptutor.learning.storage import LearningStore
+    from lumen.modes.learn.adapters.storage import LearningStore
+    from lumen.modes.learn.application.service import LearningService
 
     return LearningService(LearningStore())
 
@@ -346,8 +346,8 @@ class TeachingPlanTool(BaseTool):
                 meta_key="teaching_plan",
             )
 
-        from deeptutor.teaching_core.adapters import action_instruction
-        from deeptutor.teaching_core.teaching_service import TeachingService
+        from lumen.modes.learn.adapters.learner_state import action_instruction
+        from lumen.modes.learn.application.teaching_service import TeachingService
 
         teaching = TeachingService()
         action = teaching.decide(path_id)
@@ -627,7 +627,7 @@ class MasteryGradeTool(BaseTool):
         path_id = _resolve_path_id(kwargs)
         if not path_id:
             return _no_path_result()
-        from deeptutor.learning.scheduler import SpacedRepetitionScheduler
+        from lumen.modes.learn.policy.scheduler import SpacedRepetitionScheduler
 
         answer = str(kwargs.get("answer") or "")
         service = _new_service()
@@ -759,7 +759,7 @@ class MasteryAssessTool(BaseTool):
                 ),
                 success=False,
             )
-        from deeptutor.learning.scheduler import SpacedRepetitionScheduler
+        from lumen.modes.learn.policy.scheduler import SpacedRepetitionScheduler
 
         service.record_qualitative(
             progress,
@@ -894,7 +894,7 @@ class MasteryBuildTool(BaseTool):
         always reflect the current module tree (a stale graph would keep
         deciding against removed / renamed objectives)."""
         try:
-            from deeptutor.teaching_core.teaching_service import TeachingService
+            from lumen.modes.learn.application.teaching_service import TeachingService
 
             TeachingService().rebuild_graph(path_id)
         except Exception:

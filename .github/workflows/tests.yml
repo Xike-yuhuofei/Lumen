@@ -156,7 +156,7 @@ jobs:
       - name: Run Python tests
         run: |
           echo "🧪 Running Python tests on Python 3.13"
-          pytest -q tests deeptutor/learning/tests
+          pytest -q tests lumen/modes/learn/tests
         env:
           PYTHONPATH: ${{ github.workspace }}
 

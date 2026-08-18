@@ -3245,6 +3245,26 @@ export default function App() {
           ref={(el) => (mainRef.current = el)}
           className={mainClasses.join(' ')}
         >
+          {/* 折叠态常驻入口：展开侧边栏 + 搜索（对齐真实 TraeWork 的 headerLeft）。
+              仅左栏收起且非 chat 视图时显示；chat 使用其自带 header 的 headerLeft。 */}
+          {!sidebarOpen && view !== 'chat' && (
+            <div
+              className="collapsedMainHeaderLeft"
+              style={{
+                position: 'absolute',
+                top: '8px',
+                left: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '0 12px',
+                zIndex: 'var(--z-dropdown)',
+              }}
+            >
+              <IconBtn icon="view-left" label="展开侧边栏" title="展开侧边栏" onClick={() => setSidebarOpen(true)} />
+              <IconBtn icon="search" label="搜索" title="搜索" onClick={() => setSidebarOpen(true)} />
+            </div>
+          )}
           {view === 'chat' && (
             <>
               <div className="contentWrapper-U1GjQr" style={{ minWidth: '392px' }}>
