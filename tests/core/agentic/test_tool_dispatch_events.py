@@ -29,8 +29,8 @@ from deeptutor.core.stream import StreamEvent, StreamEventType
 from deeptutor.core.tool_protocol import ToolResult
 from deeptutor.core.trace import derive_trace_metadata
 from deeptutor.runtime.registry.tool_registry import ToolRegistry
-from deeptutor.services.sandbox import Mount
 from lumen.runtime.stream.bus import StreamBus
+from lumen.shared.sandbox import Mount
 
 
 class _Registry:

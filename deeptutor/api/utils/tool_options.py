@@ -17,8 +17,8 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from deeptutor.core.i18n import current_language
 from deeptutor.i18n.metadata_i18n import localized_description, tool_description_i18n
+from lumen.shared._util.i18n import current_language
 
 logger = logging.getLogger(__name__)
 

@@ -3,7 +3,7 @@
 This process runs *inside* the dedicated ``sandbox-runner`` container and is the
 only place where untrusted shell commands are actually executed. The main app
 never runs them itself; it submits work here over HTTP
-(:class:`deeptutor.services.sandbox.backends.RunnerSidecarBackend`).
+(:class:`lumen.shared.sandbox.backends.RunnerSidecarBackend`).
 
 Design constraints:
   * No third-party deps (no FastAPI/Flask): the runner image must stay tiny and
@@ -17,7 +17,7 @@ Wire contract (must match ``RunnerSidecarBackend``):
 
   ``GET  /health`` -> 200, any body, means alive.
   ``POST /exec``   -> request/response JSON described by the dataclasses in
-                      :mod:`deeptutor.services.sandbox.spec`. Request::
+                      :mod:`lumen.shared.sandbox.spec`. Request::
 
       {
         "command": "str",                 # shell string; used when argv is absent

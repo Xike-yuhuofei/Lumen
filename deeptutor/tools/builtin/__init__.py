@@ -266,7 +266,7 @@ class CodeExecutionTool(_PromptHintsMixin, BaseTool):
     A typed front-end over the sandbox runner: the model passes
     ready-to-run source as ``code`` + a ``language``; we write it into the
     turn's workspace, build the per-language compile/run command, and execute
-    it through :mod:`deeptutor.services.sandbox`. No second LLM call, and the
+    it through :mod:`lumen.shared.sandbox`. No second LLM call, and the
     same OS-level isolation + quota — so it inherits the sandbox gating
     (unavailable when no sandbox backend is configured).
     """
@@ -336,13 +336,13 @@ class CodeExecutionTool(_PromptHintsMixin, BaseTool):
     async def execute(self, **kwargs: Any) -> ToolResult:
         from pathlib import Path
 
-        from deeptutor.services.sandbox import (
+        from lumen.shared.sandbox import (
             ExecRequest,
             Mount,
             ResourceLimits,
             get_sandbox_service,
         )
-        from deeptutor.services.sandbox.artifacts import (
+        from lumen.shared.sandbox.artifacts import (
             collect_public_artifacts,
             render_artifacts_for_tool,
         )

@@ -17,11 +17,11 @@ from __future__ import annotations
 import asyncio
 import logging
 
-from deeptutor.core.i18n import t
-from deeptutor.services.sandbox.backends import SandboxBackend
-from deeptutor.services.sandbox.config import SandboxSettings, build_backend
-from deeptutor.services.sandbox.quota import QuotaExceeded, UserExecQuota
-from deeptutor.services.sandbox.spec import ExecRequest, ExecResult, IsolationLevel
+from lumen.shared._util.i18n import t
+from lumen.shared.sandbox.backends import SandboxBackend
+from lumen.shared.sandbox.config import SandboxSettings, build_backend
+from lumen.shared.sandbox.quota import QuotaExceeded, UserExecQuota
+from lumen.shared.sandbox.spec import ExecRequest, ExecResult, IsolationLevel
 
 logger = logging.getLogger(__name__)
 

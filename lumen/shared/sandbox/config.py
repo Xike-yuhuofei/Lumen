@@ -13,7 +13,7 @@ shape without per-user config:
 Sandboxed code execution is available to ordinary users only when the
 active backend reaches SYSTEM isolation; APPLICATION isolation is
 admin-opt-in. Per-user quotas live in
-:mod:`deeptutor.services.sandbox.quota`.
+:mod:`lumen.shared.sandbox.quota`.
 """
 
 from __future__ import annotations
@@ -21,13 +21,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 import os
 
-from deeptutor.services.sandbox.backends import (
+from lumen.shared.sandbox.backends import (
     BwrapBackend,
     RestrictedSubprocessBackend,
     RunnerSidecarBackend,
     SandboxBackend,
 )
-from deeptutor.services.sandbox.spec import ResourceLimits
+from lumen.shared.sandbox.spec import ResourceLimits
 
 RUNNER_URL_ENV = "DEEPTUTOR_SANDBOX_RUNNER_URL"
 ALLOW_SUBPROCESS_ENV = "DEEPTUTOR_SANDBOX_ALLOW_SUBPROCESS"
@@ -68,7 +68,7 @@ def build_backend(settings: SandboxSettings) -> SandboxBackend | None:
 
     Note: returns the candidate by configuration shape. Liveness (e.g. can
     bwrap actually create namespaces here) is confirmed lazily via the
-    backend's ``health()`` — see :mod:`deeptutor.services.sandbox.service`.
+    backend's ``health()`` — see :mod:`lumen.shared.sandbox.service`.
     """
     import sys
 

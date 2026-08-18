@@ -24,7 +24,7 @@ import shutil
 
 import httpx
 
-from deeptutor.services.sandbox.spec import (
+from lumen.shared.sandbox.spec import (
     ExecRequest,
     ExecResult,
     IsolationLevel,

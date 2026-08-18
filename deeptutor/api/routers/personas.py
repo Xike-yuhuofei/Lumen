@@ -19,7 +19,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from deeptutor.core.i18n import t
+from lumen.shared._util.i18n import t
 from lumen.shared._util.user import get_admin_path_service, get_current_user
 from lumen.shared.persona import (
     InvalidPersonaNameError,

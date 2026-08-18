@@ -66,13 +66,13 @@ from deeptutor.core.trace import (
 from deeptutor.runtime.registry.tool_registry import get_tool_registry
 from deeptutor.services.prompt import get_prompt_manager
 from deeptutor.services.prompt.language import append_language_directive
-from deeptutor.services.sandbox import exec_capability_available
 from deeptutor.utils.json_parser import parse_json_response
 from lumen.runtime.agent_loop.engine.usage import record_streamed_usage
 from lumen.runtime.stream.bus import StreamBus
 from lumen.shared._util.llm import get_llm_config, prepare_multimodal_messages
 from lumen.shared._util.path_service import get_path_service
 from lumen.shared.config import parse_language
+from lumen.shared.sandbox import exec_capability_available
 
 logger = logging.getLogger(__name__)
 
@@ -1546,7 +1546,7 @@ class QuestionPipeline:
             if self.kb_name:
                 kwargs.setdefault("kb_name", self.kb_name)
         elif tool_name == "code_execution":
-            from deeptutor.services.sandbox import Mount
+            from lumen.shared.sandbox import Mount
 
             if task_dir is not None:
                 code_dir = task_dir / "code_runs"

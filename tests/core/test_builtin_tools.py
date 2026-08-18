@@ -11,7 +11,6 @@ import pytest
 
 from deeptutor.core.tool_protocol import BaseTool, ToolDefinition, ToolParameter, ToolResult
 from deeptutor.runtime.registry.tool_registry import ToolRegistry
-from deeptutor.services.sandbox.spec import ExecResult
 from deeptutor.tools.builtin import (
     BrainstormTool,
     CodeExecutionTool,
@@ -20,6 +19,7 @@ from deeptutor.tools.builtin import (
     WebSearchTool,
 )
 from lumen.shared._util.path_service import PathService
+from lumen.shared.sandbox.spec import ExecResult
 
 
 def _install_module(
@@ -193,8 +193,8 @@ async def test_code_execution_tool_runs_python_via_sandbox(
             (run_dir / "result.txt").write_text("ok", encoding="utf-8")
             return ExecResult(stdout="4\n", exit_code=0)
 
-    import deeptutor.services.sandbox as sandbox_pkg
-    import deeptutor.services.sandbox.artifacts as sandbox_artifacts
+    import lumen.shared.sandbox as sandbox_pkg
+    import lumen.shared.sandbox.artifacts as sandbox_artifacts
 
     monkeypatch.setattr(sandbox_pkg, "get_sandbox_service", lambda: FakeSandboxService())
     monkeypatch.setattr(sandbox_artifacts, "get_path_service", lambda: path_service)
@@ -232,8 +232,8 @@ async def test_code_execution_tool_compiles_cpp(tmp_path, monkeypatch: pytest.Mo
             assert (run_dir / "main.cpp").exists()
             return ExecResult(stdout="hi\n", exit_code=0)
 
-    import deeptutor.services.sandbox as sandbox_pkg
-    import deeptutor.services.sandbox.artifacts as sandbox_artifacts
+    import lumen.shared.sandbox as sandbox_pkg
+    import lumen.shared.sandbox.artifacts as sandbox_artifacts
 
     monkeypatch.setattr(sandbox_pkg, "get_sandbox_service", lambda: FakeSandboxService())
     monkeypatch.setattr(sandbox_artifacts, "get_path_service", lambda: path_service)

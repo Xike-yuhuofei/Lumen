@@ -515,7 +515,7 @@ class AgenticChatPipeline:
 
     async def _exec_allowed(self, context: UnifiedContext) -> bool:
         try:
-            from deeptutor.services.sandbox import IsolationLevel, get_sandbox_service
+            from lumen.shared.sandbox import IsolationLevel, get_sandbox_service
 
             # A partner turn runs as a synthetic non-admin user but IS the admin
             # owner's extension (partners are anchored to the admin workspace), so
@@ -898,7 +898,7 @@ class AgenticChatPipeline:
         elif tool_name == "load_tools":
             kwargs["_tool_loader"] = self._deferred_loader
         elif tool_name == "code_execution":
-            from deeptutor.services.sandbox import Mount
+            from lumen.shared.sandbox import Mount
 
             kwargs["_sandbox_user_id"] = self._current_user_id()
             code_dir = task_dir / "code_runs" if task_dir is not None else None
