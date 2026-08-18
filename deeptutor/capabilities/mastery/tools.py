@@ -72,6 +72,10 @@ MASTERY_TOOL_NAMES: tuple[str, ...] = (
 )
 
 _QUESTION_TYPES = ("choice", "short", "open")
+# question_kind tags the *evidence* a question produces: rote recall, transfer
+# to a new situation, application, or a spaced-repetition review (mirrors
+# EvidenceType so the assessment trail distinguishes them).
+_QUESTION_KINDS = ("recall", "transfer", "application", "review")
 _ALLOWED_KP_TYPES = {t.value for t in KnowledgeType}
 logger = logging.getLogger(__name__)
 
@@ -481,6 +485,20 @@ class MasteryQuizTool(BaseTool):
                     enum=list(_QUESTION_TYPES),
                 ),
                 ToolParameter(
+                    name="question_kind",
+                    type="string",
+                    description=(
+                        "What the question tests: 'recall' (rote / verbatim), "
+                        "'transfer' (apply the idea to a new situation), "
+                        "'application', or 'review' (a spaced-repetition check). "
+                        "Default 'recall'. The kind is recorded as evidence so "
+                        "mastery is never judged on rote recall alone."
+                    ),
+                    required=False,
+                    default="recall",
+                    enum=list(_QUESTION_KINDS),
+                ),
+                ToolParameter(
                     name="options",
                     type="array",
                     description=(
@@ -515,6 +533,13 @@ class MasteryQuizTool(BaseTool):
             )
         except ValueError as exc:
             return ToolResult(content=str(exc), success=False)
+        question_kind = str(kwargs.get("question_kind") or "recall").strip().lower()
+        if question_kind not in _QUESTION_KINDS:
+            allowed = ", ".join(_QUESTION_KINDS)
+            return ToolResult(
+                content=f"mastery_quiz.question_kind must be one of: {allowed}.",
+                success=False,
+            )
 
         service = _new_service()
         progress = service.get_or_create(path_id)
@@ -530,6 +555,7 @@ class MasteryQuizTool(BaseTool):
             module_id=module_id,
             prompt=question,
             question_type=q_type,
+            question_kind=question_kind,
             expected_answer=expected,
             options=options,
         )
@@ -647,6 +673,7 @@ class MasteryGradeTool(BaseTool):
             question_type=pending.question_type,
             scheduler=scheduler,
             misconception_node_id=misconception_node_id,
+            question_kind=pending.question_kind,
         )
         await _sync_mastery_attempt_to_question_bank(
             session_id=_resolve_session_id(kwargs),

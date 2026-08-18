@@ -142,6 +142,7 @@ def test_pending_choice_context_is_stable_and_does_not_expose_answer():
         "question_id": "question-stable-1",
         "prompt": "Pick the blue option",
         "question_type": "choice",
+        "question_kind": "recall",
         "options": [
             {"id": "A", "label": "A", "body": "red"},
             {"id": "B", "label": "B", "body": "blue"},
@@ -167,6 +168,7 @@ def test_pending_non_choice_context_keeps_type_without_options_or_answer():
         "question_id": "short-1",
         "prompt": "Name the invariant",
         "question_type": "short",
+        "question_kind": "recall",
         "options": [],
     }
 

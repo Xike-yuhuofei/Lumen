@@ -391,9 +391,16 @@ class TestGradeAndRecord:
             scheduler=scheduler,
         )
 
-        # A repetition state was created and the review queue rebuilt for it.
+        # A repetition state was created.
         assert "kp1" in progress.repetition_states
         assert progress.repetition_states["kp1"].consecutive_correct == 1
+        # kp1 is a CONCEPT, not yet qualitatively mastered -> not reviewable yet.
+        assert progress.review_queue == []
+
+        # Mastering the objective makes it reviewable.
+        service.record_qualitative(
+            progress, "kp1", passed=True, evidence="clear explanation", scheduler=scheduler
+        )
         assert [t.knowledge_point_id for t in progress.review_queue] == ["kp1"]
 
     def test_no_scheduler_leaves_review_state_untouched(self, tmp_path: Path):

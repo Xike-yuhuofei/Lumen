@@ -114,6 +114,7 @@ class PublicPendingQuestion:
     question_id: str
     prompt: str
     question_type: str
+    question_kind: str = "recall"
     options: tuple[PublicPendingOption, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
@@ -121,6 +122,7 @@ class PublicPendingQuestion:
             "question_id": self.question_id,
             "prompt": self.prompt,
             "question_type": self.question_type,
+            "question_kind": self.question_kind,
             "options": [option.to_dict() for option in self.options],
         }
 
@@ -149,6 +151,7 @@ def public_pending_question(pending: PendingQuestion) -> PublicPendingQuestion:
         question_id=pending.question_id,
         prompt=pending.prompt,
         question_type=pending.question_type,
+        question_kind=getattr(pending, "question_kind", "recall"),
         options=options,
     )
 

@@ -242,7 +242,14 @@ class TestGradeAndRecordFailClosed:
             scheduler=scheduler,
         )
 
-        # A repetition state was created and the review queue rebuilt from it.
+        # A repetition state was created.
         assert "kp1" in progress.repetition_states
+        # kp1 is a CONCEPT not yet qualitatively mastered -> not reviewable yet.
+        assert progress.review_queue == []
+
+        # Mastering the objective makes it reviewable.
+        service.record_qualitative(
+            progress, "kp1", passed=True, evidence="clear explanation", scheduler=scheduler
+        )
         assert len(progress.review_queue) == 1
         assert progress.review_queue[0].knowledge_point_id == "kp1"

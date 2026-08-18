@@ -201,13 +201,36 @@ class TestGetDueTasks:
 # ── build_review_queue ───────────────────────────────────────────────────
 
 
+def _mastered_lp(kp_id: str, kp_type: KnowledgeType) -> LearningProgress:
+    """A progress where *kp_id* is in the module tree AND mastered — only
+    mastered objectives are reviewable (build_review_queue skips the rest)."""
+    from deeptutor.learning.models import KnowledgePoint, LearningModule
+
+    lp = LearningProgress(book_id="b1")
+    lp.modules = [
+        LearningModule(
+            id="m1",
+            name="M",
+            order=0,
+            knowledge_points=[
+                KnowledgePoint(id=kp_id, name=kp_id, type=kp_type, module_id="m1")
+            ],
+        )
+    ]
+    lp.knowledge_types[kp_id] = kp_type
+    if kp_type in (KnowledgeType.CONCEPT, KnowledgeType.DESIGN):
+        lp.qualitative_mastery[kp_id] = True
+        lp.mastery_levels[kp_id] = 1.0
+    else:
+        lp.mastery_levels[kp_id] = 1.0  # clears the 0.9 quantitative gate
+    return lp
+
+
 class TestBuildReviewQueue:
     def test_error_records_get_priority_1(self, scheduler):
         now = time.time()
-        state = RepetitionState(next_review_at=now)
-        lp = LearningProgress(book_id="b1")
-        lp.repetition_states["kp1"] = state
-        lp.knowledge_types["kp1"] = KnowledgeType.MEMORY
+        lp = _mastered_lp("kp1", KnowledgeType.MEMORY)
+        lp.repetition_states["kp1"] = RepetitionState(next_review_at=now)
         lp.error_records = [
             ErrorRecord(
                 id="e1",
@@ -223,9 +246,8 @@ class TestBuildReviewQueue:
 
     def test_non_error_kp_uses_type_priority(self, scheduler):
         now = time.time()
-        lp = LearningProgress(book_id="b1")
+        lp = _mastered_lp("kp_design", KnowledgeType.DESIGN)
         lp.repetition_states["kp_design"] = RepetitionState(next_review_at=now)
-        lp.knowledge_types["kp_design"] = KnowledgeType.DESIGN
         tasks = scheduler.build_review_queue(lp)
         assert len(tasks) == 1
         # DESIGN has the lowest urgency -> largest priority number, never 1.
@@ -234,9 +256,8 @@ class TestBuildReviewQueue:
 
     def test_graduated_error_does_not_promote_priority(self, scheduler):
         now = time.time()
-        lp = LearningProgress(book_id="b1")
+        lp = _mastered_lp("kp1", KnowledgeType.CONCEPT)
         lp.repetition_states["kp1"] = RepetitionState(next_review_at=now)
-        lp.knowledge_types["kp1"] = KnowledgeType.CONCEPT
         # Only active/retrying error records boost priority to 1.
         lp.error_records = [
             ErrorRecord(
@@ -254,9 +275,8 @@ class TestBuildReviewQueue:
 
     def test_retrying_error_promotes_priority(self, scheduler):
         now = time.time()
-        lp = LearningProgress(book_id="b1")
+        lp = _mastered_lp("kp1", KnowledgeType.CONCEPT)
         lp.repetition_states["kp1"] = RepetitionState(next_review_at=now)
-        lp.knowledge_types["kp1"] = KnowledgeType.CONCEPT
         lp.error_records = [
             ErrorRecord(
                 id="e1",
@@ -270,11 +290,34 @@ class TestBuildReviewQueue:
         tasks = scheduler.build_review_queue(lp)
         assert tasks[0].priority == 1
 
-    def test_defaults_missing_type_to_memory(self, scheduler):
+    def test_unmastered_kp_gets_no_review_task(self, scheduler):
+        """Regression: content that is not mastered is never due for review."""
+        from deeptutor.learning.models import KnowledgePoint, LearningModule
+
         now = time.time()
         lp = LearningProgress(book_id="b1")
+        lp.modules = [
+            LearningModule(
+                id="m1",
+                name="M",
+                order=0,
+                knowledge_points=[
+                    KnowledgePoint(
+                        id="kp1", name="kp1", type=KnowledgeType.MEMORY, module_id="m1"
+                    )
+                ],
+            )
+        ]
+        lp.knowledge_types["kp1"] = KnowledgeType.MEMORY
+        lp.mastery_levels["kp1"] = 0.5  # below the 0.9 gate -> not mastered
+        lp.repetition_states["kp1"] = RepetitionState(next_review_at=now - 10)
+        assert scheduler.build_review_queue(lp) == []
+
+    def test_defaults_missing_type_to_memory(self, scheduler):
+        now = time.time()
+        lp = _mastered_lp("kp1", KnowledgeType.MEMORY)
+        lp.knowledge_types.pop("kp1")  # no type entry -> defaults to MEMORY
         lp.repetition_states["kp1"] = RepetitionState(next_review_at=now)
-        # No entry in knowledge_types -> defaults to MEMORY (priority 2).
         tasks = scheduler.build_review_queue(lp)
         assert len(tasks) == 1
         assert tasks[0].knowledge_type == KnowledgeType.MEMORY

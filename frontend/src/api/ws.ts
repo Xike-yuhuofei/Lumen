@@ -43,6 +43,8 @@ export interface StartTurnMessage {
   }[]
   language?: string
   config?: Record<string, unknown>
+  /** Learning goal (``book_id``) to bind this turn to (learn mode). */
+  mastery_path_id?: string
 }
 
 export interface SubscribeSessionMessage {

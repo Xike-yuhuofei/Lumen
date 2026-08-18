@@ -135,6 +135,12 @@ class QuizAttempt(BaseModel):
     error_type: ErrorType | None = None
     self_attribution: str = ""
     mastery_estimate: float = 0.0
+    # What the question tested: "recall" (rote / verbatim), "transfer"
+    # (apply the idea to a new situation) or "application". Tagged so the
+    # evidence trail distinguishes rote recall from transfer success — the
+    # mastery evidence principle ("变化题型 / transfer") is only meaningful
+    # if the evidence records which kind of question produced it.
+    question_kind: str = "recall"
     # When a wrong answer matched a registered misconception, the graph node
     # id of that misconception (else ""). Server-matched, never model-forged.
     misconception_node_id: str = ""
@@ -203,6 +209,9 @@ class PendingQuestion(BaseModel):
     module_id: str = ""
     prompt: str = ""
     question_type: str = "short"
+    # What this question tests (recall / transfer / application) — recorded on
+    # the resulting QuizAttempt so mastery evidence distinguishes question kinds.
+    question_kind: str = "recall"
     expected_answer: str = ""
     options: list[str] = Field(default_factory=list)
     created_at: float = Field(default_factory=time.time)
@@ -220,6 +229,10 @@ class LearningProgress(BaseModel):
     # the learner-facing intent ("pass the exam", "read chapter 3", …).
     goal_name: str = ""
     goal_kp_ids: list[str] = Field(default_factory=list)
+    # A short learner-facing note about what the goal covers (optional; set at
+    # goal creation and shown in the learning-space list, never used by the
+    # teaching policy).
+    description: str = ""
     current_module_id: str = ""
     current_stage: LearningStage = LearningStage.DIAGNOSTIC
     current_kp_index: int = 0

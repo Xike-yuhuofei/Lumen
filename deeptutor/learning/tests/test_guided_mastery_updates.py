@@ -136,7 +136,8 @@ def test_grade_and_record_fail_closed_without_expected_answer(tmp_path):
 
 def test_grade_and_record_advances_sr_state_and_builds_queue(tmp_path):
     """When a scheduler is supplied, a graded answer advances the spaced-
-    repetition state and rebuilds the review queue."""
+    repetition state; a review task is built once the objective is mastered
+    (unmastered content is never due for review)."""
     store = LearningStore(root=tmp_path)
     service = LearningService(store)
     scheduler = SpacedRepetitionScheduler()
@@ -155,8 +156,15 @@ def test_grade_and_record_advances_sr_state_and_builds_queue(tmp_path):
     assert "kp1" in progress.repetition_states
     # A correct answer advanced the interval index past the initial 0.
     assert progress.repetition_states["kp1"].interval_index >= 1
-    assert len(progress.review_queue) == 1
-    assert progress.review_queue[0].knowledge_point_id == "kp1"
+    # kp1 is a CONCEPT and only has one quiz attempt -> not mastered -> not
+    # yet reviewable (only mastered content enters the review queue).
+    assert progress.review_queue == []
+
+    # Once the qualitative gate passes, the mastered objective is reviewable.
+    service.record_qualitative(
+        progress, "kp1", passed=True, evidence="clear explanation", scheduler=scheduler
+    )
+    assert any(t.knowledge_point_id == "kp1" for t in progress.review_queue)
 
 
 def test_grade_and_record_no_scheduler_skips_sr_state(tmp_path):

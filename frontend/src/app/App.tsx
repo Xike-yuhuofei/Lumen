@@ -42,6 +42,13 @@ import {
   persistInterfaceSettings,
 } from './settings'
 import { deleteSession as deleteSessionApi, renameSession as renameSessionApi } from '../api/sessions'
+import {
+  createLearningGoal,
+  deleteLearningProgress,
+  listLearningProgress,
+  renameLearningGoal,
+  type LearningGoal,
+} from '../api/learning'
 import copySvg from '../assets/icons/Copy.svg?raw'
 import moreSvg from '../../design-system/assets/icons/More.svg?raw'
 import moreActionSvg from '../../design-system/assets/icons/more-action.svg?raw'
@@ -139,7 +146,11 @@ const Icon: React.FC<IconProps> = ({
         </svg>
       )
     case 'plus':
-      return <svg {...common} className={className}><path d="M8 3.2v9.6M3.2 8h9.6" /></svg>
+      return (
+        <svg {...common} className={className} fill="currentColor" stroke="none">
+          <path d="M13.4075 8C13.4075 5.03147 11.001 2.625 8.03247 2.625C5.06394 2.625 2.65747 5.03147 2.65747 8C2.65747 8.80228 2.83281 9.56195 3.14673 10.2441C3.27815 10.5296 3.31735 10.8695 3.21509 11.1982L2.68384 12.9043C2.59508 13.19 2.86044 13.4592 3.14771 13.375L4.9397 12.8496C5.25595 12.757 5.58045 12.7939 5.85571 12.916L6.10767 13.0205C6.70456 13.2495 7.35325 13.375 8.03247 13.375C11.001 13.375 13.4075 10.9686 13.4075 8ZM14.6575 8C14.6575 11.6589 11.6914 14.625 8.03247 14.625C7.07843 14.625 6.17002 14.4228 5.34888 14.0586C5.31747 14.0447 5.29702 14.0481 5.29126 14.0498L3.49927 14.5752C2.25469 14.9399 1.10501 13.7708 1.49048 12.5322L2.02075 10.8271L2.02271 10.8066C2.02189 10.7965 2.01843 10.7828 2.01099 10.7666C1.62323 9.9239 1.40747 8.98625 1.40747 8C1.40747 4.34112 4.37359 1.375 8.03247 1.375C11.6914 1.375 14.6575 4.34112 14.6575 8ZM8.02539 5.25C8.37034 5.25026 8.64941 5.52998 8.64941 5.875V7.40039H10.125C10.4702 7.40039 10.75 7.68021 10.75 8.02539C10.7498 8.3704 10.4701 8.65039 10.125 8.65039H8.64941V10.125C8.64941 10.4702 8.36959 10.75 8.02441 10.75C7.67946 10.7497 7.39941 10.47 7.39941 10.125V8.65039H5.875C5.52994 8.65039 5.2502 8.3704 5.25 8.02539C5.25 7.68021 5.52982 7.40039 5.875 7.40039H7.39941V5.875C7.39941 5.52982 7.68021 5.25 8.02539 5.25Z" />
+        </svg>
+      )
     case 'close':
       return <svg {...common} className={className}><path d="M12 4 4 12M4 4l8 8" /></svg>
     case 'cloud':
@@ -2644,6 +2655,11 @@ export default function App() {
   const [streaming, setStreaming] = useState(false)
   const [connectError, setConnectError] = useState('')
 
+  // --- Learning space (real goals from /api/v1/learning) ---
+  const [learningGoals, setLearningGoals] = useState<LearningGoal[]>([])
+  const [learningGoalsLoading, setLearningGoalsLoading] = useState(false)
+  const [learningGoalsError, setLearningGoalsError] = useState('')
+
   const initialHash = typeof window !== 'undefined' ? parseHash() : { view: 'chat' as ViewId, sessionId: '' }
   const [view, setView] = useState<ViewId>(() => {
     if (typeof window !== 'undefined' && window.location.hash) return initialHash.view
@@ -2717,6 +2733,7 @@ export default function App() {
     setAttachments([])
     setSelectedTask('')
     setView('new-task')
+    masteryPathIdRef.current = null
   }, [])
 
   const persistSessions = useCallback((next: ChassisSession[]) => {
@@ -2766,6 +2783,7 @@ export default function App() {
   const wsRef = useRef<UnifiedWSClient | null>(null)
   const turnRef = useRef<{ sessionId: string; assistantId: string; turnId: string | null; events: StreamEvent[]; blocks: MessageBlock[] } | null>(null)
   const capabilityRef = useRef(capability)
+  const masteryPathIdRef = useRef<string | null>(null)
   const selectedToolsRef = useRef(selectedTools)
   const attachmentsRef = useRef(attachments)
   const responseLanguageRef = useRef(responseLanguage)
@@ -2929,9 +2947,9 @@ export default function App() {
   }, [])
 
   const submitLockRef = useRef(false)
-  const handleSend = useCallback(() => {
+  const handleSend = useCallback((overrideText?: string) => {
     if (submitLockRef.current || streaming) return
-    const text = composerTextRef.current.replace(/\u200b/g, '').trim()
+    const text = (overrideText ?? composerTextRef.current).replace(/\u200b/g, '').trim()
     const files = attachmentsRef.current
     if (!text && files.length === 0) return
     submitLockRef.current = true
@@ -3017,6 +3035,10 @@ export default function App() {
         base64: f.base64,
       })),
       language: responseLanguageRef.current,
+      mastery_path_id:
+        (capabilityRef.current === 'mastery_path' || capabilityRef.current === 'mode.learn')
+          ? (masteryPathIdRef.current ?? undefined)
+          : undefined,
     })
     if (!sent) {
       clearTurnIdleTimer()
@@ -3025,6 +3047,73 @@ export default function App() {
       setStreaming(false)
     }
   }, [armTurnIdleTimer, clearTurnIdleTimer, patchAssistantBlocks, persistSessions, streaming])
+
+  // --- Learning space (学习空间) handlers ---
+  const loadLearningGoals = useCallback(() => {
+    setLearningGoalsLoading(true)
+    setLearningGoalsError('')
+    listLearningProgress()
+      .then((data) => setLearningGoals(data))
+      .catch(() => setLearningGoalsError('无法加载学习目标，请确认后端已启动'))
+      .finally(() => setLearningGoalsLoading(false))
+  }, [])
+
+  const startLearnTurn = useCallback((goal: LearningGoal, initialMessage: string) => {
+    // eslint-disable-next-line react-hooks/immutability -- intentional ref forward to handleSend
+    masteryPathIdRef.current = goal.book_id
+    capabilityRef.current = 'mastery_path'
+    setCapability('mastery_path')
+    // Force a fresh session and navigate to chat. Without this, handleSend
+    // treats the learning-space action as a continuation of the currently
+    // selected session and silently appends the turn while the user stays on
+    // the learning-space page (no navigation, no visible feedback).
+    selectedTaskRef.current = ''
+    setSelectedTask('')
+    handleSend(initialMessage)
+  }, [handleSend])
+
+  const handleContinueLearning = useCallback((goal: LearningGoal) => {
+    startLearnTurn(goal, `继续学习「${goal.name || goal.book_id}」。请根据我当前的学习进度继续教学。`)
+  }, [startLearnTurn])
+
+  const handleCreateLearningGoal = useCallback((title: string, description?: string) => {
+    createLearningGoal(title, description)
+      .then((created) => {
+        loadLearningGoals()
+        const goal: LearningGoal = {
+          book_id: created.book_id,
+          name: created.goal_name,
+          goal_name: created.goal_name,
+          description: description || '',
+          modules_count: 0,
+          kp_count: 0,
+          current_stage: 'diagnostic',
+          avg_mastery_pct: 0,
+          updated_at: Date.now(),
+        }
+        const message = description && description !== title
+          ? `我要学习「${title}」。背景：${description}。请帮我制定学习计划并开始教学。`
+          : `我要学习「${title}」。请帮我制定学习计划并开始教学。`
+        startLearnTurn(goal, message)
+      })
+      .catch(() => setLearningGoalsError('创建学习目标失败，请重试'))
+  }, [loadLearningGoals, startLearnTurn])
+
+  const handleRenameLearningGoal = useCallback((bookId: string, title: string) => {
+    renameLearningGoal(bookId, title).then(loadLearningGoals).catch(() => { /* keep local */ })
+  }, [loadLearningGoals])
+
+  const handleDeleteLearningGoal = useCallback((bookId: string) => {
+    deleteLearningProgress(bookId).then(loadLearningGoals).catch(() => { /* keep local */ })
+  }, [loadLearningGoals])
+
+  useEffect(() => {
+    if (view !== 'automation') return
+    // Deferred so loadLearningGoals' setState runs in a callback, not
+    // synchronously inside the effect body.
+    const id = window.setTimeout(loadLearningGoals, 0)
+    return () => window.clearTimeout(id)
+  }, [view, loadLearningGoals])
 
   const handleCancel = useCallback(() => {
     const turnId = turnRef.current?.turnId
@@ -3326,7 +3415,16 @@ export default function App() {
 
           {view === 'automation' && (
             <div className="contentWrapper-U1GjQr">
-              <AutomationPage onContinueLearning={() => setView('chat')} />
+              <AutomationPage
+                goals={learningGoals}
+                loading={learningGoalsLoading}
+                error={learningGoalsError}
+                onContinueLearning={handleContinueLearning}
+                onCreateGoal={handleCreateLearningGoal}
+                onRenameGoal={handleRenameLearningGoal}
+                onDeleteGoal={handleDeleteLearningGoal}
+                onRefresh={loadLearningGoals}
+              />
             </div>
           )}
 

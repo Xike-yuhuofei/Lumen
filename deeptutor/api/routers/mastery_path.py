@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import html
 import json
+import re
+import time
+import uuid
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -324,3 +327,71 @@ async def generate_from_notebook(book_id: str, body: GenerateFromNotebookRequest
         "module_count": len(modules),
         "modules": [m.model_dump() for m in modules],
     }
+
+
+# ── Goal lifecycle (the learner-facing "learning goal" the UI manages) ─────
+#
+# A learning goal is a ``LearningProgress`` identified by its ``book_id``.
+# These endpoints let the UI create and rename a goal before the tutor builds
+# its modules; the tutor then resumes the same goal through ``mastery_path_id``.
+
+
+def _slugify_goal_title(title: str) -> str:
+    """A readable, filesystem-safe book_id fragment from a goal title.
+
+    Non-ASCII (e.g. Chinese) titles are dropped by the regex, so the result
+    may be empty — the caller appends a short unique suffix either way.
+    """
+    slug = re.sub(r"[^a-zA-Z0-9]+", "-", title).strip("-").lower()
+    return slug[:48]
+
+
+class CreateGoalRequest(BaseModel):
+    title: str
+    description: str = ""
+
+
+class RenameGoalRequest(BaseModel):
+    title: str
+
+
+@router.post("/goals")
+async def create_goal(body: CreateGoalRequest):
+    """Create a named, empty learning goal and return its ``book_id``.
+
+    Modules are not required yet: the tutor builds the plan in conversation
+    (or via ``import-from-book`` / ``generate-from-notebook``). Creating the
+    goal first lets the UI list it and bind learn turns to it immediately.
+    """
+    title = body.title.strip()
+    if not title:
+        raise HTTPException(status_code=400, detail="title is required")
+    if len(title) > 200:
+        raise HTTPException(status_code=400, detail="title is too long (max 200)")
+    base = _slugify_goal_title(title) or "goal"
+    book_id = f"{base}-{uuid.uuid4().hex[:6]}"
+    store = LearningStore()
+    service = LearningService(store)
+    progress = service.get_or_create(book_id)
+    progress.goal_name = title
+    progress.description = (body.description or "").strip()
+    progress.updated_at = time.time()
+    service.save(progress)
+    return {"status": "ok", "book_id": book_id, "goal_name": title}
+
+
+@router.patch("/goals/{book_id}")
+async def rename_goal(book_id: str, body: RenameGoalRequest):
+    """Rename an existing learning goal (keeps all progress intact)."""
+    _validate_book_id(book_id)
+    title = body.title.strip()
+    if not title:
+        raise HTTPException(status_code=400, detail="title is required")
+    store = LearningStore()
+    progress = store.load(book_id)
+    if progress is None:
+        raise HTTPException(status_code=404, detail="Progress not found")
+    progress.goal_name = title
+    progress.updated_at = time.time()
+    store.save(progress)
+    return {"status": "ok", "book_id": book_id, "goal_name": title}
