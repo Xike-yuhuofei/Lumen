@@ -103,7 +103,7 @@ def parse_pdf_with_mineru(
         print(f"✗ Error: File is not PDF format: {pdf_file}")
         return False
 
-    # Project root is 3 levels up from deeptutor/tools/question/
+    # Project root is 4 levels up from lumen/shared/knowledge/parsing/engines/mineru/
     project_root = Path(__file__).parent.parent.parent.parent
     if output_base_dir is None:
         base_dir = project_root / "reference_papers"

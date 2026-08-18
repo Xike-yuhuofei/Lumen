@@ -34,7 +34,7 @@ Usage:
 
     # Prompt
     pm = get_prompt_manager()
-    prompts = pm.load_prompts("question", "pipeline")
+    prompts = pm.load_prompts("chat", "agentic_chat")
 
     # Search
     result = web_search("What is AI?")

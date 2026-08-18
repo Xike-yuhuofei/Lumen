@@ -8,12 +8,11 @@ Implements the token-required *Precision API* flow for a single local PDF:
    ``state`` reaches ``done`` / ``failed``
 4. Download the ``full_zip_url`` archive and extract it into a working dir
    whose layout matches the local CLI output (``*.md`` +
-   ``*_content_list.json`` + ``images/``), so the downstream question
-   extractor is backend-agnostic.
+   ``*_content_list.json`` + ``images/``), so any downstream consumer is
+   backend-agnostic.
 
-The module is synchronous on purpose: it runs inside the worker thread that
-:func:`deeptutor.agents.question.mimic_source.parse_exam_paper_to_templates`
-spawns via ``asyncio.to_thread``, so a blocking ``httpx.Client`` is the
+The module is synchronous on purpose: it runs inside a worker thread
+spawned via ``asyncio.to_thread``, so a blocking ``httpx.Client`` is the
 simplest correct choice (no nested event loop).
 """
 

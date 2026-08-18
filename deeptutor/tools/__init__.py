@@ -30,7 +30,3 @@ def __getattr__(name: str):
     value = getattr(module, attr_name)
     globals()[name] = value
     return value
-
-
-# Question generation tools (lazy import to avoid circular dependencies)
-# Access via: from deeptutor.tools.question import parse_pdf_with_mineru, etc.
