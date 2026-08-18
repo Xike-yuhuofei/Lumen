@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from deeptutor.tools.web_fetch import (
+from lumen.runtime.tools.builtin.web_fetch import (
     DEFAULT_MAX_CHARS,
     FetchOutcome,
     _extract_readable,

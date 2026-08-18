@@ -6,6 +6,6 @@ shared services through the private ``_util`` channel.
 
 from __future__ import annotations
 
-from lumen.shared.notebook.service import get_notebook_manager
+from lumen.shared.notebook.service import RecordType, get_notebook_manager
 
-__all__ = ["get_notebook_manager"]
+__all__ = ["RecordType", "get_notebook_manager"]

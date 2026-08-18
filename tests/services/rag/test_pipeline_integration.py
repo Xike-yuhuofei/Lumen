@@ -201,7 +201,7 @@ class PipelineIntegrationTest:
         print("\n  🔧 Testing via rag_tool.py...")
 
         try:
-            from deeptutor.tools.rag_tool import rag_search
+            from lumen.runtime.tools.builtin.rag_tool import rag_search
 
             result = await rag_search(
                 query="What does Shandong have?",

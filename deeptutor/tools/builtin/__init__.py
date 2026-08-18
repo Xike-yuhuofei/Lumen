@@ -50,7 +50,7 @@ class BrainstormTool(_PromptHintsMixin, BaseTool):
         )
 
     async def execute(self, **kwargs: Any) -> ToolResult:
-        from deeptutor.tools.brainstorm import brainstorm
+        from lumen.runtime.tools.builtin.brainstorm import brainstorm
 
         result = await brainstorm(
             topic=kwargs.get("topic", ""),
@@ -101,7 +101,7 @@ class RAGTool(_PromptHintsMixin, BaseTool):
         )
 
     async def execute(self, **kwargs: Any) -> ToolResult:
-        from deeptutor.tools.rag_tool import rag_search
+        from lumen.runtime.tools.builtin.rag_tool import rag_search
 
         query = str(kwargs.get("query") or "").strip()
         if not query:
@@ -231,7 +231,7 @@ class WebSearchTool(_PromptHintsMixin, BaseTool):
         )
 
     async def execute(self, **kwargs: Any) -> ToolResult:
-        from deeptutor.tools.web_search import web_search
+        from lumen.runtime.tools.builtin.web_search import web_search
 
         query = kwargs.get("query", "")
         output_dir = kwargs.get("output_dir")
@@ -460,7 +460,7 @@ class ReasonTool(_PromptHintsMixin, BaseTool):
         )
 
     async def execute(self, **kwargs: Any) -> ToolResult:
-        from deeptutor.tools.reason import reason
+        from lumen.runtime.tools.builtin.reason import reason
 
         result = await reason(
             query=kwargs.get("query", ""),
@@ -677,7 +677,7 @@ class WebFetchTool(_PromptHintsMixin, BaseTool):
     """Fetch a specific URL and return readable markdown.
 
     The actual fetch / extract / safety logic lives in
-    ``deeptutor.tools.web_fetch`` so this wrapper stays free of network
+    ``lumen.runtime.tools.builtin.web_fetch`` so this wrapper stays free of network
     code — easier to unit-test the BaseTool boilerplate without spinning
     up an httpx mock.
     """
@@ -706,7 +706,7 @@ class WebFetchTool(_PromptHintsMixin, BaseTool):
         )
 
     async def execute(self, **kwargs: Any) -> ToolResult:
-        from deeptutor.tools.web_fetch import (
+        from lumen.runtime.tools.builtin.web_fetch import (
             DEFAULT_MAX_CHARS,
             fetch_url_as_markdown,
         )
@@ -774,7 +774,7 @@ class ListNotebookTool(_PromptHintsMixin, BaseTool):
         )
 
     async def execute(self, **kwargs: Any) -> ToolResult:
-        from deeptutor.tools.list_notebook import list_notebooks_or_records
+        from lumen.runtime.tools.builtin.list_notebook import list_notebooks_or_records
 
         outcome = list_notebooks_or_records(
             notebook_id=str(kwargs.get("notebook_id") or ""),
@@ -884,7 +884,7 @@ class WriteNoteTool(_PromptHintsMixin, BaseTool):
         )
 
     async def execute(self, **kwargs: Any) -> ToolResult:
-        from deeptutor.tools.write_note import write_note
+        from lumen.runtime.tools.builtin.write_note import write_note
 
         outcome = write_note(
             mode=str(kwargs.get("mode") or ""),
@@ -1032,7 +1032,7 @@ class AskUserTool(_PromptHintsMixin, BaseTool):
         )
 
     async def execute(self, **kwargs: Any) -> ToolResult:
-        from deeptutor.tools.ask_user import build_ask_user_payload
+        from lumen.runtime.tools.builtin.ask_user import build_ask_user_payload
 
         payload, err = build_ask_user_payload(
             questions=kwargs.get("questions"),
@@ -1148,7 +1148,7 @@ class CronTool(_PromptHintsMixin, BaseTool):
         )
 
     async def execute(self, **kwargs: Any) -> ToolResult:
-        from deeptutor.tools.cron_tool import run_cron_action
+        from lumen.runtime.tools.builtin.cron_tool import run_cron_action
 
         outcome = run_cron_action(kwargs)
         return ToolResult(content=outcome.text, success=outcome.ok, metadata=outcome.meta)

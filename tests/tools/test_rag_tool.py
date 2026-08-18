@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from deeptutor.tools.rag_tool import (
+from lumen.runtime.tools.builtin.rag_tool import (
     RAGService,
     get_available_providers,
     get_current_provider,
@@ -99,7 +99,7 @@ class TestToolLayerExports:
     def test_rag_search_requires_kb_name(self) -> None:
         import asyncio
 
-        from deeptutor.tools.rag_tool import rag_search
+        from lumen.runtime.tools.builtin.rag_tool import rag_search
 
         with pytest.raises(ValueError, match="kb_name"):
             asyncio.run(rag_search(query="hi", kb_name=""))
@@ -107,7 +107,7 @@ class TestToolLayerExports:
     def test_rag_search_requires_query(self) -> None:
         import asyncio
 
-        from deeptutor.tools.rag_tool import rag_search
+        from lumen.runtime.tools.builtin.rag_tool import rag_search
 
         with pytest.raises(ValueError, match="non-empty"):
             asyncio.run(rag_search(query="", kb_name="any"))
