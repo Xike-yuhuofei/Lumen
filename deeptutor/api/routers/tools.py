@@ -172,7 +172,7 @@ def _build_tool_payload(
 async def list_builtin_tools() -> ToolsListResponse:
     """Return all built-in tools the chat agent can invoke, plus any
     coming-soon placeholders for the settings page."""
-    from deeptutor.capabilities import capability_tool_owners
+    from lumen.modes.learn.loop_registry import capability_tool_owners
 
     enabled_optional = set(get_enabled_optional_tools())
     owners = capability_tool_owners()

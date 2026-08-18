@@ -253,7 +253,7 @@ def test_matched_wrong_answer_forces_remediation_then_graduates(tmp_path):
 
 
 def test_misconception_match_is_server_side():
-    from deeptutor.capabilities.mastery.tools import _match_misconception
+    from lumen.modes.learn.chat_tools import _match_misconception
 
     progress = _progress(with_misconceptions=True)
     assert _match_misconception(progress, "path_m0_kp0", "f(x) means f times x") == (

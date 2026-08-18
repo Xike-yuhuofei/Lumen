@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from deeptutor.capabilities.mastery.loop import MasteryLoopCapability
 from deeptutor.core.context import UnifiedContext
 from lumen.modes.learn.adapters.storage import LearningStore
 from lumen.modes.learn.domain.models import LearningProgress, PendingQuestion
+from lumen.modes.learn.loop_capability import MasteryLoopCapability
 
 
 def _use_store_root(monkeypatch, root: Path) -> None:

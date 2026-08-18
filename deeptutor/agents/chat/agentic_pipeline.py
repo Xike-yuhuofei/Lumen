@@ -17,11 +17,6 @@ from deeptutor.agents._shared.tool_composition import (
 from deeptutor.agents.chat.agent_loop import AgentLoop
 from deeptutor.agents.chat.context_budget import LLMRequestSnapshot, build_context_budget
 from deeptutor.agents.chat.prompt_blocks import ChatPromptAssembler
-from deeptutor.capabilities import (
-    LoopCapability,
-    PromptBlock,
-    active_loop_capabilities,
-)
 from deeptutor.core.agentic import (
     DispatchOutcome,
     LLMClientConfig,
@@ -44,6 +39,8 @@ from deeptutor.knowledge.manifest import KbManifest, render_manifest_note
 from deeptutor.runtime.providers.view import ProviderToolView, build_tool_view
 from deeptutor.runtime.registry.tool_registry import get_tool_registry
 from deeptutor.services.prompt import get_prompt_manager
+from lumen.modes.learn.loop_registry import active_loop_capabilities
+from lumen.runtime.agent_loop.capability import LoopCapability, PromptBlock
 from lumen.runtime.stream.bus import StreamBus
 from lumen.runtime.tools.deferred_tools import DeferredToolLoader
 from lumen.runtime.tools.providers import ToolScope
