@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from deeptutor.core.agentic import client as agentic_client
-from deeptutor.core.agentic.client import (
+from lumen.runtime.agent_loop.engine import client as agentic_client
+from lumen.runtime.agent_loop.engine.client import (
     _NATIVE_ADAPTER_BUILDERS,
     _NATIVE_TOOL_BACKENDS,
     LLMClientConfig,

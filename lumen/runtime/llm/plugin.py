@@ -10,12 +10,12 @@ from lumen.runtime.llm.contract import LLMService
 
 
 class _LLMServiceAdapter(LLMService):
-    """Wraps ``deeptutor.core.agentic.client.build_openai_client`` for the
-    OpenAI-compatible client handle, and ``lumen.shared._util.llm.factory``
+    """Wraps ``lumen.runtime.agent_loop.engine.client.build_openai_client`` for
+    the OpenAI-compatible client handle, and ``lumen.shared._util.llm.factory``
     for plain completion."""
 
     def build_openai_client(self, config: Any) -> Any:
-        from deeptutor.core.agentic.client import build_openai_client
+        from lumen.runtime.agent_loop.engine.client import build_openai_client
 
         return build_openai_client(config)
 

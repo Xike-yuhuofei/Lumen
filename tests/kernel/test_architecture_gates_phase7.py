@@ -295,7 +295,6 @@ ALLOWED_LEGACY_BRIDGES = {
     "lumen/runtime/agent_loop/providers/legacy/agent.py": (
         "deeptutor.agents.chat.agentic_pipeline"
     ),
-    "lumen/runtime/llm/plugin.py": "deeptutor.core.agentic.client",
     "lumen/runtime/session/plugin.py": "deeptutor.services.session.turn_runtime",
     "lumen/runtime/tools/plugin.py": "deeptutor.runtime.registry.tool_registry",
 }
