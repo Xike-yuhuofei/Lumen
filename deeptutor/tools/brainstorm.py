@@ -52,10 +52,10 @@ async def brainstorm(
     temperature: float | None = None,
 ) -> dict[str, Any]:
     """Generate breadth-first ideas for a topic via one LLM call."""
-    from deeptutor.services.config import get_agent_params
     from deeptutor.services.llm import get_token_limit_kwargs
     from deeptutor.services.llm import stream as llm_stream
     from deeptutor.services.llm.config import get_llm_config
+    from lumen.shared.config import get_agent_params
 
     try:
         llm_cfg = get_llm_config()

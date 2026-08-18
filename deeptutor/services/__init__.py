@@ -18,7 +18,7 @@ Usage:
     from deeptutor.services.prompt import get_prompt_manager
     from deeptutor.services.search import web_search
     from deeptutor.services.setup import init_user_directories
-    from deeptutor.services.config import load_config_with_main
+    from lumen.shared.config import load_config_with_main
 
     # LLM
     llm = get_llm_client()
@@ -74,7 +74,7 @@ def __getattr__(name: str):
     if name == "session":
         return importlib.import_module("deeptutor.services.session")
     if name == "config":
-        return importlib.import_module("deeptutor.services.config")
+        return importlib.import_module("lumen.shared.config")
     if name == "rag":
         return importlib.import_module("deeptutor.services.rag")
     if name == "embedding":

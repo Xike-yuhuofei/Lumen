@@ -19,11 +19,11 @@ from pathlib import Path
 import sys
 from typing import Any
 
-from deeptutor.services.config import get_agent_params
 from deeptutor.services.llm import complete as llm_complete
 from deeptutor.services.llm.capabilities import supports_response_format
 from deeptutor.services.llm.config import get_llm_config
 from deeptutor.utils.json_parser import parse_json_response
+from lumen.shared.config import get_agent_params
 
 
 def _find_parsed_content_dir(paper_dir: Path) -> Path:

@@ -24,14 +24,14 @@ from rich.table import Table
 from rich.text import Text
 import typer
 
-from deeptutor.services.config.embedding_endpoint import (
+from deeptutor.services.llm.config import get_token_limit_kwargs
+from deeptutor.services.provider_registry import PROVIDERS, ProviderSpec, find_by_name
+from lumen.shared.config.embedding_endpoint import (
     GEMINI_API_HOST,
     SENSITIVE_ENDPOINT_QUERY_KEYS,
     is_gemini_native_embedding_endpoint,
     redact_embedding_endpoint_for_display,
 )
-from deeptutor.services.llm.config import get_token_limit_kwargs
-from deeptutor.services.provider_registry import PROVIDERS, ProviderSpec, find_by_name
 
 # --- Featured selection ------------------------------------------------------
 # Hand-picked, in display order, for the LLM step. Everything else is reachable
@@ -70,7 +70,7 @@ LLM_FALLBACK_MODELS: dict[str, tuple[str, ...]] = {
 
 # Featured embedding providers — display order. Source of truth for label /
 # default URL / default model is ``EMBEDDING_PROVIDERS`` in
-# ``deeptutor.services.config.provider_runtime``. Adding a new featured entry
+# ``lumen.shared.config.provider_runtime``. Adding a new featured entry
 # just means appending its key here.
 FEATURED_EMBEDDING_PROVIDERS: tuple[str, ...] = (
     "openai",
@@ -108,7 +108,7 @@ EMBEDDING_FALLBACK_MODELS: dict[str, tuple[str, ...]] = {
 
 # --- Search providers ----------------------------------------------------------
 # Source of truth: ``SUPPORTED_SEARCH_PROVIDERS`` in
-# ``deeptutor.services.config.provider_runtime``. Each entry below describes
+# ``lumen.shared.config.provider_runtime``. Each entry below describes
 # how the wizard captures the credentials/config for that provider.
 
 
@@ -482,7 +482,7 @@ def select_embedding_provider(
     ``provider_runtime`` so we don't duplicate the source of truth.
     """
 
-    from deeptutor.services.config.provider_runtime import EMBEDDING_PROVIDERS
+    from lumen.shared.config.provider_runtime import EMBEDDING_PROVIDERS
 
     options: list[tuple[str, str, str]] = []
     for name in FEATURED_EMBEDDING_PROVIDERS:

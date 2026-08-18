@@ -20,18 +20,6 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger(__name__)
 
 from deeptutor.brand import PRODUCT_NAME
-from deeptutor.services.config import (
-    get_config_test_runner,
-    get_model_catalog_service,
-    get_runtime_settings_service,
-)
-from deeptutor.services.config.origins import normalize_origins
-from deeptutor.services.config.runtime_settings import (
-    CHAT_ATTACHMENT_CHARS_RANGE,
-    CHAT_ATTACHMENT_MAX_FILE_MB_RANGE,
-    CHAT_ATTACHMENT_MAX_TOTAL_MB_RANGE,
-    compute_ws_max_size,
-)
 from deeptutor.services.embedding.client import reset_embedding_client
 from deeptutor.services.llm.client import reset_llm_client
 from deeptutor.services.llm.config import clear_llm_config_cache
@@ -43,6 +31,18 @@ from deeptutor.services.settings.interface_settings import (
 from deeptutor.services.settings.interface_settings import resolve_languages
 from deeptutor.services.user import allowed_llm_options, get_current_user
 from deeptutor.tools.builtin import USER_TOGGLEABLE_TOOL_NAMES
+from lumen.shared.config import (
+    get_config_test_runner,
+    get_model_catalog_service,
+    get_runtime_settings_service,
+)
+from lumen.shared.config.origins import normalize_origins
+from lumen.shared.config.runtime_settings import (
+    CHAT_ATTACHMENT_CHARS_RANGE,
+    CHAT_ATTACHMENT_MAX_FILE_MB_RANGE,
+    CHAT_ATTACHMENT_MAX_TOTAL_MB_RANGE,
+    compute_ws_max_size,
+)
 
 router = APIRouter()
 # Public UI-settings router. The app shell bootstraps the interface language
@@ -355,12 +355,12 @@ def _require_settings_admin() -> None:
 
 def _provider_choices() -> dict[str, list[dict[str, Any]]]:
     """Build dropdown options for provider selection, keyed by service type."""
-    from deeptutor.services.config.provider_runtime import (
+    from deeptutor.services.provider_registry import PROVIDERS
+    from lumen.shared.config.provider_runtime import (
         DEPRECATED_SEARCH_PROVIDERS,
         EMBEDDING_PROVIDERS,
         SEARCH_PROVIDERS,
     )
-    from deeptutor.services.provider_registry import PROVIDERS
 
     llm = sorted(
         [

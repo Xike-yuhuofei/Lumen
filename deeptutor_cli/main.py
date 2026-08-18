@@ -127,7 +127,7 @@ def serve(
         )
         raise typer.Exit(code=1)
 
-    from deeptutor.services.config import HTTP_KEEP_ALIVE_TIMEOUT, get_ws_max_size
+    from lumen.shared.config import HTTP_KEEP_ALIVE_TIMEOUT, get_ws_max_size
 
     # ws_max_size tracks the configured chat-attachment total so base64
     # uploads fit in one WS frame (uvicorn defaults to 16MB).

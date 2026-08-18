@@ -19,7 +19,7 @@ def register(app: typer.Typer) -> None:
         """Show current configuration."""
         import json
 
-        from deeptutor.services.config import (
+        from lumen.shared.config import (
             load_config_with_main,
             load_system_settings,
             resolve_embedding_runtime_config,

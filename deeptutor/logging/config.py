@@ -25,7 +25,7 @@ def get_default_log_dir() -> Path:
 def load_logging_config() -> LoggingConfig:
     """Load logging settings from ``data/user/settings/main.yaml``."""
     try:
-        from deeptutor.services.config import (
+        from lumen.shared.config import (
             PROJECT_ROOT,
             get_path_from_config,
             load_config_with_main,

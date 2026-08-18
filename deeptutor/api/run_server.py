@@ -35,8 +35,8 @@ def main() -> None:
     # Get port from configuration
     from deeptutor.logging import configure_logging
     from deeptutor.runtime.mode import RunMode, set_mode
-    from deeptutor.services.config import HTTP_KEEP_ALIVE_TIMEOUT, get_ws_max_size
     from deeptutor.services.setup import get_backend_port
+    from lumen.shared.config import HTTP_KEEP_ALIVE_TIMEOUT, get_ws_max_size
 
     set_mode(RunMode.SERVER)
     configure_logging()

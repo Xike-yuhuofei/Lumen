@@ -91,13 +91,13 @@ def _reset_runtime_singletons() -> None:
     except Exception:
         pass
     try:
-        from deeptutor.services.config.runtime_settings import RuntimeSettingsService
+        from lumen.shared.config.runtime_settings import RuntimeSettingsService
 
         RuntimeSettingsService._instances.clear()
     except Exception:
         pass
     try:
-        from deeptutor.services.config.model_catalog import ModelCatalogService
+        from lumen.shared.config.model_catalog import ModelCatalogService
 
         ModelCatalogService._instances.clear()
     except Exception:
@@ -321,7 +321,7 @@ def _prompt_conflict_choice() -> str:
 
 
 def _persist_ports(settings_dir: Path, backend_port: int, frontend_port: int) -> Path:
-    from deeptutor.services.config.runtime_settings import RuntimeSettingsService
+    from lumen.shared.config.runtime_settings import RuntimeSettingsService
 
     service = RuntimeSettingsService.get_instance(settings_dir)
     system = service.load_system(include_process_overrides=False)
@@ -555,7 +555,7 @@ def _ensure_source_production_build(source: Path, npm: str) -> Path:
 
 
 def _spa_server_command(frontend_port: int) -> list[str]:
-    from deeptutor.services.config import HTTP_KEEP_ALIVE_TIMEOUT
+    from lumen.shared.config import HTTP_KEEP_ALIVE_TIMEOUT
 
     return [
         sys.executable,
@@ -672,7 +672,8 @@ def start(home: str | Path | None = None, *, dev: bool = False) -> None:
     os.environ[DEEPTUTOR_HOME_ENV] = str(runtime_home)
     _reset_runtime_singletons()
 
-    from deeptutor.services.config import (
+    from deeptutor.services.setup import init_user_directories
+    from lumen.shared.config import (
         HTTP_KEEP_ALIVE_TIMEOUT,
         ensure_runtime_settings_files,
         export_runtime_settings_to_env,
@@ -680,7 +681,6 @@ def start(home: str | Path | None = None, *, dev: bool = False) -> None:
         load_auth_settings,
         load_launch_settings,
     )
-    from deeptutor.services.setup import init_user_directories
 
     init_user_directories(runtime_home)
     ensure_runtime_settings_files()

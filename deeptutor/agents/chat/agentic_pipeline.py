@@ -46,7 +46,6 @@ from deeptutor.runtime.providers import ToolScope
 from deeptutor.runtime.providers.view import ProviderToolView, build_tool_view
 from deeptutor.runtime.registry.deferred_tools import DeferredToolLoader
 from deeptutor.runtime.registry.tool_registry import get_tool_registry
-from deeptutor.services.config import get_chat_params
 from deeptutor.services.llm import (
     get_llm_config,
     get_token_limit_kwargs,  # noqa: F401  (re-exported for tests)
@@ -55,6 +54,7 @@ from deeptutor.services.llm import (
 )
 from deeptutor.services.llm.context_window import resolve_effective_context_window
 from deeptutor.services.prompt import get_prompt_manager
+from lumen.shared.config import get_chat_params
 
 logger = logging.getLogger(__name__)
 

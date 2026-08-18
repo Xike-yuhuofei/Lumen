@@ -17,7 +17,7 @@ def _load_question_extractor_module():
     )
 
     stubbed_modules = {
-        "deeptutor.services.config": {"get_agent_params": lambda *_args, **_kwargs: {}},
+        "lumen.shared.config": {"get_agent_params": lambda *_args, **_kwargs: {}},
         "deeptutor.services.llm": {"complete": lambda *_args, **_kwargs: None},
         "deeptutor.services.llm.capabilities": {
             "supports_response_format": lambda *_args, **_kwargs: False

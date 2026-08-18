@@ -135,7 +135,7 @@ def _ensure_essential_settings(path_service) -> None:
     _write_yaml_if_missing(agents_file, DEFAULT_AGENTS_SETTINGS)
 
     try:
-        from deeptutor.services.config import ensure_runtime_settings_files
+        from lumen.shared.config import ensure_runtime_settings_files
 
         ensure_runtime_settings_files()
     except Exception as e:
@@ -205,7 +205,7 @@ def get_backend_port(project_root: Path | None = None) -> int:
         Backend port number (default: 8001)
     """
     try:
-        from deeptutor.services.config.launch_settings import load_launch_settings
+        from lumen.shared.config.launch_settings import load_launch_settings
 
         return load_launch_settings(project_root).backend_port
     except Exception as exc:
@@ -222,7 +222,7 @@ def get_frontend_port(project_root: Path | None = None) -> int:
         Frontend port number (default: 3782)
     """
     try:
-        from deeptutor.services.config.launch_settings import load_launch_settings
+        from lumen.shared.config.launch_settings import load_launch_settings
 
         return load_launch_settings(project_root).frontend_port
     except Exception as exc:

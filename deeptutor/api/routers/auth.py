@@ -19,7 +19,7 @@ from fastapi import (
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, field_validator
 
-from deeptutor.services.config import load_auth_settings
+from lumen.shared.config import load_auth_settings
 
 # SameSite=None lets the cookie work when the browser accesses the frontend via
 # 127.0.0.1 and the backend via localhost (different origins on the same machine).

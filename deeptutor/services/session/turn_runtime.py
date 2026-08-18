@@ -778,12 +778,12 @@ class TurnRuntimeManager:
                     "model_id": assigned_llms[0].get("model_id"),
                 }
         if llm_selection:
-            from deeptutor.services.config import get_model_catalog_service
             from deeptutor.services.model_selection import (
                 LLMSelection,
                 apply_llm_selection_to_catalog,
             )
             from deeptutor.services.user import merge_personal_llm_profiles
+            from lumen.shared.config import get_model_catalog_service
 
             try:
                 # Personal (owner-bound) profiles live in the user's own

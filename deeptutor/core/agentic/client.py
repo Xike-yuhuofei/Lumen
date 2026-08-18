@@ -22,12 +22,12 @@ from typing import Any
 import httpx
 from openai import AsyncAzureOpenAI, AsyncOpenAI
 
-from deeptutor.services.config import load_system_settings
 from deeptutor.services.llm import get_token_limit_kwargs, supports_tools
 from deeptutor.services.llm.reasoning_params import (
     build_openai_compatible_reasoning_kwargs,
 )
 from deeptutor.services.provider_registry import find_by_name
+from lumen.shared.config import load_system_settings
 
 # Providers that don't reliably support OpenAI function-calling. The loop
 # still runs without tool schemas — the model just produces prose.

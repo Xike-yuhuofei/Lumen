@@ -28,7 +28,7 @@ from datetime import datetime, timedelta, timezone
 import logging
 from typing import Any
 
-from deeptutor.services.config import load_auth_settings
+from lumen.shared.config import load_auth_settings
 
 logger = logging.getLogger(__name__)
 

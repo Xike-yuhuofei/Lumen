@@ -39,7 +39,6 @@ from deeptutor.knowledge.kb_types import is_connected_kb, supports_local_raw_fil
 from deeptutor.knowledge.manager import KnowledgeBaseManager
 from deeptutor.knowledge.naming import validate_knowledge_base_name
 from deeptutor.knowledge.progress_tracker import ProgressStage, ProgressTracker
-from deeptutor.services.config import PROJECT_ROOT, load_config_with_main
 from deeptutor.services.file_io import atomic_write_json
 from deeptutor.services.rag.factory import (
     DEFAULT_PROVIDER,
@@ -70,6 +69,7 @@ from deeptutor.utils.document_extractor import (
 )
 from lumen.shared._util.document_validator import DocumentValidator
 from lumen.shared._util.error_utils import format_exception_message
+from lumen.shared.config import PROJECT_ROOT, load_config_with_main
 
 # Initialize logger with config
 config = load_config_with_main("main.yaml", PROJECT_ROOT)
@@ -888,8 +888,8 @@ async def health_check():
 async def get_rag_providers():
     """Get list of available RAG providers (with the active per-engine mode)."""
     try:
-        from deeptutor.services.config import get_kb_config_service
         from deeptutor.services.rag.service import RAGService
+        from lumen.shared.config import get_kb_config_service
 
         providers = RAGService.list_providers()
         kb_config = get_kb_config_service()
@@ -921,8 +921,8 @@ async def set_rag_provider_mode(provider: str, payload: ProviderModeUpdate):
     The mode must be one the engine supports; a KB's own ``search_mode`` still
     overrides this per-KB default.
     """
-    from deeptutor.services.config import get_kb_config_service
     from deeptutor.services.rag.service import RAGService
+    from lumen.shared.config import get_kb_config_service
 
     entry = next((p for p in RAGService.list_providers() if p["id"] == provider), None)
     modes = (entry or {}).get("modes") or []
@@ -955,7 +955,7 @@ class LlamaIndexConfigUpdate(BaseModel):
 async def get_llamaindex_pipeline_config():
     """Read the LlamaIndex engine's retrieval + chunking knobs."""
     try:
-        from deeptutor.services.config import get_runtime_settings_service
+        from lumen.shared.config import get_runtime_settings_service
 
         return get_runtime_settings_service().load_llamaindex()
     except Exception as e:
@@ -971,7 +971,7 @@ async def update_llamaindex_pipeline_config(payload: LlamaIndexConfigUpdate):
     how documents indexed *after* the save are split.
     """
     try:
-        from deeptutor.services.config import get_runtime_settings_service
+        from lumen.shared.config import get_runtime_settings_service
 
         service = get_runtime_settings_service()
         current = service.load_llamaindex(include_process_overrides=False)
@@ -1011,7 +1011,7 @@ def _model_options_payload(kinds: list[str]) -> dict:
     Exposes only ids / display labels / dimensions — never provider URLs or
     API keys (those stay behind the admin-only catalog endpoint).
     """
-    from deeptutor.services.config import get_model_catalog_service
+    from lumen.shared.config import get_model_catalog_service
 
     catalog = get_model_catalog_service().load()
     services = catalog.get("services", {})
@@ -1080,7 +1080,7 @@ async def set_rag_active_model(payload: ActiveModelUpdate):
             detail=f"Unsupported model kind '{payload.kind}'. Choose one of: {', '.join(_ENGINE_MODEL_KINDS)}.",
         )
     try:
-        from deeptutor.services.config import get_model_catalog_service
+        from lumen.shared.config import get_model_catalog_service
 
         service = get_model_catalog_service()
         catalog = service.load()
@@ -1125,7 +1125,7 @@ async def get_supported_file_types():
 async def get_all_kb_configs():
     """Get all knowledge base configurations from centralized config file."""
     try:
-        from deeptutor.services.config import get_kb_config_service
+        from lumen.shared.config import get_kb_config_service
 
         service = get_kb_config_service()
         return service.get_all_configs()
@@ -1138,7 +1138,7 @@ async def get_all_kb_configs():
 async def get_kb_config(kb_name: str):
     """Get configuration for a specific knowledge base."""
     try:
-        from deeptutor.services.config import get_kb_config_service
+        from lumen.shared.config import get_kb_config_service
 
         service = get_kb_config_service()
         config = service.get_kb_config(kb_name)
@@ -1152,8 +1152,8 @@ async def get_kb_config(kb_name: str):
 async def update_kb_config(kb_name: str, config: dict):
     """Update configuration for a specific knowledge base."""
     try:
-        from deeptutor.services.config import get_kb_config_service
         from deeptutor.services.rag.index_probe import has_ready_provider_index
+        from lumen.shared.config import get_kb_config_service
 
         config = dict(config or {})
         if "rag_provider" in config:
@@ -1202,7 +1202,7 @@ async def update_kb_config(kb_name: str, config: dict):
 async def sync_configs_from_metadata():
     """Sync all KB configurations from their metadata.json files to centralized config."""
     try:
-        from deeptutor.services.config import get_kb_config_service
+        from lumen.shared.config import get_kb_config_service
 
         service = get_kb_config_service()
         service.sync_all_from_metadata(_current_kb_base_dir())

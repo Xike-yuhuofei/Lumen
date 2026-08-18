@@ -66,13 +66,13 @@ from deeptutor.core.trace import (
     new_call_id,
 )
 from deeptutor.runtime.registry.tool_registry import get_tool_registry
-from deeptutor.services.config import parse_language
 from deeptutor.services.llm import get_llm_config, prepare_multimodal_messages
 from deeptutor.services.path_service import get_path_service
 from deeptutor.services.prompt import get_prompt_manager
 from deeptutor.services.prompt.language import append_language_directive
 from deeptutor.services.sandbox import exec_capability_available
 from deeptutor.utils.json_parser import parse_json_response
+from lumen.shared.config import parse_language
 
 logger = logging.getLogger(__name__)
 
