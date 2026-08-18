@@ -18,15 +18,15 @@ import logging
 from typing import Any
 
 from deeptutor.core.tool_protocol import BaseTool, ToolLookup
-from deeptutor.runtime.providers.allowlist import Allowlist
-from deeptutor.runtime.providers.authorize import authorize_mcp_tools
-from deeptutor.runtime.providers.scope import ToolScope
 from deeptutor.runtime.registry.deferred_tools import (
     DeferredToolLoader,
     provider_identity,
     render_deferred_tools_manifest,
 )
 from deeptutor.runtime.registry.scoped_registry import ScopedToolRegistry
+from lumen.runtime.tools.providers.allowlist import Allowlist
+from lumen.runtime.tools.providers.authorize import authorize_mcp_tools
+from lumen.runtime.tools.providers.scope import ToolScope
 
 logger = logging.getLogger(__name__)
 

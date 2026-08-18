@@ -22,7 +22,7 @@ from typing import Any
 
 from deeptutor.core.tool_protocol import BaseTool, ToolLookup
 from deeptutor.core.tool_protocol import provider_identity as _provider_identity
-from deeptutor.runtime.providers.text import (
+from lumen.runtime.tools.providers.text import (
     MANIFEST_DESCRIPTION_MAX_CHARS,
     sanitize_provider_text,
 )
