@@ -6,14 +6,14 @@ import time
 
 import pytest
 
-from lumen.runtime.tools.builtin.cron_tool import run_cron_action
 from lumen.app.cron.service import CronService
+from lumen.runtime.tools.builtin.cron_tool import run_cron_action
 
 
 @pytest.fixture
 def cron_service(tmp_path, monkeypatch):
-    import lumen.runtime.tools.builtin.cron_tool as tool_mod
     import lumen.app.cron.service as service_mod
+    import lumen.runtime.tools.builtin.cron_tool as tool_mod
 
     service = CronService(store_path=tmp_path / "jobs.json")
     monkeypatch.setattr(service_mod, "_service", service)
