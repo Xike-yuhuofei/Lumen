@@ -1,6 +1,11 @@
-"""Application event bus utilities."""
+"""Deprecated compatibility facade — see ``lumen.runtime.stream.event_bus``.
 
-from .event_bus import (
+The application event bus is owned by ``lumen/runtime/stream``.  This module
+re-exports it for existing importers and tests only.
+"""
+from __future__ import annotations
+
+from lumen.runtime.stream.event_bus import (  # noqa: F401
     Event,
     EventBus,
     EventType,

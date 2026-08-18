@@ -88,7 +88,7 @@ class DeepTutorApp:
         the chat pipeline so the facade's module import stays lightweight.
         """
         from deeptutor.agents.chat.agentic_pipeline import CHAT_OPTIONAL_TOOLS
-        from deeptutor.i18n.metadata_i18n import capability_description_i18n
+        from lumen.runtime.i18n.metadata_i18n import capability_description_i18n
         from lumen.runtime.request_contracts import get_capability_request_schema
 
         manifest = {

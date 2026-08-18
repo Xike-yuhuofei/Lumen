@@ -33,7 +33,6 @@ import logging
 import re
 from typing import Any
 
-from deeptutor.agents._shared.capability_result import emit_capability_result
 from deeptutor.agents._shared.tool_composition import (
     ToolMountFlags,
     compose_enabled_tools,
@@ -67,6 +66,7 @@ from deeptutor.runtime.registry.tool_registry import get_tool_registry
 from deeptutor.services.prompt import get_prompt_manager
 from deeptutor.services.prompt.language import append_language_directive
 from deeptutor.utils.json_parser import parse_json_response
+from lumen.runtime.agent_loop.engine.capability_result import emit_capability_result
 from lumen.runtime.agent_loop.engine.usage import record_streamed_usage
 from lumen.runtime.stream.bus import StreamBus
 from lumen.shared._util.llm import get_llm_config, prepare_multimodal_messages

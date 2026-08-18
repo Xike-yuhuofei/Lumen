@@ -238,7 +238,7 @@ def _save_zip_archive(
     import tempfile
     import zipfile
 
-    from deeptutor.utils.archive_extractor import ArchiveTooLargeError, safe_extract_zip
+    from lumen.shared._util.archive_extractor import ArchiveTooLargeError, safe_extract_zip
 
     file.file.seek(0)
     max_size = DocumentValidator.MAX_FILE_SIZE

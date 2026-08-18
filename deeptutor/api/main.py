@@ -123,7 +123,7 @@ async def lifespan(app: FastAPI):
         logger.warning(f"Failed to initialize LLM client at startup: {e}")
 
     try:
-        from deeptutor.events.event_bus import get_event_bus
+        from lumen.runtime.stream.event_bus import get_event_bus
 
         event_bus = get_event_bus()
         await event_bus.start()
@@ -204,7 +204,7 @@ async def lifespan(app: FastAPI):
 
     # Stop EventBus
     try:
-        from deeptutor.events.event_bus import get_event_bus
+        from lumen.runtime.stream.event_bus import get_event_bus
 
         event_bus = get_event_bus()
         await event_bus.stop()
