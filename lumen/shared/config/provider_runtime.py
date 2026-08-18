@@ -7,7 +7,6 @@ import json
 from typing import Any
 from urllib.parse import urlparse
 
-from deeptutor.services.model_selection import LLMSelection, apply_llm_selection_to_catalog
 from lumen.shared._util.provider_registry import (
     NANOBOT_LLM_PROVIDERS,
     PROVIDERS,
@@ -17,6 +16,7 @@ from lumen.shared._util.provider_registry import (
     find_by_name,
     find_gateway,
 )
+from lumen.shared.config.model_selection import LLMSelection, apply_llm_selection_to_catalog
 
 from .embedding_endpoint import (
     EMBEDDING_PROVIDER_ALIASES,

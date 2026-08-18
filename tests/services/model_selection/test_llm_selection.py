@@ -1,4 +1,4 @@
-from deeptutor.services.model_selection import (
+from lumen.shared.config.model_selection import (
     LLMSelection,
     apply_llm_selection_to_catalog,
     list_llm_options,

@@ -420,7 +420,7 @@ def redacted_model_access(user_id: str | None = None) -> dict[str, list[dict[str
 
 def allowed_llm_options() -> dict[str, Any]:
     """LLM option list for the current user (single-user: the full catalog)."""
-    from deeptutor.services.model_selection import list_llm_options
+    from lumen.shared.config.model_selection import list_llm_options
 
     return list_llm_options(admin_catalog())
 
