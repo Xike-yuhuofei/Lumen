@@ -23,7 +23,7 @@ from deeptutor.knowledge.manifest import (
     KB_FILES_MAX_LIMIT,
     build_manifest,
 )
-from deeptutor.tools.builtin import BUILTIN_TOOL_NAMES, KbFilesTool
+from lumen.runtime.tools.builtin import BUILTIN_TOOL_NAMES, KbFilesTool
 
 _READY = {"rag_provider": "llamaindex", "status": "ready"}
 

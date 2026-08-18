@@ -4,7 +4,7 @@ import pytest
 
 from deeptutor.api.routers import settings as settings_router
 from deeptutor.api.routers import tools as tools_router
-from deeptutor.tools.builtin import (
+from lumen.runtime.tools.builtin import (
     BUILTIN_TOOL_NAMES,
     COMING_SOON_TOOL_NAMES,
 )

@@ -8,5 +8,6 @@ singleton through that private channel.
 from __future__ import annotations
 
 from lumen.shared.memory.store import get_memory_store
+from lumen.shared.memory.trace import TraceEvent
 
-__all__ = ["get_memory_store"]
+__all__ = ["TraceEvent", "get_memory_store"]

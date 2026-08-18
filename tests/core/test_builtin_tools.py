@@ -11,7 +11,7 @@ import pytest
 
 from deeptutor.core.tool_protocol import BaseTool, ToolDefinition, ToolParameter, ToolResult
 from deeptutor.runtime.registry.tool_registry import ToolRegistry
-from deeptutor.tools.builtin import (
+from lumen.runtime.tools.builtin import (
     BrainstormTool,
     CodeExecutionTool,
     RAGTool,
@@ -193,10 +193,10 @@ async def test_code_execution_tool_runs_python_via_sandbox(
             (run_dir / "result.txt").write_text("ok", encoding="utf-8")
             return ExecResult(stdout="4\n", exit_code=0)
 
-    import lumen.shared.sandbox as sandbox_pkg
+    import lumen.shared._util.sandbox as sandbox_shim
     import lumen.shared.sandbox.artifacts as sandbox_artifacts
 
-    monkeypatch.setattr(sandbox_pkg, "get_sandbox_service", lambda: FakeSandboxService())
+    monkeypatch.setattr(sandbox_shim, "get_sandbox_service", lambda: FakeSandboxService())
     monkeypatch.setattr(sandbox_artifacts, "get_path_service", lambda: path_service)
 
     result = await CodeExecutionTool().execute(
@@ -232,10 +232,10 @@ async def test_code_execution_tool_compiles_cpp(tmp_path, monkeypatch: pytest.Mo
             assert (run_dir / "main.cpp").exists()
             return ExecResult(stdout="hi\n", exit_code=0)
 
-    import lumen.shared.sandbox as sandbox_pkg
+    import lumen.shared._util.sandbox as sandbox_shim
     import lumen.shared.sandbox.artifacts as sandbox_artifacts
 
-    monkeypatch.setattr(sandbox_pkg, "get_sandbox_service", lambda: FakeSandboxService())
+    monkeypatch.setattr(sandbox_shim, "get_sandbox_service", lambda: FakeSandboxService())
     monkeypatch.setattr(sandbox_artifacts, "get_path_service", lambda: path_service)
 
     result = await CodeExecutionTool().execute(

@@ -129,13 +129,13 @@ class TestCronTool:
 class TestRegistryIntegration:
     def test_cron_tool_is_builtin_and_automounted(self):
         from deeptutor.agents._shared.tool_composition import AUTO_MOUNTED_TOOLS
-        from deeptutor.tools.builtin import BUILTIN_TOOL_NAMES
+        from lumen.runtime.tools.builtin import BUILTIN_TOOL_NAMES
 
         assert "cron" in BUILTIN_TOOL_NAMES
         assert "cron" in AUTO_MOUNTED_TOOLS
 
     def test_schema_has_action_enum(self):
-        from deeptutor.tools.builtin import CronTool
+        from lumen.runtime.tools.builtin import CronTool
 
         schema = CronTool().get_definition().to_openai_schema()
         action = schema["function"]["parameters"]["properties"]["action"]

@@ -17,7 +17,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from deeptutor.core.tool_protocol import BaseTool, ToolDefinition, ToolPromptHints
-from deeptutor.tools.builtin import (
+from lumen.runtime.tools.builtin import (
     BUILTIN_TOOL_TYPES,
     COMING_SOON_TOOL_TYPES,
     TOOL_ALIASES,

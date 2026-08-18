@@ -12,7 +12,7 @@ import logging
 from typing import Any
 
 from deeptutor.core.tool_protocol import BaseTool, ToolDefinition, ToolPromptHints
-from deeptutor.tools.builtin import BUILTIN_TOOL_TYPES, TOOL_ALIASES
+from lumen.runtime.tools.builtin import BUILTIN_TOOL_TYPES, TOOL_ALIASES
 from lumen.runtime.tools.prompting import compose_prompt_text
 
 logger = logging.getLogger(__name__)

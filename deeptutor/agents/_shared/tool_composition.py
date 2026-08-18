@@ -24,7 +24,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Any
 
-from deeptutor.tools.builtin import (
+from lumen.runtime.tools.builtin import (
     BUILTIN_TOOL_NAMES,
     CONFIGURABLE_BUILTIN_TOOL_NAMES,
 )
@@ -62,7 +62,7 @@ _KB_COEXISTING_TOOLS: tuple[str, ...] = ("rag", "kb_files")
 def default_optional_tools(excluded: Iterable[str] = ()) -> list[str]:
     """Return the user-toggleable tool list (chat's default set).
 
-    Sourced from :mod:`deeptutor.tools.builtin` so the /settings/tools UI
+    Sourced from :mod:`lumen.runtime.tools.builtin` so the /settings/tools UI
     and the pipelines can never disagree about which tools the user
     actually controls.
     """
