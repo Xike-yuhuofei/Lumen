@@ -19,7 +19,7 @@ class UsageTracker:
       for providers that don't emit ``usage`` (used by chat's answer-now path).
 
     Construct with ``model=<name>`` so :meth:`summary` can resolve a
-    ``total_cost_usd`` via the pricing table in ``deeptutor.logging.stats``.
+    ``total_cost_usd`` via the pricing table in ``lumen.shared._util.logging.stats``.
     """
 
     def __init__(self, *, model: str | None = None) -> None:
@@ -83,7 +83,7 @@ class UsageTracker:
         cost_usd = 0.0
         if self.model:
             # Local import keeps ``core.agentic`` import-light at module load.
-            from deeptutor.logging.stats.llm_stats import get_pricing
+            from lumen.shared._util.logging.stats.llm_stats import get_pricing
 
             pricing = get_pricing(self.model)
             cost_usd = (self.prompt_tokens / 1000.0) * pricing.get("input", 0.0) + (

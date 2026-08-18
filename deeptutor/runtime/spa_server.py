@@ -22,7 +22,7 @@ from starlette.staticfiles import StaticFiles
 from starlette.types import Receive, Scope, Send
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
-from deeptutor.brand import PRODUCT_NAME
+from lumen.shared._util.brand import PRODUCT_NAME
 
 DEFAULT_API_BASE = "http://127.0.0.1:8001"
 SPA_DIR_ENV = "DEEPTUTOR_SPA_DIR"

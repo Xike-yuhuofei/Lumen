@@ -5,12 +5,12 @@ from pathlib import Path
 
 import pytest
 
-from deeptutor.logging import LoggingConfig, bind_log_context
+from lumen.shared._util.logging import LoggingConfig, bind_log_context
 
 
 @pytest.fixture(autouse=True)
 def _clean_logging_handlers():
-    configure_module = importlib.import_module("deeptutor.logging.configure")
+    configure_module = importlib.import_module("lumen.shared._util.logging.configure")
     configure_module._remove_managed_handlers(logging.getLogger())
     yield
     configure_module._remove_managed_handlers(logging.getLogger())
@@ -22,7 +22,7 @@ def _flush_root_handlers() -> None:
 
 
 def test_configure_logging_writes_jsonl_and_respects_level(monkeypatch, tmp_path: Path):
-    configure_module = importlib.import_module("deeptutor.logging.configure")
+    configure_module = importlib.import_module("lumen.shared._util.logging.configure")
     monkeypatch.setattr(
         configure_module,
         "load_logging_config",
@@ -53,7 +53,7 @@ def test_configure_logging_writes_jsonl_and_respects_level(monkeypatch, tmp_path
 
 
 def test_configure_logging_uses_rotation_settings(monkeypatch, tmp_path: Path):
-    configure_module = importlib.import_module("deeptutor.logging.configure")
+    configure_module = importlib.import_module("lumen.shared._util.logging.configure")
     monkeypatch.setattr(
         configure_module,
         "load_logging_config",

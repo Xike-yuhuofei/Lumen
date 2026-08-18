@@ -13,7 +13,7 @@ from rich.text import Text
 import typer
 
 from deeptutor.app import DeepTutorApp, TurnRequest
-from deeptutor.brand import PRODUCT_NAME
+from lumen.shared._util.brand import PRODUCT_NAME
 
 from .common import (
     console,

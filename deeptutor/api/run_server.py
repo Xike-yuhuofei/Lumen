@@ -33,9 +33,9 @@ def main() -> None:
     os.chdir(str(project_root))
 
     # Get port from configuration
-    from deeptutor.logging import configure_logging
     from deeptutor.runtime.mode import RunMode, set_mode
     from deeptutor.services.setup import get_backend_port
+    from lumen.shared._util.logging import configure_logging
     from lumen.shared.config import HTTP_KEEP_ALIVE_TIMEOUT, get_ws_max_size
 
     set_mode(RunMode.SERVER)

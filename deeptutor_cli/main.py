@@ -6,9 +6,9 @@ from pathlib import Path
 
 import typer
 
-from deeptutor.brand import PRODUCT_NAME
-from deeptutor.logging import configure_logging
 from deeptutor.runtime.mode import RunMode, set_mode
+from lumen.shared._util.brand import PRODUCT_NAME
+from lumen.shared._util.logging import configure_logging
 
 from .chat import register as register_chat
 from .common import build_turn_request, console, maybe_run

@@ -19,9 +19,9 @@ from typing import Callable
 from urllib import error as urlerror
 from urllib import request as urlrequest
 
-from deeptutor.brand import PRODUCT_NAME
 from deeptutor.runtime.banner import labels_for, print_banner, resolve_language
 from deeptutor.runtime.home import DEEPTUTOR_HOME_ENV, PACKAGE_ROOT, get_runtime_home
+from lumen.shared._util.brand import PRODUCT_NAME
 
 # Stamped by the launcher onto every child's environment so the backend can
 # find the root of the DeepTutor process tree.

@@ -1,4 +1,4 @@
-from deeptutor.logging import bind_log_context, current_log_context
+from lumen.shared._util.logging import bind_log_context, current_log_context
 
 
 def test_bind_log_context_is_scoped_and_nested():

@@ -19,13 +19,13 @@ from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 
-from deeptutor.brand import PRODUCT_NAME
 from deeptutor.services.model_selection import list_llm_options
 from deeptutor.services.settings.interface_settings import (
     DEFAULT_UI_SETTINGS as INTERFACE_DEFAULTS,
 )
 from deeptutor.services.settings.interface_settings import resolve_languages
 from deeptutor.tools.builtin import USER_TOGGLEABLE_TOOL_NAMES
+from lumen.shared._util.brand import PRODUCT_NAME
 from lumen.shared._util.embedding.client import reset_embedding_client
 from lumen.shared._util.llm.client import reset_llm_client
 from lumen.shared._util.llm.config import clear_llm_config_cache

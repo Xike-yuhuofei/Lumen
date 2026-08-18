@@ -8,7 +8,7 @@ import threading
 import time
 from typing import Any
 
-from deeptutor.logging import (
+from lumen.shared._util.logging import (
     ProcessLogEvent,
     bind_log_context,
     capture_process_logs,

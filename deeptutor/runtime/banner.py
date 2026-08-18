@@ -13,7 +13,7 @@ from rich.panel import Panel
 from rich.text import Text
 
 from deeptutor.__version__ import __version__
-from deeptutor.brand import PRODUCT_NAME
+from lumen.shared._util.brand import PRODUCT_NAME
 
 _ASCII_LOGO = r""" _     _   _ __  __ _____ _   _
 | |   | | | |  \/  | ____| \ | |

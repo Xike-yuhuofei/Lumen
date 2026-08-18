@@ -6,7 +6,7 @@ Simple utility for tracking LLM token usage and costs across all modules.
 Outputs summary via the unified logging system.
 
 Usage:
-    from deeptutor.logging import LLMStats
+    from lumen.shared._util.logging import LLMStats
 
     stats = LLMStats("Solver")
 

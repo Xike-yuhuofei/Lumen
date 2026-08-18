@@ -5,8 +5,8 @@ import sys
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from deeptutor.brand import PRODUCT_NAME
-from deeptutor.logging import configure_logging
+from lumen.shared._util.brand import PRODUCT_NAME
+from lumen.shared._util.logging import configure_logging
 from lumen.shared._util.path_service import get_path_service
 from lumen.shared.config import (
     ensure_runtime_settings_files,

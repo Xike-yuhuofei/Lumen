@@ -9,8 +9,8 @@ import sys
 from typing import Any
 import uuid
 
-from deeptutor.brand import PRODUCT_NAME
 from deeptutor.services.cron.service import CronJob
+from lumen.shared._util.brand import PRODUCT_NAME
 
 logger = logging.getLogger(__name__)
 
