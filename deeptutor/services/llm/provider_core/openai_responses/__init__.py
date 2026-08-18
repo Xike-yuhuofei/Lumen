@@ -1,31 +1,17 @@
-"""Shared helpers for Responses API providers."""
+# ruff: noqa: F405
+"""Deprecated compatibility facade — see ``lumen.shared._util.llm.provider_core.openai_responses``.
 
-from .converters import (
-    adapt_chat_kwargs_to_responses,
-    convert_messages,
-    convert_tools,
-    convert_user_message,
-    split_tool_call_id,
-)
-from .parsing import (
-    FINISH_REASON_MAP,
-    consume_sdk_stream,
-    consume_sse,
-    iter_sse,
-    map_finish_reason,
-    parse_response_output,
-)
+The LLM service is owned by ``lumen/shared/_util/llm`` (canonical). This
+package re-exports it for existing importers and tests only.
+"""
 
-__all__ = [
-    "adapt_chat_kwargs_to_responses",
-    "convert_messages",
-    "convert_tools",
-    "convert_user_message",
-    "split_tool_call_id",
-    "iter_sse",
-    "consume_sse",
-    "consume_sdk_stream",
-    "map_finish_reason",
-    "parse_response_output",
-    "FINISH_REASON_MAP",
-]
+from __future__ import annotations
+
+import lumen.shared._util.llm.provider_core.openai_responses as _canon
+
+
+def __getattr__(name: str):
+    return getattr(_canon, name)
+
+
+__all__ = list(getattr(_canon, "__all__", ()))

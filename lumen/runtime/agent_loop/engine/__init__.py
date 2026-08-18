@@ -17,7 +17,8 @@ Layering:
 The remaining engine modules (``usage`` / ``client`` / ``labeled_step`` /
 ``tool_dispatch`` / ``loop``) still live under ``deeptutor.core.agentic``
 until their ``deeptutor.services.llm`` dependencies are canonicalized; they
-import these primitives from this package.
+import these primitives from this package.  (Their LLM deps now point at
+``lumen.shared._util.llm``, the canonical LLM module.)
 """
 
 from lumen.runtime.agent_loop.engine.labels import (

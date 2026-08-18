@@ -101,7 +101,7 @@ class TestLlmProbeUsesAgentsYaml:
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("_patch_project_root")
     async def test_probe_passes_configured_max_tokens(self, monkeypatch):
-        from deeptutor.services import llm as llm_module
+        from lumen.shared._util import llm as llm_module
         from lumen.shared.config import test_runner as test_runner_module
         from lumen.shared.config.test_runner import ConfigTestRunner, TestRun
 
@@ -144,7 +144,7 @@ class TestLlmProbeUsesAgentsYaml:
         project_root = _write_agents_yaml(tmp_path, {"capabilities": {}})
         monkeypatch.setattr(loader_module, "PROJECT_ROOT", project_root)
 
-        from deeptutor.services import llm as llm_module
+        from lumen.shared._util import llm as llm_module
         from lumen.shared.config import test_runner as test_runner_module
         from lumen.shared.config.test_runner import ConfigTestRunner, TestRun
 
@@ -179,7 +179,7 @@ class TestLlmProbeUsesAgentsYaml:
 
     @pytest.mark.asyncio
     async def test_probe_passes_runtime_api_version_and_reasoning_effort(self, monkeypatch):
-        from deeptutor.services import llm as llm_module
+        from lumen.shared._util import llm as llm_module
         from lumen.shared.config import test_runner as test_runner_module
         from lumen.shared.config.test_runner import ConfigTestRunner, TestRun
 
@@ -217,7 +217,7 @@ class TestLlmProbeUsesAgentsYaml:
     async def test_probe_reports_detected_context_window_without_persisting_catalog(
         self, tmp_path, monkeypatch
     ):
-        from deeptutor.services import llm as llm_module
+        from lumen.shared._util import llm as llm_module
         from lumen.shared.config import test_runner as test_runner_module
         from lumen.shared.config.model_catalog import ModelCatalogService
         from lumen.shared.config.test_runner import ConfigTestRunner, TestRun

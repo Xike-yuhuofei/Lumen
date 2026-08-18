@@ -1,40 +1,17 @@
-"""Services-layer provider runtime with lazy SDK-backed implementations."""
+# ruff: noqa: F405
+"""Deprecated compatibility facade — see ``lumen.shared._util.llm.provider_core``.
+
+The LLM service is owned by ``lumen/shared/_util/llm`` (canonical). This
+package re-exports it for existing importers and tests only.
+"""
 
 from __future__ import annotations
 
-from importlib import import_module
-from typing import TYPE_CHECKING
-
-from .base import GenerationSettings, LLMProvider, LLMResponse, ToolCallRequest
-
-if TYPE_CHECKING:
-    from .anthropic_provider import AnthropicProvider
-    from .azure_openai_provider import AzureOpenAIProvider
-    from .openai_compat_provider import OpenAICompatProvider
-
-__all__ = [
-    "AnthropicProvider",
-    "AzureOpenAIProvider",
-    "GenerationSettings",
-    "LLMProvider",
-    "LLMResponse",
-    "OpenAICompatProvider",
-    "ToolCallRequest",
-]
-
-
-_LAZY_TYPES = {
-    "AnthropicProvider": ("anthropic_provider", "AnthropicProvider"),
-    "AzureOpenAIProvider": ("azure_openai_provider", "AzureOpenAIProvider"),
-    "OpenAICompatProvider": ("openai_compat_provider", "OpenAICompatProvider"),
-}
+import lumen.shared._util.llm.provider_core as _canon
 
 
 def __getattr__(name: str):
-    target = _LAZY_TYPES.get(name)
-    if target is None:
-        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-    module_name, class_name = target
-    value = getattr(import_module(f"{__name__}.{module_name}"), class_name)
-    globals()[name] = value
-    return value
+    return getattr(_canon, name)
+
+
+__all__ = list(getattr(_canon, "__all__", ()))

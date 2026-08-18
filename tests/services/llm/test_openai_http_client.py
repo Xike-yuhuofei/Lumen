@@ -7,8 +7,8 @@ from typing import Any
 
 import pytest
 
-from deeptutor.services.llm import openai_http_client
-from deeptutor.services.llm.exceptions import LLMConfigError
+from lumen.shared._util.llm import openai_http_client
+from lumen.shared._util.llm.exceptions import LLMConfigError
 
 
 @pytest.fixture(autouse=True)
@@ -60,7 +60,7 @@ def test_openai_client_kwargs_rejects_production(monkeypatch: pytest.MonkeyPatch
 
 
 def test_provider_core_passes_disable_ssl_http_client(monkeypatch: pytest.MonkeyPatch) -> None:
-    from deeptutor.services.llm.provider_core import openai_compat_provider as provider_mod
+    from lumen.shared._util.llm.provider_core import openai_compat_provider as provider_mod
 
     clients = _enable_ssl_override(monkeypatch)
     captured = _capture_async_openai(monkeypatch, provider_mod)
@@ -72,7 +72,7 @@ def test_provider_core_passes_disable_ssl_http_client(monkeypatch: pytest.Monkey
 
 
 def test_azure_provider_passes_disable_ssl_http_client(monkeypatch: pytest.MonkeyPatch) -> None:
-    from deeptutor.services.llm.provider_core import azure_openai_provider as azure_mod
+    from lumen.shared._util.llm.provider_core import azure_openai_provider as azure_mod
 
     clients = _enable_ssl_override(monkeypatch)
     captured = _capture_async_openai(monkeypatch, azure_mod)

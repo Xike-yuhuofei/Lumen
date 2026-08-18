@@ -1,18 +1,11 @@
-"""Pluggable storage backends for chat-session artifacts.
+# ruff: noqa: F401,F403
+"""Deprecated compatibility facade — see ``lumen.shared._util.storage``.
 
-Currently exposes only :mod:`attachment_store`, which persists user-uploaded
-chat attachments to disk so the frontend can preview them after the original
-base64 payload is dropped from the message record.
+The attachment store is owned by ``lumen/shared/_util/storage`` (canonical).
+This package re-exports it for existing importers and tests only.
 """
 
-from deeptutor.services.storage.attachment_store import (
-    AttachmentStore,
-    LocalDiskAttachmentStore,
-    get_attachment_store,
-)
+from __future__ import annotations
 
-__all__ = [
-    "AttachmentStore",
-    "LocalDiskAttachmentStore",
-    "get_attachment_store",
-]
+from lumen.shared._util.storage import *  # noqa: F401,F403
+from lumen.shared._util.storage import __all__  # noqa: F401

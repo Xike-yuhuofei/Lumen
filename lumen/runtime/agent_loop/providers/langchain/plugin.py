@@ -398,7 +398,7 @@ def _build_model(llm_service: LLMService, config: dict[str, Any]) -> BaseChatMod
         try:
             from langchain_openai import ChatOpenAI
 
-            from deeptutor.services.llm import get_llm_config
+            from lumen.shared._util.llm import get_llm_config
 
             llm_cfg = get_llm_config()
             model = str(getattr(llm_cfg, "model", "") or "gpt-4o-mini")

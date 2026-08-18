@@ -5,8 +5,8 @@ from typing import Any
 import pytest
 import pytest_asyncio
 
-from deeptutor.services.llm import provider_factory
-from deeptutor.services.llm.config import LLMConfig
+from lumen.shared._util.llm import provider_factory
+from lumen.shared._util.llm.config import LLMConfig
 
 
 class _FakeProvider:

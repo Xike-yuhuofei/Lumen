@@ -204,9 +204,9 @@ class ConfigTestRunner:
         }
 
     async def _test_llm(self, run: TestRun, catalog: dict[str, Any]) -> None:
-        from deeptutor.services.llm import clear_llm_config_cache, get_token_limit_kwargs
-        from deeptutor.services.llm import complete as llm_complete
-        from deeptutor.services.llm.config import LLMConfig
+        from lumen.shared._util.llm import clear_llm_config_cache, get_token_limit_kwargs
+        from lumen.shared._util.llm import complete as llm_complete
+        from lumen.shared._util.llm.config import LLMConfig
 
         clear_llm_config_cache()
         run.emit("info", "Loading LLM config from the active catalog selection.")

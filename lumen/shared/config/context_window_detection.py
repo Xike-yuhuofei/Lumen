@@ -10,13 +10,13 @@ from typing import Any
 
 import aiohttp
 
-from deeptutor.services.llm.config import LLMConfig
-from deeptutor.services.llm.context_window import (
+from lumen.shared._util.llm.config import LLMConfig
+from lumen.shared._util.llm.context_window import (
     coerce_positive_int,
     default_context_window_for_model,
 )
-from deeptutor.services.llm.openai_http_client import disable_ssl_verify_enabled
-from deeptutor.services.llm.utils import build_auth_headers
+from lumen.shared._util.llm.openai_http_client import disable_ssl_verify_enabled
+from lumen.shared._util.llm.utils import build_auth_headers
 
 logger = logging.getLogger(__name__)
 
