@@ -9,7 +9,6 @@ from typing import Any
 
 from deeptutor.core.tool_protocol import BaseTool, ToolDefinition, ToolParameter, ToolResult
 from deeptutor.knowledge.manifest import KB_FILES_DEFAULT_LIMIT, KB_FILES_MAX_LIMIT
-from lumen.modes.learn.chat_tools import MASTERY_TOOL_TYPES
 from lumen.runtime.tools.prompting import load_prompt_hints
 
 logger = logging.getLogger(__name__)
@@ -1169,7 +1168,10 @@ BUILTIN_TOOL_TYPES: tuple[type[BaseTool], ...] = (
     WriteNoteTool,
     AskUserTool,
     CronTool,
-    *MASTERY_TOOL_TYPES,
+    # Capability-owned tools (mastery) are intentionally absent: they are
+    # registered by mode.learn at boot through the injected ``runtime.tools``
+    # contract (see lumen.modes.learn.plugin), never statically by the runtime
+    # registry — so runtime never imports lumen.modes.
 )
 
 # No tools are parked right now. When a tool's implementation is being

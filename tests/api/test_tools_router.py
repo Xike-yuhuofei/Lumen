@@ -8,6 +8,7 @@ from deeptutor.tools.builtin import (
     BUILTIN_TOOL_NAMES,
     COMING_SOON_TOOL_NAMES,
 )
+from lumen.modes.learn.chat_tools import MASTERY_TOOL_NAMES
 from lumen.shared._util import tool_preferences
 from lumen.shared._util.tool_preferences import USER_TOGGLEABLE_TOOL_NAMES
 
@@ -26,7 +27,9 @@ async def test_list_builtin_tools_marks_toggleable_set(
     by_name = {tool.name: tool for tool in response.tools}
 
     # Every registered tool + every coming-soon placeholder shows up.
-    assert set(by_name) == set(BUILTIN_TOOL_NAMES) | set(COMING_SOON_TOOL_NAMES)
+    assert set(by_name) == (
+        set(BUILTIN_TOOL_NAMES) | set(COMING_SOON_TOOL_NAMES) | set(MASTERY_TOOL_NAMES)
+    )
 
     # Coming-soon entries are NOT toggleable and report enabled=False so
     # the UI can lock the toggle and badge them appropriately.

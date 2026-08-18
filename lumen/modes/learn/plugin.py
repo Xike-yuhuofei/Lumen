@@ -145,6 +145,7 @@ class ModeLearnPlugin(Plugin):
 
     async def setup(self, ctx: PluginContext) -> None:
         agent_loop = ctx.require("runtime.agent_loop")
+        _register_mastery_tools(ctx.require("runtime.tools"))
         ctx.provide(
             "mode.learn",
             _LearnModeServiceAdapter(
@@ -157,3 +158,17 @@ class ModeLearnPlugin(Plugin):
                 llm_service=ctx.require("runtime.llm"),
             ),
         )
+
+
+def _register_mastery_tools(tools: Any) -> None:
+    """Register the mastery tools into the runtime tool registry at boot.
+
+    The runtime registry never statically imports ``lumen.modes`` (Architecture
+    Gate ``test_runtime_does_not_import_modes``): capability-owned tools are
+    contributed by their owning mode through the injected ``runtime.tools``
+    contract instead.
+    """
+    from lumen.modes.learn.chat_tools import MASTERY_TOOL_TYPES
+
+    for tool_type in MASTERY_TOOL_TYPES:
+        tools.register(tool_type())

@@ -22,6 +22,7 @@ from deeptutor.tools.builtin import (
     COMING_SOON_TOOL_TYPES,
     TOOL_ALIASES,
 )
+from lumen.modes.learn.chat_tools import MASTERY_TOOL_TYPES
 from lumen.runtime.i18n.metadata_i18n import tool_description_i18n
 from lumen.shared._util.tool_preferences import (
     USER_TOGGLEABLE_TOOL_NAMES,
@@ -177,7 +178,10 @@ async def list_builtin_tools() -> ToolsListResponse:
     enabled_optional = set(get_enabled_optional_tools())
     owners = capability_tool_owners()
     payloads: list[BuiltinToolPayload] = []
-    for tool_type in BUILTIN_TOOL_TYPES:
+    # Built-in tools plus capability-owned (mastery) tools: the latter are not
+    # part of BUILTIN_TOOL_TYPES (registered at boot by mode.learn), so list
+    # them here so the settings page keeps surfacing them.
+    for tool_type in (*BUILTIN_TOOL_TYPES, *MASTERY_TOOL_TYPES):
         try:
             instance = tool_type()
             payloads.append(
