@@ -9,9 +9,9 @@ from typing import Any, Dict
 
 import pytest
 
-import deeptutor.services.rag.service as rag_service_module
-from deeptutor.services.rag.service import RAGService
-from deeptutor.services.rag.smart_retriever import SmartRetriever
+import lumen.shared.knowledge.rag.service as rag_service_module
+from lumen.shared.knowledge.rag.service import RAGService
+from lumen.shared.knowledge.rag.smart_retriever import SmartRetriever
 
 
 class _FakePipeline:
@@ -130,7 +130,7 @@ async def test_search_filters_noisy_vector_and_embedding_logs(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     service, pipeline = fake_service
-    pipe_logger = logging.getLogger("deeptutor.services.rag.pipelines.llamaindex")
+    pipe_logger = logging.getLogger("lumen.shared.knowledge.rag.pipelines.llamaindex")
     original_pipe_level = pipe_logger.level
     original_pipe_propagate = pipe_logger.propagate
     events: list[tuple[str, str, dict]] = []
@@ -143,10 +143,10 @@ async def test_search_filters_noisy_vector_and_embedding_logs(
         logging.getLogger("nano-vectordb").info(
             "Init {'embedding_dim': 4096, 'metric': 'cosine'} 13 data"
         )
-        logging.getLogger("deeptutor.services.embedding.adapters.openai_compatible").info(
+        logging.getLogger("lumen.shared._util.embedding.adapters.openai_compatible").info(
             "Successfully generated 1 embeddings (model: Qwen/Qwen3-Embedding-8B, dimensions: 4096)"
         )
-        logging.getLogger("deeptutor.services.rag.pipelines.llamaindex").info(
+        logging.getLogger("lumen.shared.knowledge.rag.pipelines.llamaindex").info(
             "Raw search results: 14 entities, 13 relations, 0 vector chunks"
         )
         return {"answer": "ok", "provider": "llamaindex"}

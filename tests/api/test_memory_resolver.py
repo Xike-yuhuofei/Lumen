@@ -16,9 +16,9 @@ pytest.importorskip("fastapi")
 FastAPI = pytest.importorskip("fastapi").FastAPI
 TestClient = pytest.importorskip("fastapi.testclient").TestClient
 
-memory_router = importlib.import_module("deeptutor.api.routers.memory").router
-paths_mod = importlib.import_module("deeptutor.services.memory.paths")
-document_mod = importlib.import_module("deeptutor.services.memory.document")
+memory_router = importlib.import_module("lumen.app.api.routers.memory").router
+paths_mod = importlib.import_module("lumen.shared.memory.paths")
+document_mod = importlib.import_module("lumen.shared.memory.document")
 
 
 @pytest.fixture

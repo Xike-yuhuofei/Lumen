@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from deeptutor.services.parsing.signature import ParserSignature
+from lumen.shared.knowledge.parsing.signature import ParserSignature
 
 
 def test_hash_is_order_independent() -> None:

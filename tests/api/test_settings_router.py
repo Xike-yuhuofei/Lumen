@@ -7,16 +7,18 @@ from typing import Any
 
 import pytest
 
-from deeptutor.api.routers import settings as settings_router
-from deeptutor.services.config.provider_runtime import (
+from lumen.app.api.routers import settings as settings_router
+from lumen.shared._util import tool_preferences
+from lumen.shared._util.embedding import client as embedding_client_module
+from lumen.shared._util.embedding import config as embedding_config_module
+from lumen.shared._util.llm import client as llm_client_module
+from lumen.shared._util.llm import config as llm_config_module
+from lumen.shared._util.llm import config as lumen_llm_config_module
+from lumen.shared.config.provider_runtime import (
     ResolvedEmbeddingConfig,
     ResolvedLLMConfig,
 )
-from deeptutor.services.config.runtime_settings import RuntimeSettingsService
-from deeptutor.services.embedding import client as embedding_client_module
-from deeptutor.services.embedding import config as embedding_config_module
-from deeptutor.services.llm import client as llm_client_module
-from deeptutor.services.llm import config as llm_config_module
+from lumen.shared.config.runtime_settings import RuntimeSettingsService
 
 
 def test_load_ui_settings_migrates_legacy_language_to_response_language(
@@ -24,7 +26,7 @@ def test_load_ui_settings_migrates_legacy_language_to_response_language(
 ) -> None:
     settings_file = tmp_path / "interface.json"
     settings_file.write_text('{"theme": "snow", "language": "zh"}', encoding="utf-8")
-    monkeypatch.setattr(settings_router, "_settings_file", lambda: settings_file)
+    monkeypatch.setattr(tool_preferences, "settings_file", lambda: settings_file)
 
     settings = settings_router.load_ui_settings()
 
@@ -43,11 +45,11 @@ def test_both_readers_of_interface_json_agree_on_a_legacy_file(
     through one shared helper precisely so a legacy file can't mean different
     things depending on which one asked.
     """
-    from deeptutor.services.settings import interface_settings
+    from lumen.shared.settings import interface_settings
 
     settings_file = tmp_path / "interface.json"
     settings_file.write_text('{"theme": "dark", "language": "zh"}', encoding="utf-8")
-    monkeypatch.setattr(settings_router, "_settings_file", lambda: settings_file)
+    monkeypatch.setattr(tool_preferences, "settings_file", lambda: settings_file)
     monkeypatch.setattr(interface_settings, "_interface_settings_file", lambda: settings_file)
 
     from_router = settings_router.load_ui_settings()
@@ -62,7 +64,7 @@ async def test_ui_languages_are_persisted_independently(
     monkeypatch: pytest.MonkeyPatch, tmp_path
 ) -> None:
     settings_file = tmp_path / "interface.json"
-    monkeypatch.setattr(settings_router, "_settings_file", lambda: settings_file)
+    monkeypatch.setattr(tool_preferences, "settings_file", lambda: settings_file)
 
     response = await settings_router.update_ui_settings(
         settings_router.UISettingsUpdate(theme="snow", language="en", response_language="zh")
@@ -213,8 +215,11 @@ def _patch_runtime(
             batch_size=10,
         )
 
+    # The canonical LLM config module binds resolve_llm_runtime_config from
+    # lumen.shared.config at import time, so patch the module the canonical
+    # implementation actually reads (the facade is a __getattr__ shim).
     monkeypatch.setattr(
-        llm_config_module,
+        lumen_llm_config_module,
         "resolve_llm_runtime_config",
         _resolve_llm_runtime_config,
     )
@@ -348,7 +353,7 @@ async def test_mineru_test_connection_reports_missing_token(
 async def test_mineru_payload_includes_local_cli_probe(
     monkeypatch: pytest.MonkeyPatch, tmp_path
 ) -> None:
-    from deeptutor.services.parsing.engines.mineru import backend as mineru_backend
+    from lumen.shared.knowledge.parsing.engines.mineru import backend as mineru_backend
 
     service = RuntimeSettingsService(tmp_path / "settings", process_env={})
     monkeypatch.setattr(settings_router, "get_runtime_settings_service", lambda: service)
@@ -368,7 +373,7 @@ async def test_mineru_payload_includes_local_cli_probe(
 
 @pytest.mark.asyncio
 async def test_mineru_test_connection_local_mode(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
-    from deeptutor.services.parsing.engines.mineru import backend as mineru_backend
+    from lumen.shared.knowledge.parsing.engines.mineru import backend as mineru_backend
 
     service = RuntimeSettingsService(tmp_path / "settings", process_env={})
     monkeypatch.setattr(settings_router, "get_runtime_settings_service", lambda: service)
@@ -413,7 +418,7 @@ async def test_mineru_test_connection_local_mode(monkeypatch: pytest.MonkeyPatch
 async def test_mineru_models_download_start_requires_downloader(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from deeptutor.services.parsing.engines.mineru import models as mineru_models
+    from lumen.shared.knowledge.parsing.engines.mineru import models as mineru_models
 
     monkeypatch.setattr(
         mineru_models, "resolve_models_downloader", lambda p: {"found": False, "path": ""}
@@ -441,7 +446,7 @@ async def test_mineru_models_download_start_requires_downloader(
 async def test_mineru_models_download_start_and_status_passthrough(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from deeptutor.services.parsing.engines.mineru import models as mineru_models
+    from lumen.shared.knowledge.parsing.engines.mineru import models as mineru_models
 
     calls: dict[str, object] = {}
 
@@ -636,11 +641,11 @@ async def test_apply_catalog_invalidates_runtime_caches(monkeypatch: pytest.Monk
 @pytest.mark.asyncio
 async def test_enabled_tools_roundtrip(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
     settings_file = tmp_path / "interface.json"
-    monkeypatch.setattr(settings_router, "_settings_file", lambda: settings_file)
+    monkeypatch.setattr(tool_preferences, "settings_file", lambda: settings_file)
 
     # Default state — no file yet, so the loader emits the full toggleable set.
-    assert set(settings_router.get_enabled_optional_tools()) == set(
-        settings_router.USER_TOGGLEABLE_TOOL_NAMES
+    assert set(tool_preferences.get_enabled_optional_tools()) == set(
+        tool_preferences.USER_TOGGLEABLE_TOOL_NAMES
     )
 
     # PUT a partial set; unknown tool names get filtered out.
@@ -649,14 +654,14 @@ async def test_enabled_tools_roundtrip(monkeypatch: pytest.MonkeyPatch, tmp_path
     )
     response = await settings_router.update_enabled_tools(update)
     assert response == {"enabled_optional_tools": ["web_search", "reason"]}
-    assert settings_router.get_enabled_optional_tools() == ["web_search", "reason"]
+    assert tool_preferences.get_enabled_optional_tools() == ["web_search", "reason"]
 
     # Empty selection is a valid "all off" state.
     response = await settings_router.update_enabled_tools(
         settings_router.EnabledToolsUpdate(enabled_tools=[])
     )
     assert response == {"enabled_optional_tools": []}
-    assert settings_router.get_enabled_optional_tools() == []
+    assert tool_preferences.get_enabled_optional_tools() == []
 
 
 @pytest.mark.asyncio
@@ -709,7 +714,7 @@ async def test_complete_tour_invalidates_runtime_caches(
 
 @pytest.mark.asyncio
 async def test_fetch_models_returns_picker_options(monkeypatch: pytest.MonkeyPatch) -> None:
-    import deeptutor.services.llm.factory as factory_module
+    import lumen.shared._util.llm.factory as factory_module
 
     async def _fake_fetch(binding: str, base_url: str, api_key: str | None = None):
         assert binding == "openai"  # "OpenAI" is normalized to lowercase
@@ -748,7 +753,7 @@ async def test_fetch_models_requires_base_url() -> None:
 async def test_fetch_models_maps_provider_error_to_502(monkeypatch: pytest.MonkeyPatch) -> None:
     from fastapi import HTTPException
 
-    import deeptutor.services.llm.factory as factory_module
+    import lumen.shared._util.llm.factory as factory_module
 
     async def _boom(binding: str, base_url: str, api_key: str | None = None):
         raise RuntimeError("connection refused")
@@ -768,7 +773,7 @@ async def test_update_ui_settings_preserves_theme_and_language_when_code_block_u
 ) -> None:
     # Given: stored appearance settings differ from the UI defaults.
     settings_file = tmp_path / "interface.json"
-    monkeypatch.setattr(settings_router, "_settings_file", lambda: settings_file)
+    monkeypatch.setattr(tool_preferences, "settings_file", lambda: settings_file)
     settings_router.save_ui_settings(
         {
             **settings_router.DEFAULT_UI_SETTINGS,
@@ -794,7 +799,7 @@ async def test_get_ui_settings_returns_persisted_interface_preferences(
     monkeypatch: pytest.MonkeyPatch, tmp_path
 ) -> None:
     settings_file = tmp_path / "interface.json"
-    monkeypatch.setattr(settings_router, "_settings_file", lambda: settings_file)
+    monkeypatch.setattr(tool_preferences, "settings_file", lambda: settings_file)
     settings_router.save_ui_settings(
         {
             **settings_router.DEFAULT_UI_SETTINGS,
@@ -815,7 +820,7 @@ async def test_update_ui_settings_persists_explicit_theme_and_language_defaults(
 ) -> None:
     # Given: stored appearance settings differ from the values being reset.
     settings_file = tmp_path / "interface.json"
-    monkeypatch.setattr(settings_router, "_settings_file", lambda: settings_file)
+    monkeypatch.setattr(tool_preferences, "settings_file", lambda: settings_file)
     settings_router.save_ui_settings(
         {
             **settings_router.DEFAULT_UI_SETTINGS,
@@ -849,7 +854,7 @@ def test_get_ui_settings_is_public_without_auth(monkeypatch: pytest.MonkeyPatch,
     from fastapi.testclient import TestClient
 
     settings_file = tmp_path / "interface.json"
-    monkeypatch.setattr(settings_router, "_settings_file", lambda: settings_file)
+    monkeypatch.setattr(tool_preferences, "settings_file", lambda: settings_file)
     settings_router.save_ui_settings(
         {
             **settings_router.DEFAULT_UI_SETTINGS,
@@ -884,7 +889,7 @@ def test_public_ui_read_omits_deployment_configuration(
     from fastapi.testclient import TestClient
 
     settings_file = tmp_path / "interface.json"
-    monkeypatch.setattr(settings_router, "_settings_file", lambda: settings_file)
+    monkeypatch.setattr(tool_preferences, "settings_file", lambda: settings_file)
     settings_router.save_ui_settings(
         {
             **settings_router.DEFAULT_UI_SETTINGS,

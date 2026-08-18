@@ -9,7 +9,7 @@ from lumen.shared.contract import KnowledgeRetrievalService, RetrievalResult
 
 
 class _KnowledgeRetrievalServiceAdapter(KnowledgeRetrievalService):
-    """Wraps ``deeptutor.services.rag.service.RAGService`` (thin conversion
+    """Wraps ``lumen.shared.knowledge.rag.service.RAGService`` (thin conversion
     from the service's dict result to the contract envelope)."""
 
     def __init__(self, rag_service: Any) -> None:
@@ -47,6 +47,6 @@ class KnowledgeRetrievalPlugin(Plugin):
     )
 
     async def setup(self, ctx: PluginContext) -> None:
-        from deeptutor.services.rag.service import RAGService
+        from lumen.shared.knowledge.rag.service import RAGService
 
         ctx.provide("knowledge.retrieval", _KnowledgeRetrievalServiceAdapter(RAGService()))

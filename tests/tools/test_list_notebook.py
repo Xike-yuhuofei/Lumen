@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from deeptutor.tools.list_notebook import (
+from lumen.runtime.tools.builtin.list_notebook import (
     MAX_NOTEBOOKS_RENDERED,
     MAX_RECORDS_RENDERED,
     list_notebooks_or_records,

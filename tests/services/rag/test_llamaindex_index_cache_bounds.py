@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from deeptutor.services.rag.pipelines.llamaindex import storage
+from lumen.shared.knowledge.rag.pipelines.llamaindex import storage
 
 
 @pytest.fixture(autouse=True)

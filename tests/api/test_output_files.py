@@ -9,21 +9,21 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 import pytest
 
-from deeptutor.services.auth import TokenPayload
-from deeptutor.services.path_service import PathService
+from lumen.shared._util.auth import TokenPayload
+from lumen.shared._util.path_service import PathService
 
 OutputAppFactory = Callable[[dict[str, TokenPayload | None], bool], tuple[TestClient, Path]]
 
 
 @pytest.fixture
 def output_app(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> OutputAppFactory:
-    from deeptutor.api.routers import auth as auth_router
-    from deeptutor.api.routers import outputs
-    import deeptutor.services.user as multi_user_paths
+    from lumen.app.api.routers import auth as auth_router
+    from lumen.app.api.routers import outputs
+    import lumen.shared._util.user as canon_user
 
     admin_root = tmp_path / "data"
-    monkeypatch.setattr(multi_user_paths, "ADMIN_WORKSPACE_ROOT", admin_root)
-    monkeypatch.setattr(multi_user_paths, "_path_services", {})
+    monkeypatch.setattr(canon_user, "ADMIN_WORKSPACE_ROOT", admin_root)
+    monkeypatch.setattr(canon_user, "_path_services", {})
 
     def make_app(
         tokens: dict[str, TokenPayload | None], auth_enabled: bool = True

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from deeptutor.services.path_service import PathService
+from lumen.shared._util.path_service import PathService
 
 
 def test_path_service_defaults_to_deeptutor_home(monkeypatch, tmp_path: Path) -> None:

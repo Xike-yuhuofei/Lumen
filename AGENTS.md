@@ -57,7 +57,7 @@ are intentionally ignored.
 | Runtime | `lumen/runtime/`                    | `runtime.*` contracts + providers (agent_loop, llm, tools, session, prompt) |
 | Shared  | `lumen/shared/`                     | knowledge / memory / notebook / rendering services |
 | Modes   | `lumen/modes/learn/`                | `mode.learn` — the only product mode              |
-| App     | `lumen/bootstrap.py`, `lumen/profile.py`, `deeptutor/app/facade.py` | Profile assembly + App facade |
+| App     | `lumen/bootstrap.py`, `lumen/profile.py`, `lumen/app/facade.py`, `lumen/app/api/` | Profile assembly + App facade + Web/API |
 
 `chat` is **not** a product mode: a generic agent turn is a Runtime
 concern routed straight into `runtime.agent_loop`. Legacy
@@ -118,19 +118,19 @@ deeptutor start                   # backend + frontend together
 | `lumen/shared/`                            | Shared service contracts + providers (knowledge / memory / notebook / rendering) |
 | `lumen/modes/learn/`                       | `mode.learn` — Learn mode plugin, teaching domain, learner state |
 | `lumen/compat.py`                          | `mastery_path` / `mastery` → `mode.learn` alias mapping |
-| `deeptutor/services/session/turn_runtime.py` | `TurnRuntimeManager` — turn orchestration (WS/CLI/Cron/SDK turns) |
-| `deeptutor/services/cron/executor.py`      | Cron job execution via `runtime.agent_loop` |
-| `deeptutor/agents/chat/`                   | Legacy Agent Loop Provider (`AgenticChatPipeline` — production agent loop) |
-| `deeptutor/runtime/launcher.py`            | Backend + frontend lifecycle / port discovery |
-| `deeptutor/runtime/registry/tool_registry.py` | Tool registry                      |
-| `deeptutor/services/config/runtime_settings.py` | JSON settings + process-env overrides |
-| `deeptutor/core/stream.py`, `stream_bus.py` | StreamEvent protocol + async fan-out |
-| `deeptutor/core/tool_protocol.py`          | `BaseTool` + `ToolDefinition`         |
-| `deeptutor/core/context.py`                | `UnifiedContext` dataclass            |
-| `deeptutor/tools/builtin/__init__.py`      | All built-in tool wrappers           |
-| `deeptutor/app/facade.py`                  | `DeepTutorApp` — Python SDK facade    |
+| `lumen/runtime/session/turn_runtime.py`   | `TurnRuntimeManager` — turn orchestration (WS/CLI/Cron/SDK turns) |
+| `lumen/app/cron/executor.py`              | Cron job execution via `runtime.agent_loop` |
+| `lumen/runtime/agent_loop/providers/legacy/` | Legacy Agent Loop Provider (`AgenticChatPipeline` — production agent loop) |
+| `lumen/app/launcher.py`                    | Backend + frontend lifecycle / port discovery |
+| `lumen/runtime/tools/registry.py`          | Tool registry                      |
+| `lumen/shared/config/runtime_settings.py`  | JSON settings + process-env overrides |
+| `lumen/runtime/stream/events.py`, `lumen/runtime/stream/bus.py` | StreamEvent protocol + async fan-out |
+| `lumen/runtime/tool_protocol.py`           | `BaseTool` + `ToolDefinition`         |
+| `lumen/runtime/context.py`                 | `UnifiedContext` dataclass            |
+| `lumen/runtime/tools/builtin/__init__.py`  | All built-in tool wrappers           |
+| `lumen/app/facade.py`                      | `DeepTutorApp` — Python SDK facade    |
 | `deeptutor_cli/main.py`                    | Typer CLI entry point                |
-| `deeptutor/api/routers/unified_ws.py`      | Unified WebSocket endpoint           |
+| `lumen/app/api/routers/unified_ws.py`      | Unified WebSocket endpoint           |
 
 ## Dependency Layers
 

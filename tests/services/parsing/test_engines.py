@@ -5,8 +5,8 @@ import zipfile
 
 import pytest
 
-from deeptutor.services.parsing.engines import factory
-from deeptutor.services.parsing.types import ParserError
+from lumen.shared.knowledge.parsing.engines import factory
+from lumen.shared.knowledge.parsing.types import ParserError
 
 
 def test_known_engines() -> None:
@@ -71,7 +71,7 @@ def test_text_only_parser_extracts_docx_text(tmp_path) -> None:
 
 def test_mineru_signature_distinguishes_local_and_cloud() -> None:
     parser = factory.get_parser("mineru")
-    from deeptutor.services.parsing.engines.mineru.config import MinerUConfig
+    from lumen.shared.knowledge.parsing.engines.mineru.config import MinerUConfig
 
     local = parser.signature(MinerUConfig(mode="local")).hash()
     cloud = parser.signature(MinerUConfig(mode="cloud")).hash()
@@ -79,17 +79,17 @@ def test_mineru_signature_distinguishes_local_and_cloud() -> None:
 
 
 def test_mineru_cloud_readiness_needs_token() -> None:
-    from deeptutor.services.parsing.engines.mineru.config import MinerUConfig
-    from deeptutor.services.parsing.engines.mineru.readiness import mineru_readiness
+    from lumen.shared.knowledge.parsing.engines.mineru.config import MinerUConfig
+    from lumen.shared.knowledge.parsing.engines.mineru.readiness import mineru_readiness
 
     assert mineru_readiness(MinerUConfig(mode="cloud", api_token="")).reason == "not_configured"
     assert mineru_readiness(MinerUConfig(mode="cloud", api_token="tok")).ready is True
 
 
 def test_mineru_local_model_download_gate(monkeypatch: pytest.MonkeyPatch) -> None:
-    from deeptutor.services.parsing.engines.mineru import backend
-    from deeptutor.services.parsing.engines.mineru import readiness as rd
-    from deeptutor.services.parsing.engines.mineru.config import MinerUConfig
+    from lumen.shared.knowledge.parsing.engines.mineru import backend
+    from lumen.shared.knowledge.parsing.engines.mineru import readiness as rd
+    from lumen.shared.knowledge.parsing.engines.mineru.config import MinerUConfig
 
     monkeypatch.setattr(
         backend,
@@ -119,7 +119,7 @@ def test_mineru_local_model_download_gate(monkeypatch: pytest.MonkeyPatch) -> No
 
 def test_pymupdf4llm_signature_tracks_image_knobs() -> None:
     parser = factory.get_parser("pymupdf4llm")
-    from deeptutor.services.parsing.engines.pymupdf4llm.config import PyMuPDF4LLMConfig
+    from lumen.shared.knowledge.parsing.engines.pymupdf4llm.config import PyMuPDF4LLMConfig
 
     base = parser.signature(
         PyMuPDF4LLMConfig(write_images=True, image_format="png", image_dpi=150)
@@ -148,7 +148,7 @@ def test_pymupdf4llm_readiness_reflects_install() -> None:
 def test_pymupdf4llm_parses_pdf_and_extracts_images(tmp_path) -> None:
     pymupdf = pytest.importorskip("pymupdf")
     pytest.importorskip("pymupdf4llm")
-    from deeptutor.services.parsing.engines.pymupdf4llm.config import PyMuPDF4LLMConfig
+    from lumen.shared.knowledge.parsing.engines.pymupdf4llm.config import PyMuPDF4LLMConfig
 
     pdf = tmp_path / "doc.pdf"
     doc = pymupdf.open()
@@ -183,7 +183,7 @@ def test_pymupdf4llm_parses_pdf_and_extracts_images(tmp_path) -> None:
 def test_pymupdf4llm_no_images_leaves_no_asset_dir(tmp_path) -> None:
     pymupdf = pytest.importorskip("pymupdf")
     pytest.importorskip("pymupdf4llm")
-    from deeptutor.services.parsing.engines.pymupdf4llm.config import PyMuPDF4LLMConfig
+    from lumen.shared.knowledge.parsing.engines.pymupdf4llm.config import PyMuPDF4LLMConfig
 
     pdf = tmp_path / "text.pdf"
     doc = pymupdf.open()
@@ -204,7 +204,7 @@ def test_pymupdf4llm_no_images_leaves_no_asset_dir(tmp_path) -> None:
 
 def test_liteparse_signature_tracks_knobs() -> None:
     parser = factory.get_parser("liteparse")
-    from deeptutor.services.parsing.engines.liteparse.config import LiteParseConfig
+    from lumen.shared.knowledge.parsing.engines.liteparse.config import LiteParseConfig
 
     base = parser.signature(LiteParseConfig()).hash()
     with_images = parser.signature(LiteParseConfig(extract_images=True)).hash()
@@ -226,7 +226,7 @@ def test_liteparse_readiness_reflects_install() -> None:
 
 
 def test_liteparse_config_rejects_unknown_image_mode_and_coerces_strings() -> None:
-    from deeptutor.services.config.runtime_settings import RuntimeSettingsService
+    from lumen.shared.config.runtime_settings import RuntimeSettingsService
 
     normalized = RuntimeSettingsService._normalize_liteparse_engine(
         None,  # type: ignore[arg-type] - pure function of its argument
@@ -284,7 +284,7 @@ def _install_fake_liteparse(monkeypatch, *, image_names: tuple[str, ...] = ()) -
 
 def test_liteparse_pins_markdown_output_and_images_dir(tmp_path, monkeypatch) -> None:
     """The workdir contract, not the library's defaults, decides these two."""
-    from deeptutor.services.parsing.engines.liteparse.config import LiteParseConfig
+    from lumen.shared.knowledge.parsing.engines.liteparse.config import LiteParseConfig
 
     seen = _install_fake_liteparse(monkeypatch, image_names=("img_p1_1.png",))
     workdir = tmp_path / "work"
@@ -311,7 +311,7 @@ def test_liteparse_pins_markdown_output_and_images_dir(tmp_path, monkeypatch) ->
 
 
 def test_liteparse_without_images_leaves_no_asset_dir(tmp_path, monkeypatch) -> None:
-    from deeptutor.services.parsing.engines.liteparse.config import LiteParseConfig
+    from lumen.shared.knowledge.parsing.engines.liteparse.config import LiteParseConfig
 
     seen = _install_fake_liteparse(monkeypatch)
     workdir = tmp_path / "work"
@@ -332,7 +332,7 @@ def test_liteparse_without_images_leaves_no_asset_dir(tmp_path, monkeypatch) -> 
 
 def test_liteparse_leaves_foreign_image_links_alone(tmp_path, monkeypatch) -> None:
     """Only names LiteParse reports as extracted get the images/ prefix."""
-    from deeptutor.services.parsing.engines.liteparse.engine import LiteParseParser
+    from lumen.shared.knowledge.parsing.engines.liteparse.engine import LiteParseParser
 
     rewritten = LiteParseParser._portable_image_links(
         "![a](img_p1_1.png) ![b](https://example.com/logo.png)",
@@ -343,7 +343,7 @@ def test_liteparse_leaves_foreign_image_links_alone(tmp_path, monkeypatch) -> No
 
 
 def test_install_manager_spec_allowlist() -> None:
-    from deeptutor.services.parsing.engines._install import (
+    from lumen.shared.knowledge.parsing.engines._install import (
         ENGINE_PIP_SPECS,
         installable_engines,
     )
@@ -357,7 +357,7 @@ def test_install_manager_spec_allowlist() -> None:
 
 
 def test_model_download_allowlist() -> None:
-    from deeptutor.services.parsing.engines._install import (
+    from lumen.shared.knowledge.parsing.engines._install import (
         ENGINE_MODEL_DOWNLOADERS,
         model_downloadable_engines,
     )
@@ -370,14 +370,14 @@ def test_model_download_allowlist() -> None:
 
 
 def test_resolve_model_downloader_unknown_engine() -> None:
-    from deeptutor.services.parsing.engines._install import resolve_model_downloader
+    from lumen.shared.knowledge.parsing.engines._install import resolve_model_downloader
 
     assert resolve_model_downloader("pymupdf4llm") is None
     assert resolve_model_downloader("nope") is None
 
 
 def test_background_job_manager_idle_status() -> None:
-    from deeptutor.services.parsing.engines._install import get_background_job_manager
+    from lumen.shared.knowledge.parsing.engines._install import get_background_job_manager
 
     status = get_background_job_manager().status(0)
     assert status["state"] in {"idle", "running", "done", "failed", "cancelled"}
@@ -387,7 +387,7 @@ def test_background_job_manager_idle_status() -> None:
 
 
 def test_docling_models_dir_honors_cache_env(monkeypatch, tmp_path) -> None:
-    from deeptutor.services.parsing.engines.docling import engine as docling_engine
+    from lumen.shared.knowledge.parsing.engines.docling import engine as docling_engine
 
     monkeypatch.setenv("DOCLING_CACHE_DIR", str(tmp_path))
     assert docling_engine.docling_models_dir() == tmp_path / "models"

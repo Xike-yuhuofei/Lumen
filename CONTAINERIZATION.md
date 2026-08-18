@@ -42,7 +42,7 @@ no longer lives in the frontend bundle. Concretely:
   container entrypoint on every start, read from
   `data/user/settings/system.json`.
 - `start-frontend.sh` serves the Vite `dist` with
-  `deeptutor.runtime.spa_server`. No mutations of the bundle.
+  `lumen.app.spa_server`. No mutations of the bundle.
 - `supervisord` runs as root (PID 1) and drops each program (backend,
   frontend) to a non-root `deeptutor` user (UID 1000) via its per-program
   `user=` directive, so the app processes stay non-root. With

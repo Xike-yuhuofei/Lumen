@@ -10,8 +10,8 @@ from unittest.mock import AsyncMock, patch
 import pytest
 import yaml
 
-from deeptutor.services.config import loader as loader_module
-from deeptutor.services.config.loader import get_agent_params
+from lumen.shared.config import loader as loader_module
+from lumen.shared.config.loader import get_agent_params
 
 # ---------------------------------------------------------------------------
 # get_agent_params("llm_probe") — reads diagnostics.llm_probe from agents.yaml
@@ -101,9 +101,9 @@ class TestLlmProbeUsesAgentsYaml:
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("_patch_project_root")
     async def test_probe_passes_configured_max_tokens(self, monkeypatch):
-        from deeptutor.services import llm as llm_module
-        from deeptutor.services.config import test_runner as test_runner_module
-        from deeptutor.services.config.test_runner import ConfigTestRunner, TestRun
+        from lumen.shared._util import llm as llm_module
+        from lumen.shared.config import test_runner as test_runner_module
+        from lumen.shared.config.test_runner import ConfigTestRunner, TestRun
 
         captured_kwargs: dict[str, Any] = {}
 
@@ -144,9 +144,9 @@ class TestLlmProbeUsesAgentsYaml:
         project_root = _write_agents_yaml(tmp_path, {"capabilities": {}})
         monkeypatch.setattr(loader_module, "PROJECT_ROOT", project_root)
 
-        from deeptutor.services import llm as llm_module
-        from deeptutor.services.config import test_runner as test_runner_module
-        from deeptutor.services.config.test_runner import ConfigTestRunner, TestRun
+        from lumen.shared._util import llm as llm_module
+        from lumen.shared.config import test_runner as test_runner_module
+        from lumen.shared.config.test_runner import ConfigTestRunner, TestRun
 
         captured_kwargs: dict[str, Any] = {}
 
@@ -179,9 +179,9 @@ class TestLlmProbeUsesAgentsYaml:
 
     @pytest.mark.asyncio
     async def test_probe_passes_runtime_api_version_and_reasoning_effort(self, monkeypatch):
-        from deeptutor.services import llm as llm_module
-        from deeptutor.services.config import test_runner as test_runner_module
-        from deeptutor.services.config.test_runner import ConfigTestRunner, TestRun
+        from lumen.shared._util import llm as llm_module
+        from lumen.shared.config import test_runner as test_runner_module
+        from lumen.shared.config.test_runner import ConfigTestRunner, TestRun
 
         captured_kwargs: dict[str, Any] = {}
 
@@ -217,10 +217,10 @@ class TestLlmProbeUsesAgentsYaml:
     async def test_probe_reports_detected_context_window_without_persisting_catalog(
         self, tmp_path, monkeypatch
     ):
-        from deeptutor.services import llm as llm_module
-        from deeptutor.services.config import test_runner as test_runner_module
-        from deeptutor.services.config.model_catalog import ModelCatalogService
-        from deeptutor.services.config.test_runner import ConfigTestRunner, TestRun
+        from lumen.shared._util import llm as llm_module
+        from lumen.shared.config import test_runner as test_runner_module
+        from lumen.shared.config.model_catalog import ModelCatalogService
+        from lumen.shared.config.test_runner import ConfigTestRunner, TestRun
 
         catalog = {
             "version": 1,
@@ -303,7 +303,7 @@ class TestLlmProbeUsesAgentsYaml:
 
 def _stub_resolved_llm(**overrides: Any):
     """Return a minimal resolved LLM config stub."""
-    from deeptutor.services.config.provider_runtime import ResolvedLLMConfig
+    from lumen.shared.config.provider_runtime import ResolvedLLMConfig
 
     values = {
         "model": "gpt-4o-mini",
@@ -325,7 +325,7 @@ def _stub_resolved_llm(**overrides: Any):
 
 def _real_get_token_limit_kwargs(model: str, max_tokens: int) -> dict[str, int]:
     """Inline reimplementation to avoid importing the full LLM stack in tests."""
-    from deeptutor.services.llm.config import uses_max_completion_tokens
+    from lumen.shared._util.llm.config import uses_max_completion_tokens
 
     if uses_max_completion_tokens(model):
         return {"max_completion_tokens": max_tokens}
@@ -333,7 +333,7 @@ def _real_get_token_limit_kwargs(model: str, max_tokens: int) -> dict[str, int]:
 
 
 async def _stub_context_window_detection(*_args, **_kwargs):
-    from deeptutor.services.config.context_window_detection import (
+    from lumen.shared.config.context_window_detection import (
         ContextWindowDetectionResult,
     )
 
@@ -346,7 +346,7 @@ async def _stub_context_window_detection(*_args, **_kwargs):
 
 
 async def _stub_metadata_context_window_detection(*_args, **_kwargs):
-    from deeptutor.services.config.context_window_detection import (
+    from lumen.shared.config.context_window_detection import (
         ContextWindowDetectionResult,
     )
 

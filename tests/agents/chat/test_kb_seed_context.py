@@ -18,11 +18,11 @@ from typing import Any
 
 import pytest
 
-from deeptutor.agents.chat.agentic_pipeline import AgenticChatPipeline
-from deeptutor.core.context import UnifiedContext
-from deeptutor.core.stream import StreamEvent, StreamEventType
-from deeptutor.core.stream_bus import StreamBus
-from deeptutor.core.tool_protocol import ToolResult
+from lumen.runtime.agent_loop.providers.legacy.agentic_pipeline import AgenticChatPipeline
+from lumen.runtime.context import UnifiedContext
+from lumen.runtime.stream.bus import StreamBus
+from lumen.runtime.stream.events import StreamEvent, StreamEventType
+from lumen.runtime.tool_protocol import ToolResult
 
 
 async def _collect_bus_events(bus: StreamBus) -> tuple[list[StreamEvent], asyncio.Task[Any]]:
@@ -125,7 +125,7 @@ def _make_pipeline(
     client: _ScriptedChatClient,
 ) -> AgenticChatPipeline:
     monkeypatch.setattr(
-        "deeptutor.agents.chat.agentic_pipeline.get_llm_config",
+        "lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.get_llm_config",
         lambda: SimpleNamespace(
             binding="openai", model="gpt-test", api_key="k", base_url="u", api_version=None
         ),
@@ -290,7 +290,7 @@ async def test_run_skips_seed_result_that_needs_reindex(
 
 @pytest.mark.asyncio
 async def test_run_clips_oversized_seed_passages(monkeypatch: pytest.MonkeyPatch) -> None:
-    from deeptutor.agents.chat.agentic_pipeline import KB_SEED_CHARS_PER_KB
+    from lumen.runtime.agent_loop.providers.legacy.agentic_pipeline import KB_SEED_CHARS_PER_KB
 
     registry = _SeedRegistry(metadata={"content": "x" * (KB_SEED_CHARS_PER_KB + 500)})
     client = _ScriptedChatClient([[_llm_chunk(content="Done.")]])

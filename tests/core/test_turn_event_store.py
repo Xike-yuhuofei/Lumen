@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from deeptutor.services.session.sqlite_store import SQLiteSessionStore
+from lumen.runtime.session.sqlite_store import SQLiteSessionStore
 
 
 @pytest.mark.asyncio

@@ -9,17 +9,17 @@ from typing import Any
 
 import pytest
 
-from deeptutor.core.tool_protocol import BaseTool, ToolDefinition, ToolParameter, ToolResult
-from deeptutor.runtime.registry.tool_registry import ToolRegistry
-from deeptutor.services.path_service import PathService
-from deeptutor.services.sandbox.spec import ExecResult
-from deeptutor.tools.builtin import (
+from lumen.runtime.tool_protocol import BaseTool, ToolDefinition, ToolParameter, ToolResult
+from lumen.runtime.tools.builtin import (
     BrainstormTool,
     CodeExecutionTool,
     RAGTool,
     ReasonTool,
     WebSearchTool,
 )
+from lumen.runtime.tools.registry import ToolRegistry
+from lumen.shared._util.path_service import PathService
+from lumen.shared.sandbox.spec import ExecResult
 
 
 def _install_module(
@@ -59,7 +59,9 @@ async def test_brainstorm_tool_passes_llm_arguments(monkeypatch: pytest.MonkeyPa
         captured.update(kwargs)
         return {"answer": "## 1. Test idea\n- Rationale: worth exploring"}
 
-    _install_module(monkeypatch, "deeptutor.tools.brainstorm", brainstorm=fake_brainstorm)
+    _install_module(
+        monkeypatch, "lumen.runtime.tools.builtin.brainstorm", brainstorm=fake_brainstorm
+    )
 
     result = await BrainstormTool().execute(
         topic="agent-native tutoring",
@@ -81,7 +83,7 @@ async def test_rag_tool_forwards_query_and_extra_kwargs(monkeypatch: pytest.Monk
         captured.update(kwargs)
         return {"answer": "grounded answer", "provider": "fake"}
 
-    _install_module(monkeypatch, "deeptutor.tools.rag_tool", rag_search=fake_rag_search)
+    _install_module(monkeypatch, "lumen.runtime.tools.builtin.rag_tool", rag_search=fake_rag_search)
 
     result = await RAGTool().execute(
         query="what is a tensor",
@@ -111,7 +113,7 @@ async def test_rag_tool_cites_retrieved_sources(monkeypatch: pytest.MonkeyPatch)
             ],
         }
 
-    _install_module(monkeypatch, "deeptutor.tools.rag_tool", rag_search=fake_rag_search)
+    _install_module(monkeypatch, "lumen.runtime.tools.builtin.rag_tool", rag_search=fake_rag_search)
 
     result = await RAGTool().execute(query="what is a tensor", kb_name="demo-kb")
 
@@ -127,7 +129,7 @@ async def test_rag_tool_falls_back_to_query_echo(monkeypatch: pytest.MonkeyPatch
     async def fake_rag_search(**_kwargs: Any) -> dict[str, Any]:
         return {"answer": "grounded answer", "sources": []}
 
-    _install_module(monkeypatch, "deeptutor.tools.rag_tool", rag_search=fake_rag_search)
+    _install_module(monkeypatch, "lumen.runtime.tools.builtin.rag_tool", rag_search=fake_rag_search)
 
     result = await RAGTool().execute(query="what is a tensor", kb_name="demo-kb")
 
@@ -143,7 +145,7 @@ async def test_rag_tool_rejects_empty_query(monkeypatch: pytest.MonkeyPatch) -> 
         called = True
         return {"answer": "should not run"}
 
-    _install_module(monkeypatch, "deeptutor.tools.rag_tool", rag_search=fake_rag_search)
+    _install_module(monkeypatch, "lumen.runtime.tools.builtin.rag_tool", rag_search=fake_rag_search)
 
     with pytest.raises(ValueError, match="RAG query must be a non-empty string"):
         await RAGTool().execute(query="  ", kb_name="demo-kb")
@@ -162,7 +164,9 @@ async def test_web_search_tool_wraps_sync_function(monkeypatch: pytest.MonkeyPat
             "citations": [{"url": "https://example.com", "title": "Example"}],
         }
 
-    _install_module(monkeypatch, "deeptutor.tools.web_search", web_search=fake_web_search)
+    _install_module(
+        monkeypatch, "lumen.runtime.tools.builtin.web_search", web_search=fake_web_search
+    )
 
     result = await WebSearchTool().execute(query="latest benchmark", output_dir="/tmp/out")
 
@@ -193,10 +197,10 @@ async def test_code_execution_tool_runs_python_via_sandbox(
             (run_dir / "result.txt").write_text("ok", encoding="utf-8")
             return ExecResult(stdout="4\n", exit_code=0)
 
-    import deeptutor.services.sandbox as sandbox_pkg
-    import deeptutor.services.sandbox.artifacts as sandbox_artifacts
+    import lumen.shared._util.sandbox as sandbox_shim
+    import lumen.shared.sandbox.artifacts as sandbox_artifacts
 
-    monkeypatch.setattr(sandbox_pkg, "get_sandbox_service", lambda: FakeSandboxService())
+    monkeypatch.setattr(sandbox_shim, "get_sandbox_service", lambda: FakeSandboxService())
     monkeypatch.setattr(sandbox_artifacts, "get_path_service", lambda: path_service)
 
     result = await CodeExecutionTool().execute(
@@ -232,10 +236,10 @@ async def test_code_execution_tool_compiles_cpp(tmp_path, monkeypatch: pytest.Mo
             assert (run_dir / "main.cpp").exists()
             return ExecResult(stdout="hi\n", exit_code=0)
 
-    import deeptutor.services.sandbox as sandbox_pkg
-    import deeptutor.services.sandbox.artifacts as sandbox_artifacts
+    import lumen.shared._util.sandbox as sandbox_shim
+    import lumen.shared.sandbox.artifacts as sandbox_artifacts
 
-    monkeypatch.setattr(sandbox_pkg, "get_sandbox_service", lambda: FakeSandboxService())
+    monkeypatch.setattr(sandbox_shim, "get_sandbox_service", lambda: FakeSandboxService())
     monkeypatch.setattr(sandbox_artifacts, "get_path_service", lambda: path_service)
 
     result = await CodeExecutionTool().execute(
@@ -265,7 +269,7 @@ async def test_reason_tool_passes_llm_arguments(monkeypatch: pytest.MonkeyPatch)
         captured.update(kwargs)
         return {"answer": "reasoned"}
 
-    _install_module(monkeypatch, "deeptutor.tools.reason", reason=fake_reason)
+    _install_module(monkeypatch, "lumen.runtime.tools.builtin.reason", reason=fake_reason)
 
     result = await ReasonTool().execute(
         query="derive the formula",

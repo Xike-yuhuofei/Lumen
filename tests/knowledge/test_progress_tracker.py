@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import json
 
-from deeptutor.knowledge.manager import KnowledgeBaseManager
-from deeptutor.knowledge.progress_tracker import ProgressStage, ProgressTracker
+from lumen.shared.knowledge.manager import KnowledgeBaseManager
+from lumen.shared.knowledge.progress_tracker import ProgressStage, ProgressTracker
 
 
 def test_progress_tracker_persists_snapshot_and_config(tmp_path) -> None:

@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import pytest
 
-from deeptutor.services.search import _assert_provider_supported
-from deeptutor.services.search.providers import (
+from lumen.shared._util.search import _assert_provider_supported
+from lumen.shared._util.search.providers import (
     _DEPRECATED_UNSUPPORTED,
     get_provider,
     get_providers_info,
     list_providers,
 )
-from deeptutor.services.search.types import Citation, SearchResult, WebSearchResponse
+from lumen.shared._util.search.types import Citation, SearchResult, WebSearchResponse
 
 # ---------------------------------------------------------------------------
 # Type dataclasses

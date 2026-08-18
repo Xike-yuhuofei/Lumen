@@ -16,7 +16,7 @@ from typing import Any
 from rich.console import Console
 import typer
 
-from deeptutor.runtime.home import DEEPTUTOR_HOME_ENV, get_runtime_home
+from lumen.shared._util.runtime_home import DEEPTUTOR_HOME_ENV, get_runtime_home
 
 from . import init_wizard as wiz
 
@@ -29,19 +29,19 @@ def _reset_runtime_singletons() -> None:
     write to the wrong place if not cleared.
     """
     try:
-        from deeptutor.services.path_service import PathService
+        from lumen.shared._util.path_service import PathService
 
         PathService.reset_instance()
     except Exception:
         pass
     try:
-        from deeptutor.services.config.runtime_settings import RuntimeSettingsService
+        from lumen.shared.config.runtime_settings import RuntimeSettingsService
 
         RuntimeSettingsService._instances.clear()
     except Exception:
         pass
     try:
-        from deeptutor.services.config.model_catalog import ModelCatalogService
+        from lumen.shared.config.model_catalog import ModelCatalogService
 
         ModelCatalogService._instances.clear()
     except Exception:
@@ -212,12 +212,12 @@ def _embedding_step(
 ) -> wiz.EmbeddingChoice | None:
     """Returns ``None`` when the user picks ``[s] Skip``."""
 
-    from deeptutor.services.config.embedding_endpoint import (
+    from lumen.shared.config.embedding_endpoint import (
         EMBEDDING_PROVIDER_LABELS,
         normalize_embedding_endpoint_for_display,
         redact_embedding_endpoint_for_display,
     )
-    from deeptutor.services.config.provider_runtime import EMBEDDING_PROVIDERS
+    from lumen.shared.config.provider_runtime import EMBEDDING_PROVIDERS
 
     current_profile = (catalog.get("services", {}).get("embedding", {}).get("profiles") or [{}])[
         0
@@ -417,9 +417,9 @@ def run_init(*, cli_only: bool = False, home: str | Path | None = None) -> None:
     os.environ[DEEPTUTOR_HOME_ENV] = str(runtime_home)
     _reset_runtime_singletons()
 
-    from deeptutor.runtime.banner import labels_for, print_banner, resolve_language
-    from deeptutor.services.config import get_model_catalog_service, get_runtime_settings_service
-    from deeptutor.services.setup import init_user_directories
+    from lumen.app.banner import labels_for, print_banner, resolve_language
+    from lumen.app.setup import init_user_directories
+    from lumen.shared.config import get_model_catalog_service, get_runtime_settings_service
 
     init_user_directories(runtime_home)
 

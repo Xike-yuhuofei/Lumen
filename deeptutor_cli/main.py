@@ -6,9 +6,9 @@ from pathlib import Path
 
 import typer
 
-from deeptutor.brand import PRODUCT_NAME
-from deeptutor.logging import configure_logging
-from deeptutor.runtime.mode import RunMode, set_mode
+from lumen.app.mode import RunMode, set_mode
+from lumen.shared._util.brand import PRODUCT_NAME
+from lumen.shared._util.logging import configure_logging
 
 from .chat import register as register_chat
 from .common import build_turn_request, console, maybe_run
@@ -62,7 +62,7 @@ def run_capability(
     fmt: str = typer.Option("rich", "--format", "-f", help="Output format: rich | json."),
 ) -> None:
     """Run any capability in a single turn (agent-first entry point)."""
-    from deeptutor.app import DeepTutorApp
+    from lumen.app.facade import DeepTutorApp
 
     from .common import run_turn_and_render
 
@@ -91,7 +91,7 @@ def start(
     ),
 ) -> None:
     """Launch backend + frontend together. Source installs default to production."""
-    from deeptutor.runtime.launcher import start as start_web
+    from lumen.app.launcher import start as start_web
 
     start_web(home=home, dev=dev)
 
@@ -108,7 +108,7 @@ def serve(
 
     set_mode(RunMode.SERVER)
     if port is None:
-        from deeptutor.services.setup import get_backend_port
+        from lumen.app.setup import get_backend_port
 
         port = get_backend_port()
 
@@ -127,12 +127,12 @@ def serve(
         )
         raise typer.Exit(code=1)
 
-    from deeptutor.services.config import HTTP_KEEP_ALIVE_TIMEOUT, get_ws_max_size
+    from lumen.shared.config import HTTP_KEEP_ALIVE_TIMEOUT, get_ws_max_size
 
     # ws_max_size tracks the configured chat-attachment total so base64
     # uploads fit in one WS frame (uvicorn defaults to 16MB).
     uvicorn.run(
-        "deeptutor.api.main:app",
+        "lumen.app.api.main:app",
         host=host,
         port=port,
         reload=reload,

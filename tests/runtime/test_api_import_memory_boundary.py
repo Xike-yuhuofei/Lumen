@@ -12,7 +12,7 @@ def test_api_import_keeps_optional_heavy_dependencies_cold() -> None:
 import json
 import sys
 
-import deeptutor.api.main  # noqa: F401
+import lumen.app.api.main  # noqa: F401
 
 heavy_roots = {
     "anthropic",

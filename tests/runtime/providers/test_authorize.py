@@ -9,9 +9,9 @@ an exclusive knowledge capability must suppress everything it does not own.
 
 from __future__ import annotations
 
-from deeptutor.runtime.providers.allowlist import Allowlist
-from deeptutor.runtime.providers.authorize import authorize_mcp_tools
-from deeptutor.runtime.providers.scope import ToolScope
+from lumen.runtime.tools.providers.allowlist import Allowlist
+from lumen.runtime.tools.providers.authorize import authorize_mcp_tools
+from lumen.runtime.tools.providers.scope import ToolScope
 
 ADMIN_GRANT = Allowlist.unrestricted()
 GRANTED = Allowlist.of(["mcp_gh_search"])

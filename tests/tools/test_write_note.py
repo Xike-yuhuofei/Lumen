@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from deeptutor.tools.write_note import (
+from lumen.runtime.tools.builtin.write_note import (
     ALL_TURNS_SENTINEL,
     DEFAULT_TURNS_TO_INCLUDE,
     MAX_NOTE_CHARS,

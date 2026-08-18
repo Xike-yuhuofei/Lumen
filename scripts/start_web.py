@@ -11,7 +11,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from deeptutor.runtime.launcher import start  # noqa: E402
+from lumen.app.launcher import start  # noqa: E402
 
 
 def build_parser() -> argparse.ArgumentParser:

@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from deeptutor.services.config.provider_runtime import ResolvedSearchConfig
-from deeptutor.services.search import web_search
-from deeptutor.services.search.types import WebSearchResponse
+from lumen.shared._util.search import web_search
+from lumen.shared._util.search.types import WebSearchResponse
+from lumen.shared.config.provider_runtime import ResolvedSearchConfig
 
 
 class _FakeProvider:
@@ -32,19 +32,19 @@ class _FailingProvider(_FakeProvider):
 def _patch_runtime(monkeypatch, resolved: ResolvedSearchConfig, **kwargs) -> None:
     """Pin the resolved config and keep the fallback chain off the real catalog."""
     monkeypatch.setattr(
-        "deeptutor.services.search._get_web_search_config",
+        "lumen.shared._util.search._get_web_search_config",
         lambda: {"enabled": True},
     )
     monkeypatch.setattr(
-        "deeptutor.services.search.resolve_search_runtime_config",
+        "lumen.shared._util.search.resolve_search_runtime_config",
         lambda: resolved,
     )
     monkeypatch.setattr(
-        "deeptutor.services.search.search_fallback_candidates",
+        "lumen.shared._util.search.search_fallback_candidates",
         lambda _provider: list(kwargs.get("candidates", [])),
     )
     monkeypatch.setattr(
-        "deeptutor.services.search.search_provider_credentials",
+        "lumen.shared._util.search.search_provider_credentials",
         lambda provider: kwargs.get("credentials", {}).get(provider, ("", "")),
     )
 
@@ -97,7 +97,7 @@ def test_web_search_missing_key_falls_back_to_duckduckgo(monkeypatch) -> None:
             proxy="http://127.0.0.1:7890",
         ),
     )
-    monkeypatch.setattr("deeptutor.services.search.get_provider", _fake_get_provider)
+    monkeypatch.setattr("lumen.shared._util.search.get_provider", _fake_get_provider)
     result = web_search("hello")
     assert captured["provider"] == "duckduckgo"
     assert result["provider"] == "duckduckgo"
@@ -123,7 +123,7 @@ def test_web_search_searxng_uses_base_url(monkeypatch) -> None:
             max_results=4,
         ),
     )
-    monkeypatch.setattr("deeptutor.services.search.get_provider", _fake_get_provider)
+    monkeypatch.setattr("lumen.shared._util.search.get_provider", _fake_get_provider)
     result = web_search("hello")
     assert captured["provider"] == "searxng"
     assert captured["kwargs"]["base_url"] == "https://searx.example.com"
@@ -149,7 +149,7 @@ def test_web_search_runtime_failure_falls_through_the_chain(monkeypatch) -> None
         candidates=["tavily", "duckduckgo"],
         credentials={"tavily": ("tavily-key", "")},
     )
-    monkeypatch.setattr("deeptutor.services.search.get_provider", _fake_get_provider)
+    monkeypatch.setattr("lumen.shared._util.search.get_provider", _fake_get_provider)
     result = web_search("hello")
 
     assert [name for name, _ in seen] == ["serper", "tavily"]
@@ -175,7 +175,7 @@ def test_web_search_raises_when_every_candidate_fails(monkeypatch) -> None:
         candidates=["duckduckgo"],
     )
     monkeypatch.setattr(
-        "deeptutor.services.search.get_provider",
+        "lumen.shared._util.search.get_provider",
         lambda name, **kwargs: _FailingProvider(name),
     )
     with pytest.raises(Exception, match="brave: 202 Ratelimit; duckduckgo: 202 Ratelimit"):
@@ -200,7 +200,7 @@ def test_web_search_explicit_provider_uses_its_own_key(monkeypatch) -> None:
         ),
         credentials={"tavily": ("tavily-key", "")},
     )
-    monkeypatch.setattr("deeptutor.services.search.get_provider", _fake_get_provider)
+    monkeypatch.setattr("lumen.shared._util.search.get_provider", _fake_get_provider)
     web_search("hello", provider="tavily")
     assert captured["provider"] == "tavily"
     assert captured["kwargs"]["api_key"] == "tavily-key"

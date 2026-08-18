@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from deeptutor.knowledge.manager import KnowledgeBaseManager
+from lumen.shared.knowledge.manager import KnowledgeBaseManager
 
 ACTIVE_SIGNATURE = "active-signature"
 
@@ -50,8 +50,8 @@ def _create_ready_version(
 def _patch_active_embedding(
     monkeypatch: pytest.MonkeyPatch, sig_hash: str = ACTIVE_SIGNATURE
 ) -> None:
-    from deeptutor.knowledge import manager as manager_module
-    from deeptutor.services.rag import embedding_signature
+    from lumen.shared.knowledge import manager as manager_module
+    from lumen.shared.knowledge.rag import embedding_signature
 
     monkeypatch.setattr(
         manager_module, "_get_embedding_fingerprint", lambda: ("embed-active", 4096)

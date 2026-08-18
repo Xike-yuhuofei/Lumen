@@ -1,4 +1,4 @@
-"""Runtime adapter plugin — bridge existing ``deeptutor`` LLM client
+"""Runtime adapter plugin — bridge existing ``lumen.shared._util.llm``
 facades into the Plugin Kernel via :class:`LLMService`."""
 
 from __future__ import annotations
@@ -10,12 +10,12 @@ from lumen.runtime.llm.contract import LLMService
 
 
 class _LLMServiceAdapter(LLMService):
-    """Wraps ``deeptutor.core.agentic.client.build_openai_client`` for the
-    OpenAI-compatible client handle, and ``deeptutor.services.llm.factory``
+    """Wraps ``lumen.runtime.agent_loop.engine.client.build_openai_client`` for
+    the OpenAI-compatible client handle, and ``lumen.shared._util.llm.factory``
     for plain completion."""
 
     def build_openai_client(self, config: Any) -> Any:
-        from deeptutor.core.agentic.client import build_openai_client
+        from lumen.runtime.agent_loop.engine.client import build_openai_client
 
         return build_openai_client(config)
 
@@ -25,7 +25,7 @@ class _LLMServiceAdapter(LLMService):
         model: str | None = None,
         **kwargs: Any,
     ) -> str:
-        from deeptutor.services.llm import factory as llm_factory
+        from lumen.shared._util.llm import factory as llm_factory
 
         prompt = messages[-1]["content"] if messages else ""
         return await llm_factory.complete(

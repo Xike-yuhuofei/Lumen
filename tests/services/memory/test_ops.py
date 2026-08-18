@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from deeptutor.services.memory.document import Document, Entry, parse
-from deeptutor.services.memory.ops import AddOp, ApplyReport, DeleteOp, EditOp, apply
+from lumen.shared.memory.document import Document, Entry, parse
+from lumen.shared.memory.ops import AddOp, ApplyReport, DeleteOp, EditOp, apply
 
 _BASE_MD = """\
 # Chat memory

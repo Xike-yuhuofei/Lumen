@@ -18,9 +18,9 @@ from typing import Any
 
 import pytest
 
-from deeptutor.agents.chat.agentic_pipeline import AgenticChatPipeline
-from deeptutor.core.context import UnifiedContext
-from deeptutor.knowledge.manifest import KbDocument, KbManifest
+from lumen.runtime.agent_loop.providers.legacy.agentic_pipeline import AgenticChatPipeline
+from lumen.runtime.context import UnifiedContext
+from lumen.shared.knowledge.manifest import KbDocument, KbManifest
 
 
 def _manifest(name: str, *documents: str, total: int | None = None) -> KbManifest:
@@ -37,7 +37,7 @@ def _manifest(name: str, *documents: str, total: int | None = None) -> KbManifes
 
 def _pipeline(monkeypatch: pytest.MonkeyPatch, *, language: str = "en") -> AgenticChatPipeline:
     monkeypatch.setattr(
-        "deeptutor.agents.chat.agentic_pipeline.get_llm_config",
+        "lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.get_llm_config",
         lambda: SimpleNamespace(
             binding="openai", model="gpt-test", api_key="k", base_url="u", api_version=None
         ),
@@ -55,7 +55,7 @@ def _stub_resolver(
         asked.append(kb_ref)
         return manifests.get(kb_ref)
 
-    monkeypatch.setattr("deeptutor.services.user.resolve_kb_manifest", _resolve, raising=False)
+    monkeypatch.setattr("lumen.shared._util.user.resolve_kb_manifest", _resolve, raising=False)
     return asked
 
 
@@ -146,7 +146,7 @@ async def test_unreadable_kb_costs_the_manifest_not_the_turn(
             raise OSError("permission denied")
         return _manifest(kb_ref, "a.pdf")
 
-    monkeypatch.setattr("deeptutor.services.user.resolve_kb_manifest", _boom, raising=False)
+    monkeypatch.setattr("lumen.shared._util.user.resolve_kb_manifest", _boom, raising=False)
     context = UnifiedContext(
         session_id="s1", user_message="how many?", knowledge_bases=["broken", "course"]
     )

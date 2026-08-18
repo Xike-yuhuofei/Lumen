@@ -1,6 +1,6 @@
 """Tests for exact, user-visible embedding endpoint normalization."""
 
-from deeptutor.services.config.embedding_endpoint import (
+from lumen.shared.config.embedding_endpoint import (
     embedding_endpoint_validation_error,
     gemini_embedding_endpoint,
     normalize_embedding_endpoint_for_display,

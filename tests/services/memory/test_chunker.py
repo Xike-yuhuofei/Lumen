@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from deeptutor.services.memory.consolidator.chunker import (
+from lumen.shared.memory.consolidator.chunker import (
     ChunkSpan,
     chunk_with_boundary,
 )

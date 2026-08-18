@@ -9,6 +9,7 @@ from lumen.modes.learn.adapters.storage import LearningStore
 from lumen.modes.learn.assessment.grading import classify_error, grade_answer
 from lumen.modes.learn.domain.models import (
     ErrorRecord,
+    ErrorType,
     LearningModule,
     LearningProgress,
     LearningStage,
@@ -17,6 +18,7 @@ from lumen.modes.learn.domain.models import (
     RetryAttempt,
 )
 from lumen.modes.learn.policy.mastery import compute_mastery
+from lumen.modes.learn.policy.policy import QUALITATIVE_TYPES
 
 if TYPE_CHECKING:
     from lumen.modes.learn.policy.scheduler import SpacedRepetitionScheduler
@@ -95,15 +97,19 @@ class LearningService:
 
     def record_quiz_attempt(self, progress: LearningProgress, attempt: QuizAttempt) -> None:
         if not attempt.is_correct and attempt.error_type is not None:
-            # Find existing error record for this question + knowledge point.
-            existing = None
-            for rec in progress.error_records:
-                if (
-                    rec.question_id == attempt.question_id
-                    and rec.knowledge_point_id == attempt.knowledge_point_id
-                ):
-                    existing = rec
-                    break
+            # Reuse the existing error record for this knowledge point instead
+            # of creating one per question: every wrong answer is a fresh
+            # question id in the tool flow, so keying on (question, kp) would
+            # grow ``error_records`` without bound for a struggling learner.
+            # One record per kp carries the full retry history.
+            existing = next(
+                (
+                    rec
+                    for rec in progress.error_records
+                    if rec.knowledge_point_id == attempt.knowledge_point_id
+                ),
+                None,
+            )
 
             if existing is not None:
                 existing.retry_history.append(
@@ -130,12 +136,17 @@ class LearningService:
                 progress.error_records.append(record)
 
         elif attempt.is_correct:
-            # Graduate any active error record for this question + knowledge point.
+            # Graduate every active error record for this knowledge point. The
+            # record is keyed by (question, kp) for deduplication, but a later
+            # *independent* correct answer on the same kp is what re-verifies
+            # the misconception — real re-checks use a fresh question (the
+            # tool always registers a new question id), so matching on
+            # question_id alone would leave the misconception stuck in
+            # remediation forever.
             for rec in progress.error_records:
-                if (
-                    rec.question_id == attempt.question_id
-                    and rec.knowledge_point_id == attempt.knowledge_point_id
-                    and rec.status in ("active", "retrying")
+                if rec.knowledge_point_id == attempt.knowledge_point_id and rec.status in (
+                    "active",
+                    "retrying",
                 ):
                     rec.retry_history.append(
                         RetryAttempt(
@@ -145,7 +156,6 @@ class LearningService:
                         )
                     )
                     rec.status = "graduated"
-                    break
 
         progress.quiz_attempts.append(attempt)
         progress.updated_at = time.time()
@@ -174,15 +184,18 @@ class LearningService:
         self_attribution: str = "",
         scheduler: SpacedRepetitionScheduler | None = None,
         misconception_node_id: str = "",
+        question_kind: str = "recall",
     ) -> bool:
         """Grade one answer and fold it through the full post-answer pipeline.
 
-        record attempt -> recompute mastery -> advance the spaced-repetition
-        state -> rebuild the review queue -> persist. This is the single source
-        of truth for what happens when a student answers, shared by every
-        interactive stage. Grading is fail-closed: with no stored expected
-        answer the attempt is recorded wrong, never right. A server-matched
-        ``misconception_node_id`` (wrong answers only) rides along as evidence.
+        record attempt -> recompute mastery -> (qualitative types: a wrong
+        answer revokes a recorded pass) -> advance the spaced-repetition
+        state -> rebuild the review queue -> persist. This is the single
+        source of truth for what happens when a student answers, shared by
+        every interactive stage. Grading is fail-closed: with no stored
+        expected answer the attempt is recorded wrong, never right. A
+        server-matched ``misconception_node_id`` (wrong answers only) rides
+        along as evidence.
         """
         is_correct = bool(expected_answer) and grade_answer(
             user_answer, expected_answer, question_type
@@ -198,6 +211,7 @@ class LearningService:
                 self_attribution=self_attribution,
                 error_type=None if is_correct else classify_error(user_answer),
                 misconception_node_id="" if is_correct else misconception_node_id,
+                question_kind=question_kind,
             ),
         )
         if knowledge_point_id:
@@ -205,6 +219,15 @@ class LearningService:
                 progress, knowledge_point_id, self.calculate_mastery(progress, knowledge_point_id)
             )
             kp_type = progress.knowledge_types.get(knowledge_point_id)
+            if kp_type is not None and kp_type in QUALITATIVE_TYPES and not is_correct:
+                # A wrong answer on a qualitatively-gated point contradicts a
+                # recorded pass (including a failed delayed-retention review):
+                # revoke it so learner state tracks real performance and
+                # "mastered" concepts cannot silently stay mastered.
+                progress.qualitative_mastery[knowledge_point_id] = False
+                progress.mastery_levels[knowledge_point_id] = min(
+                    progress.mastery_levels.get(knowledge_point_id, 0.0), 0.4
+                )
             if kp_type is not None and scheduler is not None:
                 state = progress.repetition_states.get(
                     knowledge_point_id
@@ -249,12 +272,37 @@ class LearningService:
         understanding is checked for retention like every other objective —
         without this, CONCEPT / DESIGN objectives never re-enter the review
         queue and "mastered" concepts silently decay.
+
+        The check is also recorded as a ``QuizAttempt`` (a Feynman check is
+        evidence like any other): a failed check must increment the attempt
+        counter and show up in the assessment history, otherwise the learner's
+        state would not reflect the failure and the engine could never
+        escalate scaffolding for a struggling conceptual learner.
         """
         progress.qualitative_mastery[kp_id] = bool(passed)
         current = progress.mastery_levels.get(kp_id, 0.0)
         progress.mastery_levels[kp_id] = max(current, 1.0) if passed else min(current, 0.4)
         if evidence:
             progress.feynman_explanations[kp_id] = evidence
+        module_id = next(
+            (
+                mod.id
+                for mod in progress.modules
+                if any(kp.id == kp_id for kp in mod.knowledge_points)
+            ),
+            "",
+        )
+        progress.quiz_attempts.append(
+            QuizAttempt(
+                question_id=f"feynman:{kp_id}",
+                knowledge_point_id=kp_id,
+                module_id=module_id,
+                is_correct=bool(passed),
+                user_answer=evidence or "",
+                error_type=None if passed else ErrorType.APPLICATION_ERROR,
+                question_kind="application",
+            )
+        )
         if passed:
             for rec in progress.error_records:
                 if rec.knowledge_point_id == kp_id and rec.status in ("active", "retrying"):
@@ -296,14 +344,19 @@ class LearningService:
                 total_mastery = sum(
                     progress.mastery_levels.get(kp_id, 0) for kp_id in current_kp_ids
                 )
-                # Derive display name from first module, fall back to book_id
-                display_name = ""
-                if progress.modules:
+                # Derive display name from the explicit learning goal
+                # (``goal_name``), falling back to the first module name and
+                # finally the book_id. The goal is learner-facing, so it wins
+                # over an auto-generated module title.
+                display_name = progress.goal_name.strip() or ""
+                if not display_name and progress.modules:
                     display_name = progress.modules[0].name or ""
                 summaries.append(
                     {
                         "book_id": progress.book_id,
                         "name": display_name or progress.book_id,
+                        "goal_name": progress.goal_name,
+                        "description": progress.description,
                         "modules_count": len(progress.modules),
                         "kp_count": total_kps,
                         "current_stage": progress.current_stage.value

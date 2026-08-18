@@ -16,10 +16,10 @@ from typing import Any
 
 from typer.testing import CliRunner
 
-from deeptutor.app import TurnRequest
 from deeptutor_cli import common as cli_common
 from deeptutor_cli.common import _resolve_answer
 from deeptutor_cli.main import app
+from lumen.app.facade import TurnRequest
 
 runner = CliRunner()
 
@@ -124,9 +124,9 @@ def _install_fake_runtime(
             replies.append({"turn_id": turn_id, "text": text, "answers": answers})
         return True
 
-    monkeypatch.setattr("deeptutor.app.facade.DeepTutorApp.start_turn", _start_turn)
-    monkeypatch.setattr("deeptutor.app.facade.DeepTutorApp.stream_turn", _stream_turn)
-    monkeypatch.setattr("deeptutor.app.facade.DeepTutorApp.submit_user_reply", _submit_user_reply)
+    monkeypatch.setattr("lumen.app.facade.DeepTutorApp.start_turn", _start_turn)
+    monkeypatch.setattr("lumen.app.facade.DeepTutorApp.stream_turn", _stream_turn)
+    monkeypatch.setattr("lumen.app.facade.DeepTutorApp.submit_user_reply", _submit_user_reply)
 
 
 def test_narration_renders_before_tools_and_finish_is_answer(monkeypatch) -> None:

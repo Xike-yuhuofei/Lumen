@@ -52,7 +52,7 @@ class _LearnModeServiceAdapter(LearnModeService):
         self._tools_service = tools_service
         self._llm_service = llm_service
 
-    # -- learner state (existing deeptutor.learning engine) -----------------
+    # -- learner state (existing lumen.modes.learn engine) -----------------
 
     def _ensure_store(self) -> Any:
         if self._store is None:
@@ -88,6 +88,13 @@ class _LearnModeServiceAdapter(LearnModeService):
         the (deprecated) global registry fallbacks.
         """
         deps: dict[str, Any] = {}
+        # The mode's loop capability (mastery tutor) rides into the pipeline
+        # as data through the ``runtime.agent_loop`` contract — the runtime
+        # never imports ``lumen.modes``, so the concrete capability is
+        # contributed by its owning mode per turn.
+        from lumen.modes.learn.loop_registry import LOOP_CAPABILITIES
+
+        deps["loop_capabilities"] = LOOP_CAPABILITIES
         if self._memory_service is not None:
             deps["memory_service"] = self._memory_service
         if self._notebook_service is not None:
@@ -145,6 +152,7 @@ class ModeLearnPlugin(Plugin):
 
     async def setup(self, ctx: PluginContext) -> None:
         agent_loop = ctx.require("runtime.agent_loop")
+        _register_mastery_tools(ctx.require("runtime.tools"))
         ctx.provide(
             "mode.learn",
             _LearnModeServiceAdapter(
@@ -157,3 +165,17 @@ class ModeLearnPlugin(Plugin):
                 llm_service=ctx.require("runtime.llm"),
             ),
         )
+
+
+def _register_mastery_tools(tools: Any) -> None:
+    """Register the mastery tools into the runtime tool registry at boot.
+
+    The runtime registry never statically imports ``lumen.modes`` (Architecture
+    Gate ``test_runtime_does_not_import_modes``): capability-owned tools are
+    contributed by their owning mode through the injected ``runtime.tools``
+    contract instead.
+    """
+    from lumen.modes.learn.chat_tools import MASTERY_TOOL_TYPES
+
+    for tool_type in MASTERY_TOOL_TYPES:
+        tools.register(tool_type())

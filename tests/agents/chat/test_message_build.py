@@ -7,8 +7,8 @@ used to filter history to user/assistant roles, silently dropping it.
 
 from __future__ import annotations
 
-from deeptutor.agents.chat.agentic_pipeline import AgenticChatPipeline
-from deeptutor.core.context import UnifiedContext
+from lumen.runtime.agent_loop.providers.legacy.agentic_pipeline import AgenticChatPipeline
+from lumen.runtime.context import UnifiedContext
 
 
 def test_summary_system_message_reaches_messages() -> None:

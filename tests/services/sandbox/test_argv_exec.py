@@ -18,13 +18,13 @@ import shlex
 
 import pytest
 
-from deeptutor.services.sandbox.backends import (
+from lumen.shared.sandbox.backends import (
     BwrapBackend,
     RestrictedSubprocessBackend,
     RunnerSidecarBackend,
 )
-from deeptutor.services.sandbox.runner import server as runner_server
-from deeptutor.services.sandbox.spec import ExecRequest
+from lumen.shared.sandbox.runner import server as runner_server
+from lumen.shared.sandbox.spec import ExecRequest
 
 #: Arguments that would each do something different if a shell saw them.
 HOSTILE_ARGS = [
@@ -111,7 +111,7 @@ def test_the_sidecar_sends_both_spellings() -> None:
             return _Response()
 
     backend = RunnerSidecarBackend("http://runner:8900")
-    import deeptutor.services.sandbox.backends as backends_module
+    import lumen.shared.sandbox.backends as backends_module
 
     original = backends_module.httpx.AsyncClient
     backends_module.httpx.AsyncClient = lambda **_kwargs: _Client()  # type: ignore[assignment]

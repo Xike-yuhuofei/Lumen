@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from deeptutor.utils.config_manager import ConfigManager
+from lumen.shared._util.config_manager import ConfigManager
 
 
 def write_yaml(path: Path, data: dict) -> None:

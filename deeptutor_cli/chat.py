@@ -12,8 +12,8 @@ from rich.panel import Panel
 from rich.text import Text
 import typer
 
-from deeptutor.app import DeepTutorApp, TurnRequest
-from deeptutor.brand import PRODUCT_NAME
+from lumen.app.facade import DeepTutorApp, TurnRequest
+from lumen.shared._util.brand import PRODUCT_NAME
 
 from .common import (
     console,
@@ -83,7 +83,7 @@ async def _chat_repl(state: ChatState) -> None:
     client = DeepTutorApp()
     cron_service = None
     try:
-        from deeptutor.services.cron import get_cron_service
+        from lumen.app.cron import get_cron_service
 
         cron_service = get_cron_service()
         await cron_service.start()

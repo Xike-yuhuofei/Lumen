@@ -6,7 +6,7 @@ import json
 
 import typer
 
-from deeptutor.app import DeepTutorApp
+from lumen.app.facade import DeepTutorApp
 
 from .chat import ChatState, _chat_repl
 from .common import console, maybe_run, print_session_table

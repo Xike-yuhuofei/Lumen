@@ -6,7 +6,7 @@ returns each message with an ``events`` list and no ``events_json`` key, so the
 helper mutates that list in place.
 """
 
-from deeptutor.api.routers.sessions import (
+from lumen.app.api.routers.sessions import (
     _TRUNCATION_NOTICE,
     MAX_EVENT_PAYLOAD,
     _truncate_oversized_events,

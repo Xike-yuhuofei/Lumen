@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from deeptutor.services.config.loader import load_config_with_main
+from lumen.shared.config.loader import load_config_with_main
 
 
 def test_runtime_config_paths_are_confined_to_data_user() -> None:

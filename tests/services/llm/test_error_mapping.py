@@ -1,7 +1,7 @@
 """Tests for LLM error mapping helpers."""
 
-from deeptutor.services.llm.error_mapping import map_error
-from deeptutor.services.llm.exceptions import (
+from lumen.shared._util.llm.error_mapping import map_error
+from lumen.shared._util.llm.exceptions import (
     LLMAPIError,
     LLMAuthenticationError,
     LLMRateLimitError,

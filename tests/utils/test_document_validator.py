@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from deeptutor.services.rag.file_routing import FileTypeRouter
 from lumen.shared._util.document_validator import DocumentValidator
+from lumen.shared.knowledge.rag.file_routing import FileTypeRouter
 
 
 def test_validate_upload_safety_preserves_unicode_and_lowercases_extension() -> None:

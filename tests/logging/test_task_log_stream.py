@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from deeptutor.api.utils.task_log_stream import KnowledgeTaskStreamManager
+from lumen.app.api.utils.task_log_stream import KnowledgeTaskStreamManager
 
 
 @pytest.mark.asyncio

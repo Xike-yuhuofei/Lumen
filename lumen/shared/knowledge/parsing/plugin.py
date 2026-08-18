@@ -9,7 +9,7 @@ from lumen.shared.contract import KnowledgeParsingService, ParsedDocument
 
 
 class _KnowledgeParsingServiceAdapter(KnowledgeParsingService):
-    """Wraps ``deeptutor.services.parsing.service.ParseService``."""
+    """Wraps ``lumen.shared.knowledge.parsing.service.ParseService``."""
 
     def __init__(self, parse_service: Any) -> None:
         self._parse = parse_service
@@ -32,6 +32,6 @@ class KnowledgeParsingPlugin(Plugin):
     manifest = PluginManifest(id="knowledge.parsing", provides=["knowledge.parsing"])
 
     async def setup(self, ctx: PluginContext) -> None:
-        from deeptutor.services.parsing.service import ParseService
+        from lumen.shared.knowledge.parsing.service import ParseService
 
         ctx.provide("knowledge.parsing", _KnowledgeParsingServiceAdapter(ParseService()))

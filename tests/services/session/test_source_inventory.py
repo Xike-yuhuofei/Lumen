@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 
-from deeptutor.services.session.source_inventory import (
+from lumen.runtime.session.source_inventory import (
     SourceEntry,
     SourceInventory,
     build_inventory,

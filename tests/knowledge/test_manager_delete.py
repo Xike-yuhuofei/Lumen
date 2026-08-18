@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from deeptutor.knowledge.manager import KnowledgeBaseManager
+from lumen.shared.knowledge.manager import KnowledgeBaseManager
 
 
 def _create_kb(manager: KnowledgeBaseManager, name: str) -> Path:
@@ -49,7 +49,7 @@ def test_delete_knowledge_base_clears_config_when_rmtree_fails(
     manager = KnowledgeBaseManager(base_dir=str(tmp_path))
     _create_kb(manager, "broken")
 
-    from deeptutor.knowledge import manager as manager_module
+    from lumen.shared.knowledge import manager as manager_module
 
     def _rmtree_always_errors(path, onerror=None, **_kwargs):
         # Simulate a persistent OSError that chmod-retry cannot recover from.

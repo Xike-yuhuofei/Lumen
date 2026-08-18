@@ -6,14 +6,14 @@ import time
 
 import pytest
 
-from deeptutor.services.cron.service import CronService
-from deeptutor.tools.cron_tool import run_cron_action
+from lumen.app.cron.service import CronService
+from lumen.runtime.tools.builtin.cron_tool import run_cron_action
 
 
 @pytest.fixture
 def cron_service(tmp_path, monkeypatch):
-    import deeptutor.services.cron.service as service_mod
-    import deeptutor.tools.cron_tool as tool_mod
+    import lumen.app.cron.service as service_mod
+    import lumen.runtime.tools.builtin.cron_tool as tool_mod
 
     service = CronService(store_path=tmp_path / "jobs.json")
     monkeypatch.setattr(service_mod, "_service", service)
@@ -128,14 +128,14 @@ class TestCronTool:
 
 class TestRegistryIntegration:
     def test_cron_tool_is_builtin_and_automounted(self):
-        from deeptutor.agents._shared.tool_composition import AUTO_MOUNTED_TOOLS
-        from deeptutor.tools.builtin import BUILTIN_TOOL_NAMES
+        from lumen.runtime.tools.builtin import BUILTIN_TOOL_NAMES
+        from lumen.runtime.tools.composition import AUTO_MOUNTED_TOOLS
 
         assert "cron" in BUILTIN_TOOL_NAMES
         assert "cron" in AUTO_MOUNTED_TOOLS
 
     def test_schema_has_action_enum(self):
-        from deeptutor.tools.builtin import CronTool
+        from lumen.runtime.tools.builtin import CronTool
 
         schema = CronTool().get_definition().to_openai_schema()
         action = schema["function"]["parameters"]["properties"]["action"]

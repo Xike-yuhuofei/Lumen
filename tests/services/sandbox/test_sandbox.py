@@ -6,15 +6,15 @@ import asyncio
 
 import pytest
 
-from deeptutor.services.sandbox.backends import BwrapBackend, RestrictedSubprocessBackend
-from deeptutor.services.sandbox.config import SandboxSettings, build_backend
-from deeptutor.services.sandbox.quota import QuotaExceeded, UserExecQuota
-from deeptutor.services.sandbox.service import SandboxService
-from deeptutor.services.sandbox.spec import ExecRequest, ExecResult, IsolationLevel, ResourceLimits
+from lumen.shared.sandbox.backends import BwrapBackend, RestrictedSubprocessBackend
+from lumen.shared.sandbox.config import SandboxSettings, build_backend
+from lumen.shared.sandbox.quota import QuotaExceeded, UserExecQuota
+from lumen.shared.sandbox.service import SandboxService
+from lumen.shared.sandbox.spec import ExecRequest, ExecResult, IsolationLevel, ResourceLimits
 
 
 def test_backend_selection_runner_url() -> None:
-    from deeptutor.services.sandbox.backends import RunnerSidecarBackend
+    from lumen.shared.sandbox.backends import RunnerSidecarBackend
 
     settings = SandboxSettings(runner_url="http://sandbox-runner:8900")
     backend = build_backend(settings)
@@ -28,7 +28,7 @@ def test_backend_selection_none_without_optin() -> None:
     backend = build_backend(settings)
     # On a Linux host with bwrap installed this could be BwrapBackend; the
     # invariant we assert is that subprocess fallback is NOT silently used.
-    from deeptutor.services.sandbox.backends import RestrictedSubprocessBackend
+    from lumen.shared.sandbox.backends import RestrictedSubprocessBackend
 
     assert not isinstance(backend, RestrictedSubprocessBackend)
 
@@ -135,7 +135,7 @@ def test_exec_result_render_error() -> None:
 
 
 def test_runner_server_validates_request_shape() -> None:
-    from deeptutor.services.sandbox.runner import server
+    from lumen.shared.sandbox.runner import server
 
     assert "command" in server.execute({})["error"]
     assert "workdir" in server.execute({"command": "true", "workdir": 123})["error"]
@@ -145,7 +145,7 @@ def test_runner_server_validates_request_shape() -> None:
 
 
 def test_runner_server_executes_and_truncates_output() -> None:
-    from deeptutor.services.sandbox.runner import server
+    from lumen.shared.sandbox.runner import server
 
     result = server.execute(
         {
@@ -163,7 +163,7 @@ def test_runner_server_executes_and_truncates_output() -> None:
 def test_runner_server_rejects_workdir_outside_allowed_roots(
     tmp_path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from deeptutor.services.sandbox.runner import server
+    from lumen.shared.sandbox.runner import server
 
     allowed = tmp_path / "workspace"
     allowed.mkdir()

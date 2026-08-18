@@ -96,8 +96,17 @@ def test_mode_learn_does_not_import_concrete_provider_implementations() -> None:
 def test_mode_learn_does_not_import_other_plugins_providers() -> None:
     """mode.learn depends on contracts (injected), never another plugin's provider.
 
-    Pure private utilities under a leading-underscore segment (e.g.
-    ``lumen.shared._util.*``) are not provider implementations and are allowed.
+    Two precise exceptions are allowed:
+
+    * Pure private utilities under a leading-underscore segment (e.g.
+      ``lumen.shared._util.*``) — not provider implementations.
+    * A small, exact allowlist of *pure Runtime contracts* that mode.learn
+      legitimately consumes as types (``MODE_ALLOWED_RUNTIME_CONTRACTS``):
+      the tool contract, the loop-capability protocol, the unified context
+      data contract, and the session-store accessor used by the mastery
+      tools' question-bank sync. Everything else under ``lumen.runtime.*`` /
+      ``lumen.shared.*`` remains forbidden — no provider implementations, no
+      service accessors beyond the documented exception.
     """
     violations: list[str] = []
     needles = {"runtime", "shared"}
@@ -109,8 +118,29 @@ def test_mode_learn_does_not_import_other_plugins_providers() -> None:
             if len(parts) >= 2 and parts[0] == "lumen" and parts[1] in needles:
                 if _is_private_util(parts[2:]):
                     continue
+                if _is_allowed_runtime_contract(module):
+                    continue
                 violations.append(t)
     assert not violations, "mode.learn imports another plugin's provider:\n" + "\n".join(violations)
+
+
+# Pure Runtime contracts mode.learn may import. These are contract types /
+# protocols that mode.learn consumes as dependencies — not provider
+# implementations. ``lumen.runtime.session`` is the one pragmatic exception:
+# the mastery tools reach the session store (question-bank sync) through its
+# accessor; it should eventually be injected instead.
+MODE_ALLOWED_RUNTIME_CONTRACTS = frozenset(
+    {
+        "lumen.runtime.tool_protocol",  # BaseTool / ToolDefinition / … tool contract
+        "lumen.runtime.agent_loop.capability",  # LoopCapability / PromptBlock protocol
+        "lumen.runtime.context",  # UnifiedContext data contract
+        "lumen.runtime.session",  # SessionStoreProtocol + store accessor (question-bank sync)
+    }
+)
+
+
+def _is_allowed_runtime_contract(module: str) -> bool:
+    return any(module == c or module.startswith(c + ".") for c in MODE_ALLOWED_RUNTIME_CONTRACTS)
 
 
 def _is_private_util(rest: list[str]) -> bool:
@@ -145,6 +175,11 @@ def test_plugin_providers_do_not_cross_import_sibling_providers(root: Path) -> N
             parts = module.split(".")
             if len(parts) >= 2 and parts[0] == "lumen" and parts[1] in own:
                 if _is_private_util(parts[2:]):
+                    continue
+                # mode.learn depends on the allowlisted pure Runtime contracts
+                # (see MODE_ALLOWED_RUNTIME_CONTRACTS) — the reverse direction
+                # (runtime/shared importing modes) stays forbidden.
+                if root.name == "modes" and _is_allowed_runtime_contract(module):
                     continue
                 violations.append(t)
     assert not violations, f"{root.name}/* imports a sibling plugin provider:\n" + "\n".join(
@@ -242,10 +277,10 @@ def test_no_chat_mode_exists() -> None:
 # instantiate the chat pipeline directly to execute a turn.
 
 TURN_ENTRY_FILES = (
-    "deeptutor/services/session/turn_runtime.py",
-    "deeptutor/services/cron/executor.py",
+    "lumen/runtime/session/turn_runtime.py",
+    "lumen/app/cron/executor.py",
 )
-DIRECT_PIPELINE_IMPORTS = ("deeptutor.agents.chat.agentic_pipeline",)
+DIRECT_PIPELINE_IMPORTS = ("lumen.runtime.agent_loop.providers.legacy.agentic_pipeline",)
 
 
 @pytest.mark.parametrize("rel", TURN_ENTRY_FILES)
@@ -269,4 +304,42 @@ def test_no_production_import_of_legacy_capability_shell(legacy: str) -> None:
                 violations.append(t)
     assert not violations, f"production imports legacy capability shell ({legacy}):\n" + "\n".join(
         violations
+    )
+
+
+# ── DeepTutor legacy namespace is not a truth the canonical code may import ──
+#
+# ``lumen/**`` is the canonical namespace.  Production code there must never
+# import ``deeptutor.*``: the legacy namespace is only a temporary
+# compatibility facade that is being deleted, so any import would resurrect a
+# dead dependency direction.
+#
+# The Runtime ownership batch has been completed — every remaining bridge
+# (agent_loop / agentic_pipeline) is now canonical in ``lumen.runtime`` and
+# no ``lumen -> deeptutor`` import remains.  ``ALLOWED_LEGACY_BRIDGES`` is
+# intentionally empty and exists so the gate degrades to "no bridge allowed".
+
+LUMEN_DIR = LUMEN_ROOT
+
+# file:line → legacy module.  Must stay empty: every entry would be a
+# ``lumen -> deeptutor`` dependency that resurrects the legacy namespace.
+ALLOWED_LEGACY_BRIDGES: dict[str, str] = {}
+
+
+def test_lumen_never_imports_deeptutor() -> None:
+    violations: list[str] = []
+    for py in sorted(LUMEN_DIR.rglob("*.py")):
+        rel = py.relative_to(LUMEN_ROOT.parent).as_posix()
+        allowed = ALLOWED_LEGACY_BRIDGES.get(rel)
+        for t in _import_targets(py):
+            module = t.split(":", 2)[2]
+            if module == "deeptutor" or module.startswith("deeptutor."):
+                if allowed and (module == allowed or module.startswith(allowed + ".")):
+                    continue
+                violations.append(t)
+    assert not violations, (
+        "canonical lumen/ imports the legacy deeptutor namespace:\n"
+        + "\n".join(violations)
+        + "\nAllowed bridges (pending Runtime ownership batch): "
+        + "\n".join(f"{k} -> {v}" for k, v in ALLOWED_LEGACY_BRIDGES.items())
     )

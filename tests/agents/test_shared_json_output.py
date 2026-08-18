@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from deeptutor.agents._shared.json_output import extract_json_object
+from lumen.shared._util.json_output import extract_json_object
 
 
 @pytest.mark.parametrize(

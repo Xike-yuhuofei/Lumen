@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from deeptutor.core.agentic.messages import assistant_message_with_tool_calls
+from lumen.runtime.agent_loop.engine.messages import assistant_message_with_tool_calls
 
 
 def test_assistant_message_with_tool_calls_normalizes_empty_values() -> None:

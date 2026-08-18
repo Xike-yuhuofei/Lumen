@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from deeptutor.services.llm.request_compat import (
+from lumen.shared._util.llm.request_compat import (
     error_text,
     is_image_input_unsupported,
     is_stream_options_unsupported,

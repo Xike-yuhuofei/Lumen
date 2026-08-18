@@ -17,9 +17,9 @@ pytest.importorskip("fastapi")
 FastAPI = pytest.importorskip("fastapi").FastAPI
 TestClient = pytest.importorskip("fastapi.testclient").TestClient
 
-notebook_router = importlib.import_module("deeptutor.api.routers.notebook").router
+notebook_router = importlib.import_module("lumen.app.api.routers.notebook").router
 
-from deeptutor.services.notebook.service import NotebookManager
+from lumen.shared.notebook.service import NotebookManager
 
 
 def _build_app(manager: NotebookManager) -> FastAPI:
@@ -32,7 +32,7 @@ def _build_app(manager: NotebookManager) -> FastAPI:
 def manager(tmp_path, monkeypatch) -> NotebookManager:
     instance = NotebookManager(base_dir=str(tmp_path / "notebooks"))
     monkeypatch.setattr(
-        "deeptutor.api.routers.notebook.notebook_manager",
+        "lumen.app.api.routers.notebook.notebook_manager",
         instance,
     )
     return instance
@@ -130,13 +130,13 @@ def test_stream_add_record_with_summary_strips_thinking_tags(
             yield "Final reusable summary."
 
     monkeypatch.setattr(
-        "deeptutor.api.routers.notebook.NotebookSummarizeAgent",
+        "lumen.app.api.routers.notebook.NotebookSummarizeAgent",
         FakeSummarizeAgent,
     )
     nb = manager.create_notebook(name="My Notes")
 
     async def collect_events() -> list[dict]:
-        request = importlib.import_module("deeptutor.api.routers.notebook").AddRecordRequest(
+        request = importlib.import_module("lumen.app.api.routers.notebook").AddRecordRequest(
             notebook_ids=[nb["id"]],
             record_type="chat",
             title="Streaming save",
@@ -145,7 +145,7 @@ def test_stream_add_record_with_summary_strips_thinking_tags(
         )
         events: list[dict] = []
         async for raw in importlib.import_module(
-            "deeptutor.api.routers.notebook"
+            "lumen.app.api.routers.notebook"
         )._stream_add_record_with_summary(request):
             assert "<think" not in raw.lower()
             assert "private reasoning" not in raw

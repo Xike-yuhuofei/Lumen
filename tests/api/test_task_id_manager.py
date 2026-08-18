@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from deeptutor.api.utils.task_id_manager import TaskIDManager
+from lumen.app.api.utils.task_id_manager import TaskIDManager
 
 
 def _manager() -> TaskIDManager:

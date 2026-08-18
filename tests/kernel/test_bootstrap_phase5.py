@@ -156,9 +156,9 @@ async def test_pipeline_deps_forward_injected_services():
 async def test_mode_learn_turn_runs_through_injected_agent_loop(tmp_path):
     """handle_turn() drives the injected runtime.agent_loop and records the
     learner state through the existing learning engine."""
-    from deeptutor.core.context import UnifiedContext
-    from deeptutor.core.stream_bus import StreamBus
-    from deeptutor.learning.storage import LearningStore
+    from lumen.modes.learn.adapters.storage import LearningStore
+    from lumen.runtime.context import UnifiedContext
+    from lumen.runtime.stream.bus import StreamBus
 
     store = LearningStore(root=tmp_path)
     calls: list[tuple[Any, Any, str, dict[str, Any]]] = []
@@ -301,9 +301,9 @@ async def test_boot_lumen_convenience():
 @pytest.mark.asyncio
 async def test_lifecycle_boot_run_dispose_roundtrip(tmp_path, monkeypatch):
     """Full lifecycle: boot → start learner → turn → state → dispose."""
-    from deeptutor.agents.chat.agentic_pipeline import AgenticChatPipeline
-    from deeptutor.core.context import UnifiedContext
-    from deeptutor.core.stream_bus import StreamBus
+    from lumen.runtime.agent_loop.providers.legacy.agentic_pipeline import AgenticChatPipeline
+    from lumen.runtime.context import UnifiedContext
+    from lumen.runtime.stream.bus import StreamBus
     from tests.kernel.bakeoff_fakes import ScriptedOpenAIClient
 
     # handle_turn drives the real injected agent loop, whose turn executes a

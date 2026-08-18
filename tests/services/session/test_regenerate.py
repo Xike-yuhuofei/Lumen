@@ -17,12 +17,12 @@ from unittest.mock import patch
 
 import pytest
 
-from deeptutor.core.stream import StreamEvent, StreamEventType
-from deeptutor.services.session.sqlite_store import SQLiteSessionStore
-from deeptutor.services.session.turn_runtime import (
+from lumen.runtime.session.sqlite_store import SQLiteSessionStore
+from lumen.runtime.session.turn_runtime import (
     TurnRuntimeManager,
     _extract_regenerate_flag,
 )
+from lumen.runtime.stream.events import StreamEvent, StreamEventType
 
 
 async def _noop_refresh(**_kwargs):
@@ -327,17 +327,18 @@ class TestRegenerateLastTurn:
             refresh_calls.append(event)
 
         monkeypatch.setattr(
-            "deeptutor.services.llm.config.get_llm_config", lambda: SimpleNamespace()
+            "lumen.shared._util.llm.config.get_llm_config", lambda: SimpleNamespace()
         )
         monkeypatch.setattr(
-            "deeptutor.services.session.context_builder.ContextBuilder",
+            "lumen.runtime.session.context_builder.ContextBuilder",
             FakeContextBuilder,
         )
         monkeypatch.setattr(
-            "deeptutor.agents.chat.agentic_pipeline.AgenticChatPipeline", FakePipeline
+            "lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.AgenticChatPipeline",
+            FakePipeline,
         )
         monkeypatch.setattr(
-            "deeptutor.services.memory.get_memory_store",
+            "lumen.shared.memory.store.get_memory_store",
             lambda: SimpleNamespace(
                 read_l3_concat=lambda: "",
                 emit=tracking_emit,

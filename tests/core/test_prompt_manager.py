@@ -5,7 +5,7 @@ Unit tests for the unified PromptManager.
 
 import pytest
 
-from deeptutor.services.prompt import PromptManager, get_prompt_manager
+from lumen.runtime.prompt import PromptManager, get_prompt_manager
 
 
 class TestPromptManager:
@@ -28,54 +28,48 @@ class TestPromptManager:
         pm2 = get_prompt_manager()
         assert pm1 is pm2
 
-    def test_load_prompts_question_module(self):
-        """Test loading prompts for the question module."""
+    def test_load_prompts_chat_module(self):
+        """Test loading prompts for the chat module."""
         pm = get_prompt_manager()
         prompts = pm.load_prompts(
-            module_name="question",
-            agent_name="pipeline",
+            module_name="chat",
+            agent_name="agentic_chat",
             language="en",
         )
         assert isinstance(prompts, dict)
-        # pipeline.yaml carries one section per phase, each of which has
-        # its own ``system`` body.
-        assert (
-            any(
-                isinstance(prompts.get(phase), dict) and "system" in prompts[phase]
-                for phase in ("explore", "plan", "quiz_step", "repair")
-            )
-            or prompts == {}
-        )
+        # agentic_chat.yaml carries the core chat blocks (labels / general).
+        assert "general" in prompts or "labels" in prompts
 
     def test_load_prompts_solve_module(self):
-        """Test loading prompts for question module."""
+        """Test loading prompts for the chat module."""
         pm = get_prompt_manager()
         prompts = pm.load_prompts(
-            module_name="question",
-            agent_name="pipeline",
+            module_name="chat",
+            agent_name="agentic_chat",
             language="en",
         )
         assert isinstance(prompts, dict)
 
     def test_load_prompts_with_subdirectory(self):
-        """Test loading prompts with subdirectory."""
+        """Test loading prompts from an agent's prompts/ directory."""
         pm = get_prompt_manager()
         prompts = pm.load_prompts(
-            module_name="question",
-            agent_name="followup_agent",
+            module_name="chat",
+            agent_name="agentic_chat",
             language="en",
         )
         assert isinstance(prompts, dict)
+        assert prompts  # a real agent prompt file resolves to content
 
     def test_caching(self):
         """Test that prompts are cached after first load."""
         pm = get_prompt_manager()
 
         # First load
-        prompts1 = pm.load_prompts("question", "pipeline", "en")
+        prompts1 = pm.load_prompts("chat", "agentic_chat", "en")
 
         # Second load should return cached version
-        prompts2 = pm.load_prompts("question", "pipeline", "en")
+        prompts2 = pm.load_prompts("chat", "agentic_chat", "en")
 
         assert prompts1 is prompts2
 
@@ -83,9 +77,9 @@ class TestPromptManager:
         """Test clearing all cache."""
         pm = get_prompt_manager()
 
-        # Load some prompts
-        pm.load_prompts("question", "pipeline", "en")
-        pm.load_prompts("question", "followup_agent", "en")
+        # Load some prompts (two languages of the chat module = two cache keys)
+        pm.load_prompts("chat", "agentic_chat", "en")
+        pm.load_prompts("chat", "agentic_chat", "zh")
 
         assert len(pm._cache) >= 2
 
@@ -93,19 +87,18 @@ class TestPromptManager:
         assert len(pm._cache) == 0
 
     def test_clear_cache_module_specific(self):
-        """Test clearing cache for specific module."""
+        """Test clearing cache for a specific module."""
         pm = get_prompt_manager()
 
-        # Load prompts for multiple modules
-        pm.load_prompts("question", "followup_agent", "en")
+        # Load prompts for the chat module in two languages
         pm.load_prompts("chat", "agentic_chat", "en")
+        pm.load_prompts("chat", "agentic_chat", "zh")
 
-        # Clear only question cache
-        pm.clear_cache("question")
+        # Clear only chat cache
+        pm.clear_cache("chat")
 
-        # Chat prompts should still be cached
-        assert any("chat" in k for k in pm._cache)
-        assert not any("question" in k for k in pm._cache)
+        # Chat prompts should no longer be cached
+        assert not any("chat" in k for k in pm._cache)
 
     def test_get_prompt_helper(self):
         """Test the get_prompt helper method."""
@@ -136,7 +129,7 @@ class TestPromptManager:
         pm = get_prompt_manager()
 
         # Even with a potentially missing language, should fallback
-        prompts = pm.load_prompts("question", "pipeline", "zh")
+        prompts = pm.load_prompts("chat", "agentic_chat", "zh")
         assert isinstance(prompts, dict)
 
     def test_reload_prompts(self):
@@ -144,15 +137,15 @@ class TestPromptManager:
         pm = get_prompt_manager()
 
         # Load and cache
-        prompts1 = pm.load_prompts("question", "pipeline", "en")
+        prompts1 = pm.load_prompts("chat", "agentic_chat", "en")
 
         # Force reload
-        prompts2 = pm.reload_prompts("question", "pipeline", "en")
+        prompts2 = pm.reload_prompts("chat", "agentic_chat", "en")
 
         # They should be equal but not the same object
         assert prompts1 == prompts2
         # After reload, cache should have fresh entry
-        cache_key = "question_pipeline_en"
+        cache_key = "chat_agentic_chat_en"
         assert cache_key in pm._cache
 
 
@@ -166,20 +159,20 @@ class TestPromptManagerLanguages:
     def test_english_prompts(self):
         """Test loading English prompts."""
         pm = get_prompt_manager()
-        prompts = pm.load_prompts("question", "pipeline", "en")
+        prompts = pm.load_prompts("chat", "agentic_chat", "en")
         assert isinstance(prompts, dict)
 
     def test_chinese_prompts(self):
         """Test loading Chinese prompts."""
         pm = get_prompt_manager()
-        prompts = pm.load_prompts("question", "pipeline", "zh")
+        prompts = pm.load_prompts("chat", "agentic_chat", "zh")
         assert isinstance(prompts, dict)
 
     def test_invalid_language_falls_back(self):
         """Test that invalid language code falls back gracefully."""
         pm = get_prompt_manager()
         # Should not raise, should fallback
-        prompts = pm.load_prompts("question", "pipeline", "invalid")
+        prompts = pm.load_prompts("chat", "agentic_chat", "invalid")
         assert isinstance(prompts, dict)
 
 

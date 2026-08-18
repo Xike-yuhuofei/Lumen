@@ -4,8 +4,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from deeptutor.agents.chat.agentic_pipeline import AgenticChatPipeline
-from deeptutor.agents.chat.prompt_blocks import ChatPromptAssembler
+from lumen.modes.learn.loop_capability import MasteryLoopCapability
+from lumen.runtime.agent_loop.providers.legacy.agentic_pipeline import AgenticChatPipeline
+from lumen.runtime.agent_loop.providers.legacy.prompt_blocks import ChatPromptAssembler
 
 
 @pytest.fixture(autouse=True)
@@ -18,10 +19,10 @@ def _fake_llm_config(monkeypatch: pytest.MonkeyPatch) -> None:
         api_version=None,
     )
     monkeypatch.setattr(
-        "deeptutor.agents.chat.agentic_pipeline.get_llm_config",
+        "lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.get_llm_config",
         lambda: cfg,
     )
-    monkeypatch.setattr("deeptutor.agents.base_agent.get_llm_config", lambda: cfg)
+    monkeypatch.setattr("lumen.runtime.agents.base_agent.get_llm_config", lambda: cfg)
 
 
 def test_agentic_chat_final_prompt_uses_selected_language(
@@ -32,11 +33,11 @@ def test_agentic_chat_final_prompt_uses_selected_language(
             return "- tool"
 
     monkeypatch.setattr(
-        "deeptutor.agents.chat.agentic_pipeline.get_tool_registry",
+        "lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.get_tool_registry",
         lambda: FakeRegistry(),
     )
 
-    from deeptutor.core.context import UnifiedContext
+    from lumen.runtime.context import UnifiedContext
 
     ctx = UnifiedContext()
     zh_prompt = AgenticChatPipeline(language="zh")._build_system_prompt([], ctx)
@@ -60,15 +61,19 @@ def test_mastery_plugin_system_prompt_uses_localized_fallback(
             return "- tool"
 
     monkeypatch.setattr(
-        "deeptutor.agents.chat.agentic_pipeline.get_tool_registry",
+        "lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.get_tool_registry",
         lambda: FakeRegistry(),
     )
 
-    from deeptutor.core.context import UnifiedContext
+    from lumen.runtime.context import UnifiedContext
 
     ctx = UnifiedContext(metadata={"mastery_mode": True, "mastery_path_id": "p1"})
-    zh_prompt = AgenticChatPipeline(language="zh")._build_system_prompt([], ctx)
-    en_prompt = AgenticChatPipeline(language="en")._build_system_prompt([], ctx)
+    zh_prompt = AgenticChatPipeline(
+        language="zh", loop_capabilities=(MasteryLoopCapability(),)
+    )._build_system_prompt([], ctx)
+    en_prompt = AgenticChatPipeline(
+        language="en", loop_capabilities=(MasteryLoopCapability(),)
+    )._build_system_prompt([], ctx)
 
     assert "## mastery_tutor" in zh_prompt
     assert "精通导师模式" in zh_prompt
@@ -77,7 +82,7 @@ def test_mastery_plugin_system_prompt_uses_localized_fallback(
 
 
 def test_prompt_blocks_include_localized_optional_context() -> None:
-    from deeptutor.core.context import UnifiedContext
+    from lumen.runtime.context import UnifiedContext
 
     prompts = {
         "general": "通用",

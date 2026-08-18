@@ -6,8 +6,8 @@ import sqlite3
 
 import pytest
 
-from deeptutor.services.path_service import PathService
-from deeptutor.services.session.sqlite_store import SQLiteSessionStore
+from lumen.runtime.session.sqlite_store import SQLiteSessionStore
+from lumen.shared._util.path_service import PathService
 
 
 def test_sqlite_store_defaults_to_data_user_chat_history_db(tmp_path: Path) -> None:

@@ -1,6 +1,6 @@
 import logging
 
-from deeptutor.logging import ProcessLogEvent, bind_log_context, capture_process_logs
+from lumen.shared._util.logging import ProcessLogEvent, bind_log_context, capture_process_logs
 
 
 def test_capture_process_logs_emits_structured_event_for_matching_task():

@@ -18,8 +18,8 @@ def test_gemini_embedding_fallback_prefers_stable_embedding2() -> None:
 
 
 def test_embedding_setup_preserves_saved_endpoint_for_same_provider() -> None:
-    from deeptutor.services.config.provider_runtime import EMBEDDING_PROVIDERS
     from deeptutor_cli.init_cmd import _embedding_default_endpoint
+    from lumen.shared.config.provider_runtime import EMBEDDING_PROVIDERS
 
     saved = "https://proxy.example.com/google/v1/embeddings"
     endpoint = _embedding_default_endpoint(
@@ -308,8 +308,8 @@ def test_wizard_search_providers_match_the_backend_spec_table() -> None:
     ``SEARCH_PROVIDERS`` in the backend spec table. When those drift, the wizard
     writes a profile the runtime then rejects or silently downgrades.
     """
-    from deeptutor.services.config.provider_runtime import SEARCH_PROVIDERS as BACKEND
     from deeptutor_cli.init_wizard import SEARCH_PROVIDERS as WIZARD
+    from lumen.shared.config.provider_runtime import SEARCH_PROVIDERS as BACKEND
 
     wizard = {spec.name: spec for spec in WIZARD}
     assert set(wizard) == set(BACKEND)

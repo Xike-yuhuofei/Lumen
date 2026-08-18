@@ -13,17 +13,17 @@ from typing import Any
 
 import pytest
 
-from deeptutor.agents._shared.tool_composition import (
+from lumen.runtime.tools.builtin import BUILTIN_TOOL_NAMES, KbFilesTool
+from lumen.runtime.tools.composition import (
     AUTO_MOUNTED_TOOLS,
     ToolMountFlags,
     compose_enabled_tools,
 )
-from deeptutor.knowledge.manifest import (
+from lumen.shared.knowledge.manifest import (
     KB_FILES_DEFAULT_LIMIT,
     KB_FILES_MAX_LIMIT,
     build_manifest,
 )
-from deeptutor.tools.builtin import BUILTIN_TOOL_NAMES, KbFilesTool
 
 _READY = {"rag_provider": "llamaindex", "status": "ready"}
 
@@ -48,7 +48,7 @@ def _stub_resolver(monkeypatch: pytest.MonkeyPatch, kb_dir: Path | None) -> list
             name=kb_ref, kb_dir=kb_dir, entry=_READY, limit=limit, pattern=pattern
         )
 
-    monkeypatch.setattr("deeptutor.services.user.resolve_kb_manifest", _resolve, raising=False)
+    monkeypatch.setattr("lumen.shared._util.user.resolve_kb_manifest", _resolve, raising=False)
     return calls
 
 

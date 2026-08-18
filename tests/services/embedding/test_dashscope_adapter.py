@@ -8,8 +8,8 @@ from typing import Any
 
 import pytest
 
-from deeptutor.services.embedding.adapters.base import EmbeddingRequest
-from deeptutor.services.embedding.adapters.dashscope_native import (
+from lumen.shared._util.embedding.adapters.base import EmbeddingRequest
+from lumen.shared._util.embedding.adapters.dashscope_native import (
     DashScopeMultiModalEmbeddingAdapter,
 )
 
@@ -200,7 +200,7 @@ def test_get_model_info_reports_multimodal_capability() -> None:
 def test_dashscope_endpoint_routing(model: str, multimodal: bool, endpoint_tail: str) -> None:
     # Issue #660: the single source of truth that decides text vs multimodal
     # DashScope endpoint per model.
-    from deeptutor.services.config.embedding_endpoint import (
+    from lumen.shared.config.embedding_endpoint import (
         dashscope_embedding_endpoint,
         is_dashscope_multimodal_embedding_model,
     )

@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from deeptutor.services.parsing import cache
+from lumen.shared.knowledge.parsing import cache
 
 
 def test_source_hash_keys_on_bytes_not_name(tmp_path: Path) -> None:

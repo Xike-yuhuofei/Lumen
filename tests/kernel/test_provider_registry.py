@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from deeptutor.services.provider_registry import find_by_model, find_by_name
+from lumen.shared._util.provider_registry import find_by_model, find_by_name
 
 
 def test_zhipu_provider_is_registered() -> None:

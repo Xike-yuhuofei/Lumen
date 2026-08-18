@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from deeptutor.core.agentic import client as agentic_client
-from deeptutor.core.agentic.client import (
+from lumen.runtime.agent_loop.engine import client as agentic_client
+from lumen.runtime.agent_loop.engine.client import (
     _NATIVE_ADAPTER_BUILDERS,
     _NATIVE_TOOL_BACKENDS,
     LLMClientConfig,
@@ -12,7 +12,7 @@ from deeptutor.core.agentic.client import (
     build_openai_client,
     can_use_native_tool_calling,
 )
-from deeptutor.services.llm.provider_core.base import LLMResponse, ToolCallRequest
+from lumen.shared._util.llm.provider_core.base import LLMResponse, ToolCallRequest
 
 
 def test_agentic_kwargs_disable_deepseek_flash_thinking_by_default() -> None:
@@ -103,7 +103,7 @@ def test_build_openai_client_routes_anthropic_backend_through_adapter(monkeypatc
             captured.update(kwargs)
 
     monkeypatch.setattr(
-        "deeptutor.services.llm.provider_core.AnthropicProvider",
+        "lumen.shared._util.llm.provider_core.AnthropicProvider",
         FakeProvider,
     )
 

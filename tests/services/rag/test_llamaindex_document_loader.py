@@ -22,7 +22,7 @@ def _install_stub_parse_service(monkeypatch, results: dict[str, "object"]) -> No
     ``results`` maps a file name to either a ``ParsedDocument`` to return or an
     exception instance to raise (e.g. ``ParserError``).
     """
-    import deeptutor.services.parsing as parsing
+    import lumen.shared.knowledge.parsing as parsing
 
     class _StubService:
         def parse(self, source_path, **_kwargs):
@@ -38,9 +38,9 @@ def test_loader_routes_parser_files_through_active_parse_engine(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     pytest.importorskip("llama_index.core")
-    from deeptutor.services.parsing.types import ParsedDocument
-    from deeptutor.services.rag.pipelines.llamaindex.document_loader import (
-        LlamaIndexDocumentLoader,
+    from lumen.shared.knowledge.parsing.types import ParsedDocument
+    from lumen.shared.knowledge.rag.pipelines.llamaindex import (
+        document_loader as loader_module,
     )
 
     docx_path = tmp_path / "notes.docx"
@@ -60,7 +60,9 @@ def test_loader_routes_parser_files_through_active_parse_engine(
         },
     )
 
-    documents = asyncio.run(LlamaIndexDocumentLoader().load([str(docx_path), str(pdf_path)]))
+    documents = asyncio.run(
+        loader_module.LlamaIndexDocumentLoader().load([str(docx_path), str(pdf_path)])
+    )
 
     by_name = {doc.metadata["file_name"]: doc.text for doc in documents}
     assert by_name["notes.docx"] == "Docx body text"
@@ -72,9 +74,9 @@ def test_loader_skips_document_when_active_engine_cannot_parse(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
     pytest.importorskip("llama_index.core")
-    from deeptutor.services.parsing.types import ParserError
-    from deeptutor.services.rag.pipelines.llamaindex.document_loader import (
-        LlamaIndexDocumentLoader,
+    from lumen.shared.knowledge.parsing.types import ParserError
+    from lumen.shared.knowledge.rag.pipelines.llamaindex import (
+        document_loader as loader_module,
     )
 
     docx_path = tmp_path / "unsupported.docx"
@@ -86,7 +88,7 @@ def test_loader_skips_document_when_active_engine_cannot_parse(
     )
 
     with caplog.at_level("WARNING"):
-        documents = asyncio.run(LlamaIndexDocumentLoader().load([str(docx_path)]))
+        documents = asyncio.run(loader_module.LlamaIndexDocumentLoader().load([str(docx_path)]))
 
     assert documents == []
     assert "Skipped unsupported.docx" in caplog.text
@@ -99,8 +101,8 @@ def test_loader_indexes_images_extracted_from_parsed_document(
     pytest.importorskip("llama_index.core")
     from llama_index.core.schema import ImageNode
 
-    from deeptutor.services.parsing.types import ParsedDocument
-    from deeptutor.services.rag.pipelines.llamaindex import document_loader as loader_module
+    from lumen.shared.knowledge.parsing.types import ParsedDocument
+    from lumen.shared.knowledge.rag.pipelines.llamaindex import document_loader as loader_module
 
     pdf_path = tmp_path / "paper.pdf"
     pdf_path.write_bytes(b"stub")
@@ -157,7 +159,7 @@ def test_loader_skips_images_when_embedding_provider_is_text_only(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     pytest.importorskip("llama_index.core")
-    from deeptutor.services.rag.pipelines.llamaindex import document_loader as loader_module
+    from lumen.shared.knowledge.rag.pipelines.llamaindex import document_loader as loader_module
 
     image_path = tmp_path / "photo.png"
     image_path.write_bytes(b"\x89PNG\r\n")
@@ -181,9 +183,9 @@ def test_loader_embeds_images_with_qwen38_max_vision_capability(
     pytest.importorskip("llama_index.core")
     from llama_index.core.schema import ImageNode
 
-    from deeptutor.services.llm.client import LLMClient
-    from deeptutor.services.llm.config import LLMConfig
-    from deeptutor.services.rag.pipelines.llamaindex import document_loader as loader_module
+    from lumen.shared._util.llm.client import LLMClient
+    from lumen.shared._util.llm.config import LLMConfig
+    from lumen.shared.knowledge.rag.pipelines.llamaindex import document_loader as loader_module
 
     image_path = tmp_path / "photo.png"
     image_path.write_bytes(b"\x89PNG\r\n")
@@ -234,7 +236,7 @@ def test_loader_skips_images_when_llm_is_text_only(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     pytest.importorskip("llama_index.core")
-    from deeptutor.services.rag.pipelines.llamaindex import document_loader as loader_module
+    from lumen.shared.knowledge.rag.pipelines.llamaindex import document_loader as loader_module
 
     image_path = tmp_path / "photo.png"
     image_path.write_bytes(b"\x89PNG\r\n")
@@ -263,7 +265,7 @@ def test_loader_logs_all_missing_multimodal_image_requirements(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
     pytest.importorskip("llama_index.core")
-    from deeptutor.services.rag.pipelines.llamaindex import document_loader as loader_module
+    from lumen.shared.knowledge.rag.pipelines.llamaindex import document_loader as loader_module
 
     image_path = tmp_path / "photo.png"
     image_path.write_bytes(b"\x89PNG\r\n")

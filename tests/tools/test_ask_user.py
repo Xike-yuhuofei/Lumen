@@ -7,7 +7,7 @@ single-question shorthand which auto-wraps into a one-element list.
 
 from __future__ import annotations
 
-from deeptutor.tools.ask_user import (
+from lumen.runtime.tools.builtin.ask_user import (
     MAX_HEADER_CHARS,
     MAX_OPTION_CHARS,
     MAX_OPTION_DESC_CHARS,

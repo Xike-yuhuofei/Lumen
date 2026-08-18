@@ -7,13 +7,14 @@ from typing import Any
 
 import pytest
 
-from deeptutor.agents.chat.agent_loop import InlineThinkFilter
-from deeptutor.agents.chat.agentic_pipeline import AgenticChatPipeline
-from deeptutor.capabilities.mastery import MASTERY_TOOL_NAMES
-from deeptutor.core.context import Attachment, UnifiedContext
-from deeptutor.core.stream import StreamEvent, StreamEventType
-from deeptutor.core.stream_bus import StreamBus
-from deeptutor.core.tool_protocol import ToolResult
+from lumen.modes.learn.chat_tools import MASTERY_TOOL_NAMES
+from lumen.modes.learn.loop_capability import MasteryLoopCapability
+from lumen.runtime.agent_loop.providers.legacy.agent_loop import InlineThinkFilter
+from lumen.runtime.agent_loop.providers.legacy.agentic_pipeline import AgenticChatPipeline
+from lumen.runtime.context import Attachment, UnifiedContext
+from lumen.runtime.stream.bus import StreamBus
+from lumen.runtime.stream.events import StreamEvent, StreamEventType
+from lumen.runtime.tool_protocol import ToolResult
 
 
 async def _collect_bus_events(bus: StreamBus) -> tuple[list[StreamEvent], asyncio.Task[Any]]:
@@ -152,7 +153,7 @@ class _Registry:
 @pytest.fixture(autouse=True)
 def _fake_llm_config(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "deeptutor.agents.chat.agentic_pipeline.get_llm_config",
+        "lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.get_llm_config",
         lambda: SimpleNamespace(
             binding="openai",
             model="gpt-test",
@@ -1198,11 +1199,11 @@ def test_compose_enabled_tools_injects_rag_when_kb_selected(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "deeptutor.services.memory.get_memory_store",
+        "lumen.shared.memory.store.get_memory_store",
         lambda: SimpleNamespace(read_raw=lambda *_args, **_kwargs: ""),
     )
     monkeypatch.setattr(
-        "deeptutor.services.notebook.get_notebook_manager",
+        "lumen.shared.notebook.service.get_notebook_manager",
         lambda: SimpleNamespace(list_notebooks=lambda: []),
     )
     pipeline = AgenticChatPipeline.__new__(AgenticChatPipeline)
@@ -1224,16 +1225,17 @@ def test_compose_enabled_tools_mounts_mastery_plugin_only_in_mastery_mode(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "deeptutor.services.memory.get_memory_store",
+        "lumen.shared.memory.store.get_memory_store",
         lambda: SimpleNamespace(read_raw=lambda *_args, **_kwargs: ""),
     )
     monkeypatch.setattr(
-        "deeptutor.services.notebook.get_notebook_manager",
+        "lumen.shared.notebook.service.get_notebook_manager",
         lambda: SimpleNamespace(list_notebooks=lambda: []),
     )
     pipeline = AgenticChatPipeline.__new__(AgenticChatPipeline)
     pipeline._deferred_loader = None
     pipeline._exec_enabled = False
+    pipeline._loop_capabilities = (MasteryLoopCapability(),)
     pipeline.registry = SimpleNamespace(
         get_enabled=lambda selected: [SimpleNamespace(name=n) for n in selected]
     )
@@ -1256,6 +1258,7 @@ def test_compose_enabled_tools_mounts_mastery_plugin_only_in_mastery_mode(
 
 def test_augment_tool_kwargs_injects_mastery_path_id() -> None:
     pipeline = AgenticChatPipeline.__new__(AgenticChatPipeline)
+    pipeline._loop_capabilities = (MasteryLoopCapability(),)
     context = UnifiedContext(
         user_message="teach",
         metadata={"mastery_mode": True, "mastery_path_id": "book-1"},

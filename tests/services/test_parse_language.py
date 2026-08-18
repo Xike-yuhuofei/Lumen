@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import pytest
 
-from deeptutor.services.config import parse_language
-from deeptutor.services.prompt import get_prompt_manager
+from lumen.runtime.prompt import get_prompt_manager
+from lumen.shared.config import parse_language
 
 
 def prompt_file_chain(code: str) -> list[str]:

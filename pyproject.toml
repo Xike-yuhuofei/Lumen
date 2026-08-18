@@ -176,19 +176,19 @@ all = [
 include-package-data = true
 
 [tool.setuptools.dynamic]
-version = {attr = "deeptutor.__version__.__version__"}
+version = {attr = "lumen.__version__.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["deeptutor*", "deeptutor_cli*", "lumen*"]
+include = ["deeptutor_cli*", "deeptutor_web*", "lumen*"]
 
 [tool.setuptools.package-data]
-# Runtime data shipped inside the deeptutor package: prompt YAMLs (loaded by
-# PromptManager from PACKAGE_ROOT/deeptutor/.../prompts/*.yaml), markdown
+# Runtime data shipped inside the lumen package: prompt YAMLs (loaded by
+# PromptManager from PACKAGE_ROOT/lumen/.../prompts/*.yaml), markdown
 # templates (builtin SKILL.md files), and helper shell
 # scripts. Without these, ``pip install deeptutor`` ships a wheel missing
 # every agent prompt and capability fails at first use.
-deeptutor = [
+lumen = [
     "**/*.yaml",
     "**/*.yml",
     "**/*.md",
@@ -328,7 +328,7 @@ line-ending = "auto"
 # Ruff import sorting (isort replacement)
 # ============================================
 [tool.ruff.lint.isort]
-known-first-party = ["deeptutor", "deeptutor_cli", "scripts", "lumen"]
+known-first-party = ["deeptutor_cli", "scripts", "lumen"]
 force-sort-within-sections = true
 split-on-trailing-comma = true
 
@@ -351,7 +351,7 @@ max-complexity = 10
 # Pytest configuration
 # ============================================
 [tool.pytest.ini_options]
-testpaths = ["tests", "deeptutor/learning/tests"]
+testpaths = ["tests", "lumen/modes/learn/tests"]
 pythonpath = ["."]
 markers = [
     "asyncio: mark async tests that require pytest-asyncio",
@@ -388,10 +388,6 @@ no_implicit_optional = false
 [[tool.mypy.overrides]]
 module = "tests.*"
 ignore_errors = true
-
-[[tool.mypy.overrides]]
-module = "deeptutor.tools.*"
-ignore_errors = true  # Some tools may have dynamic imports
 
 # ============================================
 # Bandit security linting configuration

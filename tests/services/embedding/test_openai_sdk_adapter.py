@@ -13,11 +13,11 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from deeptutor.services.embedding.adapters.base import (
+from lumen.shared._util.embedding.adapters.base import (
     EmbeddingProviderError,
     EmbeddingRequest,
 )
-from deeptutor.services.embedding.adapters.openai_sdk import (
+from lumen.shared._util.embedding.adapters.openai_sdk import (
     OpenAISDKEmbeddingAdapter,
 )
 
@@ -92,7 +92,7 @@ def stub_client(monkeypatch: pytest.MonkeyPatch) -> type[_ClientStub]:
     _ClientStub.last_create_kwargs = {}
     _ClientStub.raised = None
     monkeypatch.setattr(
-        "deeptutor.services.embedding.adapters.openai_sdk.AsyncOpenAI",
+        "lumen.shared._util.embedding.adapters.openai_sdk.AsyncOpenAI",
         _ClientStub,
     )
     return _ClientStub

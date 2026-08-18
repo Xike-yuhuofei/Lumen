@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from deeptutor.services.persona.service import (
+from lumen.shared.persona.service import (
     InvalidPersonaNameError,
     PersonaExistsError,
     PersonaNotFoundError,

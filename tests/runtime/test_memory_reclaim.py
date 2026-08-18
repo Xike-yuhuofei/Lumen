@@ -4,7 +4,7 @@ import asyncio
 
 import pytest
 
-from deeptutor.runtime import memory_reclaim
+from lumen.runtime import memory_reclaim
 
 
 @pytest.mark.asyncio

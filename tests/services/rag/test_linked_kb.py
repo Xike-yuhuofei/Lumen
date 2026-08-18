@@ -13,10 +13,10 @@ from pathlib import Path
 
 import pytest
 
-from deeptutor.services.rag import embedding_signature as emb_sig
-from deeptutor.services.rag.index_versioning import EmbeddingSignature
-from deeptutor.services.rag.kb_paths import resolve_kb_dir
-from deeptutor.services.rag.linked_kb import (
+from lumen.shared.knowledge.rag import embedding_signature as emb_sig
+from lumen.shared.knowledge.rag.index_versioning import EmbeddingSignature
+from lumen.shared.knowledge.rag.kb_paths import resolve_kb_dir
+from lumen.shared.knowledge.rag.linked_kb import (
     assert_path_allowed,
     probe_linked_folder,
     provider_is_linkable,

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import ReactDOM from 'react-dom'
+import { getLearningProgressMap, GoalMap, LearningGoal } from '../api/learning'
 import { PRODUCT_NAME } from './brand'
 
 type IconSvgProps = { name: string; size?: number }
@@ -40,10 +41,11 @@ const PageIcon: React.FC<IconSvgProps> = ({ name, size = 16 }) => {
 }
 
 /* ============ NewTaskPage ============ */
-export function NewTaskPage({ composer }: { composer: React.ReactNode }) {
+export function NewTaskPage({ composer, sidebarBar }: { composer: React.ReactNode; sidebarBar?: React.ReactNode }) {
   return (
     <>
       <header className="header-x7rPuS">
+        {sidebarBar && <div className="headerLeft-rH3lhm">{sidebarBar}</div>}
         <div className="headerCenter-cba9zB"></div>
         <div className="headerRight-QHfr9M"></div>
       </header>
@@ -83,11 +85,12 @@ export function NewTaskPage({ composer }: { composer: React.ReactNode }) {
 
 const WORK_PPT_SUB = ['经验分享', '活动复盘', '商业计划'] as const
 
-export function WorkHomePage({ composer }: { composer: React.ReactNode }) {
+export function WorkHomePage({ composer, sidebarBar }: { composer: React.ReactNode; sidebarBar?: React.ReactNode }) {
   const [pptOpen, setPptOpen] = useState(false)
   return (
     <>
       <header className="header-x7rPuS">
+        {sidebarBar && <div className="headerLeft-rH3lhm">{sidebarBar}</div>}
         <div className="headerCenter-cba9zB" />
         <div className="headerRight-QHfr9M">
           <span className="downloadChip-trae">下载桌面端</span>
@@ -157,10 +160,11 @@ const DESIGN_CARDS = [
   { title: '规范出图', desc: '规范出图：对齐设计规范，产出高保真 SaaS 系统' },
 ] as const
 
-export function DesignHomePage({ composer }: { composer: React.ReactNode }) {
+export function DesignHomePage({ composer, sidebarBar }: { composer: React.ReactNode; sidebarBar?: React.ReactNode }) {
   return (
     <>
       <header className="header-x7rPuS">
+        {sidebarBar && <div className="headerLeft-rH3lhm">{sidebarBar}</div>}
         <div className="headerCenter-cba9zB" />
         <div className="headerRight-QHfr9M">
           <span className="downloadChip-trae">下载桌面端</span>
@@ -199,10 +203,11 @@ export function DesignHomePage({ composer }: { composer: React.ReactNode }) {
   )
 }
 
-export function ModeShellPage({ title }: { title: string }) {
+export function ModeShellPage({ title, sidebarBar }: { title: string; sidebarBar?: React.ReactNode }) {
   return (
     <div className="contentWrapper-U1GjQr">
       <header className="header-x7rPuS">
+        {sidebarBar && <div className="headerLeft-rH3lhm">{sidebarBar}</div>}
         <div className="headerCenter-cba9zB" />
         <div className="headerRight-QHfr9M" />
       </header>
@@ -351,23 +356,6 @@ const AutomationIcon: React.FC<{ iconKey: string }> = ({ iconKey }) => {
   )
 }
 
-type SpaceExample = {
-  name: string
-  desc: string
-  iconKey: string
-}
-
-const spaceExamples: SpaceExample[] = [
-  { name: '线性代数', desc: '围绕方程组、向量和矩阵组织资料与对话。', iconKey: 'summary' },
-  { name: '论文精读', desc: '把论文、笔记和后续对话放在同一个上下文里。', iconKey: 'news' },
-  { name: '英语阅读', desc: '先放阅读材料，再在这个空间里继续往下读。', iconKey: 'sentiment' },
-  { name: '统计基础', desc: '这个空间里的资料和对话与其他主题分开。', iconKey: 'competitor' },
-  { name: '写作练习', desc: '可以先有一个空空间，稍后再放入资料。', iconKey: 'stock' },
-  { name: '历史笔记', desc: '用来放史料和自己的笔记，不是进度看板。', iconKey: 'security' },
-  { name: '程序设计', desc: '围绕题目和代码练习组织学习。', iconKey: 'bug' },
-  { name: '经济学导论', desc: '用来放教材章节和相关对话。', iconKey: 'coverage' },
-]
-
 const headerBtnBase: React.CSSProperties = {
   alignItems: 'center',
   borderRadius: '6px',
@@ -381,24 +369,95 @@ const headerBtnBase: React.CSSProperties = {
   padding: '0 12px',
 }
 
-interface AutomationPageProps {
-  onContinueLearning?: () => void
+/* ============ Learning Space (学习空间) ============ */
+const STAGE_LABELS: Record<string, string> = {
+  diagnostic: '摸底诊断',
+  explain: '讲解中',
+  feynman_check: '理解检查',
+  practice: '练习中',
+  error_diagnosis: '纠错中',
+  review: '复习中',
+  completed: '已完成',
 }
 
-export function AutomationPage({ onContinueLearning }: AutomationPageProps) {
-  const [selectedSpace, setSelectedSpace] = useState<SpaceExample | null>(null)
+const ACTION_LABELS: Record<string, string> = {
+  answer_pending: '回答待批改的问题',
+  review: '间隔复习',
+  probe: '先测一测，可跳过已掌握内容',
+  practice: '继续练习',
+  assess: '检验理解',
+  complete: '目标已完成',
+}
+
+// Backend policy reasons are authored in English; map the known templates to
+// learner-facing Chinese so "为什么现在学这个" reads naturally.
+const REASON_LABELS: Record<string, string> = {
+  answer_pending: '有一个问题等你作答，回答后我会批改并继续。',
+  review: '这个知识点到了间隔复习时间，复习防止遗忘。',
+  probe: '这个知识点还没学过，先测一测能否直接跳过。',
+  practice: '这个知识点还没达到掌握线，继续练习直到达标。',
+  assess: '需要你用自己的话解释这个概念，确认真正理解。',
+  complete: '目标内所有知识点都已掌握。',
+}
+
+interface AutomationPageProps {
+  goals: LearningGoal[]
+  loading: boolean
+  error: string
+  onContinueLearning: (goal: LearningGoal) => void
+  onCreateGoal: (title: string, description?: string) => void
+  onRenameGoal: (bookId: string, title: string) => void
+  onDeleteGoal: (bookId: string) => void
+  onRefresh: () => void
+  sidebarBar?: React.ReactNode
+}
+
+export function AutomationPage({
+  goals,
+  loading,
+  error,
+  onContinueLearning,
+  onCreateGoal,
+  onRenameGoal,
+  onDeleteGoal,
+  onRefresh,
+  sidebarBar,
+}: AutomationPageProps) {
+  const [selectedGoal, setSelectedGoal] = useState<LearningGoal | null>(null)
   const [creating, setCreating] = useState(false)
+  const [renaming, setRenaming] = useState<LearningGoal | null>(null)
+  const [menuFor, setMenuFor] = useState<string | null>(null)
 
   return (
     <div className="root-Bkr7v6">
+      {sidebarBar && (
+        <header className="header-x7rPuS">
+          <div className="headerLeft-rH3lhm">{sidebarBar}</div>
+          <div className="headerCenter-cba9zB" />
+          <div className="headerRight-QHfr9M" />
+        </header>
+      )}
       <div className="scrollArea-fvGujy">
         <div className="scrollContent-Q7fN_Z">
           <div className="headerRail-GfhRry">
             <div className="titleGroup-R6DD_m">
               <h1 className="title-yQrHui">学习空间</h1>
-              <p className="subtitle-Gi_Tjb">长期学习上下文。下面是页面示例，不是你已经建好的空间。</p>
+              <p className="subtitle-Gi_Tjb">你的学习目标与进度。新建目标后，在这里继续学习或查看掌握状态。</p>
             </div>
             <div className="headerActions-TKXare" style={{ display: 'flex', gap: '8px' }}>
+              <button
+                type="button"
+                className="button-muTeiY secondary-J0eGRO large-psSWuL"
+                style={{
+                  ...headerBtnBase,
+                  background: 'transparent',
+                  border: '1px solid var(--border-border-neutral-l2)',
+                  color: 'var(--text-text-default)',
+                }}
+                onClick={onRefresh}
+              >
+                <span>刷新</span>
+              </button>
               <button
                 type="button"
                 className="button-muTeiY primary-ZG2S1H large-psSWuL"
@@ -410,75 +469,195 @@ export function AutomationPage({ onContinueLearning }: AutomationPageProps) {
                 }}
                 onClick={() => setCreating(true)}
               >
-                <span>＋ 新建空间</span>
+                <span>＋ 新建学习目标</span>
               </button>
             </div>
           </div>
           <div className="contentRail-dRMjXS">
             <div className="container-YgYmSM">
-              {spaceExamples.map((space) => (
-                <div
-                  key={space.name}
-                  className="card-_oFXKS"
-                  onClick={() => setSelectedSpace(space)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <AutomationIcon iconKey={space.iconKey} />
-                  <div className="cardTextGroup-KWTVxc">
-                    <span className="cardName-LP1Fhu">{space.name}</span>
-                    <span className="cardDescription-VEKD4l">{space.desc}</span>
-                  </div>
-                  <button
-                    type="button"
-                    className="button-muTeiY secondary-J0eGRO"
-                    style={{
-                      ...headerBtnBase,
-                      background: 'transparent',
-                      border: '1px solid var(--border-border-neutral-l2)',
-                      color: 'var(--text-text-default)',
-                      fontSize: '13px',
-                      marginTop: '8px',
-                      alignSelf: 'flex-start',
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onContinueLearning?.()
-                    }}
-                  >
-                    继续学习
-                  </button>
+              {loading && (
+                <p className="learningSpaceHint" style={{ color: 'var(--text-text-secondary)', fontSize: 13 }}>
+                  正在加载学习目标…
+                </p>
+              )}
+              {!loading && error && (
+                <div className="learningSpaceError" style={{
+                  border: '1px solid var(--status-error-default, #f65a5a)',
+                  borderRadius: 8, padding: '12px 16px',
+                  color: 'var(--status-error-default, #f65a5a)', fontSize: 13, marginBottom: 12,
+                }}>
+                  {error}
                 </div>
-              ))}
+              )}
+              {!loading && !error && goals.length === 0 && (
+                <div className="learningSpaceEmpty" style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-text-secondary)' }}>
+                  <p style={{ fontSize: 14, marginBottom: 8 }}>还没有学习目标</p>
+                  <p style={{ fontSize: 13 }}>点击「＋ 新建学习目标」开始，导入资料后由 Lumen 帮你制定学习计划。</p>
+                </div>
+              )}
+              {goals.map((goal) => {
+                const stageLabel = STAGE_LABELS[goal.current_stage] || goal.current_stage
+                return (
+                  <div
+                    key={goal.book_id}
+                    className="card-_oFXKS"
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => setSelectedGoal(goal)}
+                  >
+                    <AutomationIcon iconKey="summary" />
+                    <div className="cardTextGroup-KWTVxc">
+                      <span className="cardName-LP1Fhu">{goal.name || goal.book_id}</span>
+                      <span className="cardDescription-VEKD4l" style={{ display: 'block' }}>
+                        {goal.description || (goal.goal_name ? '学习目标 · 等待制定学习计划' : '学习进度')}
+                      </span>
+                      <span
+                        className="goalProgressLine"
+                        style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, fontSize: 12, color: 'var(--text-text-secondary)' }}
+                      >
+                        <span className="goalProgressTrack" style={{ position: 'relative', display: 'inline-block', width: 120, height: 6, borderRadius: 3, background: 'var(--bg-bg-overlay-l1)' }}>
+                          <span
+                            className="goalProgressFill"
+                            style={{ position: 'absolute', left: 0, top: 0, height: '100%', borderRadius: 3, background: 'var(--bg-bg-invert)' }}
+                            aria-hidden
+                          />
+                        </span>
+                        <span>掌握 {goal.avg_mastery_pct}%</span>
+                        <span>·</span>
+                        <span>{stageLabel}</span>
+                        <span>·</span>
+                        <span>{goal.kp_count > 0 ? `${goal.kp_count} 个知识点` : '计划未生成'}</span>
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end' }}>
+                      <button
+                        type="button"
+                        className="button-muTeiY primary-ZG2S1H"
+                        style={{
+                          ...headerBtnBase,
+                          background: 'var(--bg-bg-invert)',
+                          border: 'none',
+                          color: 'var(--text-text-onaccent)',
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onContinueLearning(goal)
+                        }}
+                      >
+                        继续学习
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="更多操作"
+                        className="goalMenuBtn"
+                        style={{
+                          ...headerBtnBase,
+                          background: 'transparent',
+                          border: 'none',
+                          color: 'var(--text-text-secondary)',
+                          padding: '0 4px',
+                          height: 24,
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setMenuFor((cur) => (cur === goal.book_id ? null : goal.book_id))
+                        }}
+                      >
+                        <PageIcon name="down" size={14} />
+                      </button>
+                      {menuFor === goal.book_id && (
+                        <div
+                          className="goalMenu"
+                          role="menu"
+                          style={{
+                            position: 'absolute',
+                            background: 'var(--bg-bg-overlay-l2, #1f2024)',
+                            border: '1px solid var(--border-border-neutral-l2)',
+                            borderRadius: 6,
+                            padding: 4,
+                            zIndex: 20,
+                            minWidth: 120,
+                          }}
+                        >
+                          <button type="button" role="menuitem" style={goalMenuBtnStyle} onClick={(e) => { e.stopPropagation(); setRenaming(goal); setMenuFor(null) }}>重命名</button>
+                          <button type="button" role="menuitem" style={{ ...goalMenuBtnStyle, color: 'var(--status-error-default, #f65a5a)' }} onClick={(e) => { e.stopPropagation(); onDeleteGoal(goal.book_id); setMenuFor(null) }}>删除</button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
         </div>
       </div>
-      {selectedSpace && (
-        <SpaceDetailModal
-          space={selectedSpace}
-          onClose={() => setSelectedSpace(null)}
+      {selectedGoal && (
+        <GoalDetailModal
+          goal={selectedGoal}
+          onClose={() => setSelectedGoal(null)}
           onContinueLearning={() => {
-            setSelectedSpace(null)
-            onContinueLearning?.()
+            setSelectedGoal(null)
+            onContinueLearning(selectedGoal)
           }}
         />
       )}
       {creating && (
-        <CreateSpaceModal onClose={() => setCreating(false)} />
+        <CreateGoalModal
+          onClose={() => setCreating(false)}
+          onCreate={(title, description) => {
+            setCreating(false)
+            onCreateGoal(title, description)
+          }}
+        />
+      )}
+      {renaming && (
+        <RenameGoalModal
+          goal={renaming}
+          onClose={() => setRenaming(null)}
+          onRename={(title) => {
+            setRenaming(null)
+            onRenameGoal(renaming.book_id, title)
+          }}
+        />
       )}
     </div>
   )
 }
 
-function SpaceDetailModal({
-  space,
+const goalMenuBtnStyle: React.CSSProperties = {
+  background: 'transparent',
+  border: 'none',
+  borderRadius: 4,
+  color: 'var(--text-text-default)',
+  cursor: 'pointer',
+  display: 'block',
+  fontSize: 13,
+  height: 28,
+  lineHeight: '20px',
+  padding: '0 10px',
+  textAlign: 'left',
+  width: '100%',
+}
+
+function GoalDetailModal({
+  goal,
   onClose,
   onContinueLearning,
 }: {
-  space: SpaceExample
+  goal: LearningGoal
   onClose: () => void
   onContinueLearning: () => void
 }) {
+  const [map, setMap] = useState<GoalMap | null>(null)
+  const [mapError, setMapError] = useState('')
+
+  useEffect(() => {
+    let cancelled = false
+    getLearningProgressMap(goal.book_id)
+      .then((data) => { if (!cancelled) setMap(data) })
+      .catch(() => { if (!cancelled) setMapError('无法加载进度，请稍后重试') })
+    return () => { cancelled = true }
+  }, [goal.book_id])
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -487,14 +666,23 @@ function SpaceDetailModal({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [onClose])
 
+  const goalCounts = map?.map.goal
+  const counts = map?.map.counts
+  const next = map?.next
+  const progressPct = goalCounts && goalCounts.total > 0
+    ? Math.round((goalCounts.mastered / goalCounts.total) * 100)
+    : 0
+  const actionLabel = (next && ACTION_LABELS[next.action]) || (next ? next.action : '')
+  const nextTopic = next?.knowledge_point_name || next?.module_name || ''
+
   return ReactDOM.createPortal(
     <div className="detailMask-W8jDqu" onClick={onClose}>
-      <div className="detailPanel-NZOW7g" onClick={(e) => e.stopPropagation()} style={{ width: '480px', height: 'auto' }}>
+      <div className="detailPanel-NZOW7g" onClick={(e) => e.stopPropagation()} style={{ width: '520px', height: 'auto' }}>
         <div className="detailBody-mX1HCM">
           <div className="detailInfoSection-c234JE">
             <div className="detailTitleGroup-cpT99c">
-              <h2 className="detailTitle-X7zIZu">{space.name}</h2>
-              <p className="detailDescription-kBy0Ek">长期学习上下文</p>
+              <h2 className="detailTitle-X7zIZu">{goal.name || goal.book_id}</h2>
+              <p className="detailDescription-kBy0Ek">学习目标 · 进度详情</p>
             </div>
             <button className="detailCloseBtn-cE6qVp" onClick={onClose} style={{
               alignItems: 'center', background: 'transparent', border: 'none',
@@ -505,10 +693,90 @@ function SpaceDetailModal({
               <PageIcon name="close" size={20} />
             </button>
           </div>
-          <div style={{ padding: '20px', color: 'var(--text-text-secondary)', fontSize: '14px', lineHeight: '22px' }}>
-            <p>{space.desc}</p>
-            <p style={{ marginTop: '12px' }}>空间用来放资料和对话，不是对话本身，也不是课程目录。</p>
-            <p style={{ marginTop: '12px' }}>现在点「继续学习」只会回到现有对话界面，不会新开一段学习。</p>
+          <div style={{ padding: '4px 20px 20px', color: 'var(--text-text-secondary)', fontSize: 14, lineHeight: '22px' }}>
+            {mapError && <p style={{ color: 'var(--status-error-default, #f65a5a)', fontSize: 13 }}>{mapError}</p>}
+            {!map && !mapError && <p>正在加载进度…</p>}
+            {map && goalCounts && (
+              <>
+                <div className="goalDetailProgress" style={{ marginBottom: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 6 }}>
+                    <span style={{ color: 'var(--text-text-default)' }}>目标整体进度</span>
+                    <span>{goalCounts.mastered} / {goalCounts.total} 已掌握（{progressPct}%）</span>
+                  </div>
+                  <div className="goalProgressTrack" style={{ position: 'relative', display: 'inline-block', width: '100%', height: 8, borderRadius: 4, background: 'var(--bg-bg-overlay-l1)' }}>
+                    <span
+                      className="goalProgressFill"
+                      style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: `${progressPct}%`, borderRadius: 4, background: 'var(--bg-bg-invert)' }}
+                      aria-hidden
+                    />
+                  </div>
+                </div>
+                {goalCounts.total === 0 ? (
+                  <div style={{ border: '1px solid var(--border-border-neutral-l2)', borderRadius: 8, padding: '12px 16px', marginBottom: 12 }}>
+                    <p style={{ color: 'var(--text-text-default)', fontSize: 14, fontWeight: 500, marginBottom: 4 }}>学习计划尚未生成</p>
+                    <p style={{ fontSize: 13 }}>点击「继续学习」，Lumen 会根据你的目标帮你制定学习计划并开始教学。</p>
+                  </div>
+                ) : map.map.complete ? (
+                  <div style={{ border: '1px solid var(--border-border-neutral-l2)', borderRadius: 8, padding: '12px 16px', marginBottom: 12 }}>
+                    <p style={{ color: 'var(--text-text-default)', fontSize: 14, fontWeight: 500, marginBottom: 4 }}>🎉 目标已完成</p>
+                    <p style={{ fontSize: 13 }}>所有知识点均已掌握，无待复习内容。可以开始新的学习目标。</p>
+                  </div>
+                ) : (
+                  next && (
+                    <div style={{ border: '1px solid var(--border-border-neutral-l2)', borderRadius: 8, padding: '12px 16px', marginBottom: 12 }}>
+                      <p style={{ color: 'var(--text-text-default)', fontSize: 14, fontWeight: 500, marginBottom: 4 }}>下一步：{actionLabel}</p>
+                      <p style={{ fontSize: 13, marginBottom: 4 }}>{nextTopic ? `正在学习：${nextTopic}` : ''}</p>
+                      <p style={{ fontSize: 12, color: 'var(--text-text-secondary)' }}>{REASON_LABELS[next.action] || next.reason}</p>
+                      {next.action !== 'complete' && next.knowledge_point_name && (
+                        <p style={{ fontSize: 12, marginTop: 6, color: 'var(--text-text-secondary)' }}>
+                          掌握度 {Math.round((next.mastery ?? 0) * 100)}%（阈值 {Math.round((next.threshold ?? 0) * 100)}%）
+                        </p>
+                      )}
+                    </div>
+                  )
+                )}
+                {counts && (
+                  <div style={{ display: 'flex', gap: 16, fontSize: 12, marginBottom: 12 }}>
+                    <span>未开始 <b style={{ color: 'var(--text-text-default)' }}>{counts.new}</b></span>
+                    <span>学习中 <b style={{ color: 'var(--text-text-default)' }}>{counts.learning}</b></span>
+                    <span>已掌握 <b style={{ color: 'var(--text-text-default)' }}>{counts.mastered}</b></span>
+                    {map.map.due_reviews > 0 && <span>待复习 <b style={{ color: 'var(--status-warning-default, #e8a23d)' }}>{map.map.due_reviews}</b></span>}
+                  </div>
+                )}
+                {map.map.modules.length > 0 && (
+                  <div style={{ fontSize: 13 }}>
+                    {map.map.modules.map((mod) => (
+                      <div key={mod.id} style={{ marginBottom: 10 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                          <span style={{ color: 'var(--text-text-default)' }}>{mod.name}</span>
+                          <span style={{ color: 'var(--text-text-secondary)' }}>{mod.mastered} / {mod.total}</span>
+                        </div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                          {mod.knowledge_points.map((kp) => (
+                            <span
+                              key={kp.id}
+                              title={`${kp.name}（${kp.status}，掌握 ${Math.round(kp.mastery * 100)}%）`}
+                              style={{
+                                display: 'inline-block',
+                                width: 10,
+                                height: 10,
+                                borderRadius: 3,
+                                background: kp.status === 'mastered'
+                                  ? 'var(--status-success-default, #25b14c)'
+                                  : kp.status === 'learning'
+                                    ? 'var(--status-warning-default, #e8a23d)'
+                                    : 'var(--bg-bg-overlay-l2)',
+                              }}
+                              aria-hidden
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
           </div>
           <div className="detailActionBar-BhqrLr">
             <button className="detailBtn-j5pRnW" onClick={onClose} style={{
@@ -535,9 +803,10 @@ function SpaceDetailModal({
   )
 }
 
-function CreateSpaceModal({ onClose }: { onClose: () => void }) {
+function CreateGoalModal({ onClose, onCreate }: { onClose: () => void; onCreate: (title: string, description?: string) => void }) {
   const [name, setName] = useState('')
-  const [notice, setNotice] = useState(false)
+  const [description, setDescription] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -553,8 +822,8 @@ function CreateSpaceModal({ onClose }: { onClose: () => void }) {
         <div className="detailBody-mX1HCM">
           <div className="detailInfoSection-c234JE">
             <div className="detailTitleGroup-cpT99c">
-              <h2 className="detailTitle-X7zIZu">新建空间</h2>
-              <p className="detailDescription-kBy0Ek">现在还不会保存</p>
+              <h2 className="detailTitle-X7zIZu">新建学习目标</h2>
+              <p className="detailDescription-kBy0Ek">起个名字，Lumen 会在对话里帮你制定学习计划</p>
             </div>
             <button className="detailCloseBtn-cE6qVp" onClick={onClose} style={{
               alignItems: 'center', background: 'transparent', border: 'none',
@@ -566,34 +835,31 @@ function CreateSpaceModal({ onClose }: { onClose: () => void }) {
             </button>
           </div>
           <div style={{ padding: '20px', color: 'var(--text-text-secondary)', fontSize: '14px', lineHeight: '22px' }}>
-            {notice ? (
-              <p>现在还不能真正创建空间。接入之后，这里才会保存。</p>
-            ) : (
-              <>
-                <label htmlFor="space-name-input" style={{ display: 'block', marginBottom: '8px', color: 'var(--text-text-default)' }}>
-                  空间名称
-                </label>
-                <input
-                  id="space-name-input"
-                  className="input-yEGQlg"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="例如：线性代数"
-                  style={{
-                    width: '100%',
-                    background: 'var(--bg-bg-input)',
-                    border: '1px solid var(--border-border-neutral-l2)',
-                    borderRadius: '6px',
-                    color: 'var(--text-text-default)',
-                    fontSize: '14px',
-                    height: '32px',
-                    outline: 'none',
-                    padding: '0 10px',
-                  }}
-                />
-                <p style={{ marginTop: '12px' }}>提交后不会显示创建成功，也不会出现在空间列表里。</p>
-              </>
-            )}
+            <label htmlFor="goal-name-input" style={{ display: 'block', marginBottom: '8px', color: 'var(--text-text-default)' }}>
+              目标名称
+            </label>
+            <input
+              id="goal-name-input"
+              className="input-yEGQlg"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="例如：掌握线性代数第三章"
+              style={goalInputStyle}
+            />
+            <label htmlFor="goal-desc-input" style={{ display: 'block', marginTop: 16, marginBottom: '8px', color: 'var(--text-text-default)' }}>
+              想学什么（可选）
+            </label>
+            <input
+              id="goal-desc-input"
+              className="input-yEGQlg"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="例如：围绕教材第三章，重点掌握行列式与特征值"
+              style={goalInputStyle}
+            />
+            <p style={{ marginTop: 12, fontSize: 12 }}>
+              创建后会打开一段引导学习，Lumen 会根据你的目标生成学习计划。
+            </p>
           </div>
           <div className="detailActionBar-BhqrLr">
             <button className="detailBtn-j5pRnW" onClick={onClose} style={{
@@ -602,24 +868,112 @@ function CreateSpaceModal({ onClose }: { onClose: () => void }) {
               display: 'inline-flex', fontSize: '13px', fontWeight: 500, gap: '6px',
               height: '32px', justifyContent: 'center', lineHeight: '20px', padding: '0 12px',
             }}>
-              {notice ? '知道了' : '取消'}
+              取消
             </button>
-            {!notice && (
-              <button className="detailBtnPrimary-NtBx72" onClick={() => setNotice(true)} style={{
+            <button
+              className="detailBtnPrimary-NtBx72"
+              disabled={!name.trim() || submitting}
+              onClick={() => { setSubmitting(true); onCreate(name.trim(), description.trim() || undefined) }}
+              style={{
                 background: 'var(--bg-bg-invert)', borderRadius: '4px',
-                color: 'var(--text-text-onaccent)', cursor: 'pointer',
+                color: 'var(--text-text-onaccent)', cursor: name.trim() && !submitting ? 'pointer' : 'not-allowed',
                 display: 'inline-flex', fontSize: '13px', fontWeight: 500, gap: '6px',
                 height: '32px', justifyContent: 'center', lineHeight: '20px', padding: '0 12px',
-              }}>
-                创建空间
-              </button>
-            )}
+                opacity: name.trim() && !submitting ? 1 : 0.6,
+              }}
+            >
+              {submitting ? '创建中…' : '创建目标'}
+            </button>
           </div>
         </div>
       </div>
     </div>,
     document.body
   )
+}
+
+function RenameGoalModal({ goal, onClose, onRename }: { goal: LearningGoal; onClose: () => void; onRename: (title: string) => void }) {
+  const [name, setName] = useState(goal.name || '')
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
+
+  return ReactDOM.createPortal(
+    <div className="detailMask-W8jDqu" onClick={onClose}>
+      <div className="detailPanel-NZOW7g" onClick={(e) => e.stopPropagation()} style={{ width: '480px', height: 'auto' }}>
+        <div className="detailBody-mX1HCM">
+          <div className="detailInfoSection-c234JE">
+            <div className="detailTitleGroup-cpT99c">
+              <h2 className="detailTitle-X7zIZu">重命名学习目标</h2>
+              <p className="detailDescription-kBy0Ek">改名不会影响已记录的进度</p>
+            </div>
+            <button className="detailCloseBtn-cE6qVp" onClick={onClose} style={{
+              alignItems: 'center', background: 'transparent', border: 'none',
+              borderRadius: '4px', color: 'var(--icon-icon-secondary)',
+              cursor: 'pointer', display: 'flex', height: '32px',
+              justifyContent: 'center', width: '32px',
+            }}>
+              <PageIcon name="close" size={20} />
+            </button>
+          </div>
+          <div style={{ padding: '20px' }}>
+            <label htmlFor="goal-rename-input" style={{ display: 'block', marginBottom: '8px', color: 'var(--text-text-default)' }}>
+              目标名称
+            </label>
+            <input
+              id="goal-rename-input"
+              className="input-yEGQlg"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              style={goalInputStyle}
+            />
+          </div>
+          <div className="detailActionBar-BhqrLr">
+            <button className="detailBtn-j5pRnW" onClick={onClose} style={{
+              background: 'transparent', border: '1px solid var(--border-border-neutral-l2)',
+              borderRadius: '4px', color: 'var(--text-text-default)', cursor: 'pointer',
+              display: 'inline-flex', fontSize: '13px', fontWeight: 500, gap: '6px',
+              height: '32px', justifyContent: 'center', lineHeight: '20px', padding: '0 12px',
+            }}>
+              取消
+            </button>
+            <button
+              className="detailBtnPrimary-NtBx72"
+              disabled={!name.trim()}
+              onClick={() => { onRename(name.trim()); onClose() }}
+              style={{
+                background: 'var(--bg-bg-invert)', borderRadius: '4px',
+                color: 'var(--text-text-onaccent)', cursor: name.trim() ? 'pointer' : 'not-allowed',
+                display: 'inline-flex', fontSize: '13px', fontWeight: 500, gap: '6px',
+                height: '32px', justifyContent: 'center', lineHeight: '20px', padding: '0 12px',
+                opacity: name.trim() ? 1 : 0.6,
+              }}
+            >
+              保存
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body
+  )
+}
+
+const goalInputStyle: React.CSSProperties = {
+  width: '100%',
+  background: 'var(--bg-bg-input)',
+  border: '1px solid var(--border-border-neutral-l2)',
+  borderRadius: '6px',
+  color: 'var(--text-text-default)',
+  fontSize: '14px',
+  height: '32px',
+  outline: 'none',
+  padding: '0 10px',
 }
 
 /* ============ Plugin Marketplace Page ============ */
@@ -697,9 +1051,10 @@ export interface PluginData {
 interface MarketplacePageProps {
   onSelectPlugin: (plugin: PluginData) => void
   onSelectSkill: (skill: SkillData) => void
+  sidebarBar?: React.ReactNode
 }
 
-export function MarketplacePage({ onSelectPlugin, onSelectSkill }: MarketplacePageProps) {
+export function MarketplacePage({ onSelectPlugin, onSelectSkill, sidebarBar }: MarketplacePageProps) {
   const [activeTab, setActiveTab] = useState<'plugins' | 'skills'>('plugins')
   const [activeCategory, setActiveCategory] = useState('全部')
   const [searchText, setSearchText] = useState('')
@@ -737,7 +1092,15 @@ export function MarketplacePage({ onSelectPlugin, onSelectSkill }: MarketplacePa
   }
 
   return (
-    <div className="marketplacePage-U60AB4">
+    <>
+      {sidebarBar && (
+        <header className="header-x7rPuS">
+          <div className="headerLeft-rH3lhm">{sidebarBar}</div>
+          <div className="headerCenter-cba9zB" />
+          <div className="headerRight-QHfr9M" />
+        </header>
+      )}
+      <div className="marketplacePage-U60AB4">
       <div className="root-Bkr7v6">
         <div className="scrollArea-fvGujy">
           <div className="scrollContent-Q7fN_Z">
@@ -960,6 +1323,7 @@ export function MarketplacePage({ onSelectPlugin, onSelectSkill }: MarketplacePa
         </div>
       </div>
     </div>
+    </>
   )
 }
 

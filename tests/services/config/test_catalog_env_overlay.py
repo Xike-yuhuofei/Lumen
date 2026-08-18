@@ -8,7 +8,7 @@ from typing import Any
 
 import pytest
 
-from deeptutor.services.config.model_catalog import ModelCatalogService
+from lumen.shared.config.model_catalog import ModelCatalogService
 
 
 def _write_env(path: Path, lines: list[str]) -> None:

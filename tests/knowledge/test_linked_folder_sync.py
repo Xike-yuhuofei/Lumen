@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from deeptutor.knowledge.manager import KnowledgeBaseManager
+from lumen.shared.knowledge.manager import KnowledgeBaseManager
 
 
 def _manager_with_linked_folder(tmp_path: Path) -> tuple[KnowledgeBaseManager, Path, str, Path]:

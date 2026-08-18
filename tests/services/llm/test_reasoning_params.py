@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from deeptutor.services.llm.reasoning_params import (
+from lumen.shared._util.llm.reasoning_params import (
     build_openai_compatible_reasoning_kwargs,
     default_reasoning_effort_for,
 )

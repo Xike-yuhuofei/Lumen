@@ -27,7 +27,9 @@ class _AgentServiceAdapter(AgentService):
         self._llm_service = llm_service
 
     async def create_pipeline(self, language: str = "en", **config: Any) -> Any:
-        from deeptutor.agents.chat.agentic_pipeline import AgenticChatPipeline
+        from lumen.runtime.agent_loop.providers.legacy.agentic_pipeline import (
+            AgenticChatPipeline,
+        )
 
         if "registry" not in config:
             config["registry"] = self._tool_service

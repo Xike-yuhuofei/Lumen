@@ -12,9 +12,6 @@ from typing import Any
 
 import pytest
 
-from deeptutor.core.context import UnifiedContext
-from deeptutor.core.stream import StreamEventType
-from deeptutor.core.stream_bus import StreamBus
 from lumen.agent_loop_langchain import LangChainAgentLoopPlugin
 from lumen.agent_loop_langchain.plugins import _LangChainAgentLoopAdapter
 from lumen.bakeoff_profiles import (
@@ -25,6 +22,9 @@ from lumen.bakeoff_profiles import (
     non_agent_loop_plugin_ids,
 )
 from lumen.kernel import Bootstrap
+from lumen.runtime.context import UnifiedContext
+from lumen.runtime.stream.bus import StreamBus
+from lumen.runtime.stream.events import StreamEventType
 from tests.kernel.bakeoff_fakes import (
     FakeBakeoffToolService,
     ScriptedLangChainModel,
@@ -199,7 +199,7 @@ async def test_langchain_tool_error_is_contained():
     """A tool that raises must not kill the turn."""
     tools = FakeBakeoffToolService()
 
-    from deeptutor.core.tool_protocol import BaseTool, ToolDefinition, ToolResult
+    from lumen.runtime.tool_protocol import BaseTool, ToolDefinition, ToolResult
 
     class BoomTool(BaseTool):
         def get_definition(self) -> ToolDefinition:
@@ -243,7 +243,7 @@ async def _legacy_run_scenario(
 ) -> Any:
     """Run one scenario through the real legacy pipeline, returning a
     ``ScenarioResult``-shaped object compatible with ``summarize``."""
-    from deeptutor.agents.chat.agentic_pipeline import AgenticChatPipeline
+    from lumen.runtime.agent_loop.providers.legacy.agentic_pipeline import AgenticChatPipeline
     from tests.kernel.bakeoff_fakes import ScriptedOpenAIClient
     from tests.kernel.bakeoff_harness import ScenarioResult
 

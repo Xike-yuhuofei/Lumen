@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from deeptutor.services.config.runtime_settings import RuntimeSettingsService
+from lumen.shared.config.runtime_settings import RuntimeSettingsService
 
 
 def test_llamaindex_defaults_when_absent(tmp_path: Path) -> None:
@@ -64,7 +64,7 @@ def test_llamaindex_profile_env_override(tmp_path: Path) -> None:
 
 
 def test_chunk_geometry_preserves_zero_overlap(monkeypatch) -> None:
-    from deeptutor.services.rag.pipelines.llamaindex import config
+    from lumen.shared.knowledge.rag.pipelines.llamaindex import config
 
     monkeypatch.setattr(
         config,

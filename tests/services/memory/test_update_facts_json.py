@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from deeptutor.services.memory.consolidator.modes import update as update_mode
+from lumen.shared.memory.consolidator.modes import update as update_mode
 
 
 def test_parse_facts_tolerates_trailing_brace_prose() -> None:

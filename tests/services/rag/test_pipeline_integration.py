@@ -89,7 +89,7 @@ class PipelineIntegrationTest:
         print_info(f"Created temp directory: {self.temp_dir}")
 
         # Initialize service with temp directory
-        from deeptutor.services.rag import RAGService
+        from lumen.shared.knowledge.rag import RAGService
 
         self.service = RAGService(kb_base_dir=self.temp_dir, provider=self.pipeline_name)
 
@@ -201,7 +201,7 @@ class PipelineIntegrationTest:
         print("\n  🔧 Testing via rag_tool.py...")
 
         try:
-            from deeptutor.tools.rag_tool import rag_search
+            from lumen.runtime.tools.builtin.rag_tool import rag_search
 
             result = await rag_search(
                 query="What does Shandong have?",
@@ -301,7 +301,7 @@ class PipelineIntegrationTest:
 
 def get_available_pipelines():
     """Get list of available pipelines"""
-    from deeptutor.services.rag import RAGService
+    from lumen.shared.knowledge.rag import RAGService
 
     return [p["id"] for p in RAGService.list_providers()]
 

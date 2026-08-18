@@ -23,9 +23,9 @@ from typing import Any
 
 import pytest
 
-from deeptutor.core.stream import StreamEvent, StreamEventType
-from deeptutor.services.session.sqlite_store import SQLiteSessionStore
-from deeptutor.services.session.turn_runtime import TurnRuntimeManager
+from lumen.runtime.session.sqlite_store import SQLiteSessionStore
+from lumen.runtime.session.turn_runtime import TurnRuntimeManager
+from lumen.runtime.stream.events import StreamEvent, StreamEventType
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Shared fakes
@@ -160,18 +160,16 @@ def _attach_bootstrap(bootstrap: Any | None = None) -> Any | None:
 def _patch_legacy_runtime(monkeypatch: pytest.MonkeyPatch) -> None:
     """Patch the legacy services the turn runtime still touches, so the
     test drives the routing without a live LLM / store backend."""
-    monkeypatch.setattr("deeptutor.services.llm.config.get_llm_config", lambda: SimpleNamespace())
+    monkeypatch.setattr("lumen.shared._util.llm.config.get_llm_config", lambda: SimpleNamespace())
+    monkeypatch.setattr("lumen.runtime.session.context_builder.ContextBuilder", _FakeContextBuilder)
     monkeypatch.setattr(
-        "deeptutor.services.session.context_builder.ContextBuilder", _FakeContextBuilder
-    )
-    monkeypatch.setattr(
-        "deeptutor.services.memory.get_memory_store",
+        "lumen.shared.memory.store.get_memory_store",
         lambda: SimpleNamespace(
             read_l3_concat=lambda: "## Memory\n## Preferences\n- Be concise.",
             emit=_noop_async,
         ),
     )
-    monkeypatch.setattr("deeptutor.services.persona.get_persona_service", _fake_persona_service)
+    monkeypatch.setattr("lumen.shared.persona.get_persona_service", _fake_persona_service)
 
 
 async def _wait_for_reply_queue(
@@ -365,7 +363,8 @@ async def test_ws_chat_turn_boots_kernel_on_demand(
     previous = _attach_bootstrap(None)
     try:
         monkeypatch.setattr(
-            "deeptutor.agents.chat.agentic_pipeline.AgenticChatPipeline", lambda **kw: probe
+            "lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.AgenticChatPipeline",
+            lambda **kw: probe,
         )
         _patch_legacy_runtime(monkeypatch)
 

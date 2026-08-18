@@ -6,10 +6,10 @@ import os
 
 import pytest
 
-from deeptutor.services.config.provider_runtime import ResolvedLLMConfig
-from deeptutor.services.llm import config as config_module
-from deeptutor.services.llm.config import LLMConfig
-from deeptutor.services.llm.exceptions import LLMConfigError
+from lumen.shared._util.llm import config as config_module
+from lumen.shared._util.llm.config import LLMConfig
+from lumen.shared._util.llm.exceptions import LLMConfigError
+from lumen.shared.config.provider_runtime import ResolvedLLMConfig
 
 
 def _reset_config_cache() -> None:

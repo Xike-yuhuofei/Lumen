@@ -1,4 +1,4 @@
-from deeptutor.core.agentic.labels import classify_label, find_inline_labels
+from lumen.runtime.agent_loop.engine.labels import classify_label, find_inline_labels
 
 _ALLOWED = ("FINISH", "TOOL", "THINK", "PAUSE")
 

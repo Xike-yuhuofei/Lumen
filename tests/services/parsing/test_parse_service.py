@@ -4,10 +4,10 @@ from pathlib import Path
 
 import pytest
 
-from deeptutor.services.parsing import base, signature
-import deeptutor.services.parsing.service as svc_mod
-from deeptutor.services.parsing.service import ParseService
-from deeptutor.services.parsing.types import ParserError
+from lumen.shared.knowledge.parsing import base, signature
+import lumen.shared.knowledge.parsing.service as svc_mod
+from lumen.shared.knowledge.parsing.service import ParseService
+from lumen.shared.knowledge.parsing.types import ParserError
 
 
 class _FakeParser:

@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from deeptutor.services.rag.index_probe import (
+from lumen.shared.knowledge.rag.index_probe import (
     has_ready_provider_index,
     inspect_kb_versions,
     inspect_provider_index,

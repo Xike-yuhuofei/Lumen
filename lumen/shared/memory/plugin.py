@@ -9,7 +9,7 @@ from lumen.shared.contract import MemoryService
 
 
 class _MemoryServiceAdapter(MemoryService):
-    """Wraps ``deeptutor.services.memory.store.MemoryStore``."""
+    """Wraps ``lumen.shared.memory.store.MemoryStore``."""
 
     def __init__(self, store: Any) -> None:
         self._store = store
@@ -43,6 +43,6 @@ class MemoryPlugin(Plugin):
     manifest = PluginManifest(id="memory", provides=["memory"])
 
     async def setup(self, ctx: PluginContext) -> None:
-        from deeptutor.services.memory.store import get_memory_store
+        from lumen.shared.memory.store import get_memory_store
 
         ctx.provide("memory", _MemoryServiceAdapter(get_memory_store()))

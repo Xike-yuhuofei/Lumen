@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import pytest
 
-from deeptutor.services.embedding.adapters.openai_compatible import (
+from lumen.shared._util.embedding.adapters.openai_compatible import (
     OpenAICompatibleEmbeddingAdapter,
 )
 

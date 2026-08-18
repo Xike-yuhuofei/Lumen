@@ -13,7 +13,7 @@ import json
 from pathlib import Path
 import shutil
 
-from deeptutor.knowledge.manager import KnowledgeBaseManager
+from lumen.shared.knowledge.manager import KnowledgeBaseManager
 
 
 def _seed_kb(manager: KnowledgeBaseManager, name: str) -> Path:

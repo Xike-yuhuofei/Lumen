@@ -6,9 +6,9 @@ from typing import Any
 
 import pytest
 
-from deeptutor.core.agentic.labeled_step import run_labeled_step
-from deeptutor.core.stream import StreamEventType
-from deeptutor.core.stream_bus import StreamBus
+from lumen.runtime.agent_loop.engine.labeled_step import run_labeled_step
+from lumen.runtime.stream.bus import StreamBus
+from lumen.runtime.stream.events import StreamEventType
 
 
 def _chunk(content: str | None = None) -> SimpleNamespace:

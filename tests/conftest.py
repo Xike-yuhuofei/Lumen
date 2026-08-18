@@ -9,8 +9,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from deeptutor.core.context import Attachment, UnifiedContext
-from deeptutor.core.stream_bus import StreamBus
+from lumen.runtime.context import Attachment, UnifiedContext
+from lumen.runtime.stream.bus import StreamBus
 
 # ---------------------------------------------------------------------------
 # Multi-user legacy migration guard
@@ -27,7 +27,7 @@ def _tree_snapshot(root: Path) -> frozenset[str]:
 #: guard below always watches the developer's real tree, whatever a test does.
 _REAL_OWNER_SECRET_TREES: tuple[Path, ...] = ()
 try:  # pragma: no cover - import-time wiring
-    from deeptutor.services.user import SYSTEM_ROOT as _REAL_SYSTEM_ROOT
+    from lumen.shared._util.user import SYSTEM_ROOT as _REAL_SYSTEM_ROOT
 
     _REAL_OWNER_SECRET_TREES = (
         _REAL_SYSTEM_ROOT / "user-secrets",
@@ -127,7 +127,7 @@ def tmp_db_path(tmp_path: Path) -> Path:
 @pytest.fixture
 def sqlite_store(tmp_db_path: Path):
     """SQLiteSessionStore backed by a temp file."""
-    from deeptutor.services.session.sqlite_store import SQLiteSessionStore
+    from lumen.runtime.session.sqlite_store import SQLiteSessionStore
 
     return SQLiteSessionStore(db_path=tmp_db_path)
 
