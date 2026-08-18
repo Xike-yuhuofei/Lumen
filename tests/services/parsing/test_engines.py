@@ -226,7 +226,7 @@ def test_liteparse_readiness_reflects_install() -> None:
 
 
 def test_liteparse_config_rejects_unknown_image_mode_and_coerces_strings() -> None:
-    from deeptutor.services.config.runtime_settings import RuntimeSettingsService
+    from lumen.shared.config.runtime_settings import RuntimeSettingsService
 
     normalized = RuntimeSettingsService._normalize_liteparse_engine(
         None,  # type: ignore[arg-type] - pure function of its argument

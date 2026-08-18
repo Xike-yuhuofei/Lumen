@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional
 
 import yaml
 
-from deeptutor.services.config.loader import get_runtime_settings_dir
+from lumen.shared.config.loader import get_runtime_settings_dir
 
 from .runtime_home import PACKAGE_ROOT
 
@@ -107,8 +107,8 @@ class ConfigManager:
         return {"missing": missing}
 
     def _runtime_key_values(self) -> Dict[str, str]:
-        from deeptutor.services.config.model_catalog import ModelCatalogService
-        from deeptutor.services.config.runtime_settings import RuntimeSettingsService
+        from lumen.shared.config.model_catalog import ModelCatalogService
+        from lumen.shared.config.runtime_settings import RuntimeSettingsService
 
         settings_dir = get_runtime_settings_dir(self.project_root)
         catalog_service = ModelCatalogService(settings_dir / "model_catalog.json")

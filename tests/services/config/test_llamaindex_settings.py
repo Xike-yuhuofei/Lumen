@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from deeptutor.services.config.runtime_settings import RuntimeSettingsService
+from lumen.shared.config.runtime_settings import RuntimeSettingsService
 
 
 def test_llamaindex_defaults_when_absent(tmp_path: Path) -> None:

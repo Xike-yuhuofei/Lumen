@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import Any, Callable, Dict, List
 
-from deeptutor.services.config.runtime_settings import (
+from lumen.shared.config.runtime_settings import (
     DOCUMENT_PARSING_ENGINE_DOCLING,
     DOCUMENT_PARSING_ENGINE_LITEPARSE,
     DOCUMENT_PARSING_ENGINE_MARKITDOWN,

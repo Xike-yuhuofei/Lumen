@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from deeptutor.services.config.runtime_settings import (
+from lumen.shared.config.runtime_settings import (
     MINERU_MODE_CLOUD,
     MINERU_MODE_LOCAL,
     load_mineru_settings,

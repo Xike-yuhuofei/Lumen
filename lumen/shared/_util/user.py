@@ -404,7 +404,7 @@ def resolve_kb_manifest(
 
 
 def admin_catalog_service() -> Any:
-    from deeptutor.services.config.model_catalog import ModelCatalogService
+    from lumen.shared.config.model_catalog import ModelCatalogService
 
     return ModelCatalogService(path=get_admin_path_service().get_settings_file("model_catalog"))
 
@@ -446,7 +446,7 @@ def owner_catalog_service() -> Any:
     Single-user mode: the owner is always the local admin, so this is the
     shared deployment catalog.
     """
-    from deeptutor.services.config.model_catalog import ModelCatalogService
+    from lumen.shared.config.model_catalog import ModelCatalogService
 
     return ModelCatalogService.get_instance(
         get_owner_path_service().get_settings_file("model_catalog")

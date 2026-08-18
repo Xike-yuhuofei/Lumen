@@ -107,7 +107,7 @@ def test_jina_truncates_results_to_max_results(monkeypatch) -> None:
 
 
 def test_provider_metadata_comes_from_the_spec_table() -> None:
-    from deeptutor.services.config import SEARCH_PROVIDERS
+    from lumen.shared.config import SEARCH_PROVIDERS
 
     for cls in (SerperProvider, TavilyProvider, BraveProvider, JinaProvider):
         spec = SEARCH_PROVIDERS[cls.name]
@@ -192,7 +192,7 @@ def test_new_providers_carry_max_results_and_proxy(module, cls_name, read_limit,
 
 @pytest.mark.parametrize(("module", "cls_name", "_read_limit"), _NEW_PROVIDERS)
 def test_new_provider_metadata_comes_from_the_spec_table(module, cls_name, _read_limit) -> None:
-    from deeptutor.services.config import SEARCH_PROVIDERS
+    from lumen.shared.config import SEARCH_PROVIDERS
 
     cls = _provider_class(module, cls_name)
     spec = SEARCH_PROVIDERS[cls.name]

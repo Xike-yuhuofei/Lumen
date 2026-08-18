@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from deeptutor.services.config.provider_runtime import (
+from lumen.shared.config.provider_runtime import (
     EMBEDDING_PROVIDERS,
     resolve_embedding_runtime_config,
 )

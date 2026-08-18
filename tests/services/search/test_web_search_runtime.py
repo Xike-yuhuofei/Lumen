@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from deeptutor.services.config.provider_runtime import ResolvedSearchConfig
 from deeptutor.services.search import web_search
 from deeptutor.services.search.types import WebSearchResponse
+from lumen.shared.config.provider_runtime import ResolvedSearchConfig
 
 
 class _FakeProvider:

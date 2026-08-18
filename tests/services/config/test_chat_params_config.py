@@ -7,8 +7,8 @@ from typing import Any
 
 import yaml
 
-from deeptutor.services.config import loader as loader_module
-from deeptutor.services.config.loader import (
+from lumen.shared.config import loader as loader_module
+from lumen.shared.config.loader import (
     DEFAULT_CHAT_PARAMS,
     get_chat_params,
 )

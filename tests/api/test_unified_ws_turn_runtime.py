@@ -272,7 +272,7 @@ async def test_turn_runtime_persists_llm_selection_in_turn_snapshot(
         ), object()
 
     monkeypatch.setattr(
-        "deeptutor.services.config.get_model_catalog_service",
+        "lumen.shared.config.get_model_catalog_service",
         lambda: SimpleNamespace(load=_model_catalog),
     )
     monkeypatch.setattr(
@@ -427,7 +427,7 @@ async def test_turn_runtime_rejects_invalid_llm_selection(
     store = SQLiteSessionStore(tmp_path / "chat_history.db")
     runtime = TurnRuntimeManager(store)
     monkeypatch.setattr(
-        "deeptutor.services.config.get_model_catalog_service",
+        "lumen.shared.config.get_model_catalog_service",
         lambda: SimpleNamespace(load=_model_catalog),
     )
 
@@ -500,7 +500,7 @@ async def test_turn_runtime_allows_model_switching_within_same_session(
         )
 
     monkeypatch.setattr(
-        "deeptutor.services.config.get_model_catalog_service",
+        "lumen.shared.config.get_model_catalog_service",
         lambda: SimpleNamespace(load=_model_catalog),
     )
     monkeypatch.setattr(

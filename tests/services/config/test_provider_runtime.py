@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from deeptutor.services.config.provider_runtime import (
+from lumen.shared.config.provider_runtime import (
     SEARCH_PROVIDERS,
     resolve_llm_runtime_config,
     resolve_search_runtime_config,

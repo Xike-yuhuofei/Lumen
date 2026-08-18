@@ -13,7 +13,7 @@ import logging
 from pathlib import Path
 from typing import Callable, Optional
 
-from deeptutor.services.config.runtime_settings import (
+from lumen.shared.config.runtime_settings import (
     _DEFAULT_DOCUMENT_PARSING_ENGINE,
     load_document_parsing_settings,
 )

@@ -937,7 +937,7 @@ def test_update_config_coerces_legacy_provider_to_llamaindex() -> None:
 
     fake_service = _FakeConfigService()
 
-    config_module = importlib.import_module("deeptutor.services.config")
+    config_module = importlib.import_module("lumen.shared.config")
     app = _build_app()
 
     with pytest.MonkeyPatch.context() as monkeypatch:

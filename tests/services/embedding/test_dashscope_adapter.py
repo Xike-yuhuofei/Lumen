@@ -200,7 +200,7 @@ def test_get_model_info_reports_multimodal_capability() -> None:
 def test_dashscope_endpoint_routing(model: str, multimodal: bool, endpoint_tail: str) -> None:
     # Issue #660: the single source of truth that decides text vs multimodal
     # DashScope endpoint per model.
-    from deeptutor.services.config.embedding_endpoint import (
+    from lumen.shared.config.embedding_endpoint import (
         dashscope_embedding_endpoint,
         is_dashscope_multimodal_embedding_model,
     )

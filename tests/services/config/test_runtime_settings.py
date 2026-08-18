@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from deeptutor.services.config.runtime_settings import (
+from lumen.shared.config.runtime_settings import (
     RuntimeSettingsService,
     ensure_runtime_settings_files,
 )
@@ -193,8 +193,8 @@ def test_startup_ensure_creates_missing_runtime_jsons_with_defaults(
     _clear_runtime_env(monkeypatch)
     settings_dir = tmp_path / "settings"
 
-    from deeptutor.services.config import model_catalog as model_catalog_module
-    from deeptutor.services.config import runtime_settings as runtime_settings_module
+    from lumen.shared.config import model_catalog as model_catalog_module
+    from lumen.shared.config import runtime_settings as runtime_settings_module
 
     runtime_settings_module.RuntimeSettingsService._instances.clear()
     model_catalog_module.ModelCatalogService._instances.clear()
@@ -304,7 +304,7 @@ def test_mineru_process_env_override(tmp_path: Path) -> None:
 def test_document_parsing_v1_to_v2_migration(tmp_path: Path) -> None:
     """A legacy flat mineru.json is folded into engines.mineru on first load,
     with the active engine pinned to MinerU (preserve existing behavior)."""
-    from deeptutor.services.config.runtime_settings import _atomic_write_json
+    from lumen.shared.config.runtime_settings import _atomic_write_json
 
     service = RuntimeSettingsService(tmp_path / "settings", process_env={})
     legacy = {
@@ -345,7 +345,7 @@ def test_document_parsing_v1_to_v2_migration(tmp_path: Path) -> None:
 def test_document_parsing_legacy_filename_rename(tmp_path: Path) -> None:
     """A pre-existing v2 ``mineru.json`` is renamed to ``document_parsing.json``
     on first load, preserving its contents."""
-    from deeptutor.services.config.runtime_settings import _atomic_write_json
+    from lumen.shared.config.runtime_settings import _atomic_write_json
 
     service = RuntimeSettingsService(tmp_path / "settings", process_env={})
     existing = service.save_document_parsing({"engine": "docling"})
@@ -453,7 +453,7 @@ def test_chat_attachment_limits_env_overrides(tmp_path: Path) -> None:
 
 
 def test_compute_ws_max_size_floor_and_inflation() -> None:
-    from deeptutor.services.config.runtime_settings import compute_ws_max_size
+    from lumen.shared.config.runtime_settings import compute_ws_max_size
 
     # Small totals never drop below uvicorn's 16MB default.
     assert compute_ws_max_size(1 * 1024 * 1024) == 16 * 1024 * 1024

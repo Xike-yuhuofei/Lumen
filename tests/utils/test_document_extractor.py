@@ -377,7 +377,7 @@ class TestExtractDocumentsFromRecords:
 
     def test_limits_come_from_settings_layer(self, monkeypatch) -> None:
         """extract_documents_from_records honors the configured policy."""
-        from deeptutor.services.config import runtime_settings as rs
+        from lumen.shared.config import runtime_settings as rs
 
         # Tiny caps prove the configured values flow through (defaults would
         # accept everything here).
@@ -420,7 +420,7 @@ class TestExtractDocumentsFromRecords:
         assert "quota exceeded" in doc_texts[1]
 
     def test_char_budget_comes_from_settings_layer(self, monkeypatch) -> None:
-        from deeptutor.services.config import runtime_settings as rs
+        from lumen.shared.config import runtime_settings as rs
 
         monkeypatch.setattr(
             rs,

@@ -273,7 +273,7 @@ def test_embedding_client_propagates_send_dimensions_to_adapter(
 
 def test_every_registered_provider_has_adapter() -> None:
     """All EMBEDDING_PROVIDERS entries must resolve to a valid adapter class."""
-    from deeptutor.services.config.provider_runtime import EMBEDDING_PROVIDERS
+    from lumen.shared.config.provider_runtime import EMBEDDING_PROVIDERS
 
     for name in EMBEDDING_PROVIDERS:
         cls = _resolve_adapter_class(name)

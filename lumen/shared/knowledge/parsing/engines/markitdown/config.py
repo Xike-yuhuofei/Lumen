@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from deeptutor.services.config.runtime_settings import (
+from lumen.shared.config.runtime_settings import (
     DOCUMENT_PARSING_ENGINE_MARKITDOWN,
     load_document_parsing_settings,
 )

@@ -8,15 +8,15 @@ from typing import Any
 import pytest
 
 from deeptutor.api.routers import settings as settings_router
-from deeptutor.services.config.provider_runtime import (
-    ResolvedEmbeddingConfig,
-    ResolvedLLMConfig,
-)
-from deeptutor.services.config.runtime_settings import RuntimeSettingsService
 from deeptutor.services.embedding import client as embedding_client_module
 from deeptutor.services.embedding import config as embedding_config_module
 from deeptutor.services.llm import client as llm_client_module
 from deeptutor.services.llm import config as llm_config_module
+from lumen.shared.config.provider_runtime import (
+    ResolvedEmbeddingConfig,
+    ResolvedLLMConfig,
+)
+from lumen.shared.config.runtime_settings import RuntimeSettingsService
 
 
 def test_load_ui_settings_migrates_legacy_language_to_response_language(

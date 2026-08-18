@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from deeptutor.services.config.launch_settings import load_launch_settings
+from lumen.shared.config.launch_settings import load_launch_settings
 
 
 def _settings_dir(root: Path) -> Path:
