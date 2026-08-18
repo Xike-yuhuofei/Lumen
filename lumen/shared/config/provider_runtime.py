@@ -8,7 +8,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 from deeptutor.services.model_selection import LLMSelection, apply_llm_selection_to_catalog
-from deeptutor.services.provider_registry import (
+from lumen.shared._util.provider_registry import (
     NANOBOT_LLM_PROVIDERS,
     PROVIDERS,
     ProviderSpec,
