@@ -19,7 +19,7 @@ import sys
 
 # Importing this module first is the worst case: it pulls in providers.text,
 # which triggers the provider package's own initialisation.
-_CANARY = "deeptutor.runtime.registry.deferred_tools"
+_CANARY = "lumen.runtime.tools.deferred_tools"
 
 
 def test_registry_imports_without_a_provider_cycle() -> None:
