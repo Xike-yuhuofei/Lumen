@@ -21,7 +21,7 @@ def _fake_llm_config(monkeypatch: pytest.MonkeyPatch) -> None:
         "deeptutor.agents.chat.agentic_pipeline.get_llm_config",
         lambda: cfg,
     )
-    monkeypatch.setattr("deeptutor.agents.base_agent.get_llm_config", lambda: cfg)
+    monkeypatch.setattr("lumen.runtime.agents.base_agent.get_llm_config", lambda: cfg)
 
 
 def test_agentic_chat_final_prompt_uses_selected_language(

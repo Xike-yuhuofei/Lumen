@@ -14,8 +14,8 @@ import logging
 import time
 from typing import Any, AsyncGenerator, Awaitable, Callable
 
-from deeptutor.config.settings import settings
-from deeptutor.services.prompt import get_prompt_manager
+from lumen.runtime.prompt import get_prompt_manager
+from lumen.shared._util.agent_params import get_agent_params
 from lumen.shared._util.llm import complete as llm_complete
 from lumen.shared._util.llm import (
     get_llm_config,
@@ -24,8 +24,8 @@ from lumen.shared._util.llm import (
     supports_response_format,
 )
 from lumen.shared._util.llm import stream as llm_stream
+from lumen.shared._util.llm.settings import settings
 from lumen.shared._util.logging import LLMStats
-from lumen.shared.config import get_agent_params
 
 
 class BaseAgent(ABC):

@@ -7,9 +7,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from deeptutor.agents.base_agent import BaseAgent
 from deeptutor.core.trace import build_trace_metadata, new_call_id
 from deeptutor.services.prompt.language import append_language_directive
+from lumen.runtime.agents.base_agent import BaseAgent
 
 
 class FollowupAgent(BaseAgent):

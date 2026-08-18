@@ -58,7 +58,7 @@ class UsageTracker:
         user_prompt: str = "",
         response_text: str = "",
     ) -> None:
-        """Adapter for :class:`~deeptutor.agents.base_agent.BaseAgent`.
+        """Adapter for :class:`~lumen.runtime.agents.base_agent.BaseAgent`.
 
         ``BaseAgent._track_tokens`` looks for an external tracker exposing
         ``add_usage(...)``; this method lets a :class:`UsageTracker` be

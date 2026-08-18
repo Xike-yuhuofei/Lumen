@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import AsyncGenerator
 
-from deeptutor.services.prompt.manager import get_prompt_manager
+from lumen.runtime.prompt.manager import get_prompt_manager
 from lumen.shared._util.llm import clean_thinking_tags, get_llm_config, get_token_limit_kwargs
 from lumen.shared._util.llm import stream as llm_stream
 

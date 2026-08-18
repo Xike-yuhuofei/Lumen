@@ -10,8 +10,8 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from deeptutor.agents.notebook import NotebookSummarizeAgent
 from deeptutor.services.notebook import notebook_manager
+from lumen.runtime.agents.notebook import NotebookSummarizeAgent
 from lumen.shared._util.llm import clean_thinking_tags
 
 router = APIRouter()

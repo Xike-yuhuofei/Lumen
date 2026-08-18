@@ -1379,7 +1379,6 @@ class TurnRuntimeManager:
             return await reply_queue.get()
 
         try:
-            from deeptutor.agents.notebook import NotebookAnalysisAgent
             from deeptutor.core.context import Attachment, UnifiedContext
             from deeptutor.services.memory import get_memory_store
             from deeptutor.services.model_selection.runtime import (
@@ -1390,6 +1389,7 @@ class TurnRuntimeManager:
             )
             from deeptutor.services.notebook import get_notebook_manager
             from deeptutor.services.session.context_builder import ContextBuilder
+            from lumen.runtime.agents.notebook import NotebookAnalysisAgent
 
             request_config = dict(payload.get("config", {}) or {})
             followup_question_context = _extract_followup_question_context(request_config)

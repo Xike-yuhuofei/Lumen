@@ -5,10 +5,10 @@ from __future__ import annotations
 import logging
 from typing import Any, Awaitable, Callable
 
-from deeptutor.core.stream import StreamEvent, StreamEventType
-from deeptutor.core.trace import build_trace_metadata, derive_trace_metadata, new_call_id
-from deeptutor.services.prompt.manager import get_prompt_manager
-from deeptutor.utils.json_parser import parse_json_response
+from lumen.runtime.prompt.manager import get_prompt_manager
+from lumen.runtime.stream.events import StreamEvent, StreamEventType
+from lumen.runtime.stream.trace import build_trace_metadata, derive_trace_metadata, new_call_id
+from lumen.shared._util.json_parser import parse_json_response
 from lumen.shared._util.llm import clean_thinking_tags, get_llm_config, get_token_limit_kwargs
 from lumen.shared._util.llm import stream as llm_stream
 
@@ -35,7 +35,7 @@ class NotebookAnalysisAgent:
         self.base_url = getattr(self.llm_config, "base_url", None)
         self.api_version = getattr(self.llm_config, "api_version", None)
         self.binding = getattr(self.llm_config, "binding", None) or "openai"
-        # Prompts come from deeptutor/agents/notebook/prompts/{en,zh}/analysis_agent.yaml
+        # Prompts come from lumen/runtime/agents/notebook/prompts/{en,zh}/analysis_agent.yaml
         # so the three-stage notebook reasoning loop stays bilingual without
         # carrying language-specific text in this file.
         self._prompts = get_prompt_manager().load_prompts(

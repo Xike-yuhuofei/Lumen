@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from deeptutor.agents.base_agent import BaseAgent
+from lumen.runtime.agents.base_agent import BaseAgent
 from lumen.shared._util.llm.config import LLMConfig
 
 
@@ -21,7 +21,7 @@ def test_base_agent_defaults_to_resolved_binding(monkeypatch) -> None:
         provider_name="openrouter",
         provider_mode="gateway",
     )
-    monkeypatch.setattr("deeptutor.agents.base_agent.get_llm_config", lambda: resolved)
+    monkeypatch.setattr("lumen.runtime.agents.base_agent.get_llm_config", lambda: resolved)
 
     agent = _DummyAgent(
         module_name="question",

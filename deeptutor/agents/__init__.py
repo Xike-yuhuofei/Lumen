@@ -8,7 +8,7 @@ This module provides a unified BaseAgent class and module-specific agents:
   (Deep Solve also runs here, via the solve loop capability)
 
 Usage:
-    from deeptutor.agents.base_agent import BaseAgent
+    from lumen.runtime.agents.base_agent import BaseAgent
 
     class MyAgent(BaseAgent):
         async def process(self, *args, **kwargs):
@@ -22,7 +22,7 @@ __all__ = ["BaseAgent"]
 
 def __getattr__(name: str):
     if name == "BaseAgent":
-        value = import_module(f"{__name__}.base_agent").BaseAgent
+        value = import_module("lumen.runtime.agents.base_agent").BaseAgent
     else:
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
     globals()[name] = value
