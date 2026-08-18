@@ -9,7 +9,7 @@ from lumen.shared.contract import NotebookService
 
 
 class _NotebookServiceAdapter(NotebookService):
-    """Wraps ``deeptutor.services.notebook.service.NotebookManager``."""
+    """Wraps ``lumen.shared.notebook.service.NotebookManager``."""
 
     def __init__(self, manager: Any) -> None:
         self._manager = manager
@@ -62,6 +62,6 @@ class NotebookPlugin(Plugin):
     manifest = PluginManifest(id="notebook", provides=["notebook"])
 
     async def setup(self, ctx: PluginContext) -> None:
-        from deeptutor.services.notebook.service import get_notebook_manager
+        from lumen.shared.notebook.service import get_notebook_manager
 
         ctx.provide("notebook", _NotebookServiceAdapter(get_notebook_manager()))
