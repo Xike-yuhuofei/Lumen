@@ -8,12 +8,12 @@ OpenRouter, Azure OpenAI and local vLLM/LM Studio; add bespoke providers
 
 from __future__ import annotations
 
+from ..base import BaseSTTAdapter, BaseTTSAdapter, VoiceProviderError
 from .openai_compat import (
     OpenAICompatSTTAdapter,
     OpenAICompatTTSAdapter,
     OpenRouterTTSAdapter,
 )
-from ..base import BaseSTTAdapter, BaseTTSAdapter, VoiceProviderError
 
 TTS_ADAPTERS: dict[str, BaseTTSAdapter] = {
     "openai_compat": OpenAICompatTTSAdapter(),

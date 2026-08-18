@@ -9,8 +9,8 @@ from pathlib import Path
 import traceback
 from typing import Any, Callable, Dict, List, Optional
 
-from lumen.shared._util.runtime_home import get_runtime_data_root
 from lumen.shared._util.embedding import get_embedding_config
+from lumen.shared._util.runtime_home import get_runtime_data_root
 from lumen.shared.knowledge.rag.embedding_signature import signature_from_embedding_config
 from lumen.shared.knowledge.rag.index_versioning import (
     EmbeddingSignature,

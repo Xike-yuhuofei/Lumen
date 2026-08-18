@@ -21,10 +21,10 @@ from typing import Any, Iterable
 from llama_index.core import Document
 from llama_index.core.schema import ImageNode
 
+from lumen.shared._util.document_validator import DocumentValidator
 from lumen.shared._util.embedding import get_embedding_client
 from lumen.shared._util.llm.client import get_llm_client
 from lumen.shared.knowledge.rag.file_routing import FileTypeRouter
-from lumen.shared._util.document_validator import DocumentValidator
 
 IMAGE_DESCRIPTION_SYSTEM_PROMPT = (
     "You describe images for a retrieval-augmented knowledge base. "

@@ -182,7 +182,8 @@ class RAGService:
         if event_sink is None:
             return contextlib.nullcontext()
 
-        from dataclasses import dataclass as _dataclass, field as _field
+        from dataclasses import dataclass as _dataclass
+        from dataclasses import field as _field
 
         @_dataclass(frozen=True)
         class _ProcessLogEvent:

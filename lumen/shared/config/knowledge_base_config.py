@@ -5,13 +5,13 @@ import logging
 from pathlib import Path
 from typing import Any
 
+from lumen.shared._util.path_service import get_path_service
 from lumen.shared.knowledge.rag.factory import (
     DEFAULT_PROVIDER,
     KNOWN_PROVIDERS,
     has_ready_provider_index,
     normalize_provider_name,
 )
-from lumen.shared._util.path_service import get_path_service
 
 logger = logging.getLogger(__name__)
 

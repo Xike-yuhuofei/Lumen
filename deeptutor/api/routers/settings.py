@@ -280,6 +280,12 @@ def _invalidate_runtime_caches() -> None:
     clear_llm_config_cache()
     reset_llm_client()
     reset_embedding_client()
+    # The agentic (chat-loop) OpenAI client pool is a runtime concern; reset it
+    # alongside the LLM/embedding singletons so an applied catalog is picked up
+    # by the agent loop too.
+    from deeptutor.core.agentic.client import reset_agentic_client_pool
+
+    reset_agentic_client_pool()
 
 
 def load_ui_settings() -> dict[str, Any]:

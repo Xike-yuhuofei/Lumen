@@ -12,6 +12,7 @@ from deeptutor.services.embedding import client as embedding_client_module
 from deeptutor.services.embedding import config as embedding_config_module
 from deeptutor.services.llm import client as llm_client_module
 from deeptutor.services.llm import config as llm_config_module
+from lumen.shared._util.llm import config as lumen_llm_config_module
 from lumen.shared.config.provider_runtime import (
     ResolvedEmbeddingConfig,
     ResolvedLLMConfig,
@@ -213,8 +214,11 @@ def _patch_runtime(
             batch_size=10,
         )
 
+    # The canonical LLM config module binds resolve_llm_runtime_config from
+    # lumen.shared.config at import time, so patch the module the canonical
+    # implementation actually reads (the facade is a __getattr__ shim).
     monkeypatch.setattr(
-        llm_config_module,
+        lumen_llm_config_module,
         "resolve_llm_runtime_config",
         _resolve_llm_runtime_config,
     )

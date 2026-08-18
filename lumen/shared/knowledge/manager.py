@@ -17,13 +17,13 @@ import stat
 import sys
 from typing import Any
 
+from lumen.shared._util.file_io import atomic_write_json
 from lumen.shared.knowledge.kb_types import (
     LINKED_KB_TYPE,
     external_root_of,
     is_connected_kb,
 )
 from lumen.shared.knowledge.manifest import iter_kb_documents
-from lumen.shared._util.file_io import atomic_write_json
 from lumen.shared.knowledge.rag.factory import (
     DEFAULT_PROVIDER,
     KNOWN_PROVIDERS,

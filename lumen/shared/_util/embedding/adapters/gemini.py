@@ -12,12 +12,12 @@ from urllib.parse import parse_qsl, unquote, urlparse
 
 import httpx
 
+from lumen.shared._util.llm.openai_http_client import disable_ssl_verify_enabled
 from lumen.shared.config.embedding_endpoint import (
     GEMINI_API_HOST,
     SENSITIVE_ENDPOINT_QUERY_KEYS,
     redact_embedding_endpoint_for_display,
 )
-from lumen.shared._util.llm.openai_http_client import disable_ssl_verify_enabled
 
 from .base import EmbeddingProviderError, EmbeddingRequest, EmbeddingResponse
 from .openai_compatible import OpenAICompatibleEmbeddingAdapter

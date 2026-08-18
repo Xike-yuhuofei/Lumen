@@ -9,9 +9,9 @@ from __future__ import annotations
 from contextvars import Token
 from typing import Any
 
-from lumen.shared.config.provider_runtime import ResolvedLLMConfig, resolve_llm_runtime_config
 from lumen.shared._util.llm import config as llm_config_module
 from lumen.shared._util.llm.config import LLMConfig
+from lumen.shared.config.provider_runtime import ResolvedLLMConfig, resolve_llm_runtime_config
 
 
 def llm_config_from_resolved(resolved: ResolvedLLMConfig) -> LLMConfig:
