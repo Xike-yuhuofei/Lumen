@@ -14,9 +14,9 @@ from typing import Any
 
 import pytest
 
-from deeptutor.core.agentic.tool_dispatch import dispatch_tool_calls
 from deeptutor.core.context import UnifiedContext
 from deeptutor.core.tool_protocol import BaseTool, ToolDefinition, ToolResult
+from lumen.runtime.agent_loop.engine.tool_dispatch import dispatch_tool_calls
 from lumen.runtime.stream.bus import StreamBus
 
 

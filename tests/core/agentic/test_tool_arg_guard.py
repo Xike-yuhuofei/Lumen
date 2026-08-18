@@ -20,7 +20,6 @@ from typing import Any
 
 import pytest
 
-from deeptutor.core.agentic.tool_dispatch import dispatch_tool_calls
 from deeptutor.core.context import UnifiedContext
 from deeptutor.core.stream import StreamEvent, StreamEventType
 from deeptutor.core.tool_protocol import (
@@ -34,6 +33,7 @@ from lumen.runtime.agent_loop.engine.tool_arg_guard import (
     missing_required_args,
     required_args,
 )
+from lumen.runtime.agent_loop.engine.tool_dispatch import dispatch_tool_calls
 from lumen.runtime.stream.bus import StreamBus
 
 

@@ -34,7 +34,6 @@ from typing import TYPE_CHECKING, Any
 
 from deeptutor.agents.chat.context_budget import LLMRequestSnapshot
 from deeptutor.core.agentic.messages import assistant_message_with_tool_calls
-from deeptutor.core.agentic.tool_dispatch import DispatchOutcome
 from deeptutor.core.context import UnifiedContext
 from deeptutor.core.trace import build_trace_metadata, merge_trace_metadata, new_call_id
 from lumen.runtime.agent_loop.engine.capability_result import emit_capability_result
@@ -42,6 +41,7 @@ from lumen.runtime.agent_loop.engine.dsml_tool_calls import (
     DSMLStreamFilter,
     extract_dsml_tool_calls,
 )
+from lumen.runtime.agent_loop.engine.tool_dispatch import DispatchOutcome
 from lumen.runtime.agent_loop.engine.usage import message_content_chars, record_streamed_usage
 from lumen.runtime.stream.bus import StreamBus
 from lumen.shared._util.llm import clean_thinking_tags

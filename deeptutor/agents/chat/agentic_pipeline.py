@@ -752,7 +752,7 @@ class AgenticChatPipeline:
         stream: StreamBus | None = None,
         retrieve_meta: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        from deeptutor.core.agentic import execute_tool_call
+        from lumen.runtime.agent_loop.engine.tool_dispatch import execute_tool_call
 
         stream = stream or StreamBus()
         return await execute_tool_call(
