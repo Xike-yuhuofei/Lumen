@@ -26,7 +26,7 @@ from typing import Any
 import pytest
 
 from deeptutor.api.routers import knowledge as knowledge_router
-from deeptutor.knowledge.add_documents import DocumentAdder
+from lumen.shared.knowledge.add_documents import DocumentAdder
 
 
 def test_saving_uploads_runs_on_a_worker_thread(monkeypatch, tmp_path: Path) -> None:
@@ -111,7 +111,7 @@ def test_recording_an_indexed_file_hash_runs_on_a_worker_thread(
         async def add_documents(self, *_args: Any, **_kwargs: Any) -> bool:
             return True
 
-    monkeypatch.setattr("deeptutor.knowledge.add_documents.RAGService", _OkRagService)
+    monkeypatch.setattr("lumen.shared.knowledge.add_documents.RAGService", _OkRagService)
 
     adder = DocumentAdder(kb_name="kb", base_dir=str(tmp_path))
     recorded: dict[str, int] = {}

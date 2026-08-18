@@ -363,7 +363,7 @@ def test_upload_task_marks_provider_failures_as_error(monkeypatch, tmp_path: Pat
             raise RuntimeError("parse failed loudly")
 
     monkeypatch.setattr(
-        "deeptutor.knowledge.add_documents.RAGService",
+        "lumen.shared.knowledge.add_documents.RAGService",
         _FailingRagService,
     )
 
