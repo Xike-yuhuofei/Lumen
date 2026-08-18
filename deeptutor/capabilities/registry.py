@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from deeptutor.capabilities.mastery import MasteryLoopCapability
-from deeptutor.capabilities.protocol import LoopCapability
 from deeptutor.core.context import UnifiedContext
+from lumen.runtime.agent_loop.capability import LoopCapability
 
 LOOP_CAPABILITIES: tuple[LoopCapability, ...] = (MasteryLoopCapability(),)
 

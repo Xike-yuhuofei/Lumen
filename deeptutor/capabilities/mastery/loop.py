@@ -7,8 +7,8 @@ import logging
 from typing import Any
 
 from deeptutor.capabilities.mastery.tools import MASTERY_TOOL_NAMES
-from deeptutor.capabilities.protocol import PromptBlock
 from deeptutor.core.context import UnifiedContext
+from lumen.runtime.agent_loop.capability import PromptBlock
 
 logger = logging.getLogger(__name__)
 

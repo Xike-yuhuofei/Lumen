@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from deeptutor.capabilities.protocol import PromptBlock
 from deeptutor.core.context import UnifiedContext
 from deeptutor.services.prompt.language import append_language_directive
+from lumen.runtime.agent_loop.capability import PromptBlock
 
 
 class ChatPromptAssembler:

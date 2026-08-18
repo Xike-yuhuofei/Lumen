@@ -22,10 +22,10 @@ from deeptutor.agents.chat.context_budget import (
     count_conversation_tokens,
     resolve_window_info,
 )
-from deeptutor.capabilities import PromptBlock
 from deeptutor.core.context import UnifiedContext
 from deeptutor.core.stream import StreamEvent, StreamEventType
 from deeptutor.core.tool_protocol import ToolResult
+from lumen.runtime.agent_loop.capability import PromptBlock
 from lumen.runtime.stream.bus import StreamBus
 
 
