@@ -1198,7 +1198,7 @@ def test_compose_enabled_tools_injects_rag_when_kb_selected(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "deeptutor.services.memory.get_memory_store",
+        "lumen.shared.memory.store.get_memory_store",
         lambda: SimpleNamespace(read_raw=lambda *_args, **_kwargs: ""),
     )
     monkeypatch.setattr(
@@ -1224,7 +1224,7 @@ def test_compose_enabled_tools_mounts_mastery_plugin_only_in_mastery_mode(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "deeptutor.services.memory.get_memory_store",
+        "lumen.shared.memory.store.get_memory_store",
         lambda: SimpleNamespace(read_raw=lambda *_args, **_kwargs: ""),
     )
     monkeypatch.setattr(

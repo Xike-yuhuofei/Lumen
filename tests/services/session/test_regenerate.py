@@ -337,7 +337,7 @@ class TestRegenerateLastTurn:
             "deeptutor.agents.chat.agentic_pipeline.AgenticChatPipeline", FakePipeline
         )
         monkeypatch.setattr(
-            "deeptutor.services.memory.get_memory_store",
+            "lumen.shared.memory.store.get_memory_store",
             lambda: SimpleNamespace(
                 read_l3_concat=lambda: "",
                 emit=tracking_emit,

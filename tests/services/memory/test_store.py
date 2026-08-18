@@ -5,12 +5,12 @@ from pathlib import Path
 
 import pytest
 
-from deeptutor.services.memory import paths, store
-from deeptutor.services.memory.store import (
+from lumen.shared.memory import paths, store
+from lumen.shared.memory.store import (
     MemoryStore,
     migrate_v1_if_needed,
 )
-from deeptutor.services.memory.trace import TraceEvent
+from lumen.shared.memory.trace import TraceEvent
 
 
 @pytest.fixture

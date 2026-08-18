@@ -215,7 +215,7 @@ def user_has_memory() -> bool:
     a tool with no payload to read.
     """
     try:
-        from deeptutor.services.memory import get_memory_store
+        from lumen.shared.memory.store import get_memory_store
 
         store = get_memory_store()
         return any(

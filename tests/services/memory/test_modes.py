@@ -13,13 +13,13 @@ from unittest.mock import patch
 
 import pytest
 
-from deeptutor.services.memory import paths as paths_mod
-from deeptutor.services.memory.consolidator.modes import audit as audit_mod
-from deeptutor.services.memory.consolidator.modes import dedup as dedup_mod
-from deeptutor.services.memory.consolidator.modes import update as update_mod
-from deeptutor.services.memory.document import Document, Entry, parse, serialize
-from deeptutor.services.memory.ids import new_entry_id
-from deeptutor.services.memory.snapshot.entity import Entity
+from lumen.shared.memory import paths as paths_mod
+from lumen.shared.memory.consolidator.modes import audit as audit_mod
+from lumen.shared.memory.consolidator.modes import dedup as dedup_mod
+from lumen.shared.memory.consolidator.modes import update as update_mod
+from lumen.shared.memory.document import Document, Entry, parse, serialize
+from lumen.shared.memory.ids import new_entry_id
+from lumen.shared.memory.snapshot.entity import Entity
 
 
 @pytest.fixture()
@@ -50,7 +50,7 @@ async def test_update_l2_appends_facts_from_chunk(memory_dir, monkeypatch):
     entities = [_entity("01ABC"), _entity("01DEF")]
 
     monkeypatch.setattr(
-        "deeptutor.services.memory.consolidator.modes.update.snap.read_snapshot",
+        "lumen.shared.memory.consolidator.modes.update.snap.read_snapshot",
         lambda surface: entities,
     )
 
@@ -64,10 +64,10 @@ async def test_update_l2_appends_facts_from_chunk(memory_dir, monkeypatch):
 
     # Force a tiny chunker so each entity ends up in its own chunk.
     with (
-        patch("deeptutor.services.memory.consolidator.modes.update.call_llm", side_effect=fake_llm),
+        patch("lumen.shared.memory.consolidator.modes.update.call_llm", side_effect=fake_llm),
         patch.object(update_mod, "load_memory_settings") as mock_settings,
     ):
-        from deeptutor.services.memory.settings import (
+        from lumen.shared.memory.settings import (
             ChunkingSettings,
             DedupSettings,
             MemorySettings,
@@ -90,7 +90,7 @@ async def test_update_l2_appends_facts_from_chunk(memory_dir, monkeypatch):
 async def test_update_l2_idempotent_when_no_new_entities(memory_dir, monkeypatch):
     entities = [_entity("01ABC")]
     monkeypatch.setattr(
-        "deeptutor.services.memory.consolidator.modes.update.snap.read_snapshot",
+        "lumen.shared.memory.consolidator.modes.update.snap.read_snapshot",
         lambda surface: entities,
     )
 
@@ -100,12 +100,12 @@ async def test_update_l2_idempotent_when_no_new_entities(memory_dir, monkeypatch
 
     with (
         patch(
-            "deeptutor.services.memory.consolidator.modes.update.call_llm",
+            "lumen.shared.memory.consolidator.modes.update.call_llm",
             side_effect=llm_returns_one,
         ),
         patch.object(update_mod, "load_memory_settings") as mock_settings,
     ):
-        from deeptutor.services.memory.settings import DedupSettings, MemorySettings
+        from lumen.shared.memory.settings import DedupSettings, MemorySettings
 
         mock_settings.return_value = MemorySettings(dedup=DedupSettings(auto_after_update=False))
         first = await update_mod.run_update("L2", "chat", language="en")
@@ -121,12 +121,12 @@ async def test_update_l2_idempotent_when_no_new_entities(memory_dir, monkeypatch
 
     with (
         patch(
-            "deeptutor.services.memory.consolidator.modes.update.call_llm",
+            "lumen.shared.memory.consolidator.modes.update.call_llm",
             side_effect=llm_should_not_run,
         ),
         patch.object(update_mod, "load_memory_settings") as mock_settings,
     ):
-        from deeptutor.services.memory.settings import DedupSettings, MemorySettings
+        from lumen.shared.memory.settings import DedupSettings, MemorySettings
 
         mock_settings.return_value = MemorySettings(dedup=DedupSettings(auto_after_update=False))
         second = await update_mod.run_update("L2", "chat", language="en")
@@ -138,7 +138,7 @@ async def test_update_l2_idempotent_when_no_new_entities(memory_dir, monkeypatch
 async def test_update_l2_drops_facts_with_out_of_pool_refs(memory_dir, monkeypatch):
     entities = [_entity("01ABC")]
     monkeypatch.setattr(
-        "deeptutor.services.memory.consolidator.modes.update.snap.read_snapshot",
+        "lumen.shared.memory.consolidator.modes.update.snap.read_snapshot",
         lambda surface: entities,
     )
 
@@ -149,10 +149,10 @@ async def test_update_l2_drops_facts_with_out_of_pool_refs(memory_dir, monkeypat
         )
 
     with (
-        patch("deeptutor.services.memory.consolidator.modes.update.call_llm", side_effect=fake_llm),
+        patch("lumen.shared.memory.consolidator.modes.update.call_llm", side_effect=fake_llm),
         patch.object(update_mod, "load_memory_settings") as mock_settings,
     ):
-        from deeptutor.services.memory.settings import (
+        from lumen.shared.memory.settings import (
             DedupSettings,
             MemorySettings,
             ReferenceSettings,
@@ -186,7 +186,7 @@ async def test_audit_l2_applies_replace_edit(memory_dir, monkeypatch):
     path.write_text(serialize(doc), encoding="utf-8")
 
     monkeypatch.setattr(
-        "deeptutor.services.memory.consolidator.modes.audit.snap.read_snapshot",
+        "lumen.shared.memory.consolidator.modes.audit.snap.read_snapshot",
         lambda surface: [_entity("01ABC", content="the user actually said Y, not X")],
     )
 
@@ -205,7 +205,7 @@ async def test_audit_l2_applies_replace_edit(memory_dir, monkeypatch):
             + ', "new_text": "claims Y", "refs": ["chat:01ABC"], "reason": "matched evidence"}]}'
         )
 
-    with patch("deeptutor.services.memory.consolidator.modes.audit.call_llm", side_effect=fake_llm):
+    with patch("lumen.shared.memory.consolidator.modes.audit.call_llm", side_effect=fake_llm):
         result = await audit_mod.run_audit("L2", "chat", language="en", budget=1)
 
     new_md = path.read_text(encoding="utf-8")
@@ -241,10 +241,10 @@ async def test_dedup_early_stop_when_no_edits(memory_dir, monkeypatch):
         return '{"edits": []}'
 
     with (
-        patch("deeptutor.services.memory.consolidator.modes.dedup.call_llm", side_effect=fake_llm),
+        patch("lumen.shared.memory.consolidator.modes.dedup.call_llm", side_effect=fake_llm),
         patch.object(dedup_mod, "load_memory_settings") as mock_settings,
     ):
-        from deeptutor.services.memory.settings import DedupSettings, MemorySettings
+        from lumen.shared.memory.settings import DedupSettings, MemorySettings
 
         mock_settings.return_value = MemorySettings(
             dedup=DedupSettings(iterations=5, auto_after_update=False)
@@ -300,10 +300,10 @@ async def test_dedup_applies_delete_then_stops(memory_dir, monkeypatch):
         return '{"edits": []}'
 
     with (
-        patch("deeptutor.services.memory.consolidator.modes.dedup.call_llm", side_effect=fake_llm),
+        patch("lumen.shared.memory.consolidator.modes.dedup.call_llm", side_effect=fake_llm),
         patch.object(dedup_mod, "load_memory_settings") as mock_settings,
     ):
-        from deeptutor.services.memory.settings import DedupSettings, MemorySettings
+        from lumen.shared.memory.settings import DedupSettings, MemorySettings
 
         mock_settings.return_value = MemorySettings(
             dedup=DedupSettings(iterations=3, auto_after_update=False)

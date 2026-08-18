@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from deeptutor.services.memory.snapshot import adapters
+from lumen.shared.memory.snapshot import adapters
 
 
 class _FakePathService:

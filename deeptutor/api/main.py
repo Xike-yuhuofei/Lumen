@@ -134,7 +134,7 @@ async def lifespan(app: FastAPI):
     # Migrate any v1 memory files (PROFILE.md / SUMMARY.md) into a
     # backup folder so the v2 three-layer subsystem starts clean.
     try:
-        from deeptutor.services.memory import migrate_v1_if_needed
+        from lumen.shared.memory.store import migrate_v1_if_needed
 
         backup = migrate_v1_if_needed()
         if backup is not None:

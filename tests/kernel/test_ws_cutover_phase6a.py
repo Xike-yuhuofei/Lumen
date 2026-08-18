@@ -165,7 +165,7 @@ def _patch_legacy_runtime(monkeypatch: pytest.MonkeyPatch) -> None:
         "lumen.runtime.session.context_builder.ContextBuilder", _FakeContextBuilder
     )
     monkeypatch.setattr(
-        "deeptutor.services.memory.get_memory_store",
+        "lumen.shared.memory.store.get_memory_store",
         lambda: SimpleNamespace(
             read_l3_concat=lambda: "## Memory\n## Preferences\n- Be concise.",
             emit=_noop_async,

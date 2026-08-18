@@ -9,7 +9,7 @@ from lumen.shared.contract import MemoryService
 
 
 class _MemoryServiceAdapter(MemoryService):
-    """Wraps ``deeptutor.services.memory.store.MemoryStore``."""
+    """Wraps ``lumen.shared.memory.store.MemoryStore``."""
 
     def __init__(self, store: Any) -> None:
         self._store = store

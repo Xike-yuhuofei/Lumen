@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 
-from deeptutor.services.memory import paths as paths_mod
-from deeptutor.services.memory.consolidator.modes import merge as merge_mod
-from deeptutor.services.memory.document import Document, Entry, parse, serialize
+from lumen.shared.memory import paths as paths_mod
+from lumen.shared.memory.consolidator.modes import merge as merge_mod
+from lumen.shared.memory.document import Document, Entry, parse, serialize
 
 
 @pytest.fixture()
@@ -132,11 +132,11 @@ async def test_auto_merge_runs_even_when_update_added_no_facts(memory_dir, monke
 
     # No new entities → run_update hits the early-return path.
     monkeypatch.setattr(
-        "deeptutor.services.memory.consolidator.modes.update.snap.read_snapshot",
+        "lumen.shared.memory.consolidator.modes.update.snap.read_snapshot",
         lambda surface: [],
     )
 
-    from deeptutor.services.memory.consolidator.modes import update as update_mod
+    from lumen.shared.memory.consolidator.modes import update as update_mod
 
     result = await update_mod.run_update("L2", "notebook")
     assert result.facts_added == 0

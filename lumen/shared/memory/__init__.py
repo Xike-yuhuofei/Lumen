@@ -1,7 +1,7 @@
 """Persistent memory store — read, write, and list memory layers.
 
 This package is the canonical three-layer memory subsystem (migrated from
-``deeptutor.services.memory``, which is now a thin re-export facade over it).
+``deeptutor.services.memory``, which has been removed).
 It also carries the Plugin Kernel contract + adapter plugin.
 
 The canonical implementation modules (``store``, ``document``, ``ops``,

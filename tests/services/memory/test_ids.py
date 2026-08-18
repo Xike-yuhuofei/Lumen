@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 
-from deeptutor.services.memory.ids import (
+from lumen.shared.memory.ids import (
     is_entry_id,
     is_shortname_ref,
     is_trace_id,

@@ -559,7 +559,7 @@ class ReadMemoryTool(_PromptHintsMixin, BaseTool):
         )
 
     async def execute(self, **kwargs: Any) -> ToolResult:
-        from deeptutor.services.memory import get_memory_store
+        from lumen.shared.memory.store import get_memory_store
 
         text = get_memory_store().read_l3_concat()
         return ToolResult(
@@ -615,8 +615,8 @@ class WriteMemoryTool(_PromptHintsMixin, BaseTool):
         )
 
     async def execute(self, **kwargs: Any) -> ToolResult:
-        from deeptutor.services.memory import get_memory_store
-        from deeptutor.services.memory.trace import TraceEvent
+        from lumen.shared.memory.store import get_memory_store
+        from lumen.shared.memory.trace import TraceEvent
 
         op = str(kwargs.get("op") or "").strip().lower()
         text = str(kwargs.get("text") or "").strip()

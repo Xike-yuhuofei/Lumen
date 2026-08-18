@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from deeptutor.services.memory.consolidator.line_doc import (
+from lumen.shared.memory.consolidator.line_doc import (
     DeleteLinesOp,
     InsertAfterOp,
     ReplaceLineOp,
@@ -10,8 +10,8 @@ from deeptutor.services.memory.consolidator.line_doc import (
     parse_edits_payload,
     render_view,
 )
-from deeptutor.services.memory.document import Document, Entry, serialize
-from deeptutor.services.memory.ids import new_entry_id
+from lumen.shared.memory.document import Document, Entry, serialize
+from lumen.shared.memory.ids import new_entry_id
 
 
 def _doc_with_three_entries() -> tuple[Document, list[str]]:
