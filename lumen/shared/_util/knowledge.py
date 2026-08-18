@@ -2,21 +2,14 @@
 
 The plugin dependency gates allow runtime modules to import only
 ``lumen.shared._util.*``; this module routes the KB manifest constants and
-renderers through that private channel.
+renderers through that private channel.  Names are read through lazily so a
+test patching the source module still takes effect.
 """
 
 from __future__ import annotations
 
-from lumen.shared.knowledge.manifest import (
-    KB_FILES_DEFAULT_LIMIT,
-    KB_FILES_MAX_LIMIT,
-    render_manifest_note,
-    render_manifest_report,
-)
+from lumen.shared.knowledge import manifest as _manifest
 
-__all__ = [
-    "KB_FILES_DEFAULT_LIMIT",
-    "KB_FILES_MAX_LIMIT",
-    "render_manifest_note",
-    "render_manifest_report",
-]
+
+def __getattr__(name: str):
+    return getattr(_manifest, name)

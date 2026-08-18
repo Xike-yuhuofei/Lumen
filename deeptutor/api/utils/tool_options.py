@@ -33,8 +33,8 @@ async def build_tool_options(
     use the mandatory ``partner_*`` memory tools instead and cannot configure
     chat's memory tools.
     """
-    from deeptutor.agents._shared.tool_composition import default_optional_tools
     from lumen.runtime.tools.builtin import CONFIGURABLE_BUILTIN_TOOL_NAMES
+    from lumen.runtime.tools.composition import default_optional_tools
     from lumen.runtime.tools.deferred_tools import provider_identity
     from lumen.runtime.tools.registry import get_tool_registry
 

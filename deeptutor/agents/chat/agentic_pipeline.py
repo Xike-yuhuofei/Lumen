@@ -7,13 +7,6 @@ from collections.abc import Callable
 import logging
 from typing import Any
 
-from deeptutor.agents._shared.tool_composition import (
-    ToolMountFlags,
-    compose_enabled_tools,
-    default_optional_tools,
-    user_has_memory,
-    user_has_notebooks,
-)
 from deeptutor.agents.chat.agent_loop import AgentLoop
 from deeptutor.agents.chat.context_budget import LLMRequestSnapshot, build_context_budget
 from deeptutor.agents.chat.prompt_blocks import ChatPromptAssembler
@@ -40,6 +33,13 @@ from deeptutor.services.prompt import get_prompt_manager
 from lumen.modes.learn.loop_registry import active_loop_capabilities
 from lumen.runtime.agent_loop.capability import LoopCapability, PromptBlock
 from lumen.runtime.stream.bus import StreamBus
+from lumen.runtime.tools.composition import (
+    ToolMountFlags,
+    compose_enabled_tools,
+    default_optional_tools,
+    user_has_memory,
+    user_has_notebooks,
+)
 from lumen.runtime.tools.deferred_tools import DeferredToolLoader
 from lumen.runtime.tools.providers import ToolScope
 from lumen.runtime.tools.providers.view import ProviderToolView, build_tool_view

@@ -13,17 +13,17 @@ from typing import Any
 
 import pytest
 
-from deeptutor.agents._shared.tool_composition import (
-    AUTO_MOUNTED_TOOLS,
-    ToolMountFlags,
-    compose_enabled_tools,
-)
 from deeptutor.knowledge.manifest import (
     KB_FILES_DEFAULT_LIMIT,
     KB_FILES_MAX_LIMIT,
     build_manifest,
 )
 from lumen.runtime.tools.builtin import BUILTIN_TOOL_NAMES, KbFilesTool
+from lumen.runtime.tools.composition import (
+    AUTO_MOUNTED_TOOLS,
+    ToolMountFlags,
+    compose_enabled_tools,
+)
 
 _READY = {"rag_provider": "llamaindex", "status": "ready"}
 

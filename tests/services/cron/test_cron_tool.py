@@ -128,8 +128,8 @@ class TestCronTool:
 
 class TestRegistryIntegration:
     def test_cron_tool_is_builtin_and_automounted(self):
-        from deeptutor.agents._shared.tool_composition import AUTO_MOUNTED_TOOLS
         from lumen.runtime.tools.builtin import BUILTIN_TOOL_NAMES
+        from lumen.runtime.tools.composition import AUTO_MOUNTED_TOOLS
 
         assert "cron" in BUILTIN_TOOL_NAMES
         assert "cron" in AUTO_MOUNTED_TOOLS
