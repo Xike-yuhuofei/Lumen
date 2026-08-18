@@ -1,31 +1,31 @@
-"""Three-layer memory subsystem.
+"""Deprecated compatibility facade — see ``lumen.shared.memory``."""
 
-- ``trace``   : L1 raw event capture (append-only JSONL per surface per day)
-- ``document``: L2/L3 markdown + footnote-citation parser/serializer (pure)
-- ``ops``     : add/edit/delete batch applier (pure)
-- ``paths``   : per-user path resolution
-- ``ids``     : ULID-style trace and entry id generators
-- ``store``   : public facade — :class:`MemoryStore`
-- ``consolidator``: LLM-driven L1→L2 and L2→L3 ops
+from __future__ import annotations
 
-The v1 two-file `MemoryService` is gone. All callers go through
-:func:`get_memory_store` and the :class:`MemoryStore` facade.
-"""
-
-from .ids import is_entry_id, is_trace_id, new_entry_id, new_trace_id
-from .paths import L3_SLOTS, SURFACES, L3Slot, Surface, memory_path_service_override
-from .store import (
+from lumen.shared.memory.contract import MemoryService
+from lumen.shared.memory.ids import is_entry_id, is_trace_id, new_entry_id, new_trace_id
+from lumen.shared.memory.paths import (
+    L3_SLOTS,
+    SURFACES,
+    L3Slot,
+    Surface,
+    memory_path_service_override,
+)
+from lumen.shared.memory.plugin import MemoryPlugin
+from lumen.shared.memory.store import (
     DocOverview,
     MemoryStore,
     get_memory_store,
     migrate_v1_if_needed,
 )
-from .trace import TraceEvent
+from lumen.shared.memory.trace import TraceEvent
 
 __all__ = [
     "DocOverview",
     "L3_SLOTS",
     "L3Slot",
+    "MemoryPlugin",
+    "MemoryService",
     "MemoryStore",
     "SURFACES",
     "Surface",

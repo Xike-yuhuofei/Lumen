@@ -8,6 +8,6 @@ Usage:
     from deeptutor.agents.chat import AgenticChatPipeline
 """
 
-from .agentic_pipeline import AgenticChatPipeline
+from deeptutor.agents.chat.agentic_pipeline import AgenticChatPipeline
 
 __all__ = ["AgenticChatPipeline"]

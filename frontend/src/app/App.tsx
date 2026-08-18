@@ -3178,6 +3178,15 @@ export default function App() {
 
   const composerTools = tools.filter((tool) => tool.enabled && !tool.comingSoon)
 
+  // 折叠态下主区顶部 header 左槽（对齐真实 TraeWork headerLeft）：展开侧边栏 + 搜索。
+  // 仅当左栏收起时传给非 chat 页面，页面在其官方 header-x7rPuS 中渲染。
+  const sidebarBar = !sidebarOpen ? (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+      <IconBtn icon="view-left" label="展开侧边栏" title="展开侧边栏" onClick={() => setSidebarOpen(true)} />
+      <IconBtn icon="search" label="搜索" title="搜索" onClick={() => setSidebarOpen(true)} />
+    </div>
+  ) : undefined
+
   return (
     <div className={`app-root ${debug ? 'debug-root' : ''}`}>
       <div className={layoutClasses.join(' ')}>
@@ -3245,26 +3254,6 @@ export default function App() {
           ref={(el) => (mainRef.current = el)}
           className={mainClasses.join(' ')}
         >
-          {/* 折叠态常驻入口：展开侧边栏 + 搜索（对齐真实 TraeWork 的 headerLeft）。
-              仅左栏收起且非 chat 视图时显示；chat 使用其自带 header 的 headerLeft。 */}
-          {!sidebarOpen && view !== 'chat' && (
-            <div
-              className="collapsedMainHeaderLeft"
-              style={{
-                position: 'absolute',
-                top: '8px',
-                left: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '0 12px',
-                zIndex: 'var(--z-dropdown)',
-              }}
-            >
-              <IconBtn icon="view-left" label="展开侧边栏" title="展开侧边栏" onClick={() => setSidebarOpen(true)} />
-              <IconBtn icon="search" label="搜索" title="搜索" onClick={() => setSidebarOpen(true)} />
-            </div>
-          )}
           {view === 'chat' && (
             <>
               <div className="contentWrapper-U1GjQr" style={{ minWidth: '392px' }}>
@@ -3423,15 +3412,15 @@ export default function App() {
                     onCancel={handleCancel}
                   />
                 )
-                if (mode === 'work') return <WorkHomePage composer={homeComposer} />
-                if (mode === 'design') return <DesignHomePage composer={homeComposer} />
-                return <NewTaskPage composer={homeComposer} />
+                if (mode === 'work') return <WorkHomePage composer={homeComposer} sidebarBar={sidebarBar} />
+                if (mode === 'design') return <DesignHomePage composer={homeComposer} sidebarBar={sidebarBar} />
+                return <NewTaskPage composer={homeComposer} sidebarBar={sidebarBar} />
               })()}
             </div>
           )}
 
-          {view === 'my-files' && <ModeShellPage title="我的文件" />}
-          {view === 'design-system' && <ModeShellPage title="设计系统" />}
+          {view === 'my-files' && <ModeShellPage title="我的文件" sidebarBar={sidebarBar} />}
+          {view === 'design-system' && <ModeShellPage title="设计系统" sidebarBar={sidebarBar} />}
 
           {view === 'automation' && (
             <div className="contentWrapper-U1GjQr">
@@ -3444,13 +3433,18 @@ export default function App() {
                 onRenameGoal={handleRenameLearningGoal}
                 onDeleteGoal={handleDeleteLearningGoal}
                 onRefresh={loadLearningGoals}
+                sidebarBar={sidebarBar}
               />
             </div>
           )}
 
           {view === 'marketplace' && (
             <div className="contentWrapper-U1GjQr" style={{ position: 'relative' }}>
-              <MarketplacePage onSelectPlugin={(p) => setSelectedPlugin(p)} onSelectSkill={(s) => setSelectedSkill(s)} />
+              <MarketplacePage
+                onSelectPlugin={(p) => setSelectedPlugin(p)}
+                onSelectSkill={(s) => setSelectedSkill(s)}
+                sidebarBar={sidebarBar}
+              />
               {selectedPlugin && (
                 <PluginDetailModal
                   plugin={selectedPlugin}

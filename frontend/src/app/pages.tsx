@@ -41,10 +41,11 @@ const PageIcon: React.FC<IconSvgProps> = ({ name, size = 16 }) => {
 }
 
 /* ============ NewTaskPage ============ */
-export function NewTaskPage({ composer }: { composer: React.ReactNode }) {
+export function NewTaskPage({ composer, sidebarBar }: { composer: React.ReactNode; sidebarBar?: React.ReactNode }) {
   return (
     <>
       <header className="header-x7rPuS">
+        {sidebarBar && <div className="headerLeft-rH3lhm">{sidebarBar}</div>}
         <div className="headerCenter-cba9zB"></div>
         <div className="headerRight-QHfr9M"></div>
       </header>
@@ -84,11 +85,12 @@ export function NewTaskPage({ composer }: { composer: React.ReactNode }) {
 
 const WORK_PPT_SUB = ['经验分享', '活动复盘', '商业计划'] as const
 
-export function WorkHomePage({ composer }: { composer: React.ReactNode }) {
+export function WorkHomePage({ composer, sidebarBar }: { composer: React.ReactNode; sidebarBar?: React.ReactNode }) {
   const [pptOpen, setPptOpen] = useState(false)
   return (
     <>
       <header className="header-x7rPuS">
+        {sidebarBar && <div className="headerLeft-rH3lhm">{sidebarBar}</div>}
         <div className="headerCenter-cba9zB" />
         <div className="headerRight-QHfr9M">
           <span className="downloadChip-trae">下载桌面端</span>
@@ -158,10 +160,11 @@ const DESIGN_CARDS = [
   { title: '规范出图', desc: '规范出图：对齐设计规范，产出高保真 SaaS 系统' },
 ] as const
 
-export function DesignHomePage({ composer }: { composer: React.ReactNode }) {
+export function DesignHomePage({ composer, sidebarBar }: { composer: React.ReactNode; sidebarBar?: React.ReactNode }) {
   return (
     <>
       <header className="header-x7rPuS">
+        {sidebarBar && <div className="headerLeft-rH3lhm">{sidebarBar}</div>}
         <div className="headerCenter-cba9zB" />
         <div className="headerRight-QHfr9M">
           <span className="downloadChip-trae">下载桌面端</span>
@@ -200,10 +203,11 @@ export function DesignHomePage({ composer }: { composer: React.ReactNode }) {
   )
 }
 
-export function ModeShellPage({ title }: { title: string }) {
+export function ModeShellPage({ title, sidebarBar }: { title: string; sidebarBar?: React.ReactNode }) {
   return (
     <div className="contentWrapper-U1GjQr">
       <header className="header-x7rPuS">
+        {sidebarBar && <div className="headerLeft-rH3lhm">{sidebarBar}</div>}
         <div className="headerCenter-cba9zB" />
         <div className="headerRight-QHfr9M" />
       </header>
@@ -405,6 +409,7 @@ interface AutomationPageProps {
   onRenameGoal: (bookId: string, title: string) => void
   onDeleteGoal: (bookId: string) => void
   onRefresh: () => void
+  sidebarBar?: React.ReactNode
 }
 
 export function AutomationPage({
@@ -416,6 +421,7 @@ export function AutomationPage({
   onRenameGoal,
   onDeleteGoal,
   onRefresh,
+  sidebarBar,
 }: AutomationPageProps) {
   const [selectedGoal, setSelectedGoal] = useState<LearningGoal | null>(null)
   const [creating, setCreating] = useState(false)
@@ -424,6 +430,13 @@ export function AutomationPage({
 
   return (
     <div className="root-Bkr7v6">
+      {sidebarBar && (
+        <header className="header-x7rPuS">
+          <div className="headerLeft-rH3lhm">{sidebarBar}</div>
+          <div className="headerCenter-cba9zB" />
+          <div className="headerRight-QHfr9M" />
+        </header>
+      )}
       <div className="scrollArea-fvGujy">
         <div className="scrollContent-Q7fN_Z">
           <div className="headerRail-GfhRry">
@@ -1038,9 +1051,10 @@ export interface PluginData {
 interface MarketplacePageProps {
   onSelectPlugin: (plugin: PluginData) => void
   onSelectSkill: (skill: SkillData) => void
+  sidebarBar?: React.ReactNode
 }
 
-export function MarketplacePage({ onSelectPlugin, onSelectSkill }: MarketplacePageProps) {
+export function MarketplacePage({ onSelectPlugin, onSelectSkill, sidebarBar }: MarketplacePageProps) {
   const [activeTab, setActiveTab] = useState<'plugins' | 'skills'>('plugins')
   const [activeCategory, setActiveCategory] = useState('全部')
   const [searchText, setSearchText] = useState('')
@@ -1078,7 +1092,15 @@ export function MarketplacePage({ onSelectPlugin, onSelectSkill }: MarketplacePa
   }
 
   return (
-    <div className="marketplacePage-U60AB4">
+    <>
+      {sidebarBar && (
+        <header className="header-x7rPuS">
+          <div className="headerLeft-rH3lhm">{sidebarBar}</div>
+          <div className="headerCenter-cba9zB" />
+          <div className="headerRight-QHfr9M" />
+        </header>
+      )}
+      <div className="marketplacePage-U60AB4">
       <div className="root-Bkr7v6">
         <div className="scrollArea-fvGujy">
           <div className="scrollContent-Q7fN_Z">
@@ -1301,6 +1323,7 @@ export function MarketplacePage({ onSelectPlugin, onSelectSkill }: MarketplacePa
         </div>
       </div>
     </div>
+    </>
   )
 }
 

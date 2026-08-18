@@ -4,21 +4,22 @@ This module is the single source of truth for *knowledge facts and knowledge
 relations* (Teaching Knowledge Model) plus the typed contracts the Teaching
 Engine operates on. It deliberately does NOT store learner state, teaching
 actions or assessment history — those live in the Learner Model
-(:mod:`deeptutor.learning`) and are projected in here only through the
-adapters (:mod:`deeptutor.teaching_core.adapters`).
+(:mod:`lumen.modes.learn.domain.models`) and are projected in here only
+through the adapters (:mod:`lumen.modes.learn.adapters.learner_state`).
 
 Domain boundaries (see also the implementation report):
 
-* Knowledge truth / relations  -> this module + :mod:`deeptutor.teaching_core.graph`
+* Knowledge truth / relations  -> this module + :mod:`lumen.modes.learn.domain.teaching_graph`
 * LearnerState / MasteryEstimate -> Learner Model (projected via adapters)
 * EvidenceBundle               -> Evidence
 * AssessmentResult             -> Assessment
-* TeachingAction               -> Teaching Engine (:mod:`deeptutor.teaching_core.engine`)
+* TeachingAction               -> Teaching Engine (:mod:`lumen.modes.learn.policy.engine`)
 * LearningGoal / LearningPlan  -> Planning
-* ReviewSchedule               -> Review Scheduler (:mod:`deeptutor.learning`)
+* ReviewSchedule               -> Review Scheduler (:mod:`lumen.modes.learn.policy.scheduler`)
 
-``KnowledgeType`` is reused (not redefined) from ``deeptutor.learning.models``
-so the Teaching Core never keeps a conflicting second copy.
+``KnowledgeType`` is reused (not redefined) from
+``lumen.modes.learn.domain.models`` so the teaching layer never keeps a
+conflicting second copy.
 """
 
 from __future__ import annotations

@@ -43,6 +43,6 @@ class MemoryPlugin(Plugin):
     manifest = PluginManifest(id="memory", provides=["memory"])
 
     async def setup(self, ctx: PluginContext) -> None:
-        from deeptutor.services.memory.store import get_memory_store
+        from lumen.shared.memory.store import get_memory_store
 
         ctx.provide("memory", _MemoryServiceAdapter(get_memory_store()))
