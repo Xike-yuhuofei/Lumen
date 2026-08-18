@@ -21,7 +21,8 @@ import time
 from typing import TYPE_CHECKING, Any
 import uuid
 
-from deeptutor.capabilities.mastery.choices import (
+from deeptutor.core.tool_protocol import BaseTool, ToolDefinition, ToolParameter, ToolResult
+from lumen.modes.learn.assessment.choices import (
     format_options,
     has_option_bodies,
     parse_options,
@@ -29,7 +30,6 @@ from deeptutor.capabilities.mastery.choices import (
     resolve_answer,
     resolve_choice_submission,
 )
-from deeptutor.core.tool_protocol import BaseTool, ToolDefinition, ToolParameter, ToolResult
 from lumen.modes.learn.assessment.pending import public_pending_question
 
 # ``learning.models`` and ``learning.policy`` only depend on pydantic — safe to

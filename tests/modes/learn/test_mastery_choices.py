@@ -1,5 +1,5 @@
 """Unit tests for the choice-question data contract
-(:mod:`deeptutor.capabilities.mastery.choices`).
+(:mod:`lumen.modes.learn.assessment.choices`).
 
 These exercise the pure option-handling rules in isolation — parsing, body
 validation, answer normalisation, and legacy recovery — independent of the
@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from deeptutor.capabilities.mastery.choices import (
+from lumen.modes.learn.assessment.choices import (
     format_options,
     has_option_bodies,
     parse_options,
