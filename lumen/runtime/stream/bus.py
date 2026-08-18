@@ -37,13 +37,10 @@ def _merge_trace_metadata(
 ) -> dict[str, Any]:
     """Shallow-merge trace metadata.
 
-    Import is deferred to avoid an import-time cycle: eagerly importing
-    ``deeptutor.core.trace`` triggers ``deeptutor.core/__init__`` ->
-    ``capability_protocol`` -> ``stream_bus`` (the legacy facade that
-    re-exports this module, which is mid-import).  At call time the whole
-    tree is loaded, so the cycle no longer exists.
+    Deferred import to avoid a potential import-time cycle when the
+    legacy ``deeptutor.core`` package is still being initialised.
     """
-    from deeptutor.core.trace import merge_trace_metadata
+    from .trace import merge_trace_metadata
 
     return merge_trace_metadata(base, extra)
 
