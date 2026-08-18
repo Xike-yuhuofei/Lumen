@@ -5,9 +5,9 @@ from __future__ import annotations
 import pytest
 
 from deeptutor.core.tool_protocol import BaseTool, ToolDefinition, ToolResult
-from deeptutor.runtime.providers.allowlist import Allowlist
 from deeptutor.runtime.registry.scoped_registry import ScopedToolRegistry
 from deeptutor.runtime.registry.tool_registry import ToolRegistry
+from lumen.runtime.tools.providers.allowlist import Allowlist
 
 
 class _Tool(BaseTool):

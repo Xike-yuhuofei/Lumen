@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from deeptutor.runtime.providers.text import sanitize_provider_text
+from lumen.runtime.tools.providers.text import sanitize_provider_text
 
 
 def test_newlines_cannot_forge_extra_manifest_lines() -> None:
