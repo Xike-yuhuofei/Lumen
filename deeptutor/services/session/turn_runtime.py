@@ -15,17 +15,17 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from deeptutor.core.stream import StreamEvent, StreamEventType
 from deeptutor.core.stream_bus import StreamBus, register_bus, unregister_bus
-from deeptutor.services.llm.utils import clean_thinking_tags
 from deeptutor.services.path_service import get_path_service
 from deeptutor.services.session.artifact_attachments import (
     artifact_attachments,
     fill_preview_text,
 )
 from deeptutor.services.session.protocol import SessionStoreProtocol
+from lumen.shared._util.llm.utils import clean_thinking_tags
 
 if TYPE_CHECKING:
     from deeptutor.core.context import UnifiedContext
-    from deeptutor.services.llm.config import LLMConfig
+    from lumen.shared._util.llm.config import LLMConfig
 
 logger = logging.getLogger(__name__)
 
@@ -2114,7 +2114,7 @@ class TurnRuntimeManager:
 
         title = ""
         try:
-            from deeptutor.services.llm import stream as llm_stream
+            from lumen.shared._util.llm import stream as llm_stream
 
             zh = str(ui_language or "").lower().startswith("zh")
             if zh:

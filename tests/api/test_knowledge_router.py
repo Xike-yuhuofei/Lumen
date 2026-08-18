@@ -754,8 +754,8 @@ def test_reindex_accepts_default_alias(monkeypatch, tmp_path: Path) -> None:
         def hash(self) -> str:
             return "sig"
 
-    embedding_signature = importlib.import_module("deeptutor.services.rag.embedding_signature")
-    index_versioning = importlib.import_module("deeptutor.services.rag.index_versioning")
+    embedding_signature = importlib.import_module("lumen.shared.knowledge.rag.embedding_signature")
+    index_versioning = importlib.import_module("lumen.shared.knowledge.rag.index_versioning")
     monkeypatch.setattr(
         embedding_signature, "signature_from_embedding_config", lambda: _Signature()
     )
@@ -790,8 +790,8 @@ def test_reindex_error_status_bypasses_existing_match_noop(monkeypatch, tmp_path
         def hash(self) -> str:
             return "sig"
 
-    embedding_signature = importlib.import_module("deeptutor.services.rag.embedding_signature")
-    index_versioning = importlib.import_module("deeptutor.services.rag.index_versioning")
+    embedding_signature = importlib.import_module("lumen.shared.knowledge.rag.embedding_signature")
+    index_versioning = importlib.import_module("lumen.shared.knowledge.rag.index_versioning")
     monkeypatch.setattr(
         embedding_signature, "signature_from_embedding_config", lambda: _Signature()
     )
@@ -830,8 +830,8 @@ def test_retry_error_status_queues_reindex(monkeypatch, tmp_path: Path) -> None:
         def hash(self) -> str:
             return "sig"
 
-    embedding_signature = importlib.import_module("deeptutor.services.rag.embedding_signature")
-    index_versioning = importlib.import_module("deeptutor.services.rag.index_versioning")
+    embedding_signature = importlib.import_module("lumen.shared.knowledge.rag.embedding_signature")
+    index_versioning = importlib.import_module("lumen.shared.knowledge.rag.index_versioning")
     monkeypatch.setattr(
         embedding_signature, "signature_from_embedding_config", lambda: _Signature()
     )
@@ -901,7 +901,7 @@ def test_reindex_bypasses_existing_match_when_vectors_are_invalid(
         encoding="utf-8",
     )
 
-    embedding_signature = importlib.import_module("deeptutor.services.rag.embedding_signature")
+    embedding_signature = importlib.import_module("lumen.shared.knowledge.rag.embedding_signature")
     monkeypatch.setattr(
         embedding_signature, "signature_from_embedding_config", lambda: _Signature()
     )

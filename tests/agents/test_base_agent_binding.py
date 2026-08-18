@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from deeptutor.agents.base_agent import BaseAgent
-from deeptutor.services.llm.config import LLMConfig
+from lumen.shared._util.llm.config import LLMConfig
 
 
 class _DummyAgent(BaseAgent):

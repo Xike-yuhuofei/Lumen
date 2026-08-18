@@ -4,16 +4,16 @@ from __future__ import annotations
 
 import pytest
 
-from deeptutor.services.rag.factory import (
-    DEFAULT_PROVIDER,
-    get_pipeline,
-    list_pipelines,
-    normalize_provider_name,
-)
 from deeptutor.tools.rag_tool import (
     RAGService,
     get_available_providers,
     get_current_provider,
+)
+from lumen.shared.knowledge.rag.factory import (
+    DEFAULT_PROVIDER,
+    get_pipeline,
+    list_pipelines,
+    normalize_provider_name,
 )
 
 

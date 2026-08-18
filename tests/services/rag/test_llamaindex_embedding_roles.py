@@ -6,7 +6,7 @@ from types import SimpleNamespace
 
 
 def test_custom_embedding_passes_query_and_document_roles(monkeypatch) -> None:
-    from deeptutor.services.rag.pipelines.llamaindex import (
+    from lumen.shared.knowledge.rag.pipelines.llamaindex import (
         embedding_adapter as embedding_module,
     )
 

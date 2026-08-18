@@ -8,8 +8,8 @@ from typing import Any
 
 import pytest
 
-from deeptutor.services.embedding.adapters.base import EmbeddingRequest
-from deeptutor.services.embedding.adapters.dashscope_native import (
+from lumen.shared._util.embedding.adapters.base import EmbeddingRequest
+from lumen.shared._util.embedding.adapters.dashscope_native import (
     DashScopeMultiModalEmbeddingAdapter,
 )
 

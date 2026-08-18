@@ -17,8 +17,8 @@ from typing import Any
 import httpx
 import pytest
 
-from deeptutor.services.embedding.adapters.base import EmbeddingRequest
-from deeptutor.services.embedding.adapters.openai_compatible import (
+from lumen.shared._util.embedding.adapters.base import EmbeddingRequest
+from lumen.shared._util.embedding.adapters.openai_compatible import (
     OpenAICompatibleEmbeddingAdapter,
 )
 

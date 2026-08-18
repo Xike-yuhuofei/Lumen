@@ -63,9 +63,9 @@ async def reason(
     Returns:
         dict with keys ``query``, ``answer``, ``model``.
     """
-    from deeptutor.services.llm import get_token_limit_kwargs
-    from deeptutor.services.llm import stream as llm_stream
-    from deeptutor.services.llm.config import get_llm_config
+    from lumen.shared._util.llm import get_token_limit_kwargs
+    from lumen.shared._util.llm import stream as llm_stream
+    from lumen.shared._util.llm.config import get_llm_config
     from lumen.shared.config import get_agent_params
 
     # ---- resolve LLM config ------------------------------------------------

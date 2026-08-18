@@ -331,7 +331,7 @@ class TestGenerateFromNotebook:
         )
         assert resp.status_code == 400
 
-    @patch("deeptutor.services.llm.complete", new_callable=AsyncMock)
+    @patch("lumen.shared._util.llm.complete", new_callable=AsyncMock)
     def test_generate_success_path(self, mock_complete, client):
         mock_complete.return_value = json.dumps(
             {
@@ -360,7 +360,7 @@ class TestGenerateFromNotebook:
         assert resp.status_code == 200
         assert resp.json()["module_count"] == 1
 
-    @patch("deeptutor.services.llm.complete", new_callable=AsyncMock)
+    @patch("lumen.shared._util.llm.complete", new_callable=AsyncMock)
     def test_generate_no_usable_modules_returns_502(self, mock_complete, client):
         mock_complete.return_value = json.dumps(
             {"modules": [{"name": "Empty", "knowledge_points": []}]}
@@ -382,7 +382,7 @@ class TestGenerateFromNotebook:
         assert resp.status_code == 502
 
     @patch("deeptutor.api.routers.mastery_path.get_response_language", return_value="en")
-    @patch("deeptutor.services.llm.complete", new_callable=AsyncMock)
+    @patch("lumen.shared._util.llm.complete", new_callable=AsyncMock)
     def test_generate_injection_ignored(self, mock_complete, _mock_language, client):
         """Injection payload in title/output must not alter generation behavior."""
         mock_complete.return_value = json.dumps(
@@ -422,7 +422,7 @@ class TestGenerateFromNotebook:
         assert "Ignore" in sys_prompt
 
     @patch("deeptutor.api.routers.mastery_path.get_response_language", return_value="zh")
-    @patch("deeptutor.services.llm.complete", new_callable=AsyncMock)
+    @patch("lumen.shared._util.llm.complete", new_callable=AsyncMock)
     def test_generate_uses_zh_prompt_when_response_language_is_zh(
         self,
         mock_complete,
@@ -451,7 +451,7 @@ class TestGenerateFromNotebook:
         assert prompt.startswith("根据以下笔记本记录 JSON 数据")
         assert resp.json()["modules"][0]["name"] == "模块 1"
 
-    @patch("deeptutor.services.llm.complete", new_callable=AsyncMock)
+    @patch("lumen.shared._util.llm.complete", new_callable=AsyncMock)
     def test_notebook_records_html_escaped(self, mock_complete, client):
         """Records containing <, >, & must be HTML-escaped in the LLM prompt."""
         mock_complete.return_value = json.dumps(
@@ -484,7 +484,7 @@ class TestGenerateFromNotebook:
         # Raw dangerous tags must NOT appear
         assert "<script>" not in prompt
 
-    @patch("deeptutor.services.llm.complete", new_callable=AsyncMock)
+    @patch("lumen.shared._util.llm.complete", new_callable=AsyncMock)
     def test_notebook_records_tag_boundary_escaped(self, mock_complete, client):
         """</notebook_records> injection in user data must be escaped to prevent tag breakout."""
         mock_complete.return_value = json.dumps(

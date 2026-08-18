@@ -11,8 +11,8 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from deeptutor.agents.notebook import NotebookSummarizeAgent
-from deeptutor.services.llm import clean_thinking_tags
 from deeptutor.services.notebook import notebook_manager
+from lumen.shared._util.llm import clean_thinking_tags
 
 router = APIRouter()
 

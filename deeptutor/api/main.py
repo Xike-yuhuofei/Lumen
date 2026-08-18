@@ -115,7 +115,7 @@ async def lifespan(app: FastAPI):
     # Initialize LLM client early so OPENAI_* env vars are available before
     # any downstream provider integrations start.
     try:
-        from deeptutor.services.llm import get_llm_client
+        from lumen.shared._util.llm import get_llm_client
 
         llm_client = get_llm_client()
         logger.info(f"LLM client initialized: model={llm_client.config.model}")
@@ -187,7 +187,7 @@ async def lifespan(app: FastAPI):
     # Close pooled LLM SDK clients so their keep-alive sockets and transports
     # are released deterministically instead of waiting for interpreter GC.
     try:
-        from deeptutor.services.llm.provider_factory import close_runtime_provider_pool
+        from lumen.shared._util.llm.provider_factory import close_runtime_provider_pool
 
         await close_runtime_provider_pool()
         logger.info("LLM provider pool closed")

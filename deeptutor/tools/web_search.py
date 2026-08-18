@@ -23,7 +23,7 @@ Available Providers:
 """
 
 # Re-export from services layer
-from deeptutor.services.search import (
+from lumen.shared._util.search import (
     PROVIDER_TEMPLATES,
     SEARCH_API_KEY_ENV,
     AnswerConsolidator,

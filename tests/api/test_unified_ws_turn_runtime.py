@@ -131,7 +131,7 @@ async def test_turn_runtime_replays_events_and_materializes_messages(
             )
             await stream.emit(StreamEvent(type=StreamEventType.DONE, source="chat"))
 
-    monkeypatch.setattr("deeptutor.services.llm.config.get_llm_config", lambda: SimpleNamespace())
+    monkeypatch.setattr("lumen.shared._util.llm.config.get_llm_config", lambda: SimpleNamespace())
     monkeypatch.setattr(
         "deeptutor.services.session.context_builder.ContextBuilder", FakeContextBuilder
     )
@@ -367,7 +367,7 @@ async def test_turn_runtime_session_persona_persists_falls_back_and_clears(
             )
             await stream.emit(StreamEvent(type=StreamEventType.DONE, source="chat"))
 
-    monkeypatch.setattr("deeptutor.services.llm.config.get_llm_config", lambda: SimpleNamespace())
+    monkeypatch.setattr("lumen.shared._util.llm.config.get_llm_config", lambda: SimpleNamespace())
     monkeypatch.setattr(
         "deeptutor.services.session.context_builder.ContextBuilder", FakeContextBuilder
     )
@@ -664,7 +664,7 @@ async def test_turn_runtime_bootstraps_question_followup_context_once(
             )
             await stream.emit(StreamEvent(type=StreamEventType.DONE, source="chat"))
 
-    monkeypatch.setattr("deeptutor.services.llm.config.get_llm_config", lambda: SimpleNamespace())
+    monkeypatch.setattr("lumen.shared._util.llm.config.get_llm_config", lambda: SimpleNamespace())
     monkeypatch.setattr(
         "deeptutor.services.session.context_builder.ContextBuilder", FakeContextBuilder
     )
@@ -783,7 +783,7 @@ async def test_turn_runtime_injects_memory_and_refreshes_after_completion(
         emit_calls.append(event)
         return None
 
-    monkeypatch.setattr("deeptutor.services.llm.config.get_llm_config", lambda: SimpleNamespace())
+    monkeypatch.setattr("lumen.shared._util.llm.config.get_llm_config", lambda: SimpleNamespace())
     monkeypatch.setattr(
         "deeptutor.services.session.context_builder.ContextBuilder", FakeContextBuilder
     )

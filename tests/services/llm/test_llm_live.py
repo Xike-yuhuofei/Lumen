@@ -46,8 +46,8 @@ async def run_test(
     binding: str | None = None,
     test_stream: bool = False,
 ) -> bool:
-    from deeptutor.services.llm import config as config_module
-    from deeptutor.services.llm.config import LLMConfig, get_llm_config
+    from lumen.shared._util.llm import config as config_module
+    from lumen.shared._util.llm.config import LLMConfig, get_llm_config
 
     config_module._LLM_CONFIG_CACHE = None
     cfg = get_llm_config()
@@ -71,7 +71,7 @@ async def run_test(
     # --- Test 1: completion ---
     print(f"\n  {BOLD}[1/{'2' if test_stream else '1'}] Completion{RESET}", end=" ", flush=True)
     try:
-        from deeptutor.services.llm.factory import complete
+        from lumen.shared._util.llm.factory import complete
 
         t0 = time.perf_counter()
         resp = await complete(
@@ -100,7 +100,7 @@ async def run_test(
     if test_stream:
         print(f"\n  {BOLD}[2/2] Streaming{RESET}", end=" ", flush=True)
         try:
-            from deeptutor.services.llm.factory import stream
+            from lumen.shared._util.llm.factory import stream
 
             chunks: list[str] = []
             t0 = time.perf_counter()

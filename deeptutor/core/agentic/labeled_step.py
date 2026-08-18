@@ -51,9 +51,9 @@ from deeptutor.core.agentic.usage import (
 )
 from deeptutor.core.stream_bus import StreamBus
 from deeptutor.core.trace import merge_trace_metadata
-from deeptutor.services.llm import clean_thinking_tags
-from deeptutor.services.llm.multimodal import should_degrade_to_text, strip_image_parts_inplace
-from deeptutor.services.llm.request_compat import (
+from lumen.shared._util.llm import clean_thinking_tags
+from lumen.shared._util.llm.multimodal import should_degrade_to_text, strip_image_parts_inplace
+from lumen.shared._util.llm.request_compat import (
     is_image_input_unsupported,
     is_stream_options_unsupported,
     is_tool_schema_unsupported,

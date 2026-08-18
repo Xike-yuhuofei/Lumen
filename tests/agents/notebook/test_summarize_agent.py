@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from deeptutor.services.llm.config import LLMConfig
+from lumen.shared._util.llm.config import LLMConfig
 
 
 def _make_cfg(**overrides):

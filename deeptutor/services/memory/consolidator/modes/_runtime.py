@@ -20,10 +20,10 @@ from typing import Any, Awaitable, Callable
 
 import yaml
 
-from deeptutor.services.llm import clean_thinking_tags
-from deeptutor.services.llm import complete as llm_complete
-from deeptutor.services.llm import stream as llm_stream
 from deeptutor.services.memory.document import Document, parse, serialize
+from lumen.shared._util.llm import clean_thinking_tags
+from lumen.shared._util.llm import complete as llm_complete
+from lumen.shared._util.llm import stream as llm_stream
 
 logger = logging.getLogger(__name__)
 
@@ -105,7 +105,7 @@ async def call_llm(
     model. Emits ``llm_io_start`` / ``llm_io_end`` events for the
     workbench trace.
     """
-    from deeptutor.services.llm import get_llm_config
+    from lumen.shared._util.llm import get_llm_config
 
     model_label = get_llm_config().model or None
     if on_event is not None:

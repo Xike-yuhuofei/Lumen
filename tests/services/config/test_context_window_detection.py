@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 
-from deeptutor.services.llm.config import LLMConfig
+from lumen.shared._util.llm.config import LLMConfig
 from lumen.shared.config import context_window_detection as detection_module
 from lumen.shared.config.context_window_detection import (
     detect_context_window,

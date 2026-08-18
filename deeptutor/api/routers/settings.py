@@ -20,9 +20,6 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger(__name__)
 
 from deeptutor.brand import PRODUCT_NAME
-from deeptutor.services.embedding.client import reset_embedding_client
-from deeptutor.services.llm.client import reset_llm_client
-from deeptutor.services.llm.config import clear_llm_config_cache
 from deeptutor.services.model_selection import list_llm_options
 from deeptutor.services.path_service import get_path_service
 from deeptutor.services.settings.interface_settings import (
@@ -31,6 +28,9 @@ from deeptutor.services.settings.interface_settings import (
 from deeptutor.services.settings.interface_settings import resolve_languages
 from deeptutor.services.user import allowed_llm_options, get_current_user
 from deeptutor.tools.builtin import USER_TOGGLEABLE_TOOL_NAMES
+from lumen.shared._util.embedding.client import reset_embedding_client
+from lumen.shared._util.llm.client import reset_llm_client
+from lumen.shared._util.llm.config import clear_llm_config_cache
 from lumen.shared.config import (
     get_config_test_runner,
     get_model_catalog_service,
@@ -975,7 +975,7 @@ async def fetch_models_from_provider(payload: FetchModelsPayload):
     the user type model IDs by hand.
     """
     _require_settings_admin()
-    from deeptutor.services.llm.factory import fetch_models as fetch_llm_models
+    from lumen.shared._util.llm.factory import fetch_models as fetch_llm_models
 
     base_url = (payload.base_url or "").strip()
     binding = (payload.binding or "").strip().lower() or "openai"

@@ -16,15 +16,15 @@ from typing import Any, AsyncGenerator, Awaitable, Callable
 
 from deeptutor.config.settings import settings
 from deeptutor.logging import LLMStats
-from deeptutor.services.llm import complete as llm_complete
-from deeptutor.services.llm import (
+from deeptutor.services.prompt import get_prompt_manager
+from lumen.shared._util.llm import complete as llm_complete
+from lumen.shared._util.llm import (
     get_llm_config,
     get_token_limit_kwargs,
     prepare_multimodal_messages,
     supports_response_format,
 )
-from deeptutor.services.llm import stream as llm_stream
-from deeptutor.services.prompt import get_prompt_manager
+from lumen.shared._util.llm import stream as llm_stream
 from lumen.shared.config import get_agent_params
 
 

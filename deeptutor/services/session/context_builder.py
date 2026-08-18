@@ -10,8 +10,8 @@ from typing import Any, Awaitable, Callable
 from deeptutor.agents.base_agent import BaseAgent
 from deeptutor.core.stream import StreamEvent, StreamEventType
 from deeptutor.core.trace import build_trace_metadata, merge_trace_metadata, new_call_id
-from deeptutor.services.llm.config import LLMConfig
-from deeptutor.services.llm.context_window import resolve_effective_context_window
+from lumen.shared._util.llm.config import LLMConfig
+from lumen.shared._util.llm.context_window import resolve_effective_context_window
 
 from .protocol import SessionStoreProtocol
 

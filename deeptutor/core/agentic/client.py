@@ -22,11 +22,11 @@ from typing import Any
 import httpx
 from openai import AsyncAzureOpenAI, AsyncOpenAI
 
-from deeptutor.services.llm import get_token_limit_kwargs, supports_tools
-from deeptutor.services.llm.reasoning_params import (
+from deeptutor.services.provider_registry import find_by_name
+from lumen.shared._util.llm import get_token_limit_kwargs, supports_tools
+from lumen.shared._util.llm.reasoning_params import (
     build_openai_compatible_reasoning_kwargs,
 )
-from deeptutor.services.provider_registry import find_by_name
 from lumen.shared.config import load_system_settings
 
 # Providers that don't reliably support OpenAI function-calling. The loop
@@ -182,7 +182,7 @@ def agentic_client_pool_size() -> int:
 
 
 def _build_anthropic_adapter(config: LLMClientConfig, spec: Any) -> Any:
-    from deeptutor.services.llm.provider_core import AnthropicProvider
+    from lumen.shared._util.llm.provider_core import AnthropicProvider
 
     anthropic_provider = AnthropicProvider(
         api_key=config.api_key,

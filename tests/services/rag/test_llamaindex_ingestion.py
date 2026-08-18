@@ -5,7 +5,7 @@ from llama_index.core.schema import TextNode
 
 
 def test_documents_do_not_bypass_chunking_pipeline(monkeypatch) -> None:
-    from deeptutor.services.rag.pipelines.llamaindex import ingestion
+    from lumen.shared.knowledge.rag.pipelines.llamaindex import ingestion
 
     captured: dict[str, object] = {}
 

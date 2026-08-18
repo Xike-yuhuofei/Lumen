@@ -160,7 +160,7 @@ def _attach_bootstrap(bootstrap: Any | None = None) -> Any | None:
 def _patch_legacy_runtime(monkeypatch: pytest.MonkeyPatch) -> None:
     """Patch the legacy services the turn runtime still touches, so the
     test drives the routing without a live LLM / store backend."""
-    monkeypatch.setattr("deeptutor.services.llm.config.get_llm_config", lambda: SimpleNamespace())
+    monkeypatch.setattr("lumen.shared._util.llm.config.get_llm_config", lambda: SimpleNamespace())
     monkeypatch.setattr(
         "deeptutor.services.session.context_builder.ContextBuilder", _FakeContextBuilder
     )

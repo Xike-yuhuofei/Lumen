@@ -20,7 +20,7 @@ import logging
 from typing import Any
 
 from deeptutor.capabilities.protocol import PromptBlock
-from deeptutor.services.llm.context_window import (
+from lumen.shared._util.llm.context_window import (
     coerce_positive_int,
     resolve_effective_context_window,
 )

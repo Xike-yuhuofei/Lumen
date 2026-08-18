@@ -516,7 +516,7 @@ def test_search_fallback_candidates_skip_unconfigured_providers() -> None:
 
 
 def test_every_search_provider_has_a_registered_implementation() -> None:
-    from deeptutor.services.search.providers import list_providers
+    from lumen.shared._util.search.providers import list_providers
 
     registered = set(list_providers())
     expected = {name for name in SEARCH_PROVIDERS if name != "none"}

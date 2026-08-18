@@ -263,7 +263,7 @@ async def generate_from_notebook(book_id: str, body: GenerateFromNotebookRequest
         for r in body.records[:20]
     ]
     records_json = json.dumps(records_data, ensure_ascii=False)
-    from deeptutor.services.llm import complete
+    from lumen.shared._util.llm import complete
 
     language = get_response_language()
     system_prompt, prompt = notebook_generation_prompts(language, records_json)

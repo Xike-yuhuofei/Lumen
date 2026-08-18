@@ -17,8 +17,8 @@ from llama_index.core.schema import ImageNode, TextNode
 import numpy as np
 import pytest
 
-from deeptutor.services.rag.pipelines.llamaindex import storage as storage_module
-from deeptutor.services.rag.pipelines.llamaindex import vector_store
+from lumen.shared.knowledge.rag.pipelines.llamaindex import storage as storage_module
+from lumen.shared.knowledge.rag.pipelines.llamaindex import vector_store
 
 faiss = pytest.importorskip("faiss")
 pytest.importorskip("llama_index.vector_stores.faiss")
@@ -227,7 +227,7 @@ def test_validation_skips_binary_faiss_files(tmp_path: Path) -> None:
 
 def test_reindex_supersedes_legacy_simple_version_with_faiss(tmp_path: Path) -> None:
     """Re-indexing a legacy KB writes a newer FAISS version that wins on read."""
-    from deeptutor.services.rag.index_versioning import (
+    from lumen.shared.knowledge.rag.index_versioning import (
         EmbeddingSignature,
         resolve_storage_dir_for_read,
         write_version_meta,

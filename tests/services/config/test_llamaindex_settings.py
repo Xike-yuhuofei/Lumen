@@ -64,7 +64,7 @@ def test_llamaindex_profile_env_override(tmp_path: Path) -> None:
 
 
 def test_chunk_geometry_preserves_zero_overlap(monkeypatch) -> None:
-    from deeptutor.services.rag.pipelines.llamaindex import config
+    from lumen.shared.knowledge.rag.pipelines.llamaindex import config
 
     monkeypatch.setattr(
         config,

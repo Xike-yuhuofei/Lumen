@@ -8,10 +8,10 @@ from typing import Any
 import pytest
 
 from deeptutor.api.routers import settings as settings_router
-from deeptutor.services.embedding import client as embedding_client_module
-from deeptutor.services.embedding import config as embedding_config_module
-from deeptutor.services.llm import client as llm_client_module
-from deeptutor.services.llm import config as llm_config_module
+from lumen.shared._util.embedding import client as embedding_client_module
+from lumen.shared._util.embedding import config as embedding_config_module
+from lumen.shared._util.llm import client as llm_client_module
+from lumen.shared._util.llm import config as llm_config_module
 from lumen.shared._util.llm import config as lumen_llm_config_module
 from lumen.shared.config.provider_runtime import (
     ResolvedEmbeddingConfig,
@@ -713,7 +713,7 @@ async def test_complete_tour_invalidates_runtime_caches(
 
 @pytest.mark.asyncio
 async def test_fetch_models_returns_picker_options(monkeypatch: pytest.MonkeyPatch) -> None:
-    import deeptutor.services.llm.factory as factory_module
+    import lumen.shared._util.llm.factory as factory_module
 
     async def _fake_fetch(binding: str, base_url: str, api_key: str | None = None):
         assert binding == "openai"  # "OpenAI" is normalized to lowercase
@@ -752,7 +752,7 @@ async def test_fetch_models_requires_base_url() -> None:
 async def test_fetch_models_maps_provider_error_to_502(monkeypatch: pytest.MonkeyPatch) -> None:
     from fastapi import HTTPException
 
-    import deeptutor.services.llm.factory as factory_module
+    import lumen.shared._util.llm.factory as factory_module
 
     async def _boom(binding: str, base_url: str, api_key: str | None = None):
         raise RuntimeError("connection refused")

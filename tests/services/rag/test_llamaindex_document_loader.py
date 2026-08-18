@@ -39,7 +39,7 @@ def test_loader_routes_parser_files_through_active_parse_engine(
 ) -> None:
     pytest.importorskip("llama_index.core")
     from deeptutor.services.parsing.types import ParsedDocument
-    from deeptutor.services.rag.pipelines.llamaindex import (
+    from lumen.shared.knowledge.rag.pipelines.llamaindex import (
         document_loader as loader_module,
     )
 
@@ -73,7 +73,7 @@ def test_loader_skips_document_when_active_engine_cannot_parse(
 ) -> None:
     pytest.importorskip("llama_index.core")
     from deeptutor.services.parsing.types import ParserError
-    from deeptutor.services.rag.pipelines.llamaindex import (
+    from lumen.shared.knowledge.rag.pipelines.llamaindex import (
         document_loader as loader_module,
     )
 
@@ -100,7 +100,7 @@ def test_loader_indexes_images_extracted_from_parsed_document(
     from llama_index.core.schema import ImageNode
 
     from deeptutor.services.parsing.types import ParsedDocument
-    from deeptutor.services.rag.pipelines.llamaindex import document_loader as loader_module
+    from lumen.shared.knowledge.rag.pipelines.llamaindex import document_loader as loader_module
 
     pdf_path = tmp_path / "paper.pdf"
     pdf_path.write_bytes(b"stub")
@@ -157,7 +157,7 @@ def test_loader_skips_images_when_embedding_provider_is_text_only(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     pytest.importorskip("llama_index.core")
-    from deeptutor.services.rag.pipelines.llamaindex import document_loader as loader_module
+    from lumen.shared.knowledge.rag.pipelines.llamaindex import document_loader as loader_module
 
     image_path = tmp_path / "photo.png"
     image_path.write_bytes(b"\x89PNG\r\n")
@@ -181,9 +181,9 @@ def test_loader_embeds_images_with_qwen38_max_vision_capability(
     pytest.importorskip("llama_index.core")
     from llama_index.core.schema import ImageNode
 
-    from deeptutor.services.llm.client import LLMClient
-    from deeptutor.services.llm.config import LLMConfig
-    from deeptutor.services.rag.pipelines.llamaindex import document_loader as loader_module
+    from lumen.shared._util.llm.client import LLMClient
+    from lumen.shared._util.llm.config import LLMConfig
+    from lumen.shared.knowledge.rag.pipelines.llamaindex import document_loader as loader_module
 
     image_path = tmp_path / "photo.png"
     image_path.write_bytes(b"\x89PNG\r\n")
@@ -234,7 +234,7 @@ def test_loader_skips_images_when_llm_is_text_only(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     pytest.importorskip("llama_index.core")
-    from deeptutor.services.rag.pipelines.llamaindex import document_loader as loader_module
+    from lumen.shared.knowledge.rag.pipelines.llamaindex import document_loader as loader_module
 
     image_path = tmp_path / "photo.png"
     image_path.write_bytes(b"\x89PNG\r\n")
@@ -263,7 +263,7 @@ def test_loader_logs_all_missing_multimodal_image_requirements(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
     pytest.importorskip("llama_index.core")
-    from deeptutor.services.rag.pipelines.llamaindex import document_loader as loader_module
+    from lumen.shared.knowledge.rag.pipelines.llamaindex import document_loader as loader_module
 
     image_path = tmp_path / "photo.png"
     image_path.write_bytes(b"\x89PNG\r\n")

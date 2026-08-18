@@ -8,11 +8,11 @@ from typing import Any
 import httpx
 import pytest
 
-from deeptutor.services.embedding.adapters.base import (
+from lumen.shared._util.embedding.adapters.base import (
     EmbeddingProviderError,
     EmbeddingRequest,
 )
-from deeptutor.services.embedding.adapters.gemini import GeminiEmbeddingAdapter
+from lumen.shared._util.embedding.adapters.gemini import GeminiEmbeddingAdapter
 
 NATIVE_GEMINI2_ENDPOINT = (
     "https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-2:batchEmbedContents"

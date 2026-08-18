@@ -12,8 +12,8 @@ from typing import Any
 
 import pytest
 
-from deeptutor.services.llm.multimodal import has_image_parts
-from deeptutor.services.llm.provider_core.base import LLMProvider, LLMResponse
+from lumen.shared._util.llm.multimodal import has_image_parts
+from lumen.shared._util.llm.provider_core.base import LLMProvider, LLMResponse
 
 
 def _image_messages() -> list[dict[str, Any]]:

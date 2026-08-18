@@ -12,11 +12,11 @@ Unified service layer for DeepTutor providing:
 - Configuration loading
 
 Usage:
-    from deeptutor.services.llm import get_llm_client
-    from deeptutor.services.embedding import get_embedding_client
-    from deeptutor.services.rag import RAGService
+    from lumen.shared._util.llm import get_llm_client
+    from lumen.shared._util.embedding import get_embedding_client
+    from lumen.shared.knowledge.rag import RAGService
     from deeptutor.services.prompt import get_prompt_manager
-    from deeptutor.services.search import web_search
+    from lumen.shared._util.search import web_search
     from deeptutor.services.setup import init_user_directories
     from lumen.shared.config import load_config_with_main
 
@@ -64,11 +64,11 @@ def __getattr__(name: str):
     import importlib
 
     if name == "llm":
-        return importlib.import_module("deeptutor.services.llm")
+        return importlib.import_module("lumen.shared._util.llm")
     if name == "prompt":
         return importlib.import_module("deeptutor.services.prompt")
     if name == "search":
-        return importlib.import_module("deeptutor.services.search")
+        return importlib.import_module("lumen.shared._util.search")
     if name == "setup":
         return importlib.import_module("deeptutor.services.setup")
     if name == "session":
@@ -76,9 +76,9 @@ def __getattr__(name: str):
     if name == "config":
         return importlib.import_module("lumen.shared.config")
     if name == "rag":
-        return importlib.import_module("deeptutor.services.rag")
+        return importlib.import_module("lumen.shared.knowledge.rag")
     if name == "embedding":
-        return importlib.import_module("deeptutor.services.embedding")
+        return importlib.import_module("lumen.shared._util.embedding")
     if name == "BaseSessionManager":
         from .session import BaseSessionManager
 

@@ -9,7 +9,7 @@ from __future__ import annotations
 import asyncio
 from typing import Dict, List, Optional
 
-from deeptutor.services.rag.service import RAGService
+from lumen.shared.knowledge.rag.service import RAGService
 
 
 async def rag_search(

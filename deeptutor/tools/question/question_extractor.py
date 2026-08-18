@@ -19,10 +19,10 @@ from pathlib import Path
 import sys
 from typing import Any
 
-from deeptutor.services.llm import complete as llm_complete
-from deeptutor.services.llm.capabilities import supports_response_format
-from deeptutor.services.llm.config import get_llm_config
 from deeptutor.utils.json_parser import parse_json_response
+from lumen.shared._util.llm import complete as llm_complete
+from lumen.shared._util.llm.capabilities import supports_response_format
+from lumen.shared._util.llm.config import get_llm_config
 from lumen.shared.config import get_agent_params
 
 

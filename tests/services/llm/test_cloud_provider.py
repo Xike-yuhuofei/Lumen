@@ -8,9 +8,9 @@ from types import TracebackType
 from _pytest.monkeypatch import MonkeyPatch
 import pytest
 
-from deeptutor.services.llm.exceptions import LLMAPIError
+from lumen.shared._util.llm.exceptions import LLMAPIError
 
-cloud_provider = importlib.import_module("deeptutor.services.llm.cloud_provider")
+cloud_provider = importlib.import_module("lumen.shared._util.llm.cloud_provider")
 
 
 class _AsyncIterator:

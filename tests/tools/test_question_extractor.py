@@ -18,11 +18,11 @@ def _load_question_extractor_module():
 
     stubbed_modules = {
         "lumen.shared.config": {"get_agent_params": lambda *_args, **_kwargs: {}},
-        "deeptutor.services.llm": {"complete": lambda *_args, **_kwargs: None},
-        "deeptutor.services.llm.capabilities": {
+        "lumen.shared._util.llm": {"complete": lambda *_args, **_kwargs: None},
+        "lumen.shared._util.llm.capabilities": {
             "supports_response_format": lambda *_args, **_kwargs: False
         },
-        "deeptutor.services.llm.config": {"get_llm_config": lambda: None},
+        "lumen.shared._util.llm.config": {"get_llm_config": lambda: None},
         "deeptutor.utils.json_parser": {"parse_json_response": lambda *_args, **_kwargs: {}},
     }
 

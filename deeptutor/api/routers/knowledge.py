@@ -40,17 +40,6 @@ from deeptutor.knowledge.manager import KnowledgeBaseManager
 from deeptutor.knowledge.naming import validate_knowledge_base_name
 from deeptutor.knowledge.progress_tracker import ProgressStage, ProgressTracker
 from deeptutor.services.file_io import atomic_write_json
-from deeptutor.services.rag.factory import (
-    DEFAULT_PROVIDER,
-    normalize_provider_name,
-    provider_uses_embedding_versions,
-)
-from deeptutor.services.rag.file_routing import FileTypeRouter
-from deeptutor.services.rag.linked_kb import (
-    LINKABLE_PROVIDERS,
-    assert_path_allowed,
-    probe_linked_folder,
-)
 from deeptutor.services.user import (
     assert_writable,
     current_kb_base_dir,
@@ -70,6 +59,17 @@ from deeptutor.utils.document_extractor import (
 from lumen.shared._util.document_validator import DocumentValidator
 from lumen.shared._util.error_utils import format_exception_message
 from lumen.shared.config import PROJECT_ROOT, load_config_with_main
+from lumen.shared.knowledge.rag.factory import (
+    DEFAULT_PROVIDER,
+    normalize_provider_name,
+    provider_uses_embedding_versions,
+)
+from lumen.shared.knowledge.rag.file_routing import FileTypeRouter
+from lumen.shared.knowledge.rag.linked_kb import (
+    LINKABLE_PROVIDERS,
+    assert_path_allowed,
+    probe_linked_folder,
+)
 
 # Initialize logger with config
 config = load_config_with_main("main.yaml", PROJECT_ROOT)
@@ -600,8 +600,8 @@ def _matching_index_is_valid(kb_name: str, matching_version: dict | None) -> boo
     if not matching_version:
         return False
     try:
-        from deeptutor.services.rag.index_probe import inspect_provider_version
-        from deeptutor.services.rag.pipelines.llamaindex.storage import (
+        from lumen.shared.knowledge.rag.index_probe import inspect_provider_version
+        from lumen.shared.knowledge.rag.pipelines.llamaindex.storage import (
             validate_storage_embeddings,
         )
 
@@ -888,8 +888,8 @@ async def health_check():
 async def get_rag_providers():
     """Get list of available RAG providers (with the active per-engine mode)."""
     try:
-        from deeptutor.services.rag.service import RAGService
         from lumen.shared.config import get_kb_config_service
+        from lumen.shared.knowledge.rag.service import RAGService
 
         providers = RAGService.list_providers()
         kb_config = get_kb_config_service()
@@ -921,8 +921,8 @@ async def set_rag_provider_mode(provider: str, payload: ProviderModeUpdate):
     The mode must be one the engine supports; a KB's own ``search_mode`` still
     overrides this per-KB default.
     """
-    from deeptutor.services.rag.service import RAGService
     from lumen.shared.config import get_kb_config_service
+    from lumen.shared.knowledge.rag.service import RAGService
 
     entry = next((p for p in RAGService.list_providers() if p["id"] == provider), None)
     modes = (entry or {}).get("modes") or []
@@ -991,7 +991,7 @@ async def get_rag_pipeline_preflight(provider: str):
     install, API key, and active model requirements per engine.
     """
     try:
-        from deeptutor.services.rag.preflight import engine_preflight
+        from lumen.shared.knowledge.rag.preflight import engine_preflight
 
         return engine_preflight(provider)
     except Exception as e:
@@ -1152,8 +1152,8 @@ async def get_kb_config(kb_name: str):
 async def update_kb_config(kb_name: str, config: dict):
     """Update configuration for a specific knowledge base."""
     try:
-        from deeptutor.services.rag.index_probe import has_ready_provider_index
         from lumen.shared.config import get_kb_config_service
+        from lumen.shared.knowledge.rag.index_probe import has_ready_provider_index
 
         config = dict(config or {})
         if "rag_provider" in config:
@@ -1976,7 +1976,7 @@ async def run_reindex_task(kb_name: str, base_dir: str, task_id: str, signature_
                 total=len(file_paths),
             )
 
-            from deeptutor.services.rag.service import RAGService
+            from lumen.shared.knowledge.rag.service import RAGService
 
             # provider=None → RAGService resolves the KB's DeepTutor-bound
             # engine, so re-indexing stays on that provider rather than forcing
@@ -2100,8 +2100,10 @@ async def reindex_knowledge_base(
         kb_dir = kb_base_dir / kb_name
         signature_hash = kb_provider
         if provider_uses_embedding_versions(kb_provider):
-            from deeptutor.services.rag.embedding_signature import signature_from_embedding_config
-            from deeptutor.services.rag.index_versioning import (
+            from lumen.shared.knowledge.rag.embedding_signature import (
+                signature_from_embedding_config,
+            )
+            from lumen.shared.knowledge.rag.index_versioning import (
                 find_matching_version,
             )
 

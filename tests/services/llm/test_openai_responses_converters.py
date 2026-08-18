@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from deeptutor.services.llm.provider_core.openai_responses import (
+from lumen.shared._util.llm.provider_core.openai_responses import (
     adapt_chat_kwargs_to_responses,
 )
 

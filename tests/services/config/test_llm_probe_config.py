@@ -325,7 +325,7 @@ def _stub_resolved_llm(**overrides: Any):
 
 def _real_get_token_limit_kwargs(model: str, max_tokens: int) -> dict[str, int]:
     """Inline reimplementation to avoid importing the full LLM stack in tests."""
-    from deeptutor.services.llm.config import uses_max_completion_tokens
+    from lumen.shared._util.llm.config import uses_max_completion_tokens
 
     if uses_max_completion_tokens(model):
         return {"max_completion_tokens": max_tokens}

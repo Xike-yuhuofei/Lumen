@@ -7,7 +7,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from deeptutor.services.llm.provider_core.openai_responses.parsing import (
+from lumen.shared._util.llm.provider_core.openai_responses.parsing import (
     consume_sdk_stream,
     consume_sse,
 )
