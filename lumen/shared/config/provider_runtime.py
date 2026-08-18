@@ -381,7 +381,7 @@ def _with_personal_llm_profiles(catalog: dict[str, Any]) -> dict[str, Any]:
     """Add the current owner's own owner-bound LLM profiles to *catalog*.
 
     An ordinary user's LLM profile lives in their own catalog rather than
-    the shared one (see :mod:`deeptutor.services.user`), so
+    the shared one (see :mod:`lumen.shared._util.user`), so
     resolving a personal selection against the shared catalog alone would
     fail to find the profile it names. Imported lazily and guarded: the LLM
     layer must keep resolving in contexts where user state is absent

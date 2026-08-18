@@ -1,7 +1,6 @@
 """Small, dependency-free helpers for durable service files.
 
-Owned by ``lumen`` (single real implementation). ``deeptutor.services.file_io``
-re-exports this module for existing importers only.
+Canonical implementation (single Source of Truth) for durable file I/O.
 """
 
 from __future__ import annotations
