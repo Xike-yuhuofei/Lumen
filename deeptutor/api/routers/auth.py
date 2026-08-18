@@ -28,7 +28,7 @@ from lumen.shared.config import load_auth_settings
 _SECURE = bool(load_auth_settings()["cookie_secure"])
 _SAMESITE = "none" if _SECURE else "lax"
 
-from deeptutor.services.auth import (
+from lumen.shared._util.auth import (
     AUTH_ENABLED,
     TOKEN_EXPIRE_HOURS,
     TokenPayload,

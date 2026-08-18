@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import FileResponse
 
 from deeptutor.api.routers.auth import require_auth
-from deeptutor.services.auth import TokenPayload
+from lumen.shared._util.auth import TokenPayload
 from lumen.shared._util.path_service import PathService
 from lumen.shared._util.user import get_current_user_or_none, get_path_service_for_scope
 
