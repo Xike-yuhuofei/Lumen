@@ -44,7 +44,9 @@ async def _plan(path_id):
     return json.loads(raw.content)
 
 
-async def _quiz_and_grade(path_id, kp_id, answer, *, expected, misconception="", question_kind="recall"):
+async def _quiz_and_grade(
+    path_id, kp_id, answer, *, expected, misconception="", question_kind="recall"
+):
     question_type = "open" if ("；" in expected or "、" in expected) else "short"
     quiz = json.loads(
         (
@@ -190,8 +192,7 @@ async def test_misconception_learner_detected_remediated_not_stuck(eval_env):
     assert final_records, "no error records recorded for the misconception learner"
     for rec in final_records:
         assert rec["status"] == "graduated", (
-            f"misconception on {rec['kp']} stuck in {rec['status']} "
-            f"(retries={rec['retry_count']})"
+            f"misconception on {rec['kp']} stuck in {rec['status']} (retries={rec['retry_count']})"
         )
 
     # the quantitative kp (真诚的三个条件, memory + registered misconception) must
@@ -266,7 +267,10 @@ async def test_forgetting_learner_review_failure_demotes_qualitative_mastery(eva
     assert plan["focus"]["node_id"] == kp_id
 
     graded = await _quiz_and_grade(
-        path_id, kp_id, "忘了这个概念的内容", expected=ZHONGCAO.modules[0].knowledge_points[0].answer
+        path_id,
+        kp_id,
+        "忘了这个概念的内容",
+        expected=ZHONGCAO.modules[0].knowledge_points[0].answer,
     )
     assert graded["is_correct"] is False
 
@@ -436,8 +440,6 @@ async def test_struggling_learner_error_records_stay_bounded(eval_env):
 
     store = LearningStore()
     progress = store.load(path_id)
-    kp_records = [
-        rec for rec in progress.error_records if rec.knowledge_point_id == kp_id
-    ]
+    kp_records = [rec for rec in progress.error_records if rec.knowledge_point_id == kp_id]
     assert len(kp_records) <= 1, f"error records grew without bound: {len(kp_records)}"
     assert len(progress.quiz_attempts) == 30

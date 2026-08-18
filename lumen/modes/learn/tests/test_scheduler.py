@@ -212,9 +212,7 @@ def _mastered_lp(kp_id: str, kp_type: KnowledgeType) -> LearningProgress:
             id="m1",
             name="M",
             order=0,
-            knowledge_points=[
-                KnowledgePoint(id=kp_id, name=kp_id, type=kp_type, module_id="m1")
-            ],
+            knowledge_points=[KnowledgePoint(id=kp_id, name=kp_id, type=kp_type, module_id="m1")],
         )
     ]
     lp.knowledge_types[kp_id] = kp_type
@@ -302,9 +300,7 @@ class TestBuildReviewQueue:
                 name="M",
                 order=0,
                 knowledge_points=[
-                    KnowledgePoint(
-                        id="kp1", name="kp1", type=KnowledgeType.MEMORY, module_id="m1"
-                    )
+                    KnowledgePoint(id="kp1", name="kp1", type=KnowledgeType.MEMORY, module_id="m1")
                 ],
             )
         ]

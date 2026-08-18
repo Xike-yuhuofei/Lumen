@@ -334,7 +334,8 @@ class TestRegenerateLastTurn:
             FakeContextBuilder,
         )
         monkeypatch.setattr(
-            "lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.AgenticChatPipeline", FakePipeline
+            "lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.AgenticChatPipeline",
+            FakePipeline,
         )
         monkeypatch.setattr(
             "lumen.shared.memory.store.get_memory_store",

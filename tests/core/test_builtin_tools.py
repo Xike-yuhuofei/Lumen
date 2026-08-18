@@ -59,7 +59,9 @@ async def test_brainstorm_tool_passes_llm_arguments(monkeypatch: pytest.MonkeyPa
         captured.update(kwargs)
         return {"answer": "## 1. Test idea\n- Rationale: worth exploring"}
 
-    _install_module(monkeypatch, "lumen.runtime.tools.builtin.brainstorm", brainstorm=fake_brainstorm)
+    _install_module(
+        monkeypatch, "lumen.runtime.tools.builtin.brainstorm", brainstorm=fake_brainstorm
+    )
 
     result = await BrainstormTool().execute(
         topic="agent-native tutoring",
@@ -162,7 +164,9 @@ async def test_web_search_tool_wraps_sync_function(monkeypatch: pytest.MonkeyPat
             "citations": [{"url": "https://example.com", "title": "Example"}],
         }
 
-    _install_module(monkeypatch, "lumen.runtime.tools.builtin.web_search", web_search=fake_web_search)
+    _install_module(
+        monkeypatch, "lumen.runtime.tools.builtin.web_search", web_search=fake_web_search
+    )
 
     result = await WebSearchTool().execute(query="latest benchmark", output_dir="/tmp/out")
 

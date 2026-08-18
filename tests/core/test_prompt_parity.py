@@ -60,9 +60,7 @@ def _collect_keys(value: Any, prefix: str = "") -> set[str]:
 
 
 def test_prompts_key_and_placeholder_parity():
-    module_dirs: list[Path] = sorted(
-        p for p in PROMPT_ROOTS if (p / "prompts" / "en").is_dir()
-    )
+    module_dirs: list[Path] = sorted(p for p in PROMPT_ROOTS if (p / "prompts" / "en").is_dir())
     assert module_dirs, f"No canonical prompt roots found under: {PROMPT_ROOTS}"
 
     failures: list[str] = []

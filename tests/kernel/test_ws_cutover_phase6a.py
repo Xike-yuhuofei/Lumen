@@ -161,9 +161,7 @@ def _patch_legacy_runtime(monkeypatch: pytest.MonkeyPatch) -> None:
     """Patch the legacy services the turn runtime still touches, so the
     test drives the routing without a live LLM / store backend."""
     monkeypatch.setattr("lumen.shared._util.llm.config.get_llm_config", lambda: SimpleNamespace())
-    monkeypatch.setattr(
-        "lumen.runtime.session.context_builder.ContextBuilder", _FakeContextBuilder
-    )
+    monkeypatch.setattr("lumen.runtime.session.context_builder.ContextBuilder", _FakeContextBuilder)
     monkeypatch.setattr(
         "lumen.shared.memory.store.get_memory_store",
         lambda: SimpleNamespace(
@@ -365,7 +363,8 @@ async def test_ws_chat_turn_boots_kernel_on_demand(
     previous = _attach_bootstrap(None)
     try:
         monkeypatch.setattr(
-            "lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.AgenticChatPipeline", lambda **kw: probe
+            "lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.AgenticChatPipeline",
+            lambda **kw: probe,
         )
         _patch_legacy_runtime(monkeypatch)
 

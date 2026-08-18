@@ -98,7 +98,7 @@ async def test_benchmark_first_module_scope_completes_without_touching_rest(eval
     for kp_id in scoped:
         assert record.final_state["mastery"][kp_id] >= 0.9
     # objectives outside the scope are untouched
-    for kp_id in kp_ids_for(path_id, material)[len(scoped):]:
+    for kp_id in kp_ids_for(path_id, material)[len(scoped) :]:
         assert kp_id not in record.final_state["mastery"] or (
             record.final_state["mastery"][kp_id] == 0
         )

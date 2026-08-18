@@ -60,7 +60,9 @@ def test_loader_routes_parser_files_through_active_parse_engine(
         },
     )
 
-    documents = asyncio.run(loader_module.LlamaIndexDocumentLoader().load([str(docx_path), str(pdf_path)]))
+    documents = asyncio.run(
+        loader_module.LlamaIndexDocumentLoader().load([str(docx_path), str(pdf_path)])
+    )
 
     by_name = {doc.metadata["file_name"]: doc.text for doc in documents}
     assert by_name["notes.docx"] == "Docx body text"

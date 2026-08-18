@@ -16,13 +16,7 @@ from lumen.shared._util.runtime_home import PACKAGE_ROOT
 # agent prompt loader today is ``chat``).
 LUMEN_AGENT_PROMPT_ROOTS: dict[str, Path] = {
     "chat": (
-        PACKAGE_ROOT
-        / "lumen"
-        / "runtime"
-        / "agent_loop"
-        / "providers"
-        / "legacy"
-        / "prompts"
+        PACKAGE_ROOT / "lumen" / "runtime" / "agent_loop" / "providers" / "legacy" / "prompts"
     ),
 }
 

@@ -219,7 +219,11 @@ async def run_loop(
         # the loop exhausted max_rounds without COMPLETE — a real failure
         # signal (e.g. a learner stuck oscillating, or a stuck misconception)
         record.failures.append(
-            {"phase": "max_rounds", "round": max_rounds, "last_action": record.rounds[-1]["action"] if record.rounds else ""}
+            {
+                "phase": "max_rounds",
+                "round": max_rounds,
+                "last_action": record.rounds[-1]["action"] if record.rounds else "",
+            }
         )
 
     # ── final state ──────────────────────────────────────────────────────
@@ -232,9 +236,7 @@ async def run_loop(
         "mastery": dict(progress.mastery_levels),
         "qualitative_mastery": dict(progress.qualitative_mastery),
         "attempts": {
-            kp_id: len(
-                [a for a in progress.quiz_attempts if a.knowledge_point_id == kp_id]
-            )
+            kp_id: len([a for a in progress.quiz_attempts if a.knowledge_point_id == kp_id])
             for kp_id in material.kp_ids()
         },
         "error_records": [

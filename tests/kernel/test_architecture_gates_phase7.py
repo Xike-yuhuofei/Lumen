@@ -140,9 +140,7 @@ MODE_ALLOWED_RUNTIME_CONTRACTS = frozenset(
 
 
 def _is_allowed_runtime_contract(module: str) -> bool:
-    return any(
-        module == c or module.startswith(c + ".") for c in MODE_ALLOWED_RUNTIME_CONTRACTS
-    )
+    return any(module == c or module.startswith(c + ".") for c in MODE_ALLOWED_RUNTIME_CONTRACTS)
 
 
 def _is_private_util(rest: list[str]) -> bool:

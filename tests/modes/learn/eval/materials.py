@@ -89,7 +89,11 @@ class BenchmarkMaterial:
 
     def kp_ids(self) -> list[str]:
         """Deterministic kp ids in build order (mirrors _parse_modules)."""
-        return [f"{self.id}_m{m}_kp{j}" for m, mod in enumerate(self.modules) for j in range(len(mod.knowledge_points))]
+        return [
+            f"{self.id}_m{m}_kp{j}"
+            for m, mod in enumerate(self.modules)
+            for j in range(len(mod.knowledge_points))
+        ]
 
     def kp_index(self) -> dict[str, int]:
         return {kp_id: i for i, kp_id in enumerate(self.kp_ids())}

@@ -78,10 +78,7 @@ def test_blank_identity_falls_back_to_product():
 
 
 def test_shipped_yaml_carries_partner_templates():
-    root = (
-        Path(__file__).resolve().parents[3]
-        / "lumen/runtime/agent_loop/providers/legacy/prompts"
-    )
+    root = Path(__file__).resolve().parents[3] / "lumen/runtime/agent_loop/providers/legacy/prompts"
     for lang in ("en", "zh"):
         data = yaml.safe_load((root / lang / "agentic_chat.yaml").read_text())
         assert "{name}" in data["general_partner"]

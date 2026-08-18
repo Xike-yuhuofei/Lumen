@@ -132,10 +132,11 @@ async def test_turn_runtime_replays_events_and_materializes_messages(
             await stream.emit(StreamEvent(type=StreamEventType.DONE, source="chat"))
 
     monkeypatch.setattr("lumen.shared._util.llm.config.get_llm_config", lambda: SimpleNamespace())
+    monkeypatch.setattr("lumen.runtime.session.context_builder.ContextBuilder", FakeContextBuilder)
     monkeypatch.setattr(
-        "lumen.runtime.session.context_builder.ContextBuilder", FakeContextBuilder
+        "lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.AgenticChatPipeline",
+        FakePipeline,
     )
-    monkeypatch.setattr("lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.AgenticChatPipeline", FakePipeline)
     monkeypatch.setattr(
         "lumen.shared._util.memory.get_memory_store",
         lambda: SimpleNamespace(
@@ -283,10 +284,11 @@ async def test_turn_runtime_persists_llm_selection_in_turn_snapshot(
         "lumen.shared._util.model_selection_runtime.reset_llm_selection",
         lambda _token: captured.setdefault("reset_called", True),
     )
+    monkeypatch.setattr("lumen.runtime.session.context_builder.ContextBuilder", FakeContextBuilder)
     monkeypatch.setattr(
-        "lumen.runtime.session.context_builder.ContextBuilder", FakeContextBuilder
+        "lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.AgenticChatPipeline",
+        FakePipeline,
     )
-    monkeypatch.setattr("lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.AgenticChatPipeline", FakePipeline)
     monkeypatch.setattr(
         "lumen.shared._util.memory.get_memory_store",
         lambda: SimpleNamespace(
@@ -368,10 +370,11 @@ async def test_turn_runtime_session_persona_persists_falls_back_and_clears(
             await stream.emit(StreamEvent(type=StreamEventType.DONE, source="chat"))
 
     monkeypatch.setattr("lumen.shared._util.llm.config.get_llm_config", lambda: SimpleNamespace())
+    monkeypatch.setattr("lumen.runtime.session.context_builder.ContextBuilder", FakeContextBuilder)
     monkeypatch.setattr(
-        "lumen.runtime.session.context_builder.ContextBuilder", FakeContextBuilder
+        "lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.AgenticChatPipeline",
+        FakePipeline,
     )
-    monkeypatch.setattr("lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.AgenticChatPipeline", FakePipeline)
     monkeypatch.setattr(
         "lumen.shared._util.memory.get_memory_store",
         lambda: SimpleNamespace(read_l3_concat=lambda: "", emit=_noop_async),
@@ -511,10 +514,11 @@ async def test_turn_runtime_allows_model_switching_within_same_session(
         "lumen.shared._util.model_selection_runtime.reset_llm_selection",
         lambda _token: None,
     )
+    monkeypatch.setattr("lumen.runtime.session.context_builder.ContextBuilder", FakeContextBuilder)
     monkeypatch.setattr(
-        "lumen.runtime.session.context_builder.ContextBuilder", FakeContextBuilder
+        "lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.AgenticChatPipeline",
+        FakePipeline,
     )
-    monkeypatch.setattr("lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.AgenticChatPipeline", FakePipeline)
     monkeypatch.setattr(
         "lumen.shared._util.memory.get_memory_store",
         lambda: SimpleNamespace(
@@ -665,10 +669,11 @@ async def test_turn_runtime_bootstraps_question_followup_context_once(
             await stream.emit(StreamEvent(type=StreamEventType.DONE, source="chat"))
 
     monkeypatch.setattr("lumen.shared._util.llm.config.get_llm_config", lambda: SimpleNamespace())
+    monkeypatch.setattr("lumen.runtime.session.context_builder.ContextBuilder", FakeContextBuilder)
     monkeypatch.setattr(
-        "lumen.runtime.session.context_builder.ContextBuilder", FakeContextBuilder
+        "lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.AgenticChatPipeline",
+        FakePipeline,
     )
-    monkeypatch.setattr("lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.AgenticChatPipeline", FakePipeline)
     monkeypatch.setattr(
         "lumen.shared._util.memory.get_memory_store",
         lambda: SimpleNamespace(
@@ -784,10 +789,11 @@ async def test_turn_runtime_injects_memory_and_refreshes_after_completion(
         return None
 
     monkeypatch.setattr("lumen.shared._util.llm.config.get_llm_config", lambda: SimpleNamespace())
+    monkeypatch.setattr("lumen.runtime.session.context_builder.ContextBuilder", FakeContextBuilder)
     monkeypatch.setattr(
-        "lumen.runtime.session.context_builder.ContextBuilder", FakeContextBuilder
+        "lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.AgenticChatPipeline",
+        FakePipeline,
     )
-    monkeypatch.setattr("lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.AgenticChatPipeline", FakePipeline)
     monkeypatch.setattr(
         "lumen.shared._util.memory.get_memory_store",
         lambda: SimpleNamespace(
