@@ -34,9 +34,9 @@ async def build_tool_options(
     chat's memory tools.
     """
     from deeptutor.agents._shared.tool_composition import default_optional_tools
-    from deeptutor.runtime.registry.tool_registry import get_tool_registry
     from lumen.runtime.tools.builtin import CONFIGURABLE_BUILTIN_TOOL_NAMES
     from lumen.runtime.tools.deferred_tools import provider_identity
+    from lumen.runtime.tools.registry import get_tool_registry
 
     exclude = exclude_builtin or set()
 

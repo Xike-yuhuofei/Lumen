@@ -51,7 +51,7 @@ def validate_tool_consistency():
     """
     try:
         from deeptutor.agents.chat.agentic_pipeline import CHAT_OPTIONAL_TOOLS
-        from deeptutor.runtime.registry.tool_registry import get_tool_registry
+        from lumen.runtime.tools.registry import get_tool_registry
 
         tool_registry = get_tool_registry()
         available_tools = set(tool_registry.list_tools())

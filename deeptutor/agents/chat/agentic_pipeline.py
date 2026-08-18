@@ -37,13 +37,13 @@ from deeptutor.core.trace import (
 )
 from deeptutor.knowledge.manifest import KbManifest, render_manifest_note
 from deeptutor.runtime.providers.view import ProviderToolView, build_tool_view
-from deeptutor.runtime.registry.tool_registry import get_tool_registry
 from deeptutor.services.prompt import get_prompt_manager
 from lumen.modes.learn.loop_registry import active_loop_capabilities
 from lumen.runtime.agent_loop.capability import LoopCapability, PromptBlock
 from lumen.runtime.stream.bus import StreamBus
 from lumen.runtime.tools.deferred_tools import DeferredToolLoader
 from lumen.runtime.tools.providers import ToolScope
+from lumen.runtime.tools.registry import get_tool_registry
 from lumen.shared._util.llm import (
     get_llm_config,
     get_token_limit_kwargs,  # noqa: F401  (re-exported for tests)

@@ -28,8 +28,8 @@ from deeptutor.core.context import UnifiedContext
 from deeptutor.core.stream import StreamEvent, StreamEventType
 from deeptutor.core.tool_protocol import ToolResult
 from deeptutor.core.trace import derive_trace_metadata
-from deeptutor.runtime.registry.tool_registry import ToolRegistry
 from lumen.runtime.stream.bus import StreamBus
+from lumen.runtime.tools.registry import ToolRegistry
 from lumen.shared.sandbox import Mount
 
 

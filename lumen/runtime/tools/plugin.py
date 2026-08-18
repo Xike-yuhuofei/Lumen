@@ -10,7 +10,7 @@ from lumen.runtime.tools.contract import ToolService
 
 
 class _ToolServiceAdapter(ToolService):
-    """Wraps ``deeptutor.runtime.registry.tool_registry.ToolRegistry``."""
+    """Wraps ``lumen.runtime.tools.registry.ToolRegistry``."""
 
     def __init__(self) -> None:
         self._registry: Any = None
@@ -18,7 +18,7 @@ class _ToolServiceAdapter(ToolService):
     def _ensure_loaded(self) -> None:
         if self._registry is not None:
             return
-        from deeptutor.runtime.registry.tool_registry import get_tool_registry
+        from lumen.runtime.tools.registry import get_tool_registry
 
         self._registry = get_tool_registry()
 

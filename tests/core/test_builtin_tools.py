@@ -10,7 +10,6 @@ from typing import Any
 import pytest
 
 from deeptutor.core.tool_protocol import BaseTool, ToolDefinition, ToolParameter, ToolResult
-from deeptutor.runtime.registry.tool_registry import ToolRegistry
 from lumen.runtime.tools.builtin import (
     BrainstormTool,
     CodeExecutionTool,
@@ -18,6 +17,7 @@ from lumen.runtime.tools.builtin import (
     ReasonTool,
     WebSearchTool,
 )
+from lumen.runtime.tools.registry import ToolRegistry
 from lumen.shared._util.path_service import PathService
 from lumen.shared.sandbox.spec import ExecResult
 

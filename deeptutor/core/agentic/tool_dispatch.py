@@ -38,9 +38,9 @@ from deeptutor.core.trace import (
     merge_trace_metadata,
     new_call_id,
 )
-from deeptutor.runtime.registry.tool_registry import get_tool_registry
 from deeptutor.utils.json_parser import parse_json_response
 from lumen.runtime.stream.bus import StreamBus
+from lumen.runtime.tools.registry import get_tool_registry
 
 logger = logging.getLogger(__name__)
 

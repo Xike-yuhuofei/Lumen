@@ -11,7 +11,7 @@ from __future__ import annotations
 import pytest
 
 from deeptutor.core.tool_protocol import BaseTool, ToolDefinition, ToolParameter, ToolResult
-from deeptutor.runtime.registry.tool_registry import ToolRegistry
+from lumen.runtime.tools.registry import ToolRegistry
 
 
 class _NameParamTool(BaseTool):

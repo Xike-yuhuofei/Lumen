@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from deeptutor.core.tool_protocol import BaseTool, ToolDefinition, ToolResult
-from deeptutor.runtime.registry.tool_registry import ToolRegistry
 from lumen.runtime.tools.deferred_tools import (
     DeferredToolLoader,
     render_deferred_tools_manifest,
 )
+from lumen.runtime.tools.registry import ToolRegistry
 
 
 class _FakeDeferredTool(BaseTool):

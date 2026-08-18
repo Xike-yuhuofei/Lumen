@@ -106,7 +106,7 @@ jobs:
         run: |
           echo "🐍 Testing with Python 3.13"
           python -c "from lumen.runtime.session.turn_runtime import TurnRuntimeManager; print('✅ Turn runtime imports OK')"
-          python -c "from deeptutor.runtime.registry.tool_registry import get_tool_registry; print('✅ Tool registry imports OK')"
+          python -c "from lumen.runtime.tools.registry import get_tool_registry; print('✅ Tool registry imports OK')"
           python -c "from lumen.bootstrap import resolve_agent_loop_service; print('✅ runtime.agent_loop bridge imports OK')"
           python -c "from lumen.shared.config.runtime_settings import RuntimeSettingsService; print('✅ RuntimeSettingsService imports OK')"
           python -c "from deeptutor.api.routers.unified_ws import unified_websocket; print('✅ Unified WS imports OK')"

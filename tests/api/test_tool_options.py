@@ -14,7 +14,7 @@ import pytest
 
 from deeptutor.api.utils import tool_options as tool_options_mod
 from deeptutor.core.tool_protocol import BaseTool, ToolDefinition, ToolResult
-from deeptutor.runtime.registry import tool_registry as tool_registry_mod
+import lumen.runtime.tools.registry as tool_registry_mod
 
 
 class _FakeTool(BaseTool):
