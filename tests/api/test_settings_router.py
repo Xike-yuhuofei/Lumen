@@ -8,6 +8,7 @@ from typing import Any
 import pytest
 
 from deeptutor.api.routers import settings as settings_router
+from lumen.shared._util import tool_preferences
 from lumen.shared._util.embedding import client as embedding_client_module
 from lumen.shared._util.embedding import config as embedding_config_module
 from lumen.shared._util.llm import client as llm_client_module
@@ -25,7 +26,7 @@ def test_load_ui_settings_migrates_legacy_language_to_response_language(
 ) -> None:
     settings_file = tmp_path / "interface.json"
     settings_file.write_text('{"theme": "snow", "language": "zh"}', encoding="utf-8")
-    monkeypatch.setattr(settings_router, "_settings_file", lambda: settings_file)
+    monkeypatch.setattr(tool_preferences, "settings_file", lambda: settings_file)
 
     settings = settings_router.load_ui_settings()
 
@@ -48,7 +49,7 @@ def test_both_readers_of_interface_json_agree_on_a_legacy_file(
 
     settings_file = tmp_path / "interface.json"
     settings_file.write_text('{"theme": "dark", "language": "zh"}', encoding="utf-8")
-    monkeypatch.setattr(settings_router, "_settings_file", lambda: settings_file)
+    monkeypatch.setattr(tool_preferences, "settings_file", lambda: settings_file)
     monkeypatch.setattr(interface_settings, "_interface_settings_file", lambda: settings_file)
 
     from_router = settings_router.load_ui_settings()
@@ -63,7 +64,7 @@ async def test_ui_languages_are_persisted_independently(
     monkeypatch: pytest.MonkeyPatch, tmp_path
 ) -> None:
     settings_file = tmp_path / "interface.json"
-    monkeypatch.setattr(settings_router, "_settings_file", lambda: settings_file)
+    monkeypatch.setattr(tool_preferences, "settings_file", lambda: settings_file)
 
     response = await settings_router.update_ui_settings(
         settings_router.UISettingsUpdate(theme="snow", language="en", response_language="zh")
@@ -640,11 +641,11 @@ async def test_apply_catalog_invalidates_runtime_caches(monkeypatch: pytest.Monk
 @pytest.mark.asyncio
 async def test_enabled_tools_roundtrip(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
     settings_file = tmp_path / "interface.json"
-    monkeypatch.setattr(settings_router, "_settings_file", lambda: settings_file)
+    monkeypatch.setattr(tool_preferences, "settings_file", lambda: settings_file)
 
     # Default state — no file yet, so the loader emits the full toggleable set.
-    assert set(settings_router.get_enabled_optional_tools()) == set(
-        settings_router.USER_TOGGLEABLE_TOOL_NAMES
+    assert set(tool_preferences.get_enabled_optional_tools()) == set(
+        tool_preferences.USER_TOGGLEABLE_TOOL_NAMES
     )
 
     # PUT a partial set; unknown tool names get filtered out.
@@ -653,14 +654,14 @@ async def test_enabled_tools_roundtrip(monkeypatch: pytest.MonkeyPatch, tmp_path
     )
     response = await settings_router.update_enabled_tools(update)
     assert response == {"enabled_optional_tools": ["web_search", "reason"]}
-    assert settings_router.get_enabled_optional_tools() == ["web_search", "reason"]
+    assert tool_preferences.get_enabled_optional_tools() == ["web_search", "reason"]
 
     # Empty selection is a valid "all off" state.
     response = await settings_router.update_enabled_tools(
         settings_router.EnabledToolsUpdate(enabled_tools=[])
     )
     assert response == {"enabled_optional_tools": []}
-    assert settings_router.get_enabled_optional_tools() == []
+    assert tool_preferences.get_enabled_optional_tools() == []
 
 
 @pytest.mark.asyncio
@@ -772,7 +773,7 @@ async def test_update_ui_settings_preserves_theme_and_language_when_code_block_u
 ) -> None:
     # Given: stored appearance settings differ from the UI defaults.
     settings_file = tmp_path / "interface.json"
-    monkeypatch.setattr(settings_router, "_settings_file", lambda: settings_file)
+    monkeypatch.setattr(tool_preferences, "settings_file", lambda: settings_file)
     settings_router.save_ui_settings(
         {
             **settings_router.DEFAULT_UI_SETTINGS,
@@ -798,7 +799,7 @@ async def test_get_ui_settings_returns_persisted_interface_preferences(
     monkeypatch: pytest.MonkeyPatch, tmp_path
 ) -> None:
     settings_file = tmp_path / "interface.json"
-    monkeypatch.setattr(settings_router, "_settings_file", lambda: settings_file)
+    monkeypatch.setattr(tool_preferences, "settings_file", lambda: settings_file)
     settings_router.save_ui_settings(
         {
             **settings_router.DEFAULT_UI_SETTINGS,
@@ -819,7 +820,7 @@ async def test_update_ui_settings_persists_explicit_theme_and_language_defaults(
 ) -> None:
     # Given: stored appearance settings differ from the values being reset.
     settings_file = tmp_path / "interface.json"
-    monkeypatch.setattr(settings_router, "_settings_file", lambda: settings_file)
+    monkeypatch.setattr(tool_preferences, "settings_file", lambda: settings_file)
     settings_router.save_ui_settings(
         {
             **settings_router.DEFAULT_UI_SETTINGS,
@@ -853,7 +854,7 @@ def test_get_ui_settings_is_public_without_auth(monkeypatch: pytest.MonkeyPatch,
     from fastapi.testclient import TestClient
 
     settings_file = tmp_path / "interface.json"
-    monkeypatch.setattr(settings_router, "_settings_file", lambda: settings_file)
+    monkeypatch.setattr(tool_preferences, "settings_file", lambda: settings_file)
     settings_router.save_ui_settings(
         {
             **settings_router.DEFAULT_UI_SETTINGS,
@@ -888,7 +889,7 @@ def test_public_ui_read_omits_deployment_configuration(
     from fastapi.testclient import TestClient
 
     settings_file = tmp_path / "interface.json"
-    monkeypatch.setattr(settings_router, "_settings_file", lambda: settings_file)
+    monkeypatch.setattr(tool_preferences, "settings_file", lambda: settings_file)
     settings_router.save_ui_settings(
         {
             **settings_router.DEFAULT_UI_SETTINGS,

@@ -19,12 +19,17 @@ from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 
-from deeptutor.tools.builtin import USER_TOGGLEABLE_TOOL_NAMES
 from lumen.shared._util.brand import PRODUCT_NAME
 from lumen.shared._util.embedding.client import reset_embedding_client
 from lumen.shared._util.llm.client import reset_llm_client
 from lumen.shared._util.llm.config import clear_llm_config_cache
 from lumen.shared._util.path_service import get_path_service
+from lumen.shared._util.tool_preferences import (
+    DEFAULT_UI_SETTINGS,
+    load_ui_settings,
+    sanitize_enabled_tools,
+    save_ui_settings,
+)
 from lumen.shared._util.user import allowed_llm_options, get_current_user
 from lumen.shared.config import (
     get_config_test_runner,
@@ -39,10 +44,6 @@ from lumen.shared.config.runtime_settings import (
     CHAT_ATTACHMENT_MAX_TOTAL_MB_RANGE,
     compute_ws_max_size,
 )
-from lumen.shared.settings.interface_settings import (
-    DEFAULT_UI_SETTINGS as INTERFACE_DEFAULTS,
-)
-from lumen.shared.settings.interface_settings import resolve_languages
 
 router = APIRouter()
 # Public UI-settings router. The app shell bootstraps the interface language
@@ -56,42 +57,11 @@ public_router = APIRouter()
 TOUR_CACHE = None
 
 
-def _settings_file():
-    return get_path_service().get_settings_file("interface")
-
-
 def _tour_cache_file():
     if TOUR_CACHE is not None:
         return TOUR_CACHE
     return get_path_service().get_settings_dir() / ".tour_cache.json"
 
-
-DEFAULT_SIDEBAR_NAV_ORDER = {
-    "start": ["/", "/history", "/knowledge", "/notebook"],
-    "learnResearch": ["/question", "/solver", "/research"],
-}
-
-DEFAULT_UI_SETTINGS = {
-    # theme / language / response_language come from the module that owns
-    # interface.json, so the two readers of that file can't drift on what a
-    # fresh install defaults to.
-    **INTERFACE_DEFAULTS,
-    "sidebar_description": "✨ Data Intelligence Lab @ HKU",
-    "sidebar_nav_order": DEFAULT_SIDEBAR_NAV_ORDER,
-    # User-toggleable chat tools. Default = all on; the /settings/tools page
-    # is the single switchboard. Removed names (e.g. tools that ship later
-    # and the user hasn't seen yet) are ignored on read; missing names from a
-    # legacy file fall back to the default (all on).
-    "enabled_optional_tools": list(USER_TOGGLEABLE_TOOL_NAMES),
-    # When true, chat auto-plays each assistant reply via TTS. Per-user UI
-    # preference (not catalog); the chat surface also keeps a per-session
-    # override on top of this global default.
-    "voice_autoplay": False,
-    # Seconds the chat UI waits for any turn event before declaring the
-    # connection timed out. Bumped from 60 → 180 so slow tools (image/video
-    # generation) don't trip it; user-adjustable in Settings > Network.
-    "chat_response_timeout": 180,
-}
 
 # Bounds for the chat idle timeout (seconds): long enough for video renders,
 # capped so a typo can't wedge a turn open forever.
@@ -286,63 +256,6 @@ def _invalidate_runtime_caches() -> None:
     from deeptutor.core.agentic.client import reset_agentic_client_pool
 
     reset_agentic_client_pool()
-
-
-def load_ui_settings() -> dict[str, Any]:
-    settings_file = _settings_file()
-    if settings_file.exists():
-        try:
-            with open(settings_file, encoding="utf-8") as handle:
-                saved = json.load(handle)
-                # resolve_languages owns the legacy migration (a file predating
-                # the UI/response split inherits its one language into both).
-                merged = {**DEFAULT_UI_SETTINGS, **saved, **resolve_languages(saved)}
-                # Filter persisted enabled_optional_tools to current
-                # toggleable set so retired tool names can't leak into
-                # the per-turn payload.
-                merged["enabled_optional_tools"] = _sanitize_enabled_tools(
-                    merged.get("enabled_optional_tools")
-                )
-                return merged
-        except Exception:
-            pass
-    return DEFAULT_UI_SETTINGS.copy()
-
-
-def _sanitize_enabled_tools(value: Any) -> list[str]:
-    if not isinstance(value, list):
-        return list(USER_TOGGLEABLE_TOOL_NAMES)
-    allowed = set(USER_TOGGLEABLE_TOOL_NAMES)
-    seen: set[str] = set()
-    out: list[str] = []
-    for name in value:
-        if isinstance(name, str) and name in allowed and name not in seen:
-            seen.add(name)
-            out.append(name)
-    return out
-
-
-def get_enabled_optional_tools() -> list[str]:
-    """Return the user's currently-enabled toggleable tool names.
-
-    Source of truth for the chat pipeline when a turn doesn't ship an
-    explicit ``tools`` list. Intersected with the admin grant whitelist so
-    a restricted user's saved toggles can't resurrect a revoked tool.
-    """
-    from lumen.shared._util.user import allowed_optional_tools
-
-    enabled = _sanitize_enabled_tools(load_ui_settings().get("enabled_optional_tools"))
-    allowed = allowed_optional_tools()
-    if allowed is not None:
-        enabled = [name for name in enabled if name in allowed]
-    return enabled
-
-
-def save_ui_settings(settings: dict[str, Any]) -> None:
-    settings_file = _settings_file()
-    settings_file.parent.mkdir(parents=True, exist_ok=True)
-    with open(settings_file, "w", encoding="utf-8") as handle:
-        json.dump(settings, handle, ensure_ascii=False, indent=2)
 
 
 def _require_settings_admin() -> None:
@@ -1126,7 +1039,7 @@ async def update_sidebar_nav_order(update: SidebarNavOrderUpdate):
 
 @router.put("/enabled-tools")
 async def update_enabled_tools(update: EnabledToolsUpdate):
-    sanitized = _sanitize_enabled_tools(update.enabled_tools)
+    sanitized = sanitize_enabled_tools(update.enabled_tools)
     current_ui = load_ui_settings()
     current_ui["enabled_optional_tools"] = sanitized
     save_ui_settings(current_ui)

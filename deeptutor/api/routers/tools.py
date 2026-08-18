@@ -16,14 +16,16 @@ from typing import Any, Literal
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from deeptutor.api.routers.settings import get_enabled_optional_tools
 from deeptutor.core.tool_protocol import BaseTool, ToolDefinition, ToolPromptHints
 from deeptutor.i18n.metadata_i18n import tool_description_i18n
 from deeptutor.tools.builtin import (
     BUILTIN_TOOL_TYPES,
     COMING_SOON_TOOL_TYPES,
     TOOL_ALIASES,
+)
+from lumen.shared._util.tool_preferences import (
     USER_TOGGLEABLE_TOOL_NAMES,
+    get_enabled_optional_tools,
 )
 
 logger = logging.getLogger(__name__)

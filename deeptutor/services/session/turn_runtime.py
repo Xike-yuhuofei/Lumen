@@ -804,7 +804,7 @@ class TurnRuntimeManager:
         # an empty list) keep their value untouched.
         if payload.get("tools") is None:
             try:
-                from deeptutor.api.routers.settings import get_enabled_optional_tools
+                from lumen.shared._util.tool_preferences import get_enabled_optional_tools
 
                 payload = {**payload, "tools": list(get_enabled_optional_tools())}
             except Exception:

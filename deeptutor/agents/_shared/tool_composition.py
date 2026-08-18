@@ -27,8 +27,8 @@ from typing import Any
 from deeptutor.tools.builtin import (
     BUILTIN_TOOL_NAMES,
     CONFIGURABLE_BUILTIN_TOOL_NAMES,
-    USER_TOGGLEABLE_TOOL_NAMES,
 )
+from lumen.shared._util.tool_preferences import USER_TOGGLEABLE_TOOL_NAMES
 
 # Tools whose mounting is owned by the pipeline (auto-on under specific
 # context conditions), not by the user's composer toggles. Membership here

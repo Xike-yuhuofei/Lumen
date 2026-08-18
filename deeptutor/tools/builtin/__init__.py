@@ -1189,11 +1189,7 @@ COMING_SOON_TOOL_NAMES: tuple[str, ...] = tuple(
 # automatically by the chat pipeline under per-tool context gates and is
 # locked-on from the user's perspective. Ordering here is the canonical
 # display order for the settings page.
-USER_TOGGLEABLE_TOOL_NAMES: tuple[str, ...] = (
-    "brainstorm",
-    "web_search",
-    "reason",
-)
+from lumen.shared._util.tool_preferences import USER_TOGGLEABLE_TOOL_NAMES  # noqa: F401
 
 # Built-in tools the chat agent loop auto-mounts under context gates (a KB
 # attached, the sandbox enabled, the user having memory/notebooks, …) rather

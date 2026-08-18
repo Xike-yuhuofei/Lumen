@@ -7,8 +7,9 @@ from deeptutor.api.routers import tools as tools_router
 from deeptutor.tools.builtin import (
     BUILTIN_TOOL_NAMES,
     COMING_SOON_TOOL_NAMES,
-    USER_TOGGLEABLE_TOOL_NAMES,
 )
+from lumen.shared._util import tool_preferences
+from lumen.shared._util.tool_preferences import USER_TOGGLEABLE_TOOL_NAMES
 
 
 @pytest.mark.asyncio
@@ -19,7 +20,7 @@ async def test_list_builtin_tools_marks_toggleable_set(
     tools from locked-on (auto-mounted) tools so the /settings/tools UI
     can render the right control per row."""
     settings_file = tmp_path / "interface.json"
-    monkeypatch.setattr(settings_router, "_settings_file", lambda: settings_file)
+    monkeypatch.setattr(tool_preferences, "settings_file", lambda: settings_file)
 
     response = await tools_router.list_builtin_tools()
     by_name = {tool.name: tool for tool in response.tools}
@@ -65,7 +66,7 @@ async def test_list_builtin_tools_marks_capability_owned_tools(
     capability so the /settings/tools UI groups them below the built-ins;
     plain system built-ins report ``capability=None``."""
     settings_file = tmp_path / "interface.json"
-    monkeypatch.setattr(settings_router, "_settings_file", lambda: settings_file)
+    monkeypatch.setattr(tool_preferences, "settings_file", lambda: settings_file)
 
     response = await tools_router.list_builtin_tools()
     by_name = {tool.name: tool for tool in response.tools}
@@ -82,7 +83,7 @@ async def test_list_builtin_tools_reflects_user_toggle(
     monkeypatch: pytest.MonkeyPatch, tmp_path
 ) -> None:
     settings_file = tmp_path / "interface.json"
-    monkeypatch.setattr(settings_router, "_settings_file", lambda: settings_file)
+    monkeypatch.setattr(tool_preferences, "settings_file", lambda: settings_file)
 
     # User disables a subset of toggleable tools.
     await settings_router.update_enabled_tools(
