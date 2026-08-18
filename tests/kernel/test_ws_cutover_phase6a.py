@@ -24,8 +24,8 @@ from typing import Any
 import pytest
 
 from deeptutor.core.stream import StreamEvent, StreamEventType
-from deeptutor.services.session.sqlite_store import SQLiteSessionStore
-from deeptutor.services.session.turn_runtime import TurnRuntimeManager
+from lumen.runtime.session.sqlite_store import SQLiteSessionStore
+from lumen.runtime.session.turn_runtime import TurnRuntimeManager
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Shared fakes
@@ -162,7 +162,7 @@ def _patch_legacy_runtime(monkeypatch: pytest.MonkeyPatch) -> None:
     test drives the routing without a live LLM / store backend."""
     monkeypatch.setattr("lumen.shared._util.llm.config.get_llm_config", lambda: SimpleNamespace())
     monkeypatch.setattr(
-        "deeptutor.services.session.context_builder.ContextBuilder", _FakeContextBuilder
+        "lumen.runtime.session.context_builder.ContextBuilder", _FakeContextBuilder
     )
     monkeypatch.setattr(
         "deeptutor.services.memory.get_memory_store",

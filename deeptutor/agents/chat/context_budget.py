@@ -305,7 +305,7 @@ def _dumps(value: Any) -> str:
 def _default_counter() -> TokenCounter:
     # Imported lazily: ``context_builder`` pulls in the agent base classes, and
     # a module-level import from an agents module would close a cycle.
-    from deeptutor.services.session.context_builder import count_tokens
+    from lumen.runtime.session.context_builder import count_tokens
 
     return count_tokens
 

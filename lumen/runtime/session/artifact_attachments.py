@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import unquote
 
-from deeptutor.core.stream import StreamEvent, StreamEventType
+from lumen.runtime.stream.events import StreamEvent, StreamEventType
 from lumen.shared._util.path_service import get_path_service
 
 logger = logging.getLogger(__name__)
@@ -102,7 +102,7 @@ def _needs_preview_text(attachment: dict[str, Any]) -> bool:
 
 
 def _fill_preview_text_sync(attachments: list[dict[str, Any]]) -> None:
-    from deeptutor.utils.document_extractor import (
+    from lumen.shared._util.document_extractor import (
         DocumentExtractionError,
         extract_text_from_path,
     )

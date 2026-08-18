@@ -242,7 +242,7 @@ def test_no_chat_mode_exists() -> None:
 # instantiate the chat pipeline directly to execute a turn.
 
 TURN_ENTRY_FILES = (
-    "deeptutor/services/session/turn_runtime.py",
+    "lumen/runtime/session/turn_runtime.py",
     "deeptutor/services/cron/executor.py",
 )
 DIRECT_PIPELINE_IMPORTS = ("deeptutor.agents.chat.agentic_pipeline",)
@@ -295,7 +295,6 @@ ALLOWED_LEGACY_BRIDGES = {
     "lumen/runtime/agent_loop/providers/legacy/agent.py": (
         "deeptutor.agents.chat.agentic_pipeline"
     ),
-    "lumen/runtime/session/plugin.py": "deeptutor.services.session.turn_runtime",
     "lumen/runtime/tools/plugin.py": "deeptutor.runtime.registry.tool_registry",
 }
 

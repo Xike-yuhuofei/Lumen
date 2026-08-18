@@ -6,7 +6,7 @@ import sqlite3
 
 import pytest
 
-from deeptutor.services.session.sqlite_store import SQLiteSessionStore
+from lumen.runtime.session.sqlite_store import SQLiteSessionStore
 from lumen.shared._util.path_service import PathService
 
 

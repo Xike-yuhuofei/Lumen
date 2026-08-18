@@ -78,7 +78,7 @@ def _validate_runnable_modules(modules: list[LearningModule], *, status_code: in
 
 
 async def _cancel_active_learning_turn(book_id: str) -> None:
-    from deeptutor.services.session import get_turn_runtime_manager
+    from lumen.runtime.session import get_turn_runtime_manager
 
     runtime = get_turn_runtime_manager()
     active_turn = await runtime.store.get_active_turn(book_id)

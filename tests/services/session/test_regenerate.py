@@ -18,8 +18,8 @@ from unittest.mock import patch
 import pytest
 
 from deeptutor.core.stream import StreamEvent, StreamEventType
-from deeptutor.services.session.sqlite_store import SQLiteSessionStore
-from deeptutor.services.session.turn_runtime import (
+from lumen.runtime.session.sqlite_store import SQLiteSessionStore
+from lumen.runtime.session.turn_runtime import (
     TurnRuntimeManager,
     _extract_regenerate_flag,
 )
@@ -330,7 +330,7 @@ class TestRegenerateLastTurn:
             "lumen.shared._util.llm.config.get_llm_config", lambda: SimpleNamespace()
         )
         monkeypatch.setattr(
-            "deeptutor.services.session.context_builder.ContextBuilder",
+            "lumen.runtime.session.context_builder.ContextBuilder",
             FakeContextBuilder,
         )
         monkeypatch.setattr(

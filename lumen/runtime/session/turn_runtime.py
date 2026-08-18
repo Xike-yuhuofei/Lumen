@@ -13,18 +13,18 @@ import json
 import logging
 from typing import TYPE_CHECKING, Any, Literal
 
-from deeptutor.core.stream import StreamEvent, StreamEventType
-from deeptutor.services.session.artifact_attachments import (
+from lumen.runtime.session.artifact_attachments import (
     artifact_attachments,
     fill_preview_text,
 )
-from deeptutor.services.session.protocol import SessionStoreProtocol
+from lumen.runtime.session.protocol import SessionStoreProtocol
 from lumen.runtime.stream.bus import StreamBus, register_bus, unregister_bus
+from lumen.runtime.stream.events import StreamEvent, StreamEventType
 from lumen.shared._util.llm.utils import clean_thinking_tags
 from lumen.shared._util.path_service import get_path_service
 
 if TYPE_CHECKING:
-    from deeptutor.core.context import UnifiedContext
+    from lumen.runtime.context import UnifiedContext
     from lumen.shared._util.llm.config import LLMConfig
 
 logger = logging.getLogger(__name__)
@@ -202,7 +202,7 @@ def _mastery_path_id(value: Any) -> str:
 
 
 def _llm_selection_dict(value: Any) -> dict[str, str] | None:
-    from lumen.shared.config.model_selection import LLMSelection
+    from lumen.shared._util.model_selection import LLMSelection
 
     selection = LLMSelection.from_payload(value)
     return selection.to_dict() if selection else None
@@ -624,7 +624,7 @@ class TurnRuntimeManager:
     """Run one turn in the background and multiplex persisted/live events."""
 
     def __init__(self, store: SessionStoreProtocol | None = None) -> None:
-        from deeptutor.services.session import get_session_store
+        from lumen.runtime.session import get_session_store
 
         self.store = store or get_session_store()
         self._lock = asyncio.Lock()
@@ -684,7 +684,7 @@ class TurnRuntimeManager:
     async def start_turn(self, payload: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
         capability = str(payload.get("capability") or "chat")
         if not payload.get("language"):
-            from lumen.shared.settings.interface_settings import (
+            from lumen.shared._util.interface_settings import (
                 get_response_language,
             )
 
@@ -778,12 +778,12 @@ class TurnRuntimeManager:
                     "model_id": assigned_llms[0].get("model_id"),
                 }
         if llm_selection:
-            from lumen.shared._util.user import merge_personal_llm_profiles
-            from lumen.shared.config import get_model_catalog_service
-            from lumen.shared.config.model_selection import (
+            from lumen.shared._util.model_catalog import get_model_catalog_service
+            from lumen.shared._util.model_selection import (
                 LLMSelection,
                 apply_llm_selection_to_catalog,
             )
+            from lumen.shared._util.user import merge_personal_llm_profiles
 
             try:
                 # Personal (owner-bound) profiles live in the user's own
@@ -1379,17 +1379,17 @@ class TurnRuntimeManager:
             return await reply_queue.get()
 
         try:
-            from deeptutor.core.context import Attachment, UnifiedContext
-            from deeptutor.services.memory import get_memory_store
-            from deeptutor.services.notebook import get_notebook_manager
-            from deeptutor.services.session.context_builder import ContextBuilder
             from lumen.runtime.agents.notebook import NotebookAnalysisAgent
-            from lumen.shared.config.model_selection_runtime import (
+            from lumen.runtime.context import Attachment, UnifiedContext
+            from lumen.runtime.session.context_builder import ContextBuilder
+            from lumen.shared._util.memory import get_memory_store
+            from lumen.shared._util.model_selection_runtime import (
                 activate_llm_selection,
             )
-            from lumen.shared.config.model_selection_runtime import (
+            from lumen.shared._util.model_selection_runtime import (
                 reset_llm_selection as reset_active_llm_selection,
             )
+            from lumen.shared._util.notebook import get_notebook_manager
 
             request_config = dict(payload.get("config", {}) or {})
             followup_question_context = _extract_followup_question_context(request_config)
@@ -1479,7 +1479,7 @@ class TurnRuntimeManager:
                         exc,
                     )
 
-            from deeptutor.utils.document_extractor import extract_documents_from_records
+            from lumen.shared._util.document_extractor import extract_documents_from_records
 
             document_texts, attachment_records = extract_documents_from_records(attachment_records)
             attachments = [
@@ -1545,7 +1545,7 @@ class TurnRuntimeManager:
             # users fall back to admin-authored presets (personas carry no
             # privileged workflow, so no grant gate applies).
             from lumen.shared._util.user import get_admin_path_service, get_current_user
-            from lumen.shared.persona import PersonaService, get_persona_service
+            from lumen.shared._util.persona import PersonaService, get_persona_service
 
             current_user = get_current_user()
             requested_persona = str(payload.get("persona") or "").strip()
@@ -1569,7 +1569,7 @@ class TurnRuntimeManager:
             source_index: dict[str, str] = {}
 
             if is_chat_capability:
-                from deeptutor.services.session.source_inventory import (
+                from lumen.runtime.session.source_inventory import (
                     build_inventory,
                     render_manifest,
                 )
@@ -1617,7 +1617,7 @@ class TurnRuntimeManager:
                         )
 
                 if history_references:
-                    from deeptutor.services.session.source_inventory import (
+                    from lumen.runtime.session.source_inventory import (
                         serialize_referenced_transcript,
                     )
 
@@ -2282,7 +2282,7 @@ _runtime_instances: dict[str, TurnRuntimeManager] = {}
 
 
 def get_turn_runtime_manager() -> TurnRuntimeManager:
-    from deeptutor.services.session import get_session_store
+    from lumen.runtime.session import get_session_store
 
     store = get_session_store()
     key = str(getattr(store, "db_path", id(store)))

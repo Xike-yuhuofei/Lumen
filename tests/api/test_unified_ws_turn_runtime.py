@@ -5,8 +5,8 @@ from types import SimpleNamespace
 import pytest
 
 from deeptutor.core.stream import StreamEvent, StreamEventType
-from deeptutor.services.session.sqlite_store import SQLiteSessionStore
-from deeptutor.services.session.turn_runtime import TurnRuntimeManager
+from lumen.runtime.session.sqlite_store import SQLiteSessionStore
+from lumen.runtime.session.turn_runtime import TurnRuntimeManager
 
 
 async def _noop_async(*_args, **_kwargs):
@@ -133,18 +133,18 @@ async def test_turn_runtime_replays_events_and_materializes_messages(
 
     monkeypatch.setattr("lumen.shared._util.llm.config.get_llm_config", lambda: SimpleNamespace())
     monkeypatch.setattr(
-        "deeptutor.services.session.context_builder.ContextBuilder", FakeContextBuilder
+        "lumen.runtime.session.context_builder.ContextBuilder", FakeContextBuilder
     )
     monkeypatch.setattr("deeptutor.agents.chat.agentic_pipeline.AgenticChatPipeline", FakePipeline)
     monkeypatch.setattr(
-        "deeptutor.services.memory.get_memory_store",
+        "lumen.shared._util.memory.get_memory_store",
         lambda: SimpleNamespace(
             read_l3_concat=lambda: "",
             emit=_noop_async,
         ),
     )
     monkeypatch.setattr(
-        "lumen.shared.persona.get_persona_service",
+        "lumen.shared._util.persona.get_persona_service",
         _fake_persona_service,
     )
 
@@ -272,30 +272,30 @@ async def test_turn_runtime_persists_llm_selection_in_turn_snapshot(
         ), object()
 
     monkeypatch.setattr(
-        "lumen.shared.config.get_model_catalog_service",
+        "lumen.shared._util.model_catalog.get_model_catalog_service",
         lambda: SimpleNamespace(load=_model_catalog),
     )
     monkeypatch.setattr(
-        "lumen.shared.config.model_selection_runtime.activate_llm_selection",
+        "lumen.shared._util.model_selection_runtime.activate_llm_selection",
         fake_activate,
     )
     monkeypatch.setattr(
-        "lumen.shared.config.model_selection_runtime.reset_llm_selection",
+        "lumen.shared._util.model_selection_runtime.reset_llm_selection",
         lambda _token: captured.setdefault("reset_called", True),
     )
     monkeypatch.setattr(
-        "deeptutor.services.session.context_builder.ContextBuilder", FakeContextBuilder
+        "lumen.runtime.session.context_builder.ContextBuilder", FakeContextBuilder
     )
     monkeypatch.setattr("deeptutor.agents.chat.agentic_pipeline.AgenticChatPipeline", FakePipeline)
     monkeypatch.setattr(
-        "deeptutor.services.memory.get_memory_store",
+        "lumen.shared._util.memory.get_memory_store",
         lambda: SimpleNamespace(
             read_l3_concat=lambda: "",
             emit=_noop_async,
         ),
     )
 
-    monkeypatch.setattr("lumen.shared.persona.get_persona_service", _fake_persona_service)
+    monkeypatch.setattr("lumen.shared._util.persona.get_persona_service", _fake_persona_service)
 
     selection = {"profile_id": "p-alt", "model_id": "m-alt"}
     session, turn = await runtime.start_turn(
@@ -369,15 +369,15 @@ async def test_turn_runtime_session_persona_persists_falls_back_and_clears(
 
     monkeypatch.setattr("lumen.shared._util.llm.config.get_llm_config", lambda: SimpleNamespace())
     monkeypatch.setattr(
-        "deeptutor.services.session.context_builder.ContextBuilder", FakeContextBuilder
+        "lumen.runtime.session.context_builder.ContextBuilder", FakeContextBuilder
     )
     monkeypatch.setattr("deeptutor.agents.chat.agentic_pipeline.AgenticChatPipeline", FakePipeline)
     monkeypatch.setattr(
-        "deeptutor.services.memory.get_memory_store",
+        "lumen.shared._util.memory.get_memory_store",
         lambda: SimpleNamespace(read_l3_concat=lambda: "", emit=_noop_async),
     )
 
-    monkeypatch.setattr("lumen.shared.persona.get_persona_service", _fake_persona_service)
+    monkeypatch.setattr("lumen.shared._util.persona.get_persona_service", _fake_persona_service)
 
     async def run_turn(session_id, extra):
         session, turn = await runtime.start_turn(
@@ -427,7 +427,7 @@ async def test_turn_runtime_rejects_invalid_llm_selection(
     store = SQLiteSessionStore(tmp_path / "chat_history.db")
     runtime = TurnRuntimeManager(store)
     monkeypatch.setattr(
-        "lumen.shared.config.get_model_catalog_service",
+        "lumen.shared._util.model_catalog.get_model_catalog_service",
         lambda: SimpleNamespace(load=_model_catalog),
     )
 
@@ -500,30 +500,30 @@ async def test_turn_runtime_allows_model_switching_within_same_session(
         )
 
     monkeypatch.setattr(
-        "lumen.shared.config.get_model_catalog_service",
+        "lumen.shared._util.model_catalog.get_model_catalog_service",
         lambda: SimpleNamespace(load=_model_catalog),
     )
     monkeypatch.setattr(
-        "lumen.shared.config.model_selection_runtime.activate_llm_selection",
+        "lumen.shared._util.model_selection_runtime.activate_llm_selection",
         fake_activate,
     )
     monkeypatch.setattr(
-        "lumen.shared.config.model_selection_runtime.reset_llm_selection",
+        "lumen.shared._util.model_selection_runtime.reset_llm_selection",
         lambda _token: None,
     )
     monkeypatch.setattr(
-        "deeptutor.services.session.context_builder.ContextBuilder", FakeContextBuilder
+        "lumen.runtime.session.context_builder.ContextBuilder", FakeContextBuilder
     )
     monkeypatch.setattr("deeptutor.agents.chat.agentic_pipeline.AgenticChatPipeline", FakePipeline)
     monkeypatch.setattr(
-        "deeptutor.services.memory.get_memory_store",
+        "lumen.shared._util.memory.get_memory_store",
         lambda: SimpleNamespace(
             read_l3_concat=lambda: "",
             emit=_noop_async,
         ),
     )
 
-    monkeypatch.setattr("lumen.shared.persona.get_persona_service", _fake_persona_service)
+    monkeypatch.setattr("lumen.shared._util.persona.get_persona_service", _fake_persona_service)
 
     first_selection = {"profile_id": "p-default", "model_id": "m-default"}
     second_selection = {"profile_id": "p-alt", "model_id": "m-alt"}
@@ -666,18 +666,18 @@ async def test_turn_runtime_bootstraps_question_followup_context_once(
 
     monkeypatch.setattr("lumen.shared._util.llm.config.get_llm_config", lambda: SimpleNamespace())
     monkeypatch.setattr(
-        "deeptutor.services.session.context_builder.ContextBuilder", FakeContextBuilder
+        "lumen.runtime.session.context_builder.ContextBuilder", FakeContextBuilder
     )
     monkeypatch.setattr("deeptutor.agents.chat.agentic_pipeline.AgenticChatPipeline", FakePipeline)
     monkeypatch.setattr(
-        "deeptutor.services.memory.get_memory_store",
+        "lumen.shared._util.memory.get_memory_store",
         lambda: SimpleNamespace(
             read_l3_concat=lambda: "",
             emit=_noop_async,
         ),
     )
 
-    monkeypatch.setattr("lumen.shared.persona.get_persona_service", _fake_persona_service)
+    monkeypatch.setattr("lumen.shared._util.persona.get_persona_service", _fake_persona_service)
 
     session, turn = await runtime.start_turn(
         {
@@ -785,18 +785,18 @@ async def test_turn_runtime_injects_memory_and_refreshes_after_completion(
 
     monkeypatch.setattr("lumen.shared._util.llm.config.get_llm_config", lambda: SimpleNamespace())
     monkeypatch.setattr(
-        "deeptutor.services.session.context_builder.ContextBuilder", FakeContextBuilder
+        "lumen.runtime.session.context_builder.ContextBuilder", FakeContextBuilder
     )
     monkeypatch.setattr("deeptutor.agents.chat.agentic_pipeline.AgenticChatPipeline", FakePipeline)
     monkeypatch.setattr(
-        "deeptutor.services.memory.get_memory_store",
+        "lumen.shared._util.memory.get_memory_store",
         lambda: SimpleNamespace(
             read_l3_concat=lambda: "## Memory\n## Preferences\n- Prefer concise answers.",
             emit=fake_emit,
         ),
     )
 
-    monkeypatch.setattr("lumen.shared.persona.get_persona_service", _fake_persona_service)
+    monkeypatch.setattr("lumen.shared._util.persona.get_persona_service", _fake_persona_service)
 
     _session, turn = await runtime.start_turn(
         {

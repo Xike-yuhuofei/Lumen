@@ -10,7 +10,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field, field_validator
 
-from deeptutor.services.session import get_session_store, get_sqlite_session_store
+from lumen.runtime.session import get_session_store, get_sqlite_session_store
 from lumen.shared._util.storage.attachment_store import get_attachment_store
 
 logger = logging.getLogger(__name__)

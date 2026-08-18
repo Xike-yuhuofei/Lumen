@@ -5,8 +5,8 @@ import asyncio
 import pytest
 
 from deeptutor.core.stream import StreamEvent, StreamEventType
-from deeptutor.services.session.sqlite_store import SQLiteSessionStore
-from deeptutor.services.session.turn_runtime import (
+from lumen.runtime.session.sqlite_store import SQLiteSessionStore
+from lumen.runtime.session.turn_runtime import (
     TurnRuntimeManager,
     _resolve_turn_outcome,
     _TurnExecution,

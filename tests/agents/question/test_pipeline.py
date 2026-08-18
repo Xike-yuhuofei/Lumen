@@ -291,11 +291,11 @@ def test_emit_quiz_question_structures_metadata() -> None:
 def tmp_sqlite_store(tmp_path: Path):
     """Spin up an isolated SQLite session store + force the global getter
     to return it for the duration of the test."""
-    from deeptutor.services.session.sqlite_store import SQLiteSessionStore
+    from lumen.runtime.session.sqlite_store import SQLiteSessionStore
 
     store = SQLiteSessionStore(db_path=tmp_path / "session.db")
     with patch(
-        "deeptutor.services.session.sqlite_store.get_sqlite_session_store",
+        "lumen.runtime.session.sqlite_store.get_sqlite_session_store",
         return_value=store,
     ):
         yield store

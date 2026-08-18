@@ -72,7 +72,7 @@ def __getattr__(name: str):
     if name == "setup":
         return importlib.import_module("lumen.app.setup")
     if name == "session":
-        return importlib.import_module("deeptutor.services.session")
+        return importlib.import_module("lumen.runtime.session")
     if name == "config":
         return importlib.import_module("lumen.shared.config")
     if name == "rag":

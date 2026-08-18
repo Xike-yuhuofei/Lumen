@@ -1182,7 +1182,7 @@ class AgenticChatPipeline:
 
     @staticmethod
     def _estimate_messages_tokens(messages: list[dict[str, Any]]) -> int:
-        from deeptutor.services.session.context_builder import count_tokens
+        from lumen.runtime.session.context_builder import count_tokens
 
         total = 0
         for msg in messages:

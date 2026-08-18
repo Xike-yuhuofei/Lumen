@@ -51,7 +51,7 @@ async def load_session_quiz_history(
     if not session_id or max_entries <= 0:
         return []
     try:
-        from deeptutor.services.session.sqlite_store import get_sqlite_session_store
+        from lumen.runtime.session.sqlite_store import get_sqlite_session_store
 
         store = get_sqlite_session_store()
         result = await store.list_notebook_entries(

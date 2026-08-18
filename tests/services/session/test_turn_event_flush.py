@@ -15,8 +15,8 @@ from pathlib import Path
 
 import pytest
 
-from deeptutor.services.session.sqlite_store import SQLiteSessionStore
-from deeptutor.services.session.turn_runtime import TurnRuntimeManager, _TurnExecution
+from lumen.runtime.session.sqlite_store import SQLiteSessionStore
+from lumen.runtime.session.turn_runtime import TurnRuntimeManager, _TurnExecution
 
 pytestmark = pytest.mark.asyncio
 
@@ -47,7 +47,7 @@ def stub_workspace(monkeypatch, tmp_path):
             return tmp_path / "workspace" / feature / task_id
 
     monkeypatch.setattr(
-        "deeptutor.services.session.turn_runtime.get_path_service",
+        "lumen.runtime.session.turn_runtime.get_path_service",
         lambda: _StubPathService(),
     )
     return tmp_path / "workspace"

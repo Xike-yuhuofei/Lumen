@@ -7,7 +7,7 @@ import json
 from typing import Any, AsyncIterator
 
 from deeptutor.services.notebook import get_notebook_manager
-from deeptutor.services.session import get_session_store, get_turn_runtime_manager
+from lumen.runtime.session import get_session_store, get_turn_runtime_manager
 
 
 @dataclass(slots=True)

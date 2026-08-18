@@ -33,7 +33,7 @@ from dataclasses import dataclass, field
 import logging
 from typing import Any, Sequence
 
-from deeptutor.services.session.protocol import SessionStoreProtocol
+from lumen.runtime.session.protocol import SessionStoreProtocol
 
 logger = logging.getLogger(__name__)
 
@@ -412,7 +412,7 @@ async def _collect_from_user_message(
     # Notebook records — re-resolve through the notebook service.
     notebook_refs = snap.get("notebookReferences") or []
     if notebook_refs:
-        from deeptutor.services.notebook import get_notebook_manager
+        from lumen.shared._util.notebook import get_notebook_manager
 
         try:
             records = get_notebook_manager().get_records_by_references(list(notebook_refs))
@@ -703,7 +703,7 @@ async def _load_question_entry(store: SessionStoreProtocol, entry_id: int) -> tu
         return "", ""
     # Use the existing turn_runtime helper for consistency with fresh-path
     # formatting. Imported here to keep this module's static deps minimal.
-    from deeptutor.services.session.turn_runtime import _format_question_bank_entry
+    from lumen.runtime.session.turn_runtime import _format_question_bank_entry
 
     block = _format_question_bank_entry(entry)
     if not block.strip():

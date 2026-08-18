@@ -1,5 +1,5 @@
-"""Runtime adapter plugin — bridge existing ``deeptutor`` session store and
-turn runtime into the Plugin Kernel via :class:`SessionService`."""
+"""Runtime adapter plugin — bridge the session store and turn runtime into
+the Plugin Kernel via :class:`SessionService`."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from lumen.runtime.session.contract import SessionService
 
 
 class _SessionServiceAdapter(SessionService):
-    """Wraps ``deeptutor.services.session`` (store + turn runtime) as one
+    """Wraps ``lumen.runtime.session`` (store + turn runtime) as one
     :class:`SessionService`."""
 
     def __init__(self) -> None:
@@ -24,7 +24,7 @@ class _SessionServiceAdapter(SessionService):
         # Reuse the process-global TurnRuntimeManager (keyed by store db_path)
         # so the adapter shares the same turn executions as the rest of the
         # runtime instead of spinning up a private one.
-        from deeptutor.services.session.turn_runtime import get_turn_runtime_manager
+        from lumen.runtime.session.turn_runtime import get_turn_runtime_manager
 
         self._runtime = get_turn_runtime_manager()
         self._store = self._runtime.store

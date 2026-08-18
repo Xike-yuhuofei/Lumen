@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from deeptutor.services.session.turn_runtime import _sanitize_session_title
+from lumen.runtime.session.turn_runtime import _sanitize_session_title
 
 
 def test_sanitize_session_title_removes_reasoning_block() -> None:

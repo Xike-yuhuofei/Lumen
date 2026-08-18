@@ -7,9 +7,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Awaitable, Callable
 
-from deeptutor.core.stream import StreamEvent, StreamEventType
-from deeptutor.core.trace import build_trace_metadata, merge_trace_metadata, new_call_id
 from lumen.runtime.agents.base_agent import BaseAgent
+from lumen.runtime.stream.events import StreamEvent, StreamEventType
+from lumen.runtime.stream.trace import build_trace_metadata, merge_trace_metadata, new_call_id
 from lumen.shared._util.llm.config import LLMConfig
 from lumen.shared._util.llm.context_window import resolve_effective_context_window
 

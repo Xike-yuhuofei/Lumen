@@ -78,7 +78,7 @@ async def unified_websocket(ws: WebSocket) -> None:
             pass
 
     async def subscribe_turn(turn_id: str, after_seq: int = 0) -> None:
-        from deeptutor.services.session import get_turn_runtime_manager
+        from lumen.runtime.session import get_turn_runtime_manager
 
         async def _forward() -> None:
             runtime = get_turn_runtime_manager()
@@ -89,7 +89,7 @@ async def unified_websocket(ws: WebSocket) -> None:
         subscription_tasks[turn_id] = asyncio.create_task(_forward())
 
     async def subscribe_session(session_id: str, after_seq: int = 0) -> None:
-        from deeptutor.services.session import get_turn_runtime_manager
+        from lumen.runtime.session import get_turn_runtime_manager
 
         async def _forward() -> None:
             runtime = get_turn_runtime_manager()
@@ -112,7 +112,7 @@ async def unified_websocket(ws: WebSocket) -> None:
             msg_type = msg.get("type")
 
             if msg_type in {"message", "start_turn"}:
-                from deeptutor.services.session import get_turn_runtime_manager
+                from lumen.runtime.session import get_turn_runtime_manager
 
                 runtime = get_turn_runtime_manager()
                 try:
@@ -163,7 +163,7 @@ async def unified_websocket(ws: WebSocket) -> None:
                 if not session_id:
                     await safe_send({"type": "error", "content": "Missing session_id."})
                     continue
-                from deeptutor.services.session import get_turn_runtime_manager
+                from lumen.runtime.session import get_turn_runtime_manager
 
                 runtime = get_turn_runtime_manager()
                 active_turn = await runtime.store.get_active_turn(session_id)
@@ -215,7 +215,7 @@ async def unified_websocket(ws: WebSocket) -> None:
                 if not turn_id:
                     await safe_send({"type": "error", "content": "Missing turn_id."})
                     continue
-                from deeptutor.services.session import get_turn_runtime_manager
+                from lumen.runtime.session import get_turn_runtime_manager
 
                 runtime = get_turn_runtime_manager()
                 cancelled = await runtime.cancel_turn(turn_id)
@@ -246,7 +246,7 @@ async def unified_websocket(ws: WebSocket) -> None:
                             continue
                         cleaned.append({"questionId": qid, "text": str(entry.get("text") or "")})
                     answers = cleaned or None
-                from deeptutor.services.session import get_turn_runtime_manager
+                from lumen.runtime.session import get_turn_runtime_manager
 
                 runtime = get_turn_runtime_manager()
                 accepted = await runtime.submit_user_reply(turn_id, text=text_str, answers=answers)
@@ -264,7 +264,7 @@ async def unified_websocket(ws: WebSocket) -> None:
                 if not session_id:
                     await safe_send({"type": "error", "content": "Missing session_id."})
                     continue
-                from deeptutor.services.session import get_turn_runtime_manager
+                from lumen.runtime.session import get_turn_runtime_manager
 
                 runtime = get_turn_runtime_manager()
                 overrides = msg.get("overrides") if isinstance(msg.get("overrides"), dict) else None

@@ -239,7 +239,7 @@ async def _resolve_pending_choice(
     options = parse_options(list(pending.options or []))
     if not has_option_bodies(options):
         try:
-            from deeptutor.services.session import get_sqlite_session_store
+            from lumen.runtime.session import get_sqlite_session_store
 
             options = await recover_options_from_turn(
                 get_sqlite_session_store(), turn_id, pending.prompt
@@ -275,7 +275,7 @@ async def _sync_mastery_attempt_to_question_bank(
         "is_correct": is_correct,
     }
     try:
-        from deeptutor.services.session import get_sqlite_session_store
+        from lumen.runtime.session import get_sqlite_session_store
 
         await get_sqlite_session_store().upsert_notebook_entries(session_id, [item])
     except Exception:

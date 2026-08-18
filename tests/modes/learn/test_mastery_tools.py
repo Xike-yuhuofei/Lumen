@@ -9,7 +9,6 @@ import json
 
 import pytest
 
-from deeptutor.services.session.sqlite_store import SQLiteSessionStore
 from deeptutor.tools.mastery_tool import (
     MasteryAssessTool,
     MasteryBuildTool,
@@ -19,6 +18,7 @@ from deeptutor.tools.mastery_tool import (
 )
 from lumen.modes.learn.adapters.storage import LearningStore
 from lumen.modes.learn.domain.models import PendingQuestion
+from lumen.runtime.session.sqlite_store import SQLiteSessionStore
 
 
 @pytest.fixture
@@ -31,7 +31,7 @@ def path_id(tmp_path, monkeypatch):
 @pytest.fixture
 def session_store(tmp_path, monkeypatch):
     store = SQLiteSessionStore(db_path=tmp_path / "chat.db")
-    monkeypatch.setattr("deeptutor.services.session.get_sqlite_session_store", lambda: store)
+    monkeypatch.setattr("lumen.runtime.session.get_sqlite_session_store", lambda: store)
     return store
 
 
