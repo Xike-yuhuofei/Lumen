@@ -100,7 +100,7 @@ def test_parse_sync_upload_mode_uses_parse_service_and_isolates_output(
     """Upload mode goes through the shared ParseService and writes the
     questions JSON to the session output dir, never the shared parse cache."""
     from deeptutor.agents.question import mimic_source
-    from deeptutor.services.parsing.types import ParsedDocument
+    from lumen.shared.knowledge.parsing.types import ParsedDocument
 
     # The parse cache dir the (fake) ParseService returns as the parsed workdir.
     cache_dir = tmp_path / "parse_cache" / "abc"

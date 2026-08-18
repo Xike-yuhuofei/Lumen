@@ -1,7 +1,7 @@
 """Document loading for the LlamaIndex RAG pipeline.
 
 Parser-backed files (PDF / Office / e-book) are converted through the shared
-document-parse bridge (``deeptutor/services/parsing``), so the engine the user
+document-parse bridge (``lumen.shared.knowledge.parsing``), so the engine the user
 picked in Settings → Document Parsing (text-only, MinerU, Docling, markitdown,
 PyMuPDF4LLM) owns extraction. Routing LlamaIndex through it too means the
 parse-engine choice is honored by the retrieval engine, and image-capable

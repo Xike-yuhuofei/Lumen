@@ -353,7 +353,7 @@ async def test_mineru_test_connection_reports_missing_token(
 async def test_mineru_payload_includes_local_cli_probe(
     monkeypatch: pytest.MonkeyPatch, tmp_path
 ) -> None:
-    from deeptutor.services.parsing.engines.mineru import backend as mineru_backend
+    from lumen.shared.knowledge.parsing.engines.mineru import backend as mineru_backend
 
     service = RuntimeSettingsService(tmp_path / "settings", process_env={})
     monkeypatch.setattr(settings_router, "get_runtime_settings_service", lambda: service)
@@ -373,7 +373,7 @@ async def test_mineru_payload_includes_local_cli_probe(
 
 @pytest.mark.asyncio
 async def test_mineru_test_connection_local_mode(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
-    from deeptutor.services.parsing.engines.mineru import backend as mineru_backend
+    from lumen.shared.knowledge.parsing.engines.mineru import backend as mineru_backend
 
     service = RuntimeSettingsService(tmp_path / "settings", process_env={})
     monkeypatch.setattr(settings_router, "get_runtime_settings_service", lambda: service)
@@ -418,7 +418,7 @@ async def test_mineru_test_connection_local_mode(monkeypatch: pytest.MonkeyPatch
 async def test_mineru_models_download_start_requires_downloader(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from deeptutor.services.parsing.engines.mineru import models as mineru_models
+    from lumen.shared.knowledge.parsing.engines.mineru import models as mineru_models
 
     monkeypatch.setattr(
         mineru_models, "resolve_models_downloader", lambda p: {"found": False, "path": ""}
@@ -446,7 +446,7 @@ async def test_mineru_models_download_start_requires_downloader(
 async def test_mineru_models_download_start_and_status_passthrough(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from deeptutor.services.parsing.engines.mineru import models as mineru_models
+    from lumen.shared.knowledge.parsing.engines.mineru import models as mineru_models
 
     calls: dict[str, object] = {}
 

@@ -502,7 +502,7 @@ def _mineru_settings_payload() -> dict[str, Any]:
     install status at config time instead of failing at parse time; the
     definitive ``--version`` check runs behind the explicit Test button.
     """
-    from deeptutor.services.parsing.engines.mineru.backend import local_cli_probe
+    from lumen.shared.knowledge.parsing.engines.mineru.backend import local_cli_probe
 
     service = get_runtime_settings_service()
     settings = service.load_mineru(include_process_overrides=True)
@@ -518,15 +518,15 @@ def _document_parsing_payload() -> dict[str, Any]:
     """State for the Document Parsing settings page: active engine, all engine
     slices (MinerU token redacted), engine availability, and per-engine
     readiness (so the UI can surface the "models not downloaded" gate)."""
-    from deeptutor.services.parsing.engines._install import (
+    from lumen.shared.knowledge.parsing.engines._install import (
         installable_engines,
         model_downloadable_engines,
     )
-    from deeptutor.services.parsing.engines.factory import (
+    from lumen.shared.knowledge.parsing.engines.factory import (
         get_parser,
         list_engines,
     )
-    from deeptutor.services.parsing.engines.mineru.backend import local_cli_probe
+    from lumen.shared.knowledge.parsing.engines.mineru.backend import local_cli_probe
 
     service = get_runtime_settings_service()
     full = service.load_document_parsing(include_process_overrides=True)
@@ -638,7 +638,7 @@ async def test_document_parsing(payload: DocumentParsingTest):
     token / CLI ``--version``) the UI uses ``/mineru/test``; this generic test
     covers engine availability + model readiness for all engines."""
     _require_settings_admin()
-    from deeptutor.services.parsing.engines.factory import get_parser, is_engine_available
+    from lumen.shared.knowledge.parsing.engines.factory import get_parser, is_engine_available
 
     service = get_runtime_settings_service()
     engine = payload.engine or service.load_document_parsing().get("engine") or ""
@@ -667,7 +667,7 @@ async def start_document_parsing_install(payload: DocumentParsingInstall):
     status endpoint. Only one job runs at a time (process-wide singleton). The
     engine must be in the install allow-list (``ENGINE_PIP_SPECS``)."""
     _require_settings_admin()
-    from deeptutor.services.parsing.engines._install import (
+    from lumen.shared.knowledge.parsing.engines._install import (
         ENGINE_PIP_SPECS,
         get_background_job_manager,
     )
@@ -688,7 +688,7 @@ async def start_document_parsing_model_download(payload: DocumentParsingInstall)
     status endpoint. The engine must be in ``ENGINE_MODEL_DOWNLOADERS`` and its
     script reachable next to the server's python or on PATH."""
     _require_settings_admin()
-    from deeptutor.services.parsing.engines._install import (
+    from lumen.shared.knowledge.parsing.engines._install import (
         get_background_job_manager,
         model_downloadable_engines,
         resolve_model_downloader,
@@ -712,7 +712,7 @@ async def start_document_parsing_model_download(payload: DocumentParsingInstall)
 @router.get("/document-parsing/job/status")
 async def document_parsing_job_status(cursor: int = 0):
     _require_settings_admin()
-    from deeptutor.services.parsing.engines._install import get_background_job_manager
+    from lumen.shared.knowledge.parsing.engines._install import get_background_job_manager
 
     return get_background_job_manager().status(cursor)
 
@@ -720,7 +720,7 @@ async def document_parsing_job_status(cursor: int = 0):
 @router.post("/document-parsing/job/cancel")
 async def cancel_document_parsing_job():
     _require_settings_admin()
-    from deeptutor.services.parsing.engines._install import get_background_job_manager
+    from lumen.shared.knowledge.parsing.engines._install import get_background_job_manager
 
     return get_background_job_manager().cancel()
 
@@ -733,7 +733,7 @@ async def start_mineru_models_download(payload: MinerUModelDownloadPayload):
     endpoint. Only one download runs at a time (process-wide singleton).
     """
     _require_settings_admin()
-    from deeptutor.services.parsing.engines.mineru.models import (
+    from lumen.shared.knowledge.parsing.engines.mineru.models import (
         get_model_download_manager,
         resolve_models_downloader,
     )
@@ -764,7 +764,7 @@ async def start_mineru_models_download(payload: MinerUModelDownloadPayload):
 @router.get("/mineru/models/download/status")
 async def mineru_models_download_status(cursor: int = 0):
     _require_settings_admin()
-    from deeptutor.services.parsing.engines.mineru.models import get_model_download_manager
+    from lumen.shared.knowledge.parsing.engines.mineru.models import get_model_download_manager
 
     return get_model_download_manager().status(cursor)
 
@@ -772,7 +772,7 @@ async def mineru_models_download_status(cursor: int = 0):
 @router.post("/mineru/models/download/cancel")
 async def cancel_mineru_models_download():
     _require_settings_admin()
-    from deeptutor.services.parsing.engines.mineru.models import get_model_download_manager
+    from lumen.shared.knowledge.parsing.engines.mineru.models import get_model_download_manager
 
     return get_model_download_manager().cancel()
 
@@ -785,11 +785,11 @@ async def test_mineru_connection(payload: MinerUSettingsUpdate):
     the user can verify before saving; falls back to the stored token when the
     secret field is untouched."""
     _require_settings_admin()
-    from deeptutor.services.parsing.engines.mineru.cloud import verify_credentials
-    from deeptutor.services.parsing.engines.mineru.config import MinerUConfig, MinerUError
+    from lumen.shared.knowledge.parsing.engines.mineru.cloud import verify_credentials
+    from lumen.shared.knowledge.parsing.engines.mineru.config import MinerUConfig, MinerUError
 
     if payload.mode == "local":
-        from deeptutor.services.parsing.engines.mineru.backend import (
+        from lumen.shared.knowledge.parsing.engines.mineru.backend import (
             local_cli_probe,
             local_cli_version,
         )

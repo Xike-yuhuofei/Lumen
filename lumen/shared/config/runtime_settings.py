@@ -62,7 +62,7 @@ DEFAULT_INTEGRATIONS_SETTINGS: dict[str, Any] = {
     "version": 1,
 }
 
-# Document parsing settings. The parse layer (deeptutor/services/parsing)
+# Document parsing settings. The parse layer (lumen.shared.knowledge.parsing)
 # supports several pluggable engines; one is active at a time. The persisted
 # shape is v2::
 #

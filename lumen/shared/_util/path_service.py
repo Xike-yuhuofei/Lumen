@@ -108,7 +108,7 @@ class PathService:
         Lives under the workspace root (sibling of ``knowledge_bases``) so it is
         automatically scoped per user/workspace. Both knowledge-base indexing
         and question extraction draw from this one cache, keyed by
-        ``(source_hash, parser_signature)`` — see ``deeptutor/services/parsing``.
+        ``(source_hash, parser_signature)`` — see ``lumen.shared.knowledge.parsing``.
         """
         return self._workspace_root / "parse_cache"
 

@@ -38,7 +38,7 @@ def test_loader_routes_parser_files_through_active_parse_engine(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     pytest.importorskip("llama_index.core")
-    from deeptutor.services.parsing.types import ParsedDocument
+    from lumen.shared.knowledge.parsing.types import ParsedDocument
     from lumen.shared.knowledge.rag.pipelines.llamaindex import (
         document_loader as loader_module,
     )
@@ -72,7 +72,7 @@ def test_loader_skips_document_when_active_engine_cannot_parse(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
     pytest.importorskip("llama_index.core")
-    from deeptutor.services.parsing.types import ParserError
+    from lumen.shared.knowledge.parsing.types import ParserError
     from lumen.shared.knowledge.rag.pipelines.llamaindex import (
         document_loader as loader_module,
     )
@@ -99,7 +99,7 @@ def test_loader_indexes_images_extracted_from_parsed_document(
     pytest.importorskip("llama_index.core")
     from llama_index.core.schema import ImageNode
 
-    from deeptutor.services.parsing.types import ParsedDocument
+    from lumen.shared.knowledge.parsing.types import ParsedDocument
     from lumen.shared.knowledge.rag.pipelines.llamaindex import document_loader as loader_module
 
     pdf_path = tmp_path / "paper.pdf"

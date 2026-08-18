@@ -27,8 +27,8 @@ from deeptutor.agents.question.pipeline import (
     _VALID_QUESTION_TYPES,
     QuizTemplate,
 )
-from deeptutor.services.parsing import get_parse_service
 from deeptutor.tools.question.question_extractor import extract_questions_from_paper
+from lumen.shared.knowledge.parsing import get_parse_service
 
 logger = logging.getLogger(__name__)
 
