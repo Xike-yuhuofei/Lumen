@@ -7,10 +7,6 @@ This module provides a unified BaseAgent class and module-specific agents:
 - chat: ``AgenticChatPipeline`` — single-loop chat on the agentic engine
   (Deep Solve also runs here, via the solve loop capability)
 
-Note: ``book`` is an independent top-level module under ``deeptutor/``
-(e.g. ``deeptutor.book``). It still inherits from :class:`BaseAgent`
-defined here but is not part of the ``deeptutor.agents`` package.
-
 Usage:
     from deeptutor.agents.base_agent import BaseAgent
 

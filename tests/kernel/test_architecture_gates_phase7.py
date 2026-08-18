@@ -270,3 +270,51 @@ def test_no_production_import_of_legacy_capability_shell(legacy: str) -> None:
     assert not violations, f"production imports legacy capability shell ({legacy}):\n" + "\n".join(
         violations
     )
+
+
+# ── DeepTutor legacy namespace is not a truth the canonical code may import ──
+#
+# ``lumen/**`` is the canonical namespace.  Production code there must never
+# import ``deeptutor.*``: the legacy namespace is only a temporary
+# compatibility facade that is being deleted, so any import would resurrect a
+# dead dependency direction.  (``deeptutor_cli/`` and ``scripts/`` are the
+# remaining App/CLI consumers that still go through ``deeptutor.app`` and
+# ``deeptutor.runtime``; they move to ``lumen`` in the App ownership batch.)
+#
+# A small set of runtime contract providers still bridge to legacy
+# implementations during the Runtime ownership migration.  Each entry is the
+# precise remaining debt that must be eliminated; the gate enforces that no
+# *new* ``deeptutor`` dependency is introduced in the meantime.
+
+LUMEN_DIR = LUMEN_ROOT
+
+# file:line → legacy module.  These must be migrated to canonical lumen
+# implementations; the list must shrink to empty before ``deeptutor/`` can be
+# deleted.
+ALLOWED_LEGACY_BRIDGES = {
+    "lumen/runtime/agent_loop/providers/legacy/agent.py": (
+        "deeptutor.agents.chat.agentic_pipeline"
+    ),
+    "lumen/runtime/llm/plugin.py": "deeptutor.core.agentic.client",
+    "lumen/runtime/session/plugin.py": "deeptutor.services.session.turn_runtime",
+    "lumen/runtime/tools/plugin.py": "deeptutor.runtime.registry.tool_registry",
+}
+
+
+def test_lumen_never_imports_deeptutor() -> None:
+    violations: list[str] = []
+    for py in sorted(LUMEN_DIR.rglob("*.py")):
+        rel = py.relative_to(LUMEN_ROOT.parent).as_posix()
+        allowed = ALLOWED_LEGACY_BRIDGES.get(rel)
+        for t in _import_targets(py):
+            module = t.split(":", 2)[2]
+            if module == "deeptutor" or module.startswith("deeptutor."):
+                if allowed and (module == allowed or module.startswith(allowed + ".")):
+                    continue
+                violations.append(t)
+    assert not violations, (
+        "canonical lumen/ imports the legacy deeptutor namespace:\n"
+        + "\n".join(violations)
+        + "\nAllowed bridges (pending Runtime ownership batch): "
+        + "\n".join(f"{k} -> {v}" for k, v in ALLOWED_LEGACY_BRIDGES.items())
+    )

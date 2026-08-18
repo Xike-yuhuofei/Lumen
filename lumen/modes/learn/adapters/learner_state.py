@@ -1,7 +1,7 @@
 """Adapters between the existing Lumen learner model and the Teaching Core.
 
 The Teaching Core never writes ``LearningProgress`` — that state is owned by
-:mod:`deeptutor.learning`. These adapters *project* it into the Teaching
+:mod:`lumen.modes.learn`. These adapters *project* it into the Teaching
 Core contracts (``LearnerState``, ``LearningGoal``, ``EvidenceBundle``,
 ``MasteryEstimate``, ``AssessmentResult``) so the Teaching Engine can decide
 deterministically, and map Teaching Actions back onto the mastery tools the

@@ -52,7 +52,7 @@ class _LearnModeServiceAdapter(LearnModeService):
         self._tools_service = tools_service
         self._llm_service = llm_service
 
-    # -- learner state (existing deeptutor.learning engine) -----------------
+    # -- learner state (existing lumen.modes.learn engine) -----------------
 
     def _ensure_store(self) -> Any:
         if self._store is None:

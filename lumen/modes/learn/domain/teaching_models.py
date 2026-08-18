@@ -64,7 +64,7 @@ class TeachingNodeType(str, Enum):
     below (concept / procedure / example / misconception / …) tell the Teaching
     Engine and the content generator how a unit should be taught, as opposed to
     ``KnowledgeType`` (memory / concept / procedure / design) which is the
-    learner-model's classification reused from ``deeptutor.learning``.
+    learner-model's classification reused from ``lumen.modes.learn``.
     """
 
     LEARNING_OBJECTIVE = "learning_objective"
@@ -331,14 +331,14 @@ class LearningPlan(BaseModel):
         return value
 
 
-# ── Learner Model projection (used by the engine, owned by deeptutor.learning) ──
+# ── Learner Model projection (used by the engine, owned by lumen.modes.learn) ──
 
 
 class LearnerState(BaseModel):
     """A deterministic projection of the Learner Model for the Teaching Engine.
 
     The engine never writes this; adapters project it from
-    ``deeptutor.learning.LearningProgress``.
+    ``lumen.modes.learn.LearningProgress``.
     """
 
     model_config = ConfigDict(extra="ignore")

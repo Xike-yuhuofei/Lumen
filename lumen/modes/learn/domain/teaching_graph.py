@@ -6,7 +6,7 @@ vector store. Queries here return teaching structure answers (prerequisites,
 misconception links, teaching context), not document passages.
 
 Repository and query utilities for a persistent (SQLite + JSON) backing store
-live in :mod:`deeptutor.teaching_core.graph_repository`.
+live in :mod:`lumen.modes.learn.adapters.graph_repository`.
 """
 
 from __future__ import annotations
