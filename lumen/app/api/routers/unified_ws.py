@@ -220,7 +220,16 @@ async def unified_websocket(ws: WebSocket) -> None:
                 runtime = get_turn_runtime_manager()
                 cancelled = await runtime.cancel_turn(turn_id)
                 if not cancelled:
-                    await safe_send({"type": "error", "content": f"Turn not found: {turn_id}"})
+                    # cancel_turn returns False both for a genuinely missing
+                    # turn and for a turn that already reached a terminal
+                    # status (completed/failed/cancelled). The latter is a
+                    # benign idempotent no-op (e.g. the frontend's idle-timeout
+                    # fallback firing after DONE was lost); only surface an
+                    # error when the turn truly does not exist, otherwise the
+                    # error text would replace the user's real answer in the UI.
+                    turn = await runtime.store.get_turn(turn_id)
+                    if turn is None:
+                        await safe_send({"type": "error", "content": f"Turn not found: {turn_id}"})
                 continue
 
             if msg_type == "submit_user_reply":
