@@ -24,7 +24,7 @@ from typing import Any
 
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
-from langgraph.types import interrupt
+from langgraph.types import RunnableConfig, interrupt
 import pytest
 
 from lumen.evolution.benchmark import run_benchmark
@@ -112,7 +112,7 @@ def _interrupt_graph(saver: MemorySaver) -> Any:
     class S(dict):
         pass
 
-    async def node(state: Any, config: Any) -> dict[str, Any]:
+    async def node(state: Any, config: RunnableConfig) -> dict[str, Any]:
         human = interrupt("proceed")  # raises GraphInterrupt on the first pass
         return {"value": human}
 
