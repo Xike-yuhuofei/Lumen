@@ -144,6 +144,16 @@ PROVIDERS: tuple[ProviderSpec, ...] = (
         default_api_base="https://openrouter.ai/api/v1",
         supports_prompt_caching=True,
     ),
+    ProviderSpec(
+        name="gitee",
+        keywords=("gitee",),
+        env_key="GITEE_API_KEY",
+        display_name="Gitee AI",
+        backend="openai_compat",
+        is_gateway=True,
+        detect_by_base_keyword="gitee.com",
+        default_api_base="https://ai.gitee.com/v1",
+    ),
     # === Standard providers (matched by model-name keywords) ===============
     ProviderSpec(
         name="anthropic",

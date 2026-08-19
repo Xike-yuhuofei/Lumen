@@ -245,6 +245,7 @@ async def run_benchmark(
                 latency = time.perf_counter() - start
                 # collect teaching decisions the teaching plugin produced
                 decisions = getattr(request.teaching, "decisions", [])
+                teaching_names = [request.teaching.name] if request.teaching is not None else []
                 expected = Expected(
                     ok=True,
                     tool_sequence=list(scenario.expected_tools or []),
@@ -267,7 +268,7 @@ async def run_benchmark(
                     model="scripted-seeded",
                     model_config={"seed": seed},
                     toolset=["calc", "boom", "ask_user"],
-                    teaching_plugins=[request.teaching.name],
+                    teaching_plugins=teaching_names,
                     input_dataset="benchmark-v2-standard",
                     seed=seed,
                     environment="deterministic-fake",

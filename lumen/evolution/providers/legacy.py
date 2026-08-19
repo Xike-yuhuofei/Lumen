@@ -79,7 +79,7 @@ class LegacyProvider(RuntimeProvider):
 
             # Dispatch each requested tool call through the ToolRuntime.
             for call in calls:
-                name = call.get("name")
+                name = str(call.get("name"))
                 args = dict(call.get("args") or {})
                 if self._emit_stream:
                     pass  # stream events are captured via TraceEvent; provider stays framework-agnostic

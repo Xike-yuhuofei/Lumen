@@ -10,10 +10,31 @@ rollback path (deprecated), never as a second formal lifecycle.
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from lumen.kernel import Bootstrap, PluginContext
 from lumen.profile import PRODUCTION_PLUGINS, PRODUCTION_PROFILE
+
+#: Env var that elects the dev Active Provider for ``runtime.agent_loop``.
+#: ``langgraph_thin`` = P1 (dev default); ``legacy`` / unset = P0 (production
+#: default, unchanged).
+AGENT_LOOP_PROVIDER_ENV = "LUMEN_AGENT_LOOP_PROVIDER"
+
+
+def resolve_active_assembly() -> tuple[Any, list[Any]]:
+    """Return ``(profile, plugins)`` for the process's Active Provider.
+
+    Production default (env unset or ``legacy``) = ``PRODUCTION_PROFILE``
+    (P0 / Legacy — unchanged).  Dev selects P1 (``langgraph_thin``) via the
+    env var; P0 fast-fallback is one env change away.
+    """
+    provider = os.environ.get(AGENT_LOOP_PROVIDER_ENV, "").strip().lower()
+    if provider == "langgraph_thin":
+        from lumen.dev_profile import DEV_PLUGINS, DEV_PROFILE
+
+        return DEV_PROFILE, list(DEV_PLUGINS)
+    return PRODUCTION_PROFILE, list(PRODUCTION_PLUGINS)
 
 
 class LumenBootstrap:
@@ -29,8 +50,12 @@ class LumenBootstrap:
         profile: Any | None = None,
         plugins: list[Any] | None = None,
     ) -> None:
-        self._profile = profile if profile is not None else PRODUCTION_PROFILE
-        self._plugins = plugins if plugins is not None else PRODUCTION_PLUGINS
+        if profile is None or plugins is None:
+            resolved_profile, resolved_plugins = resolve_active_assembly()
+            profile = profile if profile is not None else resolved_profile
+            plugins = plugins if plugins is not None else resolved_plugins
+        self._profile = profile
+        self._plugins = plugins
         self._root: PluginContext | None = None
 
     async def boot(self) -> PluginContext:

@@ -144,7 +144,7 @@ class ModelCatalogService:
                     profile.setdefault("proxy", "")
                     profile["models"] = []
                 else:
-                    profile.setdefault("binding", "openai")
+                    profile.setdefault("binding", "gitee")
                     profile.setdefault("extra_headers", {})
                     if service_name == "embedding":
                         models = profile.setdefault("models", [])
