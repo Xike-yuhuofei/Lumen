@@ -65,7 +65,9 @@ def _reason(state: TeachingState) -> TeachingState:
     return {**state, "stage": "reason"}
 
 
-def _assess(state: TeachingState, teaching: Any, output_holder: list[dict[str, Any]]) -> TeachingState:
+def _assess(
+    state: TeachingState, teaching: Any, output_holder: list[dict[str, Any]]
+) -> TeachingState:
     decision = state.get("last_decision")
     if decision is not None:
         record = teaching.assess(decision, state.get("messages", []))
@@ -89,7 +91,9 @@ class LangGraphNodesProvider(RuntimeProvider):
 
     provider_id = "langgraph_nodes"
 
-    def __init__(self, *, max_steps: int = 30, max_teaching_rounds: int = 12, emit_trace: bool = True) -> None:
+    def __init__(
+        self, *, max_steps: int = 30, max_teaching_rounds: int = 12, emit_trace: bool = True
+    ) -> None:
         self._max_steps = max_steps
         self._max_teaching_rounds = max_teaching_rounds
         self._emit_trace = emit_trace
@@ -113,7 +117,9 @@ class LangGraphNodesProvider(RuntimeProvider):
             if decision is not None:
                 seed_segment = teaching.scaffold(decision, request.context)
             model_out = await request.model.generate(
-                messages + [{"role": "system", "content": seed_segment}] if seed_segment else messages,
+                messages + [{"role": "system", "content": seed_segment}]
+                if seed_segment
+                else messages,
                 tools=request.tools.build_schemas(),
                 seed=request.seed,
             )
@@ -134,7 +140,13 @@ class LangGraphNodesProvider(RuntimeProvider):
                     content = str(result)
                 except Exception as exc:  # noqa: BLE001
                     content = f"Error: {exc}"
-                messages.append({"role": "assistant", "content": "", "tool_calls": [{"id": f"n{idx}", "name": name, "args": args}]})
+                messages.append(
+                    {
+                        "role": "assistant",
+                        "content": "",
+                        "tool_calls": [{"id": f"n{idx}", "name": name, "args": args}],
+                    }
+                )
                 messages.append({"role": "tool", "tool_call_id": f"n{idx}", "content": content})
             return {**state, "messages": messages, "tool_requests": []}
 
@@ -176,7 +188,11 @@ class LangGraphNodesProvider(RuntimeProvider):
                 if node_name == "reason":
                     msgs = update.get("messages", [])
                     for m in reversed(msgs):
-                        if isinstance(m, dict) and m.get("role") == "assistant" and m.get("content"):
+                        if (
+                            isinstance(m, dict)
+                            and m.get("role") == "assistant"
+                            and m.get("content")
+                        ):
                             final_text = str(m.get("content"))
                             break
                 if node_name == "policy":
@@ -196,7 +212,9 @@ class LangGraphNodesProvider(RuntimeProvider):
         reason = TerminationReason.COMPLETED
         if steps >= self._max_steps:
             reason = TerminationReason.STEP_LIMIT
-        termination = Termination(reason=reason, completed=reason == TerminationReason.COMPLETED, step_count=steps)
+        termination = Termination(
+            reason=reason, completed=reason == TerminationReason.COMPLETED, step_count=steps
+        )
         return ProviderResult(
             provider_id=self.provider_id,
             output=TurnOutput(

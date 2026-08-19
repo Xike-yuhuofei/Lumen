@@ -22,12 +22,12 @@ from __future__ import annotations
 
 import pytest
 
+from tests.kernel.bakeoff_harness import summarize  # noqa: F401  (re-export surface)
 from tests.kernel.bakeoff_v1 import (
     SCENARIOS,
     _side_pass,
     run_full_bakeoff,
 )
-from tests.kernel.bakeoff_harness import summarize  # noqa: F401  (re-export surface)
 
 
 @pytest.mark.asyncio
@@ -74,4 +74,6 @@ async def test_decision_critical_gap_is_measured():
         legacy_ok, _ = _side_pass(rep["scenarios"][sid]["legacy"])
         lc_ok, _ = _side_pass(rep["scenarios"][sid]["langchain"])
         assert legacy_ok, f"legacy unexpectedly failed {sid}"
-        assert not lc_ok, f"LangChain unexpectedly passed {sid} — decision baseline may have shifted"
+        assert not lc_ok, (
+            f"LangChain unexpectedly passed {sid} — decision baseline may have shifted"
+        )

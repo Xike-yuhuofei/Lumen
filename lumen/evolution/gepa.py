@@ -60,17 +60,21 @@ class GepaAdapter(Protocol):
 class GepaFeasibility:
     """Static findings of the GEPA feasibility study (recorded, not runtime)."""
 
-    integration_points: list[str] = field(default_factory=lambda: [
-        "prompt",  # evolve system/user prompt text for teaching clarity
-        "teaching_policy",  # evolve scaffold / remediation / assessment strategy params
-        "context_policy",  # evolve how KB/memory seeds are weighted/selected
-        "provider_config",  # evolve model/tool wiring params of a provider
-        "graph_topology",  # evolve LangGraph node order / branching
-    ])
-    hard_blockers: list[str] = field(default_factory=lambda: [
-        # GEPA must NOT drive: production binding, benchmark definition, gate logic,
-        # test oracles, or arbitrary repo edits.  See lumen.evolution.safety.
-    ])
+    integration_points: list[str] = field(
+        default_factory=lambda: [
+            "prompt",  # evolve system/user prompt text for teaching clarity
+            "teaching_policy",  # evolve scaffold / remediation / assessment strategy params
+            "context_policy",  # evolve how KB/memory seeds are weighted/selected
+            "provider_config",  # evolve model/tool wiring params of a provider
+            "graph_topology",  # evolve LangGraph node order / branching
+        ]
+    )
+    hard_blockers: list[str] = field(
+        default_factory=lambda: [
+            # GEPA must NOT drive: production binding, benchmark definition, gate logic,
+            # test oracles, or arbitrary repo edits.  See lumen.evolution.safety.
+        ]
+    )
     recommended_contract: str = "adapters.GepaAdapter + SafetyGate + ParetoArchive + PromotionGate"
     verdict: str = (
         "FEASIBLE for harness-level PoC; NOT recommended for production now. "

@@ -151,7 +151,9 @@ class EvolutionHarness:
             )
         return results
 
-    def record_experiment(self, experiment_id: str, records: list[ExperimentRecord], seed: int | None) -> Experiment:
+    def record_experiment(
+        self, experiment_id: str, records: list[ExperimentRecord], seed: int | None
+    ) -> Experiment:
         exp = Experiment(
             experiment_id=experiment_id,
             provider_id=",".join(self._target_provider_ids),

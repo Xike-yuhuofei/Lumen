@@ -141,7 +141,9 @@ def compute_metrics(
     # tool-call correctness vs the expected ordered sequence
     got = [name for name, _ in result.output.tool_calls]
     if expected.tool_sequence:
-        match = sum(1 for i, name in enumerate(expected.tool_sequence) if i < len(got) and got[i] == name)
+        match = sum(
+            1 for i, name in enumerate(expected.tool_sequence) if i < len(got) and got[i] == name
+        )
         rt.tool_call_correct = match / len(expected.tool_sequence)
     else:
         rt.tool_call_correct = 0.0

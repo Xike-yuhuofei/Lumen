@@ -143,7 +143,9 @@ async def test_langgraph_nodes_emits_teaching_events():
 
 @pytest.mark.asyncio
 async def test_langgraph_dual_keeps_agent_and_teaching_separate():
-    teaching = ScriptedTeaching([TeachingDecision(kind=TeachingDecisionKind.EXPLAIN, strategy="socratic")])
+    teaching = ScriptedTeaching(
+        [TeachingDecision(kind=TeachingDecisionKind.EXPLAIN, strategy="socratic")]
+    )
     req = _request(decision=TeachingDecisionKind.EXPLAIN)
     req.teaching = teaching
     res = await LangGraphDualProvider().run(req)

@@ -125,4 +125,11 @@ class ParetoArchive:
         }
 
 
-__all__ = ["AxisSpec", "DEFAULT_AXES", "dominates", "pareto_frontier", "ParetoCandidate", "ParetoArchive"]
+__all__ = [
+    "AxisSpec",
+    "DEFAULT_AXES",
+    "dominates",
+    "pareto_frontier",
+    "ParetoCandidate",
+    "ParetoArchive",
+]

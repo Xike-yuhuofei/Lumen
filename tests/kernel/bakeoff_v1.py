@@ -35,8 +35,8 @@ side-by-side dict; ``render_markdown()`` turns it into the report.
 from __future__ import annotations
 
 import asyncio
-import time
 from dataclasses import dataclass, field
+import time
 from typing import Any, Callable
 
 from lumen.modes.learn.loop_registry import LOOP_CAPABILITIES
@@ -93,6 +93,7 @@ class _ProbeScriptedLC(ScriptedLangChainModel):
         async for chunk in super()._astream(messages, stop=stop, run_manager=run_manager, **kwargs):
             yield chunk
 
+
 # ── FROZEN scenario catalog ────────────────────────────────────────────────
 
 MASTERY_TOOL = "mastery_status"
@@ -118,9 +119,7 @@ def _make_mastery_tool(capture: list[str]) -> Any:
                 name=MASTERY_TOOL,
                 description="Report the learner's current mastery status for this path.",
                 parameters=[
-                    ToolParameter(
-                        name="topic", type="string", description="Topic to report on"
-                    )
+                    ToolParameter(name="topic", type="string", description="Topic to report on")
                 ],
             )
 
@@ -320,7 +319,11 @@ async def _run_legacy(scenario: Scenario) -> ProviderResult:
         loop_capabilities=LOOP_CAPABILITIES,
     )
     bus = _new_bus()
-    ctx = _make_ctx(scenario, enabled_tools=list(scenario.enabled_tools or []), wait_for_user_reply=scenario.wait_for_user_reply)
+    ctx = _make_ctx(
+        scenario,
+        enabled_tools=list(scenario.enabled_tools or []),
+        wait_for_user_reply=scenario.wait_for_user_reply,
+    )
     start = time.perf_counter()
     ok_run = True
     error = ""
@@ -332,7 +335,15 @@ async def _run_legacy(scenario: Scenario) -> ProviderResult:
         ok_run = False
         error = f"{type(exc).__name__}: {exc}"
     latency = time.perf_counter() - start
-    res = _result_from_events(scenario, "legacy", list(bus._history), latency=latency, error=error, pipeline=pipeline, client=client)
+    res = _result_from_events(
+        scenario,
+        "legacy",
+        list(bus._history),
+        latency=latency,
+        error=error,
+        pipeline=pipeline,
+        client=client,
+    )
     if ok_run:
         res.ok = bool(res.final_text.strip())
     res.prompts["mastery_bound_seen"] = list(mastery_capture)
@@ -375,7 +386,9 @@ async def _run_langchain(scenario: Scenario) -> ProviderResult:
         prompts={
             "seen_message_types": [m.type for m in seen],
             "n_seen": len(seen),
-            "system_prompt_len": len(str(next((m.content for m in seen if m.type == "system"), "")) or ""),
+            "system_prompt_len": len(
+                str(next((m.content for m in seen if m.type == "system"), "")) or ""
+            ),
             "history_carried": _history_present_text(seen_text),
             "mastery_bound_seen": list(mastery_capture),
         },
@@ -474,23 +487,38 @@ def _judge(scenario: Scenario, res: ProviderResult) -> tuple[bool, dict[str, Any
     metrics: dict[str, Any] = {}
     calls = res.tool_calls
     if scenario.id in {"single_tool_call", "structured_args"}:
-        expected = ("calc", {"a": 2, "b": 3}) if scenario.id == "single_tool_call" else ("calc", {"a": 10, "b": 20})
+        expected = (
+            ("calc", {"a": 2, "b": 3})
+            if scenario.id == "single_tool_call"
+            else ("calc", {"a": 10, "b": 20})
+        )
         got = calls[0] if calls else None
         metrics["tool_selected"] = bool(got and got[0] == expected[0])
         metrics["args_correct"] = bool(got and got[1] == expected[1])
-        return bool(res.final_text.strip()) and metrics["tool_selected"] and metrics["args_correct"] and not res.error, metrics
+        return bool(res.final_text.strip()) and metrics["tool_selected"] and metrics[
+            "args_correct"
+        ] and not res.error, metrics
     if scenario.id == "multi_tool_sequential":
         metrics["tool_selected"] = [name for name, _ in calls] == ["calc", "calc"]
-        metrics["args_correct"] = [args for _, args in calls] == [{"a": 1, "b": 1}, {"a": 2, "b": 2}]
-        return len(calls) >= 2 and metrics["tool_selected"] and metrics["args_correct"] and not res.error, metrics
+        metrics["args_correct"] = [args for _, args in calls] == [
+            {"a": 1, "b": 1},
+            {"a": 2, "b": 2},
+        ]
+        return len(calls) >= 2 and metrics["tool_selected"] and metrics[
+            "args_correct"
+        ] and not res.error, metrics
     if scenario.id == "tool_error_recovery":
         names = [name for name, _ in calls]
         metrics["recovered_after_error"] = "calc" in names and "boom" in names
         metrics["recovery_last_tool_ok"] = bool(names) and names[-1] == "calc"
-        return bool(res.final_text.strip()) and metrics["recovered_after_error"] and not res.error, metrics
+        return bool(res.final_text.strip()) and metrics[
+            "recovered_after_error"
+        ] and not res.error, metrics
     if scenario.id == "streaming":
         metrics["streamed_incrementally"] = res.n_content_events > 1
-        return bool(res.final_text.strip()) and metrics["streamed_incrementally"] and not res.error, metrics
+        return bool(res.final_text.strip()) and metrics[
+            "streamed_incrementally"
+        ] and not res.error, metrics
     if scenario.id == "ask_user_interrupt_resume":
         metrics["tool_selected"] = bool(calls) and calls[0][0] == "ask_user"
         return metrics["tool_selected"] and bool(res.final_text.strip()) and not res.error, metrics
@@ -508,7 +536,9 @@ def _judge(scenario: Scenario, res: ProviderResult) -> tuple[bool, dict[str, Any
         metrics["mastery_state_bound"] = "path-1" in bound
         metrics["mastery_prompt_block"] = bool(res.prompts.get("prompt_blocks"))
         metrics["usage_tracked"] = bool(res.prompts.get("usage_tracked"))
-        return bool(res.final_text.strip()) and metrics["mastery_tool_mounted"] and metrics["mastery_state_bound"] and not res.error, metrics
+        return bool(res.final_text.strip()) and metrics["mastery_tool_mounted"] and metrics[
+            "mastery_state_bound"
+        ] and not res.error, metrics
     return bool(res.final_text.strip()) and not res.error, metrics
 
 
@@ -531,9 +561,13 @@ async def _run_cancellable(side: str, scenario: Scenario) -> ProviderResult:
     except asyncio.CancelledError:
         pass
     except (asyncio.TimeoutError, Exception):  # noqa: BLE001
-        return ProviderResult(scenario=scenario.id, side=side, ok=False, error="cancel_cleanup_hang")
+        return ProviderResult(
+            scenario=scenario.id, side=side, ok=False, error="cancel_cleanup_hang"
+        )
     latency = time.perf_counter() - start
-    res = ProviderResult(scenario=scenario.id, side=side, ok=True, completed=False, latency_s=latency)
+    res = ProviderResult(
+        scenario=scenario.id, side=side, ok=True, completed=False, latency_s=latency
+    )
     res.prompts["cancelled_cleanly"] = True
     return res
 
@@ -544,7 +578,9 @@ RUNNERS = {
 }
 
 
-async def run_full_bakeoff(sides: tuple[str, ...] = ("legacy", "langchain"), reps: int = 3) -> dict[str, Any]:
+async def run_full_bakeoff(
+    sides: tuple[str, ...] = ("legacy", "langchain"), reps: int = 3
+) -> dict[str, Any]:
     """Run every frozen scenario against each provider ``reps`` times.
 
     Returns a nested dict::
@@ -598,10 +634,14 @@ def _clip(value: Any, limit: int = 200, depth: int = 0) -> Any:
             return value
         return value[:limit] + f"...[+{len(value) - limit} chars]"
     if isinstance(value, dict):
-        return {k: _clip(v, limit, depth + 1) for k, v in value.items()} if len(value) <= 8 else {f"<{len(value)} keys>"}
+        return (
+            {k: _clip(v, limit, depth + 1) for k, v in value.items()}
+            if len(value) <= 8
+            else {f"<{len(value)} keys>"}
+        )
     if isinstance(value, (list, tuple)):
         clipped = [_clip(v, limit, depth + 1) for v in value[:4]]
-        return clipped + (["..." ] if len(value) > 4 else [])
+        return clipped + (["..."] if len(value) > 4 else [])
     return value
 
 
@@ -611,14 +651,18 @@ def render_markdown(report: dict[str, Any], side_metrics: dict[str, Any] | None 
     rows.append("# Agent Loop Provider Bake-off v1 — Side-by-side")
     rows.append("")
     rows.append(f"- Repeats per scenario: **{report['reps']}** (replay stability)")
-    rows.append("- LLM / prompts / tools / material / context / machine: **identical** (deterministic fakes)")
+    rows.append(
+        "- LLM / prompts / tools / material / context / machine: **identical** (deterministic fakes)"
+    )
     rows.append("")
     rows.append("| Scenario | Legacy (pass) | LangChain (pass) |")
     rows.append("|---|---|---|")
     for sid, per_side in report["scenarios"].items():
         legacy_ok, _ = _side_pass(per_side.get("legacy", []))
         lc_ok, _ = _side_pass(per_side.get("langchain", []))
-        rows.append(f"| {sid} | {'PASS' if legacy_ok else 'FAIL'} | {'PASS' if lc_ok else 'FAIL'} |")
+        rows.append(
+            f"| {sid} | {'PASS' if legacy_ok else 'FAIL'} | {'PASS' if lc_ok else 'FAIL'} |"
+        )
     rows.append("")
     rows.append("## Per-scenario detail")
     for sid, per_side in report["scenarios"].items():
@@ -630,7 +674,9 @@ def render_markdown(report: dict[str, Any], side_metrics: dict[str, Any] | None 
             r = _best(results)
             verdict, metrics = _judge(_scenario_by_id(sid), r)
             ok_str = "PASS" if verdict else "FAIL"
-            rows.append(f"- **{side}**: {ok_str} | completed={r.completed} | latency={r.latency_s:.3f}s | tool_calls={[(n, a) for n, a in r.tool_calls]} | error={r.error!r}")
+            rows.append(
+                f"- **{side}**: {ok_str} | completed={r.completed} | latency={r.latency_s:.3f}s | tool_calls={[(n, a) for n, a in r.tool_calls]} | error={r.error!r}"
+            )
             if metrics:
                 rows.append(f"  - metrics: {metrics}")
             if r.prompts:
