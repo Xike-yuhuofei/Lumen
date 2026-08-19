@@ -59,6 +59,7 @@ type Copy = {
   change: string
   light: string
   dark: string
+  systemTheme: string
   zh: string
   en: string
   ask: string
@@ -93,6 +94,7 @@ const COPY: Record<LanguageId, Copy> = {
     change: '更改',
     light: '亮色',
     dark: '暗色',
+    systemTheme: '跟随系统',
     zh: '简体中文',
     en: 'English',
     ask: '始终询问',
@@ -125,6 +127,7 @@ const COPY: Record<LanguageId, Copy> = {
     change: 'Change',
     light: 'Light',
     dark: 'Dark',
+    systemTheme: 'Follow system',
     zh: '简体中文',
     en: 'English',
     ask: 'Always ask',
@@ -439,6 +442,7 @@ export function SettingsModal({
                     onChange={setTheme}
                     options={[
                       { value: 'light', label: copy.light },
+                      { value: 'system', label: copy.systemTheme },
                       { value: 'dark', label: copy.dark },
                     ]}
                   />

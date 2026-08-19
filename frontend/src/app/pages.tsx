@@ -107,7 +107,6 @@ export function WorkHomePage({ composer, sidebarBar }: { composer: React.ReactNo
         {sidebarBar && <div className="headerLeft-rH3lhm">{sidebarBar}</div>}
         <div className="headerCenter-cba9zB" />
         <div className="headerRight-QHfr9M">
-          <span className="downloadChip-trae">下载桌面端</span>
         </div>
       </header>
       <div className="workspace-sBvxKr" style={{ ['--input-center-offset' as any]: '331px' }}>
@@ -181,7 +180,6 @@ export function DesignHomePage({ composer, sidebarBar }: { composer: React.React
         {sidebarBar && <div className="headerLeft-rH3lhm">{sidebarBar}</div>}
         <div className="headerCenter-cba9zB" />
         <div className="headerRight-QHfr9M">
-          <span className="downloadChip-trae">下载桌面端</span>
         </div>
       </header>
       <div className="workspace-sBvxKr" style={{ ['--input-center-offset' as any]: '331px' }}>
@@ -1238,7 +1236,7 @@ export function LibraryPage({ sidebarBar }: LibraryPageProps) {
     setBusyAdding((cur) => new Set(cur).add(it.id))
     setToast(null)
     try {
-      await createLearningGoal(it.name, `围绕「${it.name}」制定学习计划`)
+      await createLearningGoal(it.name, `围绕「${it.name}」制定学习计划`, it.kb)
       setAdded((cur) => new Set(cur).add(it.id))
       setToast({ kind: 'success', text: `「${it.name}」已加入学习空间` })
     } catch (e) {

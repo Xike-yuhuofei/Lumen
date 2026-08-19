@@ -1,6 +1,6 @@
 import { apiFetch } from '../api/http'
 
-export type ThemeId = 'light' | 'dark'
+export type ThemeId = 'light' | 'dark' | 'system'
 export type LanguageId = 'zh' | 'en'
 export type LocalLinkOpenMode = 'ask' | 'builtin' | 'system'
 

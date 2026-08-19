@@ -37,6 +37,7 @@ import {
   LS_LANGUAGE,
   LS_RESPONSE_LANGUAGE,
   LanguageId,
+  ThemeId,
   clampChatTimeout,
   loadRuntimeUiSettings,
   persistInterfaceSettings,
@@ -62,9 +63,8 @@ import domainSvg from '../../design-system/assets/icons/domain.svg?raw'
 import moonSvg from '../../design-system/assets/icons/Moon.svg?raw'
 import settingsSvg from '../../design-system/assets/icons/settings.svg?raw'
 import feedbackSvg from '../../design-system/assets/icons/feedback.svg?raw'
-import downloadSvg from '../../design-system/assets/icons/download.svg?raw'
-import mobileSvg from '../../design-system/assets/icons/mobile.svg?raw'
 import rightSvg from '../../design-system/assets/icons/Right.svg?raw'
+import checkSvg from '../../design-system/assets/icons/check-small.svg?raw'
 import {
   CAPABILITIES,
   ChassisSession,
@@ -1008,7 +1008,7 @@ function Sidebar({
   expandedTreeId, onToggleTree,
   onPinTask, onRenameTask, onDeleteTask,
   activeNavItem, onNavigate,
-  theme, onToggleTheme,
+  theme, onThemeChange,
   language,
   onOpenSettings,
   searchDocs = [],
@@ -1028,8 +1028,8 @@ function Sidebar({
   onDeleteTask: (id: string) => void
   activeNavItem?: string
   onNavigate?: (id: string) => void
-  theme: 'light' | 'dark'
-  onToggleTheme: () => void
+  theme: ThemeId
+  onThemeChange: (theme: ThemeId) => void
   language: LanguageId
   onOpenSettings: () => void
   searchDocs?: { id: string; title: string; snippet: string }[]
@@ -1312,7 +1312,6 @@ function Sidebar({
                 </span>
               </button>
             </span>
-            <span className="downloadChip-trae footerDownloadChip">下载桌面端</span>
             {accountOpen && (
               <div className="popover-HaNsn7 portal-ThLRPV visible-Uwmjga accountPopover-FbNGEo" data-side="top" role="dialog">
                 <div className="content-NiU62c accountPopoverContent-LrhkkF">
@@ -1348,12 +1347,42 @@ function Sidebar({
                           <span className="accountMenuValue-iTOf2H">{language === 'en' ? 'English' : '中文'}</span>
                           <OfficialIcon svg={rightSvg} size={14} className="trae-icon-Right accountMenuArrow-fbYuZj" />
                         </button>
-                        <button type="button" className="accountMenuItem-NXEKcd" onClick={onToggleTheme}>
+                        <div className="accountMenuItemWrapper-Wm6vmI">
+                        <button type="button" className="accountMenuItem-NXEKcd">
                           <span className="accountMenuIcon-mCju4M"><OfficialIcon svg={moonSvg} size={16} className="trae-icon-Moon accountMenuIconSvg-Y56ze8" /></span>
                           <span className="accountMenuLabel-VsH45r">主题</span>
-                          <span className="accountMenuValue-iTOf2H">{theme === 'dark' ? '暗色' : '浅色'}</span>
+                          <span className="accountMenuValue-iTOf2H">{theme === 'dark' ? '暗色' : theme === 'system' ? '跟随系统' : '亮色'}</span>
                           <OfficialIcon svg={rightSvg} size={14} className="trae-icon-Right accountMenuArrow-fbYuZj" />
                         </button>
+                        <div className="accountSubmenuPanel-I8ScWr" data-submenu-align="top">
+                          <div className="accountSubmenu-Hv7amr">
+                            <button type="button" className="accountOptionItem-MUTW3Q" onClick={() => { onThemeChange('dark'); setAccountOpen(false) }}>
+                              <span className="accountOptionLabel-C5rP_Q">暗色</span>
+                              <span className="accountOptionTrailing-rK4ZF7">
+                                {theme === 'dark' && (
+                                  <span className="trae-icon trae-icon-check accountCheckIcon-nel9BM" dangerouslySetInnerHTML={{ __html: checkSvg }} />
+                                )}
+                              </span>
+                            </button>
+                            <button type="button" className="accountOptionItem-MUTW3Q" onClick={() => { onThemeChange('light'); setAccountOpen(false) }}>
+                              <span className="accountOptionLabel-C5rP_Q">亮色</span>
+                              <span className="accountOptionTrailing-rK4ZF7">
+                                {theme === 'light' && (
+                                  <span className="trae-icon trae-icon-check accountCheckIcon-nel9BM" dangerouslySetInnerHTML={{ __html: checkSvg }} />
+                                )}
+                              </span>
+                            </button>
+                            <button type="button" className="accountOptionItem-MUTW3Q" onClick={() => { onThemeChange('system'); setAccountOpen(false) }}>
+                              <span className="accountOptionLabel-C5rP_Q">跟随系统</span>
+                              <span className="accountOptionTrailing-rK4ZF7">
+                                {theme === 'system' && (
+                                  <span className="trae-icon trae-icon-check accountCheckIcon-nel9BM" dangerouslySetInnerHTML={{ __html: checkSvg }} />
+                                )}
+                              </span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                       </section>
                       <section className="accountSection-gqAsGh">
                         <button
@@ -1367,15 +1396,6 @@ function Sidebar({
                         <button type="button" className="accountMenuItem-NXEKcd">
                           <span className="accountMenuIcon-mCju4M"><OfficialIcon svg={feedbackSvg} size={16} className="trae-icon-feedback accountMenuIconSvg-Y56ze8" /></span>
                           <span className="accountMenuLabel-VsH45r">报告问题</span>
-                        </button>
-                        <button type="button" className="accountMenuItem-NXEKcd">
-                          <span className="accountMenuIcon-mCju4M"><OfficialIcon svg={downloadSvg} size={16} className="trae-icon-download accountMenuIconSvg-Y56ze8" /></span>
-                          <span className="accountMenuLabel-VsH45r">下载 TraeWork 桌面版</span>
-                        </button>
-                        <button type="button" className="accountMenuItem-NXEKcd">
-                          <span className="accountMenuIcon-mCju4M"><OfficialIcon svg={mobileSvg} size={16} className="trae-icon-mobile accountMenuIconSvg-Y56ze8" /></span>
-                          <span className="accountMenuLabel-VsH45r">下载 TRAE 移动端</span>
-                          <OfficialIcon svg={rightSvg} size={14} className="trae-icon-Right accountMenuArrow-fbYuZj" />
                         </button>
                       </section>
                     </div>
@@ -1492,6 +1512,75 @@ function renderBlock(block: MessageBlock, idx: number) {
 }
 
 /* =============================================================
+   Pending-turn phase indicator (thinking state)
+   -------------------------------------------------------------
+   Industry practice: the gap between submitting a prompt and the
+   first visible reply is the most anxious moment of an AI turn.
+   Instead of a generic "loading" spinner, show a phase-aware
+   thinking state that reflects what Lumen is actually doing, is
+   announced to assistive tech (aria-live), and gives way (or to a
+   concrete error / timeout) as soon as real output — or silence
+   past the timeout — arrives.
+   ============================================================= */
+
+const TOOL_PHASE_LABELS: Record<string, string> = {
+  web_search: '正在联网搜索…',
+  web_fetch: '正在获取网页…',
+  rag: '正在检索资料…',
+  kb_files: '正在检索资料…',
+  read_source: '正在阅读资料…',
+  read_memory: '正在读取记忆…',
+  write_memory: '正在写入记忆…',
+  code_execution: '正在运行代码…',
+  list_notebook: '正在整理笔记…',
+  write_note: '正在整理笔记…',
+}
+
+/** Backend ``stage`` names that map to a friendly UI phase. Unrecognised
+ *  stages are deliberately NOT surfaced to avoid leaking English ids like
+ *  "assessing" into the thinking indicator. */
+const STAGE_PHASE_LABELS: Record<string, string> = {
+  assessing: '正在评估知识…',
+  planning: '正在制定计划…',
+  searching: '正在检索资料…',
+  retrieval: '正在检索资料…',
+  analyze: '正在分析资料…',
+  reasoning: '正在思考…',
+  generating: '正在生成回答…',
+}
+
+/** Derive a reassuring, phase-aware "thinking" label from the events a
+ *  turn has produced so far. Shows movement even before the first reply
+ *  token arrives (tool calls, retrieval, generation), so the user can
+ *  tell Lumen is still working rather than stuck. */
+function deriveThinkingPhase(events: StreamEvent[]): string {
+  if (!events.length) return '正在处理…'
+  for (let i = events.length - 1; i >= 0; i--) {
+    const event = events[i]
+    if (event.type === 'tool_call') {
+      return TOOL_PHASE_LABELS[event.content] || '正在调用工具…'
+    }
+    if (event.type === 'tool_result') return '正在分析结果…'
+    if (event.type === 'sources') return '正在检索资料…'
+    if (event.type === 'progress') {
+      const msg = (event.content || '').trim()
+      return msg ? `正在${msg.replace(/…$/, '')}…` : '正在处理…'
+    }
+    if (event.type === 'stage_start') {
+      const stage = (event.stage || '').trim()
+      const label = stage ? STAGE_PHASE_LABELS[stage.toLowerCase()] : ''
+      if (label) return label
+      // Unrecognised stage: keep scanning earlier events rather than leaking
+      // the raw English stage name.
+      continue
+    }
+    if (event.type === 'thinking') return '正在思考…'
+    if (event.type === 'content') return '正在生成回答…'
+  }
+  return '正在处理…'
+}
+
+/* =============================================================
    Conversation view (user + agent messages paired into turns)
    ============================================================= */
 function visibleAssistantBlocks(blocks: MessageBlock[]): MessageBlock[] {
@@ -1505,7 +1594,31 @@ function studentVisibleText(blocks: MessageBlock[]): string {
     .join('\n\n')
 }
 
-function AssistantActionBar({ text }: { text: string }) {
+function copyText(text: string): void {
+  try {
+    if (navigator.clipboard?.writeText) {
+      void navigator.clipboard.writeText(text)
+      return
+    }
+  } catch {
+    // fall through to legacy fallback below
+  }
+  // Fallback for non-secure contexts where the async Clipboard API is unavailable.
+  const textarea = document.createElement('textarea')
+  textarea.value = text
+  textarea.style.position = 'fixed'
+  textarea.style.opacity = '0'
+  document.body.appendChild(textarea)
+  textarea.select()
+  try {
+    document.execCommand('copy')
+  } catch {
+    // ignore
+  }
+  textarea.remove()
+}
+
+function AssistantActionBar({ text, onRetry }: { text: string; onRetry?: () => void }) {
   const [vote, setVote] = useState<null | 'up' | 'down'>(null)
   const [copied, setCopied] = useState(false)
   const copiedTimer = useRef<number | null>(null)
@@ -1516,9 +1629,7 @@ function AssistantActionBar({ text }: { text: string }) {
 
   const copyAll = () => {
     if (copied) return
-    if (text) {
-      void navigator.clipboard.writeText(text).catch(() => {})
-    }
+    if (text) copyText(text)
     setCopied(true)
     if (copiedTimer.current) window.clearTimeout(copiedTimer.current)
     copiedTimer.current = window.setTimeout(() => setCopied(false), 4000)
@@ -1563,6 +1674,7 @@ function AssistantActionBar({ text }: { text: string }) {
                 label="重试"
                 tooltip="重试"
                 testId="chat-icon-retry"
+                onClick={onRetry}
               />
             </div>
           </div>
@@ -1575,7 +1687,7 @@ function AssistantActionBar({ text }: { text: string }) {
   )
 }
 
-function ConversationView({ messages }: { messages: ChatMessage[]; streaming?: boolean }) {
+function ConversationView({ messages, streaming, phase, onRetry }: { messages: ChatMessage[]; streaming?: boolean; phase?: string; onRetry?: (agent: ChatMessage) => void }) {
   const turns: { user?: ChatMessage; agent?: ChatMessage }[] = []
   for (let i = 0; i < messages.length; i++) {
     const msg = messages[i]
@@ -1684,14 +1796,23 @@ function ConversationView({ messages }: { messages: ChatMessage[]; streaming?: b
                     </div>
                   ) : (
                     <div data-item-type="plan-item:toolcall">
-                      <div className="agent-plan-item" data-toolcall-type="finish" />
+                      <div className="agent-plan-item" data-toolcall-type="finish">
+                        {isLast && streaming ? (
+                          <div className="agent-processing" role="status" aria-live="polite" data-testid="agent-processing">
+                            <span className="agent-processing__dots" aria-hidden="true">
+                              <i /><i /><i />
+                            </span>
+                            <span className="agent-processing__text">{phase || '正在处理…'}</span>
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
                   )}
                   <div data-item-type="agent:notification"></div>
                   <div data-item-type="agent:after-plans">
                     <div data-virtual-item-empty="after-plans" style={{ height: 0, overflow: 'hidden' }}></div>
                   </div>
-                  {showAnswer && <AssistantActionBar text={studentVisibleText(turn.agent.blocks)} />}
+                  {showAnswer && <AssistantActionBar text={studentVisibleText(turn.agent.blocks)} onRetry={onRetry ? () => onRetry(turn.agent!) : undefined} />}
                   <div data-item-type="agent:feedback"></div>
                   <div data-item-type="agent:last-content"></div>
                 </div>
@@ -1905,6 +2026,16 @@ function Composer({
   }
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'a') {
+      e.preventDefault()
+      const el = e.currentTarget
+      const range = document.createRange()
+      range.selectNodeContents(el)
+      const sel = window.getSelection()
+      sel?.removeAllRanges()
+      sel?.addRange(range)
+      return
+    }
     const composing =
       composingRef.current ||
       e.nativeEvent.isComposing ||
@@ -2539,7 +2670,7 @@ function DebugOverlay({
 }: {
   sidebarOpen: boolean
   statusOpen: boolean
-  theme: 'light' | 'dark'
+  theme: ThemeId
   mode: ModeTabId
   leftWidth: number
   rightWidth: number
@@ -2590,10 +2721,9 @@ function readStrLs(key: string, fallback: string): string {
 
 export default function App() {
   // --- Theme ---
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    const saved = readStrLs(LS_THEME, '') as 'light' | 'dark' | ''
-    if (saved) return saved
-    return window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+  const [theme, setTheme] = useState<ThemeId>(() => {
+    const saved = readStrLs(LS_THEME, '') as ThemeId | ''
+    return saved === 'light' || saved === 'dark' || saved === 'system' ? saved : 'system'
   })
   const [language, setLanguage] = useState<LanguageId>(() => (
     readStrLs(LS_LANGUAGE, 'zh') === 'en' ? 'en' : 'zh'
@@ -2606,9 +2736,28 @@ export default function App() {
     return clampChatTimeout(Number.isNaN(raw) ? DEFAULT_CHAT_TIMEOUT : raw)
   })
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const systemThemePref = useRef<'light' | 'dark'>(
+    typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+  )
+  useEffect(() => {
+    const mql = window.matchMedia?.('(prefers-color-scheme: light)')
+    if (!mql) return
+    systemThemePref.current = mql.matches ? 'light' : 'dark'
+    const onPrefChange = (e: MediaQueryListEvent) => {
+      systemThemePref.current = e.matches ? 'light' : 'dark'
+      if (themeRef.current === 'system') {
+        document.documentElement.setAttribute('data-theme', systemThemePref.current)
+      }
+    }
+    mql.addEventListener?.('change', onPrefChange)
+    return () => mql.removeEventListener?.('change', onPrefChange)
+  }, [])
+  const themeRef = useRef(theme)
+  useEffect(() => { themeRef.current = theme }, [theme])
   useEffect(() => {
     const html = document.documentElement
-    html.setAttribute('data-theme', theme)
+    const effective = theme === 'system' ? systemThemePref.current : theme
+    html.setAttribute('data-theme', effective)
     try { localStorage.setItem(LS_THEME, theme) } catch { /* ignore storage errors */ }
   }, [theme])
   useEffect(() => {
@@ -2667,6 +2816,7 @@ export default function App() {
   const [selectedTools, setSelectedTools] = useState<string[]>([])
   const [attachments, setAttachments] = useState<FileAttachment[]>([])
   const [streaming, setStreaming] = useState(false)
+  const [streamPhase, setStreamPhase] = useState('正在处理…')
   const [connectError, setConnectError] = useState('')
 
   // --- Learning space (real goals from /api/v1/learning) ---
@@ -2838,6 +2988,20 @@ export default function App() {
     setSessions(sessionsRef.current)
   }, [])
 
+  const patchAssistantServerId = useCallback((sessionId: string, assistantId: string, event: StreamEvent) => {
+    const raw = (event.metadata ?? {}).assistant_message_id
+    const serverId = typeof raw === 'number' ? raw : parseInt(String(raw ?? ''), 10)
+    if (!Number.isFinite(serverId)) return
+    sessionsRef.current = sessionsRef.current.map((s) => {
+      if (s.id !== sessionId) return s
+      return {
+        ...s,
+        messages: s.messages.map((m) => (m.id === assistantId ? { ...m, serverMessageId: serverId } : m)),
+      }
+    })
+    setSessions(sessionsRef.current)
+  }, [])
+
   const failTurnIdle = useCallback(() => {
     const turn = turnRef.current
     if (!turn) return
@@ -2869,10 +3033,12 @@ export default function App() {
       clearTurnIdleTimer()
       turn.blocks = eventsToBlocks(turn.events, '')
       patchAssistantBlocks(turn.sessionId, turn.assistantId, turn.blocks)
+      patchAssistantServerId(turn.sessionId, turn.assistantId, event)
       setStreaming(false)
       return
     }
     turn.events.push(event)
+    setStreamPhase(deriveThinkingPhase(turn.events))
     const next = eventsToBlocks(turn.events, '')
     turn.blocks = next
     patchAssistantBlocks(turn.sessionId, turn.assistantId, turn.blocks)
@@ -2880,7 +3046,7 @@ export default function App() {
       clearTurnIdleTimer()
       setStreaming(false)
     }
-  }, [armTurnIdleTimer, clearTurnIdleTimer, patchAssistantBlocks, remapSessionId])
+  }, [armTurnIdleTimer, clearTurnIdleTimer, patchAssistantBlocks, patchAssistantServerId, remapSessionId])
 
   useEffect(() => {
     const client = new UnifiedWSClient(
@@ -3032,6 +3198,7 @@ export default function App() {
       blocks: [],
     }
     setStreaming(true)
+    setStreamPhase('正在处理…')
     setConnectError('')
     armTurnIdleTimer()
 
@@ -3089,8 +3256,8 @@ export default function App() {
     startLearnTurn(goal, `继续学习「${goal.name || goal.book_id}」。请根据我当前的学习进度继续教学。`)
   }, [startLearnTurn])
 
-  const handleCreateLearningGoal = useCallback((title: string, description?: string) => {
-    createLearningGoal(title, description)
+  const handleCreateLearningGoal = useCallback((title: string, description?: string, kbName = '') => {
+    createLearningGoal(title, description, kbName)
       .then((created) => {
         loadLearningGoals()
         const goal: LearningGoal = {
@@ -3098,6 +3265,7 @@ export default function App() {
           name: created.goal_name,
           goal_name: created.goal_name,
           description: description || '',
+          source_kb: kbName || undefined,
           modules_count: 0,
           kp_count: 0,
           current_stage: 'diagnostic',
@@ -3127,6 +3295,45 @@ export default function App() {
     const id = window.setTimeout(loadLearningGoals, 0)
     return () => window.clearTimeout(id)
   }, [view, loadLearningGoals])
+
+  const handleRetry = useCallback((agent: ChatMessage) => {
+    const sessionId = selectedTaskRef.current
+    if (streaming || !sessionId) return
+    const session = sessionsRef.current.find((s) => s.id === sessionId)
+    if (!session) return
+    const backendId = session.backendId || (sessionId.startsWith('pending-') ? null : sessionId)
+    if (!backendId) return
+    const idx = session.messages.findIndex((m) => m.id === agent.id)
+    if (idx < 0) return
+    // 方案 A：点击即回退。保留目标回复对应的 user 消息，丢弃该回复及其后所有消息。
+    const kept = session.messages.slice(0, idx)
+    const time = formatClock()
+    const assistantId = `a-${Date.now()}`
+    const pendingAssistant: ChatMessage = {
+      id: assistantId,
+      role: 'assistant',
+      author: PRODUCT_NAME,
+      time,
+      blocks: [],
+    }
+    sessionsRef.current = sessionsRef.current.map((s) => (
+      s.id === sessionId ? { ...s, messages: [...kept, pendingAssistant] } : s
+    ))
+    persistSessions(sessionsRef.current)
+    setSessions(sessionsRef.current)
+    turnRef.current = { sessionId, assistantId, turnId: null, events: [], blocks: [] }
+    setStreaming(true)
+    setStreamPhase('正在处理…')
+    setConnectError('')
+    armTurnIdleTimer()
+    wsRef.current?.send({
+      type: 'regenerate',
+      session_id: backendId,
+      // message_id 优先（精确到后端行 id）；缺失时用 message_index 兜底定位。
+      message_id: agent.serverMessageId,
+      message_index: idx,
+    })
+  }, [streaming, armTurnIdleTimer, persistSessions])
 
   const handleCancel = useCallback(() => {
     const turnId = turnRef.current?.turnId
@@ -3239,12 +3446,9 @@ export default function App() {
               }}
               theme={theme}
               language={language}
-              onToggleTheme={() => {
-                setTheme((t) => {
-                  const next = t === 'dark' ? 'light' : 'dark'
-                  persistInterfaceSettings({ theme: next })
-                  return next
-                })
+              onThemeChange={(next) => {
+                setTheme(next)
+                persistInterfaceSettings({ theme: next })
               }}
               onOpenSettings={() => setSettingsOpen(true)}
               hideSessions={mode !== 'code'}
@@ -3343,7 +3547,7 @@ export default function App() {
                               <div className="virtualized-message-list-view__content">
                                 <div className="virtualized-message-list-view__scroller virtualized-message-list-view__scroller--hide-scrollbar">
                                   <div className="virtualized-message-list-view__virtuoso" style={{ position: 'relative' }}>
-                                    <ConversationView messages={messages} streaming={streaming} />
+                                    <ConversationView messages={messages} streaming={streaming} phase={streamPhase} onRetry={handleRetry} />
                                     <div ref={chatEndRef} />
                                   </div>
                                 </div>
