@@ -310,7 +310,7 @@ export async function fileToAttachment(file: File): Promise<FileAttachment> {
   }
 }
 
-export type ViewId = 'chat' | 'new-task' | 'automation' | 'marketplace' | 'library' | 'my-files' | 'design-system'
+export type ViewId = 'chat' | 'new-task' | 'spaces' | 'marketplace' | 'library' | 'my-files' | 'design-system'
 
 export function parseHash(): { view: ViewId; sessionId: string } {
   const raw = (typeof window !== 'undefined' ? window.location.hash : '').replace(/^#/, '')
@@ -320,7 +320,7 @@ export function parseHash(): { view: ViewId; sessionId: string } {
   }
   if (path.startsWith('/marketplace')) return { view: 'marketplace', sessionId: '' }
   if (path.startsWith('/library')) return { view: 'library', sessionId: '' }
-  if (path.startsWith('/automation')) return { view: 'automation', sessionId: '' }
+  if (path.startsWith('/spaces')) return { view: 'spaces', sessionId: '' }
   if (path.startsWith('/files')) return { view: 'my-files', sessionId: '' }
   if (path.startsWith('/design-system')) return { view: 'design-system', sessionId: '' }
   if (path === '/new' || path === '/') return { view: 'new-task', sessionId: '' }
@@ -330,7 +330,7 @@ export function parseHash(): { view: ViewId; sessionId: string } {
 export function hashFor(view: ViewId, sessionId?: string): string {
   if (view === 'marketplace') return '#/marketplace'
   if (view === 'library') return '#/library'
-  if (view === 'automation') return '#/automation'
+  if (view === 'spaces') return '#/spaces'
   if (view === 'my-files') return '#/files'
   if (view === 'design-system') return '#/design-system'
   if (view === 'new-task' || !sessionId) return '#/new'

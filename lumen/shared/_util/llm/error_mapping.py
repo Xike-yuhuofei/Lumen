@@ -71,12 +71,66 @@ _GLOBAL_RULES: list[MappingRule] = [
 ]
 
 
+def _provider_env_hint(provider: str | None) -> str:
+    """Return a short, actionable hint naming the env var for *provider*.
+
+    Reads the LLM registry's canonical env key so the message can tell the
+    user *where* to re-supply the credential instead of dumping raw JSON.
+    Lazy import keeps the mapping module free of configuration imports.
+    """
+    if not provider:
+        return ""
+    try:
+        from lumen.shared.config.credentials import provider_env_key
+
+        key = provider_env_key(provider)
+    except Exception:
+        return ""
+    if not key:
+        return ""
+    return f" 需要更新环境变量 {key} 后重启应用。"
+
+
+def _friendly_auth_message(raw: str, provider: str | None) -> str:
+    """Build a clean, actionable message for an upstream 401 without leaking
+    the raw provider body to the end user (criterion: never expose a raw
+    upstream exception as the *only* feedback)."""
+    low = (raw or "").lower()
+    # The provider prefix already precedes the message in ``__str__``
+    # (``[gitee] HTTP 401 ...``), so do not name the service again here.
+    if any(k in low for k in ("token_expired", "token has expired", "已过期", "expired")):
+        return (
+            f"访问凭证（Token / API Key）已过期，"
+            f"请重新生成该服务的凭证并更新后重试。{_provider_env_hint(provider)}"
+        )
+    if any(
+        k in low
+        for k in (
+            "unauthorized",
+            "invalid api key",
+            "invalid_key",
+            "authentication",
+            "not_authenticated",
+            "invalid token",
+            "missing api key",
+        )
+    ):
+        return (
+            f"认证失败：API Key / Token 无效、缺失或已被吊销，"
+            f"请核对并更新该服务的凭证后重试。{_provider_env_hint(provider)}"
+        )
+    return (
+        f"认证失败（HTTP 401），请检查 API Key / Token 是否配置正确。{_provider_env_hint(provider)}"
+    )
+
+
 def map_error(exc: Exception, provider: str | None = None) -> LLMError:
     """Map provider-specific errors to unified internal exceptions."""
     # Heuristic check for status codes before rules
     status_code = getattr(exc, "status_code", None)
     if status_code == 401:
-        return LLMAuthenticationError(str(exc), provider=provider)
+        # Never pass the raw upstream body through as the user-facing message.
+        return LLMAuthenticationError(_friendly_auth_message(str(exc), provider), provider=provider)
     if status_code == 429:
         return LLMRateLimitError(str(exc), provider=provider)
 

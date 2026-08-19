@@ -15,7 +15,7 @@ const STATES = [
   { name: 'L3-middle', mhtml: '中栏.mhtml' },
   { name: 'L4-middle-right', mhtml: '中栏+右栏.mhtml' },
   { name: 'S1-new-task', mhtml: '新建任务.mhtml' },
-  { name: 'S2-automation', mhtml: '自动化.mhtml' },
+  { name: 'S2-spaces', mhtml: '学习空间.mhtml' },
   { name: 'S3-marketplace', mhtml: '插件市场.mhtml' },
   { name: 'S4-plugin-detail', mhtml: '插件市场-插件详情.mhtml' },
 ]

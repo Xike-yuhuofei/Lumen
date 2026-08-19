@@ -107,6 +107,7 @@ class ConfigManager:
         return {"missing": missing}
 
     def _runtime_key_values(self) -> Dict[str, str]:
+        from lumen.shared.config.credentials import get_provider_api_key
         from lumen.shared.config.model_catalog import ModelCatalogService
         from lumen.shared.config.runtime_settings import RuntimeSettingsService
 
@@ -121,7 +122,7 @@ class ConfigManager:
             "FRONTEND_PORT": str(system["frontend_port"]),
             "LLM_BINDING": str(llm_profile.get("binding") or ""),
             "LLM_MODEL": str(llm_model.get("model") or ""),
-            "LLM_API_KEY": str(llm_profile.get("api_key") or ""),
+            "LLM_API_KEY": get_provider_api_key(llm_profile.get("binding"), service_type="llm"),
             "LLM_HOST": str(llm_profile.get("base_url") or ""),
         }
 

@@ -18,6 +18,7 @@ from lumen.shared._util.provider_registry import (
 )
 from lumen.shared.config.model_selection import LLMSelection, apply_llm_selection_to_catalog
 
+from .credentials import get_provider_api_key, is_provider_key_configured
 from .embedding_endpoint import (
     EMBEDDING_PROVIDER_ALIASES,
     EMBEDDING_PROVIDER_DEFAULT_ENDPOINTS,
@@ -132,6 +133,10 @@ class EmbeddingProviderSpec:
     mode: str = "standard"
     default_model: str = ""
     default_dim: int = 0
+    # Env var supplying the API key when the profile stores none
+    # (e.g. GITEE_API_KEY). Resolvers read it as a fallback so keys
+    # can be injected instead of stored in plaintext.
+    env_key: str = ""
     # Per-provider cap on items per embedding request batch. Adapters/clients
     # clamp `batch_size` against this. SiliconFlow Qwen3 family caps at 32;
     # DashScope caps at 20; most others have generous limits.
@@ -206,6 +211,7 @@ EMBEDDING_PROVIDERS: dict[str, EmbeddingProviderSpec] = {
         default_api_base=EMBEDDING_PROVIDER_DEFAULT_ENDPOINTS["gitee"],
         keywords=("gitee", "qwen3-embedding"),
         is_local=False,
+        env_key="GITEE_API_KEY",
         default_model="Qwen3-Embedding-8B",
     ),
     "siliconflow": EmbeddingProviderSpec(
@@ -421,14 +427,21 @@ def _collect_provider_pool(catalog: dict[str, Any]) -> dict[str, NormalizedProvi
             continue
         providers[name] = NormalizedProviderConfig(
             name=name,
-            api_key=_as_str(profile.get("api_key")),
+            api_key=get_provider_api_key(name, service_type="llm"),
             api_base=_as_str(profile.get("base_url")) or None,
             api_version=_as_str(profile.get("api_version")) or None,
             extra_headers=_to_headers(profile.get("extra_headers")) or None,
         )
+    for spec in PROVIDERS:
+        if spec.name in providers or spec.is_oauth:
+            continue
+        if is_provider_key_configured(spec.name, service_type="llm"):
+            providers[spec.name] = NormalizedProviderConfig(
+                name=spec.name,
+                api_key=get_provider_api_key(spec.name, service_type="llm"),
+                api_base=None, api_version=None, extra_headers=None,
+            )
     return providers
-
-
 def _choose_resolved_provider(
     *,
     hint: str | None,
@@ -498,7 +511,7 @@ def resolve_llm_runtime_config(
     binding_hint_raw = _as_str((profile or {}).get("binding"))
     binding_hint = canonical_provider_name(binding_hint_raw)
 
-    active_api_key = _as_str((profile or {}).get("api_key"))
+    active_api_key = get_provider_api_key(binding_hint, service_type='llm')
     active_api_base = _as_str((profile or {}).get("base_url"))
     active_api_version = _as_str((profile or {}).get("api_version"))
     reasoning_effort = _as_str((model or {}).get("reasoning_effort")) or None
@@ -517,7 +530,7 @@ def resolve_llm_runtime_config(
     )
 
     mapped = provider_pool.get(spec.name)
-    api_key = active_api_key or (mapped.api_key if mapped else "")
+    api_key = get_provider_api_key(spec.name, service_type='llm')
     api_base = active_api_base or ((mapped.api_base or "") if mapped else "")
     api_version = active_api_version or ((mapped.api_version or "") if mapped else "")
     if not api_base and spec.default_api_base:
@@ -567,14 +580,21 @@ def _collect_embedding_provider_pool(
             continue
         providers[name] = NormalizedProviderConfig(
             name=name,
-            api_key=_as_str(profile.get("api_key")),
+            api_key=get_provider_api_key(name, service_type="embedding"),
             api_base=_as_str(profile.get("base_url")) or None,
             api_version=_as_str(profile.get("api_version")) or None,
             extra_headers=_to_headers(profile.get("extra_headers")) or None,
         )
+    for provider_name, spec in EMBEDDING_PROVIDERS.items():
+        if provider_name in providers or spec.is_local:
+            continue
+        if is_provider_key_configured(provider_name, service_type="embedding"):
+            providers[provider_name] = NormalizedProviderConfig(
+                name=provider_name,
+                api_key=get_provider_api_key(provider_name, service_type="embedding"),
+                api_base=None, api_version=None, extra_headers=None,
+            )
     return providers
-
-
 def _resolve_embedding_dimension(value: Any, default: int = 0) -> int:
     """Parse the dimension value. Returns 0 when unknown/unparseable.
 
@@ -676,7 +696,7 @@ def resolve_embedding_runtime_config(
     binding_hint_raw = _as_str((profile or {}).get("binding"))
     binding_hint = _canonical_embedding_provider_name(binding_hint_raw)
 
-    active_api_key = _as_str((profile or {}).get("api_key"))
+    active_api_key = get_provider_api_key(binding_hint, service_type='embedding')
     active_api_base = _as_str((profile or {}).get("base_url"))
     active_api_version = _as_str((profile or {}).get("api_version"))
     active_extra_headers = _to_headers((profile or {}).get("extra_headers"))
@@ -698,7 +718,7 @@ def resolve_embedding_runtime_config(
     spec = EMBEDDING_PROVIDERS[provider_name]
     mapped = provider_pool.get(provider_name)
 
-    api_key = active_api_key or (mapped.api_key if mapped else "")
+    api_key = get_provider_api_key(provider_name, service_type='embedding')
     api_base = active_api_base or ((mapped.api_base or "") if mapped else "")
     if not api_base:
         if provider_name == "gemini":
@@ -809,7 +829,7 @@ def search_provider_credentials(
     active = catalog_service.get_active_profile(loaded, "search") or {}
     for profile in (active, *_search_profiles(loaded)):
         if _as_str(profile.get("provider")).lower() == name:
-            return _as_str(profile.get("api_key")), _as_str(profile.get("base_url"))
+            return get_provider_api_key(name, service_type="search"), _as_str(profile.get("base_url"))
     return "", ""
 
 
@@ -849,7 +869,7 @@ def search_fallback_candidates(
         if spec is None or provider in {"none", name} or provider in candidates:
             continue
         if search_missing_credential(
-            provider, _as_str(profile.get("api_key")), _as_str(profile.get("base_url"))
+            provider, get_provider_api_key(provider, service_type="search"), _as_str(profile.get("base_url"))
         ):
             continue
         candidates.append(provider)
@@ -870,7 +890,7 @@ def resolve_search_runtime_config(
 
     requested_provider = (_as_str(profile.get("provider")) or SEARCH_FALLBACK_PROVIDER).lower()
     provider = requested_provider
-    api_key = _as_str(profile.get("api_key"))
+    api_key = get_provider_api_key(provider, service_type="search")
     base_url = _as_str(profile.get("base_url"))
     proxy = _as_str(profile.get("proxy")) or None
     max_results = _resolve_search_max_results(loaded)

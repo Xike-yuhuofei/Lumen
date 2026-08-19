@@ -88,12 +88,13 @@ def test_load_does_not_sync_existing_active_profiles_from_dotenv(tmp_path: Path)
 
     assert llm_profile["binding"] == "openai"
     assert llm_profile["base_url"] == "https://old-llm.example/v1"
-    assert llm_profile["api_key"] == "old-llm-key"
+    # API keys are never persisted — legacy plaintext values are stripped.
+    assert "api_key" not in llm_profile
     assert llm_model["model"] == "old-model"
     assert llm_model["name"] == "old-model"
     assert emb_profile["binding"] == "openai"
     assert emb_profile["base_url"] == "https://old-emb.example/v1/embeddings"
-    assert emb_profile["api_key"] == "old-emb-key"
+    assert "api_key" not in emb_profile
     assert emb_model["model"] == "old-embedding"
     assert emb_model["name"] == "old-embedding"
     assert emb_model["dimension"] == "3072"

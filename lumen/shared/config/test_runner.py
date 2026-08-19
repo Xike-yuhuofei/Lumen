@@ -10,6 +10,7 @@ from typing import Any
 from uuid import uuid4
 
 from .context_window_detection import detect_context_window
+from .credentials import get_provider_api_key
 from .embedding_endpoint import redact_embedding_endpoint_for_display
 from .model_catalog import get_model_catalog_service
 from .provider_runtime import (
@@ -103,14 +104,25 @@ class ConfigTestRunner:
 
             run.emit("info", "Preparing configuration snapshot.")
             if profile:
+                binding = profile.get("binding") or profile.get("provider")
+                service_type = (
+                    "embedding"
+                    if service == "embedding"
+                    else "search"
+                    if service == "search"
+                    else "voice"
+                    if service in {"tts", "stt"}
+                    else "llm"
+                )
                 run.emit(
                     "config",
                     "Using active profile.",
                     profile={
                         "name": profile.get("name", ""),
                         "base_url": profile.get("base_url", ""),
-                        "binding": profile.get("binding") or profile.get("provider"),
-                        "api_key": _redact(str(profile.get("api_key", ""))),
+                        "binding": binding,
+                        # Keys are env-sourced; redacted for the test trace.
+                        "api_key": _redact(get_provider_api_key(binding, service_type=service_type)),
                         "api_version": profile.get("api_version", ""),
                     },
                     model=model,
@@ -429,8 +441,8 @@ class ConfigTestRunner:
             )
         if resolved.missing_credentials:
             raise ValueError(
-                f"Search provider `{resolved.requested_provider}` requires api_key. "
-                "Set profile.api_key in Settings > Catalog."
+                f"Search provider `{resolved.requested_provider}` requires an api_key. "
+                f"Set the {resolved.requested_provider.upper()}_API_KEY environment variable."
             )
         provider = resolved.provider
         run.emit("info", f"Resolved search provider `{provider}`.")

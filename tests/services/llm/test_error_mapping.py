@@ -40,3 +40,30 @@ def test_map_error_falls_back_to_api_error() -> None:
     mapped = map_error(DummyError("boom", status_code=500), provider="openai")
     assert isinstance(mapped, LLMAPIError)
     assert mapped.status_code == 500
+
+
+def test_map_error_token_expired_clean_message() -> None:
+    """An expired upstream token must yield an actionable message, not raw JSON."""
+    mapped = map_error(
+        DummyError('OpenAI API error: {"error":{"code":"token_expired","message":"token has expired"}}', status_code=401),
+        provider="gitee",
+    )
+    assert isinstance(mapped, LLMAuthenticationError)
+    assert mapped.status_code == 401
+    assert "已过期" in str(mapped)
+    assert "GITEE_API_KEY" in str(mapped)
+    # Raw provider body must never be the user-facing message.
+    assert "token_expired" not in str(mapped)
+    assert "{" not in str(mapped)
+
+
+def test_map_error_invalid_key_clean_message() -> None:
+    """An invalid/missing key must map to a clear auth failure without raw JSON."""
+    mapped = map_error(
+        DummyError('OpenAI stream error: {"error":"Invalid API key"}', status_code=401),
+        provider="zhipu",
+    )
+    assert isinstance(mapped, LLMAuthenticationError)
+    assert "无效" in str(mapped)
+    assert "ZHIPU_API_KEY" in str(mapped)
+    assert "{" not in str(mapped)

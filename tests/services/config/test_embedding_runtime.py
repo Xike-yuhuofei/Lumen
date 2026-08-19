@@ -121,10 +121,12 @@ def test_embedding_alias_canonicalization_google_to_gemini() -> None:
     assert resolved.binding == "gemini"
 
 
-def test_embedding_gemini_default_base_and_profile_key() -> None:
+def test_embedding_gemini_default_base_and_profile_key(monkeypatch) -> None:
     """An existing gemini-embedding-001 profile with no explicit endpoint must
     keep the OpenAI-compatible URL — the native route sends a taskType and
-    L2-normalizes, so moving it would invalidate the index built from it."""
+    L2-normalizes, so moving it would invalidate the index built from it.
+    API keys resolve from the environment (``GEMINI_API_KEY``)."""
+    monkeypatch.setenv("GEMINI_API_KEY", "gemini-test-key")
     catalog = _build_catalog(
         embedding_profile={
             "id": "embedding-p",
@@ -229,7 +231,8 @@ def test_embedding_local_fallback_from_base_url() -> None:
     assert resolved.api_key == ""
 
 
-def test_embedding_local_vllm_uses_profile_key() -> None:
+def test_embedding_local_vllm_uses_profile_key(monkeypatch) -> None:
+    monkeypatch.setenv("HOSTED_VLLM_API_KEY", "local-secret")
     catalog = _build_catalog(
         embedding_profile={
             "id": "embedding-p",
@@ -324,8 +327,9 @@ def test_embedding_send_dimensions_resolves_from_catalog() -> None:
     assert resolved.send_dimensions is True
 
 
-def test_embedding_custom_openai_sdk_uses_user_supplied_base_url() -> None:
+def test_embedding_custom_openai_sdk_uses_user_supplied_base_url(monkeypatch) -> None:
     """Legacy `custom_openai_sdk` configs still resolve for backwards compatibility."""
+    monkeypatch.setenv("CUSTOM_OPENAI_SDK_API_KEY", "sk-custom")
     catalog = _build_catalog(
         embedding_profile={
             "id": "embedding-p",
@@ -379,7 +383,8 @@ def test_embedding_openrouter_default_base_url_injected() -> None:
     assert EMBEDDING_PROVIDERS["openrouter"].adapter == "openai_compat"
 
 
-def test_embedding_openrouter_profile_key() -> None:
+def test_embedding_openrouter_profile_key(monkeypatch) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-from-profile")
     catalog = _build_catalog(
         embedding_profile={
             "id": "embedding-p",
@@ -397,7 +402,8 @@ def test_embedding_openrouter_profile_key() -> None:
     assert resolved.api_key == "sk-or-from-profile"
 
 
-def test_embedding_provider_profile_key() -> None:
+def test_embedding_provider_profile_key(monkeypatch) -> None:
+    monkeypatch.setenv("COHERE_API_KEY", "cohere-test-key")
     catalog = _build_catalog(
         embedding_profile={
             "id": "embedding-p",

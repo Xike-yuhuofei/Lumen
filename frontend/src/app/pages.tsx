@@ -29,8 +29,10 @@ const PageIcon: React.FC<IconSvgProps> = ({ name, size = 16 }) => {
       return <svg {...s} viewBox="0 0 18 18" fill="currentColor"><path d="M14.5625 5.0625C14.5625 4.16503 13.835 3.4375 12.9375 3.4375H5.0625C4.16504 3.4375 3.4375 4.16504 3.4375 5.0625V12.9375C3.4375 13.835 4.16503 14.5625 5.0625 14.5625H12.9375C13.835 14.5625 14.5625 13.835 14.5625 12.9375V5.0625ZM15.8125 12.9375C15.8125 14.5254 14.5254 15.8125 12.9375 15.8125H5.0625C3.47469 15.8125 2.1875 14.5254 2.1875 12.9375V5.0625C2.1875 3.47468 3.47468 2.1875 5.0625 2.1875H12.9375C14.5254 2.1875 15.8125 3.47469 15.8125 5.0625V12.9375Z"/><path d="M10.7614 11.8182C10.7614 11.2345 11.2345 10.7614 11.8182 10.7614C12.4018 10.7614 12.875 11.2345 12.875 11.8182C12.875 12.4018 12.4018 12.875 11.8182 12.875C11.2345 12.875 10.7614 12.4018 10.7614 11.8182ZM7.94318 9C7.94318 8.41635 8.41635 7.94318 9 7.94318C9.58365 7.94318 10.0568 8.41635 10.0568 9C10.0568 9.58365 9.58365 10.0568 9 10.0568C8.41635 10.0568 7.94318 9.58365 7.94318 9ZM5.125 6.18182C5.125 5.59815 5.59815 5.125 6.18182 5.125C6.76548 5.125 7.23864 5.59815 7.23864 6.18182C7.23864 6.76548 6.76548 7.23864 6.18182 7.23864C5.59815 7.23864 5.125 6.76548 5.125 6.18182Z"/></svg>
     case 'showcase_tools':
       return <svg {...s} viewBox="0 0 18 18" fill="currentColor"><path d="M14.5649 5.13184C14.5649 4.19502 13.8055 3.43555 12.8687 3.43555H5.13135C4.19454 3.43555 3.43506 4.19503 3.43506 5.13184V12.8691C3.43506 13.806 4.19453 14.5654 5.13135 14.5654H12.8687C13.8055 14.5654 14.5649 13.806 14.5649 12.8691V5.13184ZM15.8149 12.8691C15.8149 14.4963 14.4959 15.8154 12.8687 15.8154H5.13135C3.50419 15.8154 2.18506 14.4964 2.18506 12.8691V5.13184C2.18506 3.50467 3.50418 2.18555 5.13135 2.18555H12.8687C14.4959 2.18555 15.8149 3.50468 15.8149 5.13184V12.8691Z"/><path d="M5.18257 5.55806C5.42665 5.31398 5.82326 5.31398 6.06734 5.55806L7.37984 6.87056C7.62391 7.11464 7.62391 7.51125 7.37984 7.75532L6.06734 9.06782C5.82326 9.3119 5.42665 9.3119 5.18257 9.06782C4.93849 8.82375 4.93849 8.42714 5.18257 8.18306L6.05269 7.31294L5.18257 6.44282C4.93849 6.19875 4.93849 5.80214 5.18257 5.55806Z"/></svg>
-    case 'automation':
-      return <svg {...s} viewBox="0 0 16 16" fill="currentColor"><path d="M13.373 8C13.373 5.03239 10.9676 2.62695 8 2.62695C5.03239 2.62695 2.62695 5.03239 2.62695 8C2.62695 10.9676 5.03239 13.373 8 13.373C10.9676 13.373 13.373 10.9676 13.373 8ZM7.37305 5.33333C7.37305 4.98723 7.6539 4.70638 8 4.70638C8.3461 4.70638 8.62695 4.98723 8.62695 5.33333V7.74023L10.11 9.22331C10.3548 9.46804 10.3548 9.8653 10.11 10.11C9.8653 10.3548 9.46804 10.3548 9.22331 10.11L7.55664 8.44336C7.43912 8.32584 7.37305 8.1662 7.37305 8V5.33333ZM14.627 8C14.627 11.6598 11.6598 14.627 8 14.627C4.3402 14.627 1.37305 11.6598 1.37305 8C1.37305 4.34019 4.34019 1.37305 8 1.37305C11.6598 1.37305 14.627 4.3402 14.627 8ZM2.99887 1.05728C3.24354.812617 3.64031.812292 3.88506 1.05682C4.12979 1.30155 4.12979 1.69874 3.88506 1.94346L1.94328 3.88525C1.69855 4.12997 1.30136 4.12997 1.05663 3.88525.812106 3.6405.812431 3.24372 1.05709 2.99906L2.99887 1.05728ZM13.163 1.05728C12.9183.812617 12.5216.812292 12.2768 1.05682C12.0321 1.30155 12.0321 1.69874 12.2768 1.94346L14.2186 3.88525C14.4633 4.12997 14.8605 4.12997 15.1052 3.88525 15.3498 3.6405 15.3494 3.24372 15.1048 2.99906L13.163 1.05728z"/></svg>
+    case 'spaces':
+      return <svg {...s} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"><path d="m8 1.9 5.2 2.95L8 7.8 2.8 4.85 8 1.9Z"/><path d="m2.8 8.3 5.2 2.95 5.2-2.95"/><path d="m2.8 11.6 5.2 2.95 5.2-2.95"/></svg>
+    case 'plus':
+      return <svg {...s} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M8 3v10M3 8h10"/></svg>
     case 'close':
       return <svg {...s} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 4l8 8M12 4l-8 8"/></svg>
     case 'search':
@@ -234,140 +236,6 @@ export function ModeShellPage({ title, sidebarBar }: { title: string; sidebarBar
   )
 }
 
-/* ============ Automation Page ============ */
-
-const AutomationIcon: React.FC<{ iconKey: string }> = ({ iconKey }) => {
-  const icons: Record<string, React.ReactNode> = {
-    news: (
-      <>
-        <rect width="48" height="48" rx="5.6" fill="#E0E2F2" fillOpacity="0.08" />
-        <rect x="0.25" y="0.25" width="47.5" height="47.5" rx="5.35" stroke="#E0E2F2" strokeOpacity="0.1" strokeWidth="0.5" />
-        <rect x="4.80078" y="24.1484" width="15.2" height="2.4" rx="0.756" fill="#666B75" />
-        <rect x="4.80078" y="30.1484" width="11.6" height="2.4" rx="0.756" fill="#666B75" />
-        <rect x="4.80078" y="36.1484" width="11.6" height="2.4" rx="0.756" fill="#666B75" />
-        <path d="M26.6433 36.3516L30.2273 26.4116H32.1453L35.7293 36.3516H34.1193L33.2093 33.7616H29.1493L28.2533 36.3516H26.6433ZM29.6253 32.3896H32.7473L31.1793 27.8536L29.6253 32.3896ZM36.9188 36.3516V26.4116H38.4308V36.3516H36.9188Z" fill="#9599A6" />
-        <circle cx="7.20078" cy="7.19688" r="2.4" fill="#FF6464" />
-        <circle cx="15.2008" cy="7.19688" r="2.4" fill="#FFA83D" />
-        <circle cx="23.2008" cy="7.19688" r="2.4" fill="#25B14C" />
-      </>
-    ),
-    sentiment: (
-      <>
-        <rect width="48" height="48" rx="5.6" fill="#E0E2F2" fillOpacity="0.08" />
-        <rect x="0.25" y="0.25" width="47.5" height="47.5" rx="5.35" stroke="#E0E2F2" strokeOpacity="0.1" strokeWidth="0.5" />
-        <rect x="4.80078" y="24.9453" width="15.2" height="2.4" rx="0.756" fill="#666B75" />
-        <rect x="4.80078" y="30.9453" width="11.6" height="2.4" rx="0.756" fill="#666B75" />
-        <rect x="4.80078" y="36.9453" width="11.6" height="2.4" rx="0.756" fill="#666B75" />
-        <path d="M33.0648 34.9942C32.0492 34.9942 31.4219 35.6812 31.0037 36.1492C30.7946 36.3882 30.6253 36.5774 30.4561 36.6968C30.2868 36.8163 30.1474 36.8661 29.9283 36.8661C29.5998 36.8661 29.4006 36.6968 29.2214 36.4778C29.0521 36.2488 28.9426 36.0297 28.9426 36.0297L27.7676 36.4678C27.7676 36.4678 27.917 36.8661 28.2356 37.2744C28.5543 37.6826 29.1318 38.1406 29.9283 38.1406C30.4262 38.1406 30.8643 37.9614 31.1929 37.7324C31.5115 37.4934 31.7505 37.2146 31.9596 36.9856C32.3778 36.5176 32.5869 36.2587 33.0847 36.2587C33.035 36.2587 33.1544 36.2886 33.254 36.3981C33.3536 36.4977 33.4233 36.5973 33.4233 36.5973L33.5926 36.896H34.3991L34.5982 36.6172C34.5982 36.6172 34.6679 36.5077 34.7675 36.3981C34.8671 36.2986 34.9965 36.2587 34.9368 36.2587C35.4346 36.2587 35.6437 36.5176 36.0619 36.9856C36.271 37.2246 36.51 37.5034 36.8286 37.7324C37.1473 37.9714 37.5854 38.1406 38.0932 38.1406C38.8898 38.1406 39.4573 37.6826 39.7859 37.2744C40.1045 36.8761 40.2539 36.4678 40.2539 36.4678L39.0789 36.0297C39.0789 36.0297 38.9993 36.2587 38.83 36.4778C38.6607 36.7068 38.4317 36.8661 38.1031 36.8661C37.8741 36.8661 37.7546 36.8064 37.5854 36.6968C37.4161 36.5774 37.2269 36.3882 37.0178 36.1492C36.5996 35.6713 35.9723 34.9942 34.9567 34.9942C34.5086 34.9942 34.2298 35.1933 34.0207 35.3825C33.7917 35.1933 33.493 34.9942 33.0648 34.9942ZM38.4019 27.4187C39.7959 27.4187 40.921 28.5438 40.921 29.9378C40.921 31.3318 39.7959 32.457 38.4019 32.457C37.0079 32.457 35.8827 31.3318 35.8827 29.9378C35.8827 28.5438 36.9979 27.4187 38.4019 27.4187ZM29.5998 27.4187C30.9938 27.4187 32.1189 28.5438 32.1189 29.9378C32.1189 31.3318 30.9938 32.457 29.5998 32.457C28.2058 32.457 27.0806 31.3318 27.0806 29.9378C27.0806 28.5438 28.2058 27.4187 29.5998 27.4187ZM29.5998 26.1641C27.9576 26.1641 26.5556 27.2173 26.0425 28.6887C25.9039 29.086 25.8857 29.512 25.8857 29.9328C25.8857 30.3536 25.9039 30.7797 26.0425 31.177C26.5556 32.6483 27.9576 33.7016 29.5998 33.7016C31.6808 33.7016 33.3735 32.0089 33.3735 29.9279C33.3735 29.5694 33.6424 29.3006 34.0008 29.3006C34.3593 29.3006 34.6281 29.5694 34.6281 29.9279C34.6281 32.0089 36.3208 33.7016 38.4019 33.7016C40.0439 33.7016 41.4447 32.6557 41.9575 31.1863C42.0962 30.789 42.1146 30.363 42.1151 29.9423C42.1156 29.5152 42.0977 29.0827 41.956 28.6797C41.4404 27.2131 40.0407 26.1641 38.4019 26.1641C36.8983 26.1641 35.5939 27.0502 34.9866 28.3248C34.6978 28.1555 34.3593 28.046 34.0008 28.046C33.6424 28.046 33.3038 28.1455 33.015 28.3248C32.4077 27.0502 31.1033 26.1641 29.5998 26.1641Z" fill="#9599A6" />
-        <circle cx="7.20078" cy="7.19688" r="2.4" fill="#FF6464" />
-        <circle cx="15.2008" cy="7.19688" r="2.4" fill="#FFA83D" />
-        <circle cx="23.2008" cy="7.19688" r="2.4" fill="#25B14C" />
-      </>
-    ),
-    competitor: (
-      <>
-        <rect width="48" height="48" rx="5.6" fill="#E0E2F2" fillOpacity="0.08" />
-        <rect x="0.25" y="0.25" width="47.5" height="47.5" rx="5.35" stroke="#E0E2F2" strokeOpacity="0.1" strokeWidth="0.5" />
-        <rect x="4.80078" y="24.9453" width="15.2" height="2.4" rx="0.756" fill="#666B75" />
-        <rect x="4.80078" y="30.9453" width="11.6" height="2.4" rx="0.756" fill="#666B75" />
-        <rect x="4.80078" y="36.9453" width="11.6" height="2.4" rx="0.756" fill="#666B75" />
-        <path d="M34.001 26.8151V29.4818M36.6676 32.1484H39.3343M34.001 34.8151V37.4818M28.6676 32.1484C28.6676 32.1484 30.5741 32.1484 31.3343 32.1484M34.001 38.1484C30.6873 38.1484 28.001 35.4622 28.001 32.1484C28.001 28.8347 30.6873 26.1484 34.001 26.1484C37.3147 26.1484 40.001 28.8347 40.001 32.1484C40.001 35.4622 37.3147 38.1484 34.001 38.1484Z" stroke="#9599A6" strokeWidth="1.33" strokeLinecap="round" />
-        <circle cx="7.20078" cy="7.19688" r="2.4" fill="#FF6464" />
-        <circle cx="15.2008" cy="7.19688" r="2.4" fill="#FFA83D" />
-        <circle cx="23.2008" cy="7.19688" r="2.4" fill="#25B14C" />
-      </>
-    ),
-    stock: (
-      <>
-        <rect width="48" height="48" rx="5.6" fill="#E0E2F2" fillOpacity="0.08" />
-        <rect x="0.25" y="0.25" width="47.5" height="47.5" rx="5.35" stroke="#E0E2F2" strokeOpacity="0.1" strokeWidth="0.5" />
-        <rect x="4.80078" y="24.9453" width="15.2" height="2.4" rx="0.756" fill="#666B75" />
-        <rect x="4.80078" y="30.9453" width="11.6" height="2.4" rx="0.756" fill="#666B75" />
-        <rect x="4.80078" y="36.9453" width="11.6" height="2.4" rx="0.756" fill="#666B75" />
-        <path d="M40.001 38.1484H29.0676C28.6943 38.1484 28.5076 38.1484 28.365 38.0758C28.2395 38.0119 28.1376 37.9099 28.0736 37.7844C28.001 37.6418 28.001 37.4551 28.001 37.0818V26.1484M40.001 28.8151L36.3781 32.438C36.2461 32.57 36.1801 32.636 36.104 32.6607C36.037 32.6825 35.9649 32.6825 35.898 32.6607C35.8219 32.636 35.7559 32.57 35.6239 32.438L34.3781 31.1922C34.2461 31.0602 34.1801 30.9942 34.104 30.9695C34.037 30.9477 33.9649 30.9477 33.898 30.9695C33.8219 30.9942 33.7559 31.0602 33.6239 31.1922L30.6676 34.1484M40.001 28.8151H37.3343M40.001 28.8151V31.4818" stroke="#9599A6" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx="7.20078" cy="7.19688" r="2.4" fill="#FF6464" />
-        <circle cx="15.2008" cy="7.19688" r="2.4" fill="#FFA83D" />
-        <circle cx="23.2008" cy="7.19688" r="2.4" fill="#25B14C" />
-      </>
-    ),
-    security: (
-      <>
-        <rect width="48" height="48" rx="5.6" fill="#E0E2F2" fillOpacity="0.08" />
-        <rect x="0.25" y="0.25" width="47.5" height="47.5" rx="5.35" stroke="#E0E2F2" strokeOpacity="0.1" strokeWidth="0.5" />
-        <rect x="6.85938" y="8" width="4" height="2.85714" rx="0.714286" fill="#8585FF" />
-        <rect x="11.6211" y="8" width="23.6905" height="2.85714" rx="0.714286" fill="#666B75" />
-        <rect x="36.0732" y="8" width="6.78571" height="2.85714" rx="0.714286" fill="#666B75" />
-        <rect x="6.85938" y="14.125" width="4" height="2.85714" rx="0.714286" fill="#00B983" fillOpacity="0.8" />
-        <rect x="11.6211" y="14.125" width="23.2381" height="2.85714" rx="0.714286" fill="#666B75" />
-        <rect x="6.85938" y="20.25" width="4" height="2.85714" rx="0.714286" fill="#00B983" opacity="0.8" />
-        <rect x="11.6211" y="20.25" width="6.79" height="2.85714" rx="0.714286" fill="#666B75" />
-        <path d="M40.0039 32.1484C40.0039 34.3576 38.213 36.1484 36.0039 36.1484C33.7948 36.1484 32.0039 34.3576 32.0039 32.1484C32.0039 29.9393 33.7948 28.1484 36.0039 28.1484C38.213 28.1484 40.0039 29.9393 40.0039 32.1484Z" stroke="#9599A6" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M28.0039 32.1484H29.3372" stroke="#9599A6" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M28.0039 28.8125H30.0039" stroke="#9599A6" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M28.0039 35.4844H30.0039" stroke="#9599A6" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M39.001 35.1484L40.6676 36.8151" stroke="#9599A6" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-      </>
-    ),
-    bug: (
-      <>
-        <rect width="48" height="48" rx="5.6" fill="#E0E2F2" fillOpacity="0.08" />
-        <rect x="0.25" y="0.25" width="47.5" height="47.5" rx="5.35" stroke="#E0E2F2" strokeOpacity="0.1" strokeWidth="0.5" />
-        <rect x="6.85938" y="8" width="4" height="2.85714" rx="0.714286" fill="#8585FF" />
-        <rect x="11.6211" y="8" width="23.6905" height="2.85714" rx="0.714286" fill="#666B75" />
-        <rect x="36.0732" y="8" width="6.78571" height="2.85714" rx="0.714286" fill="#666B75" />
-        <rect x="6.85938" y="14.125" width="4" height="2.85714" rx="0.714286" fill="#00B983" fillOpacity="0.8" />
-        <rect x="11.6211" y="14.125" width="23.2381" height="2.85714" rx="0.714286" fill="#666B75" />
-        <rect opacity="0.8" x="6.85938" y="20.25" width="4" height="2.85714" rx="0.714286" fill="#00B983" />
-        <rect x="11.6211" y="20.25" width="6.79" height="2.85714" rx="0.714286" fill="#666B75" />
-        <path d="M30.001 32.8151V34.1484C30.001 36.3576 31.7918 38.1484 34.001 38.1484C36.2101 38.1484 38.001 36.3576 38.001 34.1484V32.8151M30.001 32.8151H28.001M30.001 32.8151V31.4818C30.001 30.3772 30.8964 29.4818 32.001 29.4818H36.001C37.1056 29.4818 38.001 30.3772 38.001 31.4818V32.8151M38.001 32.8151H40.001M30.001 35.4818L28.1676 36.1484M38.001 35.4818L39.8343 36.1484M34.001 32.8151V37.4818M31.3343 29.1484V28.8151C31.3343 27.3423 32.5282 26.1484 34.001 26.1484C35.4737 26.1484 36.6676 27.3423 36.6676 28.8151V29.1484M30.181 30.1484L28.1676 29.4818M37.6676 30.1484L39.8343 29.4818" stroke="#9599A6" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
-      </>
-    ),
-    coverage: (
-      <>
-        <rect width="48" height="48" rx="5.6" fill="#E0E2F2" fillOpacity="0.08" />
-        <rect x="0.25" y="0.25" width="47.5" height="47.5" rx="5.35" stroke="#E0E2F2" strokeOpacity="0.1" strokeWidth="0.5" />
-        <rect x="6.85938" y="8" width="4" height="2.85714" rx="0.714286" fill="#8585FF" />
-        <rect x="11.6211" y="8" width="23.6905" height="2.85714" rx="0.714286" fill="#666B75" />
-        <rect x="36.0732" y="8" width="6.78571" height="2.85714" rx="0.714286" fill="#666B75" />
-        <rect x="6.85938" y="14.125" width="4" height="2.85714" rx="0.714286" fill="#00B983" fillOpacity="0.8" />
-        <rect x="11.6211" y="14.125" width="23.2381" height="2.85714" rx="0.714286" fill="#666B75" />
-        <rect opacity="0.8" x="6.85938" y="20.25" width="4" height="2.85714" rx="0.714286" fill="#00B983" />
-        <rect x="11.6211" y="20.25" width="6.79" height="2.85714" rx="0.714286" fill="#666B75" />
-        <path d="M32.0013 27.0078C30.0736 27.5815 28.668 29.3672 28.668 31.4813C28.668 34.0586 30.7573 36.1479 33.3346 36.1479C35.4487 36.1479 37.2344 34.7422 37.8081 32.8145" stroke="#9599A6" strokeWidth="1.33" strokeLinecap="round" />
-        <path d="M39.3345 37.4849L36.7012 34.8516" stroke="#9599A6" strokeWidth="1.5" strokeLinecap="round" />
-        <path d="M36.668 25.8174C36.6904 25.8175 36.7105 25.8317 36.7188 25.8525L37.1836 27.0605C37.2851 27.3247 37.4938 27.5332 37.7578 27.6348L38.9658 28.0996C38.987 28.1078 39.001 28.1286 39.001 28.1514C39.0008 28.174 38.9869 28.194 38.9658 28.2021L37.7578 28.667C37.4938 28.7686 37.2851 28.9771 37.1836 29.2412L36.7188 30.4492C36.7106 30.4703 36.6905 30.4842 36.668 30.4844C36.6452 30.4844 36.6244 30.4704 36.6162 30.4492L36.1514 29.2412C36.0498 28.9772 35.8412 28.7685 35.5771 28.667L34.3691 28.2021C34.3483 28.1939 34.3341 28.1739 34.334 28.1514C34.334 28.1287 34.3481 28.1078 34.3691 28.0996L35.5771 27.6348C35.8412 27.5332 36.0498 27.3247 36.1514 27.0605L36.6162 25.8525C36.6244 25.8315 36.6453 25.8174 36.668 25.8174Z" fill="#9599A6" stroke="#9599A6" strokeWidth="0.666667" />
-      </>
-    ),
-    summary: (
-      <>
-        <rect width="48" height="48" rx="5.6" fill="#E0E2F2" fillOpacity="0.08" />
-        <rect x="0.25" y="0.25" width="47.5" height="47.5" rx="5.35" stroke="#E0E2F2" strokeOpacity="0.1" strokeWidth="0.5" />
-        <rect x="6.85938" y="8" width="4" height="2.85714" rx="0.714286" fill="#8585FF" />
-        <rect x="11.6211" y="8" width="23.6905" height="2.85714" rx="0.714286" fill="#666B75" />
-        <rect x="36.0732" y="8" width="6.78571" height="2.85714" rx="0.714286" fill="#666B75" />
-        <rect x="6.85938" y="14.125" width="4" height="2.85714" rx="0.714286" fill="#00B983" fillOpacity="0.8" />
-        <rect x="11.6211" y="14.125" width="23.2381" height="2.85714" rx="0.714286" fill="#666B75" />
-        <rect opacity="0.8" x="6.85938" y="20.25" width="4" height="2.85714" rx="0.714286" fill="#00B983" />
-        <rect x="11.6211" y="20.25" width="6.79" height="2.85714" rx="0.714286" fill="#666B75" />
-        <path d="M28.3359 36.1494V28.1494C28.3359 26.6776 29.5291 25.4844 31.001 25.4844H36.0645C36.8553 25.4844 37.605 25.8359 38.1113 26.4434L39.5479 28.167C39.9469 28.6458 40.1659 29.2498 40.166 29.873V36.1494C40.166 37.6213 38.9728 38.8145 37.501 38.8145H31.001C29.5291 38.8145 28.3359 37.6213 28.3359 36.1494ZM29.666 36.1494C29.666 36.8867 30.2637 37.4844 31.001 37.4844H37.501C38.2383 37.4844 38.8359 36.8867 38.8359 36.1494V29.873C38.8358 29.5609 38.7262 29.2584 38.5264 29.0186L37.0898 27.2949C36.8363 26.9906 36.4606 26.8145 36.0645 26.8145H31.001C30.2637 26.8145 29.666 27.4121 29.666 28.1494V36.1494Z" fill="#9599A6" />
-        <path d="M36.251 30.4844C36.6182 30.4844 36.916 30.7821 36.916 31.1494C36.916 31.5167 36.6182 31.8145 36.251 31.8145H32.251C31.8837 31.8145 31.5859 31.5167 31.5859 31.1494C31.5859 30.7821 31.8837 30.4844 32.251 30.4844H36.251Z" fill="#9599A6" />
-        <path d="M36.251 34.4844C36.6182 34.4844 36.916 34.7821 36.916 35.1494C36.916 35.5167 36.6182 35.8145 36.251 35.8145H32.251C31.8837 35.8145 31.5859 35.5167 31.5859 35.1494C31.5859 34.7821 31.8837 34.4844 32.251 34.4844H36.251Z" fill="#9599A6" />
-        <path d="M34.916 33.1494C34.916 33.5167 34.6182 33.8145 34.251 33.8145C33.8837 33.8145 33.5859 33.5167 33.5859 33.1494L33.5859 29.1494C33.5859 28.7821 33.8837 28.4844 34.251 28.4844C34.6182 28.4844 34.916 28.7821 34.916 29.1494L34.916 33.1494Z" fill="#9599A6" />
-      </>
-    ),
-  }
-
-  return (
-    <div className="cardIcon-ZFp7gR">
-      <span className="cardIconImg-Ir2I_1" role="img">
-        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-          {icons[iconKey]}
-        </svg>
-      </span>
-    </div>
-  )
-}
-
 const headerBtnBase: React.CSSProperties = {
   alignItems: 'center',
   borderRadius: '6px',
@@ -398,7 +266,7 @@ const ACTION_LABELS: Record<string, string> = {
   probe: '先测一测，可跳过已掌握内容',
   practice: '继续练习',
   assess: '检验理解',
-  complete: '目标已完成',
+  complete: '空间已完成',
 }
 
 // Backend policy reasons are authored in English; map the known templates to
@@ -409,10 +277,10 @@ const REASON_LABELS: Record<string, string> = {
   probe: '这个知识点还没学过，先测一测能否直接跳过。',
   practice: '这个知识点还没达到掌握线，继续练习直到达标。',
   assess: '需要你用自己的话解释这个概念，确认真正理解。',
-  complete: '目标内所有知识点都已掌握。',
+  complete: '空间内所有知识点都已掌握。',
 }
 
-interface AutomationPageProps {
+interface LearningSpacePageProps {
   goals: LearningGoal[]
   loading: boolean
   error: string
@@ -420,11 +288,10 @@ interface AutomationPageProps {
   onCreateGoal: (title: string, description?: string) => void
   onRenameGoal: (bookId: string, title: string) => void
   onDeleteGoal: (bookId: string) => void
-  onRefresh: () => void
   sidebarBar?: React.ReactNode
 }
 
-export function AutomationPage({
+export function LearningSpacePage({
   goals,
   loading,
   error,
@@ -432,13 +299,44 @@ export function AutomationPage({
   onCreateGoal,
   onRenameGoal,
   onDeleteGoal,
-  onRefresh,
   sidebarBar,
-}: AutomationPageProps) {
+}: LearningSpacePageProps) {
   const [selectedGoal, setSelectedGoal] = useState<LearningGoal | null>(null)
   const [creating, setCreating] = useState(false)
   const [renaming, setRenaming] = useState<LearningGoal | null>(null)
   const [menuFor, setMenuFor] = useState<string | null>(null)
+
+  // Dismiss the open card menu on outside click / Escape (mirrors app-wide useDismiss).
+  useEffect(() => {
+    if (!menuFor) return
+    let lastPointer = 0
+    const isInside = (el: Node | null) => {
+      const menu = document.querySelector(`[data-space-menu="${menuFor}"]`)
+      const trigger = document.querySelector(`[data-space-more="${menuFor}"]`)
+      return !!el && ((menu?.contains(el) ?? false) || (trigger?.contains(el) ?? false))
+    }
+    const close = () => setMenuFor(null)
+    const onPointer = (e: PointerEvent) => {
+      lastPointer = Date.now()
+      if (!isInside(e.target as Node)) close()
+    }
+    // Synthetic clicks may only dispatch mouse events; dedupe against pointerdown.
+    const onMouse = (e: MouseEvent) => {
+      if (Date.now() - lastPointer < 50) return
+      if (!isInside(e.target as Node)) close()
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') close()
+    }
+    document.addEventListener('pointerdown', onPointer)
+    document.addEventListener('mousedown', onMouse)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('pointerdown', onPointer)
+      document.removeEventListener('mousedown', onMouse)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [menuFor])
 
   return (
     <div className="root-Bkr7v6">
@@ -454,22 +352,9 @@ export function AutomationPage({
           <div className="headerRail-GfhRry">
             <div className="titleGroup-R6DD_m">
               <h1 className="title-yQrHui">学习空间</h1>
-              <p className="subtitle-Gi_Tjb">你的学习目标与进度。新建目标后，在这里继续学习或查看掌握状态。</p>
+              <p className="subtitle-Gi_Tjb">创建学习空间，Lumen 会为每个空间制定学习计划并跟踪掌握进度。</p>
             </div>
             <div className="headerActions-TKXare" style={{ display: 'flex', gap: '8px' }}>
-              <button
-                type="button"
-                className="button-muTeiY secondary-J0eGRO large-psSWuL"
-                style={{
-                  ...headerBtnBase,
-                  background: 'transparent',
-                  border: '1px solid var(--border-border-neutral-l2)',
-                  color: 'var(--text-text-default)',
-                }}
-                onClick={onRefresh}
-              >
-                <span>刷新</span>
-              </button>
               <button
                 type="button"
                 className="button-muTeiY primary-ZG2S1H large-psSWuL"
@@ -481,7 +366,8 @@ export function AutomationPage({
                 }}
                 onClick={() => setCreating(true)}
               >
-                <span>＋ 新建学习目标</span>
+                <PageIcon name="plus" size={14} />
+                <span>新建空间</span>
               </button>
             </div>
           </div>
@@ -489,7 +375,7 @@ export function AutomationPage({
             <div className="container-YgYmSM">
               {loading && (
                 <p className="learningSpaceHint" style={{ color: 'var(--text-text-secondary)', fontSize: 13 }}>
-                  正在加载学习目标…
+                  正在加载学习空间…
                 </p>
               )}
               {!loading && error && (
@@ -503,53 +389,48 @@ export function AutomationPage({
               )}
               {!loading && !error && goals.length === 0 && (
                 <div className="learningSpaceEmpty" style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-text-secondary)' }}>
-                  <p style={{ fontSize: 14, marginBottom: 8 }}>还没有学习目标</p>
-                  <p style={{ fontSize: 13 }}>点击「＋ 新建学习目标」开始，导入资料后由 Lumen 帮你制定学习计划。</p>
+                  <p style={{ fontSize: 14, marginBottom: 8 }}>还没有学习空间</p>
+                  <p style={{ fontSize: 13 }}>点击「新建空间」开始，导入资料后由 Lumen 帮你制定学习计划。</p>
                 </div>
               )}
               {goals.map((goal) => {
                 const stageLabel = STAGE_LABELS[goal.current_stage] || goal.current_stage
+                const mastery = Math.max(0, Math.min(100, Math.round(goal.avg_mastery_pct || 0)))
                 return (
                   <div
                     key={goal.book_id}
-                    className="card-_oFXKS"
-                    style={{ cursor: 'pointer' }}
+                    className="spaceCard"
                     onClick={() => setSelectedGoal(goal)}
                   >
-                    <AutomationIcon iconKey="summary" />
-                    <div className="cardTextGroup-KWTVxc">
-                      <span className="cardName-LP1Fhu">{goal.name || goal.book_id}</span>
-                      <span className="cardDescription-VEKD4l" style={{ display: 'block' }}>
-                        {goal.description || (goal.goal_name ? '学习目标 · 等待制定学习计划' : '学习进度')}
+                    <div className="spaceCardHeader">
+                      <span className="spaceCardIcon">
+                        <PageIcon name="spaces" size={20} />
                       </span>
-                      <span
-                        className="goalProgressLine"
-                        style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, fontSize: 12, color: 'var(--text-text-secondary)' }}
-                      >
-                        <span className="goalProgressTrack" style={{ position: 'relative', display: 'inline-block', width: 120, height: 6, borderRadius: 3, background: 'var(--bg-bg-overlay-l1)' }}>
-                          <span
-                            className="goalProgressFill"
-                            style={{ position: 'absolute', left: 0, top: 0, height: '100%', borderRadius: 3, background: 'var(--bg-bg-invert)' }}
-                            aria-hidden
-                          />
+                      <div className="spaceCardBody">
+                        <span className="spaceCardName">{goal.name || goal.book_id}</span>
+                        <span className="spaceCardDesc">
+                          {goal.description || (goal.goal_name ? '学习空间 · 等待制定学习计划' : '学习进度')}
                         </span>
-                        <span>掌握 {goal.avg_mastery_pct}%</span>
-                        <span>·</span>
-                        <span>{stageLabel}</span>
-                        <span>·</span>
-                        <span>{goal.kp_count > 0 ? `${goal.kp_count} 个知识点` : '计划未生成'}</span>
-                      </span>
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end' }}>
+                    <div className="spaceCardProgress">
+                      <span className="spaceCardProgressBar">
+                        <span
+                          className="spaceCardProgressFill"
+                          style={{ width: `${mastery}%` }}
+                          aria-hidden
+                        />
+                      </span>
+                      <span className="spaceCardProgressPct">掌握 {mastery}%</span>
+                    </div>
+                    <div className="spaceCardMeta">
+                      <span className={`spaceCardStage${goal.current_stage === 'completed' ? ' isCompleted' : ''}`}>{stageLabel}</span>
+                      <span>{goal.kp_count > 0 ? `${goal.kp_count} 个知识点` : '计划未生成'}</span>
+                    </div>
+                    <div className="spaceCardActions">
                       <button
                         type="button"
-                        className="button-muTeiY primary-ZG2S1H"
-                        style={{
-                          ...headerBtnBase,
-                          background: 'var(--bg-bg-invert)',
-                          border: 'none',
-                          color: 'var(--text-text-onaccent)',
-                        }}
+                        className="spaceCardBtnPrimary"
                         onClick={(e) => {
                           e.stopPropagation()
                           onContinueLearning(goal)
@@ -560,15 +441,8 @@ export function AutomationPage({
                       <button
                         type="button"
                         aria-label="更多操作"
-                        className="goalMenuBtn"
-                        style={{
-                          ...headerBtnBase,
-                          background: 'transparent',
-                          border: 'none',
-                          color: 'var(--text-text-secondary)',
-                          padding: '0 4px',
-                          height: 24,
-                        }}
+                        className="spaceCardBtnMore"
+                        data-space-more={goal.book_id}
                         onClick={(e) => {
                           e.stopPropagation()
                           setMenuFor((cur) => (cur === goal.book_id ? null : goal.book_id))
@@ -577,19 +451,7 @@ export function AutomationPage({
                         <PageIcon name="down" size={14} />
                       </button>
                       {menuFor === goal.book_id && (
-                        <div
-                          className="goalMenu"
-                          role="menu"
-                          style={{
-                            position: 'absolute',
-                            background: 'var(--bg-bg-overlay-l2, #1f2024)',
-                            border: '1px solid var(--border-border-neutral-l2)',
-                            borderRadius: 6,
-                            padding: 4,
-                            zIndex: 20,
-                            minWidth: 120,
-                          }}
-                        >
+                        <div className="spaceCardMenu" role="menu" data-space-menu={goal.book_id}>
                           <button type="button" role="menuitem" style={goalMenuBtnStyle} onClick={(e) => { e.stopPropagation(); setRenaming(goal); setMenuFor(null) }}>重命名</button>
                           <button type="button" role="menuitem" style={{ ...goalMenuBtnStyle, color: 'var(--status-error-default, #f65a5a)' }} onClick={(e) => { e.stopPropagation(); onDeleteGoal(goal.book_id); setMenuFor(null) }}>删除</button>
                         </div>
@@ -694,7 +556,7 @@ function GoalDetailModal({
           <div className="detailInfoSection-c234JE">
             <div className="detailTitleGroup-cpT99c">
               <h2 className="detailTitle-X7zIZu">{goal.name || goal.book_id}</h2>
-              <p className="detailDescription-kBy0Ek">学习目标 · 进度详情</p>
+              <p className="detailDescription-kBy0Ek">学习空间 · 进度详情</p>
             </div>
             <button className="detailCloseBtn-cE6qVp" onClick={onClose} style={{
               alignItems: 'center', background: 'transparent', border: 'none',
@@ -712,7 +574,7 @@ function GoalDetailModal({
               <>
                 <div className="goalDetailProgress" style={{ marginBottom: 16 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 6 }}>
-                    <span style={{ color: 'var(--text-text-default)' }}>目标整体进度</span>
+                    <span style={{ color: 'var(--text-text-default)' }}>空间整体进度</span>
                     <span>{goalCounts.mastered} / {goalCounts.total} 已掌握（{progressPct}%）</span>
                   </div>
                   <div className="goalProgressTrack" style={{ position: 'relative', display: 'inline-block', width: '100%', height: 8, borderRadius: 4, background: 'var(--bg-bg-overlay-l1)' }}>
@@ -726,12 +588,12 @@ function GoalDetailModal({
                 {goalCounts.total === 0 ? (
                   <div style={{ border: '1px solid var(--border-border-neutral-l2)', borderRadius: 8, padding: '12px 16px', marginBottom: 12 }}>
                     <p style={{ color: 'var(--text-text-default)', fontSize: 14, fontWeight: 500, marginBottom: 4 }}>学习计划尚未生成</p>
-                    <p style={{ fontSize: 13 }}>点击「继续学习」，Lumen 会根据你的目标帮你制定学习计划并开始教学。</p>
+                    <p style={{ fontSize: 13 }}>点击「继续学习」，Lumen 会根据这个空间帮你制定学习计划并开始教学。</p>
                   </div>
                 ) : map.map.complete ? (
                   <div style={{ border: '1px solid var(--border-border-neutral-l2)', borderRadius: 8, padding: '12px 16px', marginBottom: 12 }}>
-                    <p style={{ color: 'var(--text-text-default)', fontSize: 14, fontWeight: 500, marginBottom: 4 }}>🎉 目标已完成</p>
-                    <p style={{ fontSize: 13 }}>所有知识点均已掌握，无待复习内容。可以开始新的学习目标。</p>
+                    <p style={{ color: 'var(--text-text-default)', fontSize: 14, fontWeight: 500, marginBottom: 4 }}>🎉 空间已完成</p>
+                    <p style={{ fontSize: 13 }}>所有知识点均已掌握，无待复习内容。可以开始新的学习空间。</p>
                   </div>
                 ) : (
                   next && (
@@ -834,7 +696,7 @@ function CreateGoalModal({ onClose, onCreate }: { onClose: () => void; onCreate:
         <div className="detailBody-mX1HCM">
           <div className="detailInfoSection-c234JE">
             <div className="detailTitleGroup-cpT99c">
-              <h2 className="detailTitle-X7zIZu">新建学习目标</h2>
+              <h2 className="detailTitle-X7zIZu">新建空间</h2>
               <p className="detailDescription-kBy0Ek">起个名字，Lumen 会在对话里帮你制定学习计划</p>
             </div>
             <button className="detailCloseBtn-cE6qVp" onClick={onClose} style={{
@@ -848,7 +710,7 @@ function CreateGoalModal({ onClose, onCreate }: { onClose: () => void; onCreate:
           </div>
           <div style={{ padding: '20px', color: 'var(--text-text-secondary)', fontSize: '14px', lineHeight: '22px' }}>
             <label htmlFor="goal-name-input" style={{ display: 'block', marginBottom: '8px', color: 'var(--text-text-default)' }}>
-              目标名称
+              空间名称
             </label>
             <input
               id="goal-name-input"
@@ -870,7 +732,7 @@ function CreateGoalModal({ onClose, onCreate }: { onClose: () => void; onCreate:
               style={goalInputStyle}
             />
             <p style={{ marginTop: 12, fontSize: 12 }}>
-              创建后会打开一段引导学习，Lumen 会根据你的目标生成学习计划。
+              创建后会打开一段引导学习，Lumen 会根据这个空间生成学习计划。
             </p>
           </div>
           <div className="detailActionBar-BhqrLr">
@@ -894,7 +756,7 @@ function CreateGoalModal({ onClose, onCreate }: { onClose: () => void; onCreate:
                 opacity: name.trim() && !submitting ? 1 : 0.6,
               }}
             >
-              {submitting ? '创建中…' : '创建目标'}
+              {submitting ? '创建中…' : '创建空间'}
             </button>
           </div>
         </div>
@@ -921,7 +783,7 @@ function RenameGoalModal({ goal, onClose, onRename }: { goal: LearningGoal; onCl
         <div className="detailBody-mX1HCM">
           <div className="detailInfoSection-c234JE">
             <div className="detailTitleGroup-cpT99c">
-              <h2 className="detailTitle-X7zIZu">重命名学习目标</h2>
+              <h2 className="detailTitle-X7zIZu">重命名空间</h2>
               <p className="detailDescription-kBy0Ek">改名不会影响已记录的进度</p>
             </div>
             <button className="detailCloseBtn-cE6qVp" onClick={onClose} style={{
@@ -935,7 +797,7 @@ function RenameGoalModal({ goal, onClose, onRename }: { goal: LearningGoal; onCl
           </div>
           <div style={{ padding: '20px' }}>
             <label htmlFor="goal-rename-input" style={{ display: 'block', marginBottom: '8px', color: 'var(--text-text-default)' }}>
-              目标名称
+              空间名称
             </label>
             <input
               id="goal-rename-input"
@@ -1156,6 +1018,8 @@ export function MarketplacePage({ onSelectPlugin, sidebarBar }: MarketplacePageP
                         <input
                           className="input-yEGQlg"
                           placeholder="搜索插件、能力或开发者"
+                          name="marketplace-search"
+                          aria-label="搜索插件、能力或开发者"
                           value={searchText}
                           onChange={(e) => setSearchText(e.target.value)}
                           style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-text-default)', fontSize: '13px' }}
@@ -1479,6 +1343,8 @@ export function LibraryPage({ sidebarBar }: LibraryPageProps) {
                         <input
                           className="input-yEGQlg"
                           placeholder="搜索资料、类型或所属知识库"
+                          name="library-search"
+                          aria-label="搜索资料、类型或所属知识库"
                           value={searchText}
                           onChange={(e) => setSearchText(e.target.value)}
                           style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-text-default)', fontSize: '13px' }}
@@ -1987,7 +1853,7 @@ export function WorkspacePage() {
             <span className="wrapper-RV5xqM">
               <div className="infoArea-Y4r_8m">
                 <div className="iconWrap-_fRuU8">
-                  <PageIcon name="automation" size={14} />
+                  <PageIcon name="spaces" size={14} />
                 </div>
                 <span className="taskName-iaeIsX">Greeting</span>
                 <div className="timeWrap-ksZO3X">
