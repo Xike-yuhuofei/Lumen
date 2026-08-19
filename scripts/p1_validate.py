@@ -55,7 +55,9 @@ async def _collect(app: DeepTutorApp, turn_id: str) -> list[dict[str, Any]]:
 
 def _content(events: list[dict[str, Any]]) -> str:
     return "".join(
-        str(e.get("content") or "") for e in events if e.get("type") == StreamEventType.CONTENT.value
+        str(e.get("content") or "")
+        for e in events
+        if e.get("type") == StreamEventType.CONTENT.value
     )
 
 
@@ -455,9 +457,7 @@ async def run_all(summary_only: bool, only: set[str] | None = None) -> list[dict
         except Exception as exc:  # noqa: BLE001
             result = {"error": f"{type(exc).__name__}: {exc}"}
         if summary_only:
-            result = {
-                k: v for k, v in result.items() if k not in ("events", "content")
-            }
+            result = {k: v for k, v in result.items() if k not in ("events", "content")}
         results.append({"scenario": name, **result})
         print(json.dumps(result, ensure_ascii=False)[:600], flush=True)
     return results

@@ -65,6 +65,7 @@ from uuid import uuid4
 
 from langgraph.errors import GraphInterrupt, GraphRecursionError
 from langgraph.graph import END, START, StateGraph
+from langgraph.types import RunnableConfig
 
 from lumen.evolution.contract import (
     ProviderRequest,
@@ -123,11 +124,11 @@ class _RunCtx:
     seed: int | None
 
 
-def _lctx(config: dict[str, Any]) -> _RunCtx:
+def _lctx(config: RunnableConfig) -> _RunCtx:
     return config["configurable"]["__lumen"]
 
 
-async def _agent_node(state: AgentState, config: dict[str, Any]) -> AgentState:
+async def _agent_node(state: AgentState, config: RunnableConfig) -> AgentState:
     """One LangGraph node: call the model; if it asks for tools, record them."""
     ctx = _lctx(config)
     messages = list(state.get("messages", []))
@@ -149,7 +150,7 @@ async def _agent_node(state: AgentState, config: dict[str, Any]) -> AgentState:
     }
 
 
-async def _tools_node(state: AgentState, config: dict[str, Any]) -> AgentState:
+async def _tools_node(state: AgentState, config: RunnableConfig) -> AgentState:
     """One LangGraph node: dispatch every requested tool call exactly once."""
     ctx = _lctx(config)
     messages = list(state.get("messages", []))

@@ -70,9 +70,7 @@ def test_tools_node_emits_canonical_openai_tool_calls() -> None:
     snap = prov._graph.get_state({"configurable": {"thread_id": "gen-CANONICAL"}})
     msgs = snap.values.get("messages", [])
     # Find the assistant message that carries tool_calls.
-    assistant_tool_msgs = [
-        m for m in msgs if m.get("role") == "assistant" and m.get("tool_calls")
-    ]
+    assistant_tool_msgs = [m for m in msgs if m.get("role") == "assistant" and m.get("tool_calls")]
     assert assistant_tool_msgs, "no assistant tool_calls message was emitted"
     tc = assistant_tool_msgs[-1]["tool_calls"][0]
     # Canonical shape: type=function + function.name/arguments.

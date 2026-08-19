@@ -337,7 +337,9 @@ class _RealLumenToolRuntime:
             result = await self._tool_service.execute(name, **augmented)
         except Exception as exc:  # noqa: BLE001
             logger.warning("P1 tool %s failed: %s", name, exc)
-            await self._stream.tool_result(name, str(exc)[:500], source=self._source, stage=self._stage)
+            await self._stream.tool_result(
+                name, str(exc)[:500], source=self._source, stage=self._stage
+            )
             return ToolResult(content=f"Error: {exc}", success=False)
 
         pause = getattr(result, "pause_for_user", None)
@@ -507,7 +509,9 @@ class _LangGraphThinAgentLoopAdapter(AgentLoopService):
 
         # ── 2. Build the ProviderRequest from the real UnifiedContext ──────
         conversation_history = list(getattr(context, "conversation_history", None) or [])
-        step_budget = int(config.get("step_budget") or config.get("max_rounds") or DEFAULT_STEP_BUDGET)
+        step_budget = int(
+            config.get("step_budget") or config.get("max_rounds") or DEFAULT_STEP_BUDGET
+        )
         gen = turn_id or f"turn-{new_call_id('p1')}"
         request = ProviderRequest(
             input=TurnInput(
