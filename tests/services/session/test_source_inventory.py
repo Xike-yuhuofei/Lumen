@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -418,3 +419,38 @@ def test_serialize_returns_empty_when_no_content() -> None:
     meta = {"session_id": "imported_x"}
     assert serialize_referenced_transcript(meta, [{"role": "user", "content": "  "}]) == ""
     assert serialize_referenced_transcript(meta, []) == ""
+
+
+# ---------------------------------------------------------------------------
+# Canonical-import regression — guards the runtime ModuleNotFoundError:
+#   No module named 'deeptutor.services.session.source_inventory'
+# `source_inventory` must live only at lumen.runtime.session.source_inventory,
+# and production code must never reference the legacy deeptutor.* namespace.
+# ---------------------------------------------------------------------------
+
+
+def test_source_inventory_resolves_from_canonical_runtime_path() -> None:
+    """The active module must be the canonical lumen.runtime.session one — a
+    stale package (old worktree / old editable install) must never shadow it."""
+    import lumen.runtime.session.source_inventory as canonical
+
+    resolved = Path(canonical.__file__).resolve()
+    rel = resolved.relative_to(Path(__file__).resolve().parents[3])
+    assert rel.as_posix() == "lumen/runtime/session/source_inventory.py", rel
+
+
+def test_no_legacy_deeptutor_session_import_in_production_source() -> None:
+    """No production source may import ``deeptutor.services.session`` (the
+    exact dangling import that surfaced as the runtime ModuleNotFoundError)."""
+    repo_root = Path(__file__).resolve().parents[3]
+    forbidden = ("deeptutor.services.session",)
+
+    offenders: list[str] = []
+    for path in sorted((repo_root / "lumen").rglob("*.py")):
+        if "__pycache__" in path.parts:
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        if any(tok in text for tok in forbidden):
+            offenders.append(str(path.relative_to(repo_root)))
+
+    assert not offenders, f"legacy deeptutor.services.session imports: {offenders}"
