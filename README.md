@@ -431,6 +431,8 @@ Everything under `data/user/settings/` is plain JSON/YAML. The **Settings** page
 
 Project-root `.env` is **not** read as an application config file. For a minimal model setup, open **Settings → Models**, add an LLM profile (Base URL / API key / model name), and save. Add an embedding profile only if you plan to use Knowledge Base / RAG features.
 
+**API keys can be injected through environment variables** instead of being stored in plaintext. `model_catalog.json` keeps each provider's key in its `api_key` field as plaintext, but when that field is **left empty**, the runtime falls back to the provider's environment variable: `GITEE_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `DASHSCOPE_API_KEY`, and so on (the LLM and embedding resolvers both read them). Precedence is **profile key in `model_catalog.json` > environment variable** — set `export GITEE_API_KEY=…` and leave the profile `api_key` empty to keep keys out of the config file.
+
 </details>
 
 ## 📖 Explore Lumen

@@ -2695,7 +2695,7 @@ body.dragging-resize * {
 .messageInputEditorWrapper { width: 100%; }
 
 /* =========================================================
-   Automation Page (自动化)
+   Learning Space Page (学习空间)
    ========================================================= */
 .root-Bkr7v6 { --library-page-content-max-width: 1240px; --library-page-horizontal-gutter: 40px; --library-page-resolved-sticky-top: var(--library-page-sticky-top,50px); --library-page-shell-max-width: calc(var(--library-page-content-max-width) + var(--library-page-horizontal-gutter) + var(--library-page-horizontal-gutter)); display: flex; flex-direction: column; height: 100%; min-height: 0px; width: 100%; }
 .scrollArea-fvGujy { --custom-scrollbar-track-z-index: calc(var(--z-sticky, 10) + 1); display: flex; flex: 1 1 0%; flex-direction: column; min-height: 0px; position: relative; width: 100%; }
@@ -2712,19 +2712,161 @@ body.dragging-resize * {
 .tabSliderItem-bXa2uc:hover, .tabSliderItemActive-yIgLwL { color: var(--text-text-default); }
 .tabSliderIndicator-IKo0jG, .tabSliderIndicatorAnimated-kkjURd { background-color: var(--bg-bg-invert); border-radius: 1px; bottom: 0px; height: 2px; position: absolute; }
 .tabSliderIndicatorAnimated-kkjURd { transition: left 0.25s, width 0.25s; }
-.gridAutomation { display: grid; gap: 16px; grid-template-columns: repeat(3, minmax(0px, 1fr)); }
-@media (max-width: 900px) { .gridAutomation { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 600px) { .gridAutomation { grid-template-columns: 1fr; } }
-.container-YgYmSM { display: grid; gap: 16px; grid-template-columns: repeat(3, 1fr); }
-@media (max-width: 900px) { .container-YgYmSM { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 600px) { .container-YgYmSM { grid-template-columns: 1fr; } }
-.card-_oFXKS { border: 1px solid rgba(77, 107, 153, 0.18); border-radius: 6px; cursor: pointer; display: flex; flex-direction: column; gap: 16px; min-width: 0px; padding: 16px; }
-.card-_oFXKS:hover { background: var(--bg-bg-hover,#5663770f); }
+.container-YgYmSM { align-self: stretch; display: grid; gap: 16px; grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0px, 1fr)); width: 100%; }
+@media (max-width: 1200px) { .container-YgYmSM { grid-template-columns: repeat(2, minmax(0px, 1fr)); } }
+@media (max-width: 800px) { .container-YgYmSM { grid-template-columns: 1fr; } }
+
+/* Learning space card */
+.spaceCard {
+  align-items: stretch;
+  align-self: stretch;
+  background: var(--bg-bg-base-secondary);
+  border: 1px solid var(--border-border-neutral-l1);
+  border-radius: var(--radius-radius-md-12);
+  box-sizing: border-box;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0px;
+  padding: 16px;
+  position: relative;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+.spaceCard:hover { background: var(--bg-bg-overlay-l1); border-color: var(--border-border-neutral-l2); }
+.spaceCardHeader { align-items: flex-start; display: flex; gap: 12px; min-width: 0px; }
+.spaceCardIcon {
+  align-items: center;
+  background: var(--bg-bg-overlay-l1);
+  border: 1px solid var(--border-border-neutral-l1);
+  border-radius: 10px;
+  box-sizing: border-box;
+  color: var(--text-text-secondary);
+  display: flex;
+  flex-shrink: 0;
+  height: 40px;
+  justify-content: center;
+  width: 40px;
+}
+.spaceCardBody { display: flex; flex: 1 1 0%; flex-direction: column; gap: 3px; min-width: 0px; }
+.spaceCardName {
+  color: var(--text-text-default);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.28px;
+  line-height: 20px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.spaceCardDesc {
+  color: var(--text-text-tertiary);
+  display: -webkit-box;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: -0.26px;
+  line-height: 18px;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.spaceCardProgress { align-items: center; display: flex; gap: 12px; min-width: 0px; }
+.spaceCardProgressBar {
+  background: var(--bg-bg-overlay-l1);
+  border-radius: 3px;
+  flex: 1 1 0%;
+  height: 6px;
+  min-width: 40px;
+  overflow: hidden;
+  position: relative;
+}
+.spaceCardProgressFill {
+  background: var(--bg-bg-invert);
+  border-radius: 3px;
+  display: block;
+  height: 100%;
+  transition: width 0.3s ease;
+}
+.spaceCardProgressPct {
+  color: var(--text-text-secondary);
+  flex-shrink: 0;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  line-height: 16px;
+}
+.spaceCardMeta {
+  align-items: center;
+  color: var(--text-text-tertiary);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 12px;
+  gap: 8px;
+  line-height: 16px;
+}
+.spaceCardStage {
+  background: var(--bg-bg-overlay-l1);
+  border-radius: 4px;
+  color: var(--text-text-secondary);
+  font-size: 11px;
+  line-height: 16px;
+  padding: 1px 7px;
+}
+.spaceCardStage.isCompleted { color: var(--status-success-default); }
+.spaceCardActions {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
+  position: relative;
+}
+.spaceCardBtnPrimary {
+  align-items: center;
+  background: var(--bg-bg-invert);
+  border: none;
+  border-radius: 6px;
+  color: var(--text-text-onaccent);
+  cursor: pointer;
+  display: inline-flex;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  gap: 6px;
+  height: 28px;
+  justify-content: center;
+  line-height: 20px;
+  padding: 0 12px;
+  transition: opacity 0.15s;
+}
+.spaceCardBtnPrimary:hover { opacity: 0.9; }
+.spaceCardBtnMore {
+  align-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  box-sizing: border-box;
+  color: var(--text-text-secondary);
+  cursor: pointer;
+  display: inline-flex;
+  height: 28px;
+  justify-content: center;
+  width: 28px;
+  transition: background-color 0.15s, color 0.15s;
+}
+.spaceCardBtnMore:hover { background: var(--bg-bg-overlay-l1); color: var(--text-text-default); }
+.spaceCardMenu {
+  background: var(--bg-bg-overlay-l2, #1f2024);
+  border: 1px solid var(--border-border-neutral-l2);
+  border-radius: 6px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.24);
+  min-width: 120px;
+  padding: 4px;
+  position: absolute;
+  right: 0px;
+  top: calc(100% + 4px);
+  z-index: 20;
+}
 .cardIcon-ZFp7gR { border-radius: 5.6px; box-shadow: rgba(94, 98, 102, 0.09) 0px 1px 3.8px 0px, rgba(94, 98, 102, 0.09) 0px 6px 12px 0px; flex-shrink: 0; height: 48px; width: 48px; }
-.cardIcon-ZFp7gR svg, .cardIconImg-Ir2I_1 { display: block; height: 48px; width: 48px; }
-.cardTextGroup-KWTVxc { display: flex; flex-direction: column; gap: 2px; min-width: 0px; }
-.cardName-LP1Fhu { color: var(--text-text-default,#26292c); font-size: 13px; font-weight: 500; line-height: 20px; overflow: hidden; text-overflow: ellipsis; }
-.cardDescription-VEKD4l { color: var(--text-text-secondary,#7e8389); display: -webkit-box; font-size: 11px; font-weight: 400; -webkit-line-clamp: 2; line-height: 16px; -webkit-box-orient: vertical; overflow: hidden; }
+.cardIcon-ZFp7gR svg { display: block; height: 48px; width: 48px; }
 
 /* =========================================================
    Plugin Marketplace (插件市场)

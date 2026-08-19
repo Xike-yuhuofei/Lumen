@@ -80,12 +80,13 @@ def test_llm_explicit_binding_and_headers() -> None:
     assert resolved.extra_headers == {"APP-Code": "abc"}
 
 
-def test_llm_api_key_prefix_gateway() -> None:
+def test_llm_api_key_prefix_gateway(monkeypatch) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-test-key")
     catalog = _build_catalog(
         llm_profile={
             "id": "llm-p",
             "name": "LLM",
-            "binding": "",
+            "binding": "openrouter",
             "base_url": "",
             "api_key": "sk-or-test-key",
             "api_version": "",
@@ -97,6 +98,7 @@ def test_llm_api_key_prefix_gateway() -> None:
     assert resolved.provider_name == "openrouter"
     assert resolved.provider_mode == "gateway"
     assert resolved.effective_url == "https://openrouter.ai/api/v1"
+    assert resolved.api_key == "sk-or-test-key"
 
 
 def test_llm_openrouter_base_keyword_gateway() -> None:
@@ -479,7 +481,9 @@ def test_search_missing_credential_names_the_field() -> None:
     assert search_missing_credential("exa", "", "") is None
 
 
-def test_search_credentials_come_from_the_matching_profile() -> None:
+def test_search_credentials_come_from_the_matching_profile(monkeypatch) -> None:
+    monkeypatch.setenv("BRAVE_API_KEY", "brave-key")
+    monkeypatch.setenv("TAVILY_API_KEY", "tavily-key")
     catalog = _build_catalog(
         search_profile=_search_profile("p-brave", "brave", api_key="brave-key"),
         search_profiles=[
@@ -499,7 +503,9 @@ def test_search_credentials_come_from_the_matching_profile() -> None:
     assert search_provider_credentials("serper", catalog=catalog) == ("", "")
 
 
-def test_search_fallback_candidates_skip_unconfigured_providers() -> None:
+def test_search_fallback_candidates_skip_unconfigured_providers(monkeypatch) -> None:
+    monkeypatch.setenv("BRAVE_API_KEY", "brave-key")
+    monkeypatch.setenv("TAVILY_API_KEY", "tavily-key")
     catalog = _build_catalog(
         search_profile=_search_profile("p-brave", "brave", api_key="brave-key"),
         search_profiles=[
@@ -521,3 +527,27 @@ def test_every_search_provider_has_a_registered_implementation() -> None:
     registered = set(list_providers())
     expected = {name for name in SEARCH_PROVIDERS if name != "none"}
     assert registered == expected
+
+
+def test_llm_env_key_wins_over_legacy_catalog_api_key(monkeypatch) -> None:
+    """A legacy plaintext ``api_key`` in the catalog is ignored — the runtime
+    credential always comes from the environment variable."""
+    catalog = _build_catalog(
+        llm_profile={
+            "id": "llm-p",
+            "name": "LLM",
+            "binding": "gitee",
+            "base_url": "",
+            "api_key": "sk-legacy-plaintext",
+            "api_version": "",
+            "extra_headers": {},
+            "models": [{"id": "llm-m", "name": "m", "model": "Qwen3-8B"}],
+        }
+    )
+    # No env var set -> clearly not configured, no fallback to the stored key.
+    assert resolve_llm_runtime_config(catalog=catalog).api_key == ""
+    # With the env var set, the environment value is the sole source.
+    monkeypatch.setenv("GITEE_API_KEY", "sk-env-only")
+    resolved = resolve_llm_runtime_config(catalog=catalog)
+    assert resolved.api_key == "sk-env-only"
+    assert "legacy" not in resolved.api_key

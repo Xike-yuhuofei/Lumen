@@ -115,7 +115,7 @@ def test_user_added_second_profile_survives_reload(
     )
     # The bug: env's openrouter URL was overlaying aliyun's DashScope URL.
     assert aliyun["base_url"].startswith("https://dashscope.aliyuncs.com/")
-    assert aliyun["api_key"] == "sk-dashscope"
+    assert "api_key" not in aliyun
     assert aliyun["binding"] == "aliyun"
     # And the second profile is still there (not collapsed into a single one).
     assert len(embedding_service["profiles"]) == 2
@@ -173,7 +173,7 @@ def test_legacy_env_does_not_overlay_existing_single_default_profile(
 
     profile = loaded["services"]["embedding"]["profiles"][0]
     assert profile["base_url"] == "stale-old-value"
-    assert profile["api_key"] == "stale-old-key"
+    assert "api_key" not in profile
     assert profile["models"][0]["model"] == "stale-model"
 
 

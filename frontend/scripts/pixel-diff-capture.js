@@ -30,7 +30,7 @@ for (const dir of [SCREENSHOTS_DIR, DIFF_DIR]) {
 
 const MHTML_FILES = {
   'new-task': '新建任务.mhtml',
-  'automation': '自动化.mhtml',
+  'spaces': '学习空间.mhtml',
   'marketplace': '插件市场.mhtml',
   'plugin-detail': '插件市场-插件详情.mhtml',
 };
@@ -80,7 +80,7 @@ async function captureReplica(browser, key) {
       },
       waitSelector: '.workspace-sBvxKr',
     },
-    'automation': {
+    'spaces': {
       name: '学习空间',
       navigate: async (page) => {
         await setDarkTheme(page);

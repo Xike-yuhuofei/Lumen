@@ -129,7 +129,7 @@ export interface NavItem {
 
 export const navItems: NavItem[] = [
   { id: 'create-task', label: '新建对话', icon: 'chat-new', shortcut: '⌘⌃N' },
-  { id: 'automation',  label: '学习空间', icon: 'automation' },
+  { id: 'spaces',      label: '学习空间', icon: 'spaces' },
   { id: 'plugin',      label: '插件市场', icon: 'marketplace' },
   { id: 'library',     label: '资料库',   icon: 'library' },
 ]
@@ -140,7 +140,7 @@ export const navItemsByMode: Record<ModeTabId, NavItem[]> = {
     { id: 'create-task', label: '新建任务', icon: 'chat-new', shortcut: '⌘⌃N' },
     { id: 'plugin', label: '插件市场', icon: 'marketplace' },
     { id: 'library', label: '资料库', icon: 'library' },
-    { id: 'automation', label: '自动化', icon: 'automation' },
+    { id: 'spaces', label: '学习空间', icon: 'spaces' },
     { id: 'my-files', label: '我的文件', icon: 'folder' },
   ],
   design: [

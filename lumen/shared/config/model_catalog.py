@@ -138,7 +138,10 @@ class ModelCatalogService:
                 profile.setdefault("name", "Untitled Profile")
                 profile.setdefault("api_version", "")
                 profile.setdefault("base_url", "")
-                profile.setdefault("api_key", "")
+                # API keys are never persisted in config. Any legacy plaintext
+                # value is stripped on load/save so the catalog is no longer a
+                # credential source of truth.
+                profile.pop("api_key", None)
                 if service_name == "search":
                     profile.setdefault("provider", "brave")
                     profile.setdefault("proxy", "")

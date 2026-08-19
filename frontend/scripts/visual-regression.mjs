@@ -18,7 +18,7 @@ const STATES = [
   { name: 'L3-middle', mhtml: '中栏.mhtml', view: 'chat', sidebarOpen: false, statusOpen: false, theme: 'dark' },
   { name: 'L4-middle-right', mhtml: '中栏+右栏.mhtml', view: 'chat', sidebarOpen: false, statusOpen: true, theme: 'dark' },
   { name: 'S1-new-task', mhtml: '新建任务.mhtml', view: 'new-task', sidebarOpen: true, statusOpen: false, theme: 'dark' },
-  { name: 'S2-automation', mhtml: '自动化.mhtml', view: 'automation', sidebarOpen: true, statusOpen: false, theme: 'dark' },
+  { name: 'S2-spaces', mhtml: '学习空间.mhtml', view: 'spaces', sidebarOpen: true, statusOpen: false, theme: 'dark' },
   { name: 'S3-marketplace', mhtml: '插件市场.mhtml', view: 'marketplace', sidebarOpen: true, statusOpen: false, theme: 'dark' },
   { name: 'S4-plugin-detail', mhtml: '插件市场-插件详情.mhtml', view: 'marketplace', sidebarOpen: true, statusOpen: false, skillTabClick: true, theme: 'dark' },
 ]

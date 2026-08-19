@@ -67,7 +67,6 @@ def _ensure_model_service(catalog: dict, service_name: str, profile_id: str, mod
             else "Default Embedding Endpoint",
             "binding": "openai",
             "base_url": "",
-            "api_key": "",
             "api_version": "",
             "extra_headers": {},
             "models": [],
@@ -398,7 +397,6 @@ def _ensure_search_service(catalog: dict, profile_id: str) -> dict:
             "name": "Default Search",
             "provider": "brave",
             "base_url": "",
-            "api_key": "",
             "api_version": "",
             "extra_headers": {},
             "proxy": "",
@@ -469,10 +467,10 @@ def run_init(*, cli_only: bool = False, home: str | Path | None = None) -> None:
         wiz.step_header(console, strings["init.step_llm"].format(n=step_num, total=total_steps))
         llm_choice = _llm_step(console, strings, llm_profile, llm_model)
 
-        # Apply LLM choice back into the catalog draft.
+        # Apply LLM choice back into the catalog draft (credentials are NOT
+        # persisted here — they are env-sourced at runtime and stripped on save).
         llm_profile["binding"] = llm_choice.binding
         llm_profile["base_url"] = llm_choice.base_url
-        llm_profile["api_key"] = llm_choice.api_key
         llm_model["model"] = llm_choice.model
         llm_model["name"] = llm_choice.model or "Default Model"
 
@@ -492,7 +490,6 @@ def run_init(*, cli_only: bool = False, home: str | Path | None = None) -> None:
             )
             emb_profile["binding"] = embedding_choice.binding
             emb_profile["base_url"] = embedding_choice.base_url
-            emb_profile["api_key"] = embedding_choice.api_key
             emb_model["model"] = embedding_choice.model
             emb_model["name"] = embedding_choice.model or "Default Embedding Model"
             if embedding_choice.dimension:
@@ -506,7 +503,6 @@ def run_init(*, cli_only: bool = False, home: str | Path | None = None) -> None:
         if search_choice is not None:
             search_profile = _ensure_search_service(catalog, "search-profile-default")
             search_profile["provider"] = search_choice.provider
-            search_profile["api_key"] = search_choice.api_key
             search_profile["base_url"] = search_choice.base_url
 
         # --- Step 5: Review & save ---
@@ -530,6 +526,19 @@ def run_init(*, cli_only: bool = False, home: str | Path | None = None) -> None:
         catalog_service.save(catalog)
         console.print()
         wiz.ok(console, strings["init.saved"])
+        # Provider keys are never persisted; the wizard only probes with the
+        # captured value. Remind the user that runtime credentials come from
+        # the environment so the discarding of the typed key is not a surprise.
+        env_hint = (
+            "提示：运行时不会保存 API Key。请在启动 Lumen 前导出对应环境变量 "
+            "（例如 GITEE_API_KEY=...）以便凭据生效。"
+            if language == "zh"
+            else (
+                "Provider keys are not persisted. Export the matching environment "
+                "variable (e.g. GITEE_API_KEY=...) before starting Lumen."
+            )
+        )
+        wiz.info(console, env_hint)
         console.print(f"[dim]{strings['init.next_step']}[/dim]")
 
     except (KeyboardInterrupt, typer.Abort):

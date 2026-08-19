@@ -21,7 +21,7 @@ import {
   WorkHomePage,
   DesignHomePage,
   ModeShellPage,
-  AutomationPage,
+  LearningSpacePage,
   MarketplacePage,
   LibraryPage,
   PluginDetailModal,
@@ -350,10 +350,12 @@ const Icon: React.FC<IconProps> = ({
           <path d="M11.5314 8.57031C11.8771 8.57077 12.1574 8.85145 12.1574 9.19727V11.0107H13.9689C14.3148 11.011 14.5959 11.2918 14.5959 11.6377C14.5955 11.90833 14.3145 12.2634 13.9689 12.2637H12.1574V14.0771C12.1572 14.4228 11.877 14.7036 11.5314 14.7041C11.1854 14.7041 10.9046 14.4231 10.9044 14.0771V12.2637H9.09293C8.74707 12.2637 8.46637 11.9835 8.46597 11.6377C8.46597 11.2916 8.74683 11.0107 9.09293 11.0107H10.9044V9.19727C10.9044 8.85117 11.1853 8.57031 11.5314 8.57031ZM3.02847 9.37891C3.62998 8.30359 5.17801 8.30351 5.707945 9.37891L7.28921 12.0801C7.87639 13.1304 7.11753 14.4248 5.91421 14.4248H2.89371C1.69036 14.4248 0.930526 13.1304 1.51773 12.0801L3.02847 9.37891ZM4.68765 9.98926C4.56323 9.76715 4.24357 9.76699 4.11929 9.98926L2.60953 12.6904C2.48821 12.9075 2.64498 13.1748 2.89371 13.1748H5.91421C6.16291 13.1748 6.31968 12.9075 6.19839 12.6904L4.68765 9.98926ZM11.5314 1.57324C13.2233 1.57368 14.5958 2.94487 14.5959 4.63672C14.5959 6.32863 13.2233 7.69976 11.5314 7.7002C9.83912 7.7002 8.46597 6.3289 8.46597 4.63672C8.46605 2.9446 9.83917 1.57324 11.5314 1.57324ZM5.65347 1.54785C6.67607 1.5482 7.50406 2.37815 7.50406 3.40039V5.7998C7.50406 6.82205 6.67607 7.652 5.65347 7.65234H3.25503C2.23214 7.65234 1.40347 6.82226 1.40347 5.7998V3.40039C1.40347 2.37794 2.23214 1.54785 3.25503 1.54785H5.65347ZM11.5314 2.82715C10.5307 2.82715 9.71996 3.6375 9.71988 4.63672C9.71988 5.636 10.5306 6.44727 11.5314 6.44727C12.5318 6.44683 13.3429 5.63573 13.3429 4.63672C13.3428 3.63777 12.5318 2.82759 11.5314 2.82715ZM3.25503 2.85254C2.95346 2.85254 2.70816 3.09736 2.70816 3.40039V5.7998C2.70816 6.10283 2.95346 6.34766 3.25503 6.34766H5.65347C5.95476 6.34731 6.20035 6.10262 6.20035 5.7998V3.40039C6.20035 3.09758 5.95476 2.85288 5.65347 2.85254H3.25503Z" />
         </svg>
       )
-    case 'automation':
+    case 'spaces':
       return (
-        <svg {...common} className={className} fill="currentColor" stroke="none">
-          <path d="M13.373 8C13.373 5.03239 10.9676 2.62695 8 2.62695C5.03239 2.62695 2.62695 5.03239 2.62695 8C2.62695 10.9676 5.03239 13.373 8 13.373C10.9676 13.373 13.373 10.9676 13.373 8ZM7.37305 5.33333C7.37305 4.98723 7.6539 4.70638 8 4.70638C8.3461 4.70638 8.62695 4.98723 8.62695 5.33333V7.74023L10.11 9.22331C10.3548 9.46804 10.3548 9.8653 10.11 10.11C9.8653 10.3548 9.46804 10.3548 9.22331 10.11L7.55664 8.44336C7.43912 8.32584 7.37305 8.1662 7.37305 8V5.33333ZM14.627 8C14.627 11.6598 11.6598 14.627 8 14.627C4.3402 14.627 1.37305 11.6598 1.37305 8C1.37305 4.34019 4.34019 1.37305 8 1.37305C11.6598 1.37305 14.627 4.3402 14.627 8ZM2.99887 1.05728C3.24354.812617 3.64031.812292 3.88506 1.05682C4.12979 1.30155 4.12979 1.69874 3.88506 1.94346L1.94328 3.88525C1.69855 4.12997 1.30136 4.12997 1.05663 3.88525.812106 3.6405.812431 3.24372 1.05709 2.99906L2.99887 1.05728ZM13.163 1.05728C12.9183.812617 12.5216.812292 12.2768 1.05682C12.0321 1.30155 12.0321 1.69874 12.2768 1.94346L14.2186 3.88525C14.4633 4.12997 14.8605 4.12997 15.1052 3.88525 15.3498 3.6405 15.3494 3.24372 15.1048 2.99906L13.163 1.05728z" />
+        <svg {...common} className={className}>
+          <path d="m8 2.1 5.2 2.95L8 8 2.8 5.05 8 2.1Z" />
+          <path d="m2.8 8.4 5.2 2.95 5.2-2.95" />
+          <path d="m2.8 11.7 5.2 2.95 5.2-2.95" />
         </svg>
       )
     case 'library':
@@ -1393,6 +1395,8 @@ function Sidebar({
               <input
                 className="searchInput-B4HMSr"
                 placeholder="搜索任务名称及内容"
+                name="global-search"
+                aria-label="搜索任务名称及内容"
                 value={searchQuery}
                 autoFocus
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -2675,7 +2679,7 @@ export default function App() {
     if (typeof window !== 'undefined' && window.location.hash) return initialHash.view
     try {
       const saved = sessionStorage.getItem('trae:view') as ViewId | null
-      if (saved && ['chat', 'new-task', 'automation', 'marketplace', 'library', 'my-files', 'design-system'].includes(saved)) return saved
+      if (saved && ['chat', 'new-task', 'spaces', 'marketplace', 'library', 'my-files', 'design-system'].includes(saved)) return saved
     } catch { /* ignore */ }
     return 'chat'
   })
@@ -3063,7 +3067,7 @@ export default function App() {
     setLearningGoalsError('')
     listLearningProgress()
       .then((data) => setLearningGoals(data))
-      .catch(() => setLearningGoalsError('无法加载学习目标，请确认后端已启动'))
+      .catch(() => setLearningGoalsError('无法加载学习空间，请确认后端已启动'))
       .finally(() => setLearningGoalsLoading(false))
   }, [])
 
@@ -3105,7 +3109,7 @@ export default function App() {
           : `我要学习「${title}」。请帮我制定学习计划并开始教学。`
         startLearnTurn(goal, message)
       })
-      .catch(() => setLearningGoalsError('创建学习目标失败，请重试'))
+      .catch(() => setLearningGoalsError('创建空间失败，请重试'))
   }, [loadLearningGoals, startLearnTurn])
 
   const handleRenameLearningGoal = useCallback((bookId: string, title: string) => {
@@ -3117,7 +3121,7 @@ export default function App() {
   }, [loadLearningGoals])
 
   useEffect(() => {
-    if (view !== 'automation') return
+    if (view !== 'spaces') return
     // Deferred so loadLearningGoals' setState runs in a callback, not
     // synchronously inside the effect body.
     const id = window.setTimeout(loadLearningGoals, 0)
@@ -3224,12 +3228,12 @@ export default function App() {
               onPinTask={handlePinTask}
               onRenameTask={handleRenameTask}
               onDeleteTask={handleDeleteTask}
-              activeNavItem={view === 'new-task' ? 'create-task' : view === 'marketplace' ? 'plugin' : view === 'library' ? 'library' : view === 'automation' ? 'automation' : view === 'my-files' ? 'my-files' : view === 'design-system' ? 'design-system' : undefined}
+              activeNavItem={view === 'new-task' ? 'create-task' : view === 'marketplace' ? 'plugin' : view === 'library' ? 'library' : view === 'spaces' ? 'spaces' : view === 'my-files' ? 'my-files' : view === 'design-system' ? 'design-system' : undefined}
               onNavigate={(id) => {
                 if (id === 'create-task') openNewConversation()
                 else if (id === 'plugin') setView('marketplace')
                 else if (id === 'library') setView('library')
-                else if (id === 'automation') setView('automation')
+                else if (id === 'spaces') setView('spaces')
                 else if (id === 'my-files') setView('my-files')
                 else if (id === 'design-system') setView('design-system')
               }}
@@ -3432,9 +3436,9 @@ export default function App() {
           {view === 'my-files' && <ModeShellPage title="我的文件" sidebarBar={sidebarBar} />}
           {view === 'design-system' && <ModeShellPage title="设计系统" sidebarBar={sidebarBar} />}
 
-          {view === 'automation' && (
+          {view === 'spaces' && (
             <div className="contentWrapper-U1GjQr">
-              <AutomationPage
+              <LearningSpacePage
                 goals={learningGoals}
                 loading={learningGoalsLoading}
                 error={learningGoalsError}
@@ -3442,7 +3446,6 @@ export default function App() {
                 onCreateGoal={handleCreateLearningGoal}
                 onRenameGoal={handleRenameLearningGoal}
                 onDeleteGoal={handleDeleteLearningGoal}
-                onRefresh={loadLearningGoals}
                 sidebarBar={sidebarBar}
               />
             </div>
