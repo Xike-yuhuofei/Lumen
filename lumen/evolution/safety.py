@@ -93,7 +93,11 @@ class SafetyGate:
 
     def _record(self, proposal: MutationProposal, reason: str, ok: bool) -> None:
         self.decisions.append(
-            {"proposal": proposal.serialized, "decision": "allow" if ok else "deny", "reason": reason}
+            {
+                "proposal": proposal.serialized,
+                "decision": "allow" if ok else "deny",
+                "reason": reason,
+            }
         )
 
 
@@ -110,7 +114,9 @@ class RecursiveEvolutionLoop:
     lifecycle without letting an Evolution agent touch production.
     """
 
-    def __init__(self, produce_candidates: Any, evaluate: Any, archive: Any, gate: SafetyGate | None = None) -> None:
+    def __init__(
+        self, produce_candidates: Any, evaluate: Any, archive: Any, gate: SafetyGate | None = None
+    ) -> None:
         self._produce = produce_candidates  # () -> list[EvolutionCandidate]
         self._evaluate = evaluate  # async (candidate) -> metrics dict | None
         self._archive = archive
@@ -131,7 +137,11 @@ class RecursiveEvolutionLoop:
                 self._archive.add(cand.candidate_id, metrics)
                 results.append((cand.candidate_id, metrics))
         self.history.append(
-            {"generation": generation_number, "proposed": len(candidates), "evaluated": len(results)}
+            {
+                "generation": generation_number,
+                "proposed": len(candidates),
+                "evaluated": len(results),
+            }
         )
         return results
 

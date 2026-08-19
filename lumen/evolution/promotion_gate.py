@@ -75,7 +75,12 @@ class CandidateGate:
 
     def _log(self, stage: GateStage, note: str) -> None:
         self.audit_trail.append(
-            {"candidate": self.candidate_id, "stage": stage.value, "war_note": note, "ts": time.time()}
+            {
+                "candidate": self.candidate_id,
+                "stage": stage.value,
+                "war_note": note,
+                "ts": time.time(),
+            }
         )
 
     def current_stage(self) -> GateStage:

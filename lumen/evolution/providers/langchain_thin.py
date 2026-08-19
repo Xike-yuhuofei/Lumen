@@ -47,7 +47,10 @@ async def _agent_node(state: AgentState, model: Any, tools: Any, seed: int | Non
     out = await model.generate(messages, tools=tools.build_schemas(), seed=seed)
     calls = _tool_calls(out)
     if not calls:
-        return {"messages": messages + [{"role": "assistant", "content": _text(out)}], "tool_requests": []}
+        return {
+            "messages": messages + [{"role": "assistant", "content": _text(out)}],
+            "tool_requests": [],
+        }
     reqs = []
     for call in calls:
         name = call.get("name")
@@ -68,7 +71,13 @@ async def _tools_node(state: AgentState, tools: Any) -> AgentState:
             content = str(result)
         except Exception as exc:  # noqa: BLE001
             content = f"Error: {exc}"
-        messages.append({"role": "assistant", "content": "", "tool_calls": [{"id": f"t{step}", "name": name, "args": args}]})
+        messages.append(
+            {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [{"id": f"t{step}", "name": name, "args": args}],
+            }
+        )
         messages.append({"role": "tool", "tool_call_id": f"t{step}", "content": content})
     return {"messages": messages, "tool_requests": []}
 
@@ -136,7 +145,11 @@ class LangGraphThinProvider(RuntimeProvider):
                 # capture latest assistant text
                 if msgs:
                     for m in reversed(msgs):
-                        if isinstance(m, dict) and m.get("role") == "assistant" and m.get("content"):
+                        if (
+                            isinstance(m, dict)
+                            and m.get("role") == "assistant"
+                            and m.get("content")
+                        ):
                             final_text = str(m.get("content"))
                             break
                 # agent produced a plain answer (no tools) → loop can stop
@@ -160,7 +173,9 @@ class LangGraphThinProvider(RuntimeProvider):
                 tool_calls=tool_calls,
                 streamed_chars=len(final_text),
             ),
-            termination=Termination(reason=reason, completed=reason == TerminationReason.COMPLETED, step_count=steps),
+            termination=Termination(
+                reason=reason, completed=reason == TerminationReason.COMPLETED, step_count=steps
+            ),
             error=None,
             trace=trace,
         )

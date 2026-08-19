@@ -45,7 +45,9 @@ class AgentState(TypedDict, total=False):
     learner_snapshot: dict[str, Any]  # durable, checkpointable learner state
 
 
-async def _agent_run(state: AgentState, model: Any, tools: Any, directive: str, seed: int | None) -> AgentState:
+async def _agent_run(
+    state: AgentState, model: Any, tools: Any, directive: str, seed: int | None
+) -> AgentState:
     messages = list(state.get("messages", []))
     prompt = messages
     if directive:
@@ -53,9 +55,17 @@ async def _agent_run(state: AgentState, model: Any, tools: Any, directive: str, 
     out = await model.generate(prompt, tools=tools.build_schemas(), seed=seed)
     calls = _tool_calls(out)
     if not calls:
-        return {**state, "messages": messages + [{"role": "assistant", "content": _text(out)}], "tool_requests": []}
+        return {
+            **state,
+            "messages": messages + [{"role": "assistant", "content": _text(out)}],
+            "tool_requests": [],
+        }
     reqs = [(c.get("name"), dict(c.get("args") or {})) for c in calls]
-    return {**state, "messages": messages + [{"role": "assistant", "content": _text(out)}], "tool_requests": reqs}
+    return {
+        **state,
+        "messages": messages + [{"role": "assistant", "content": _text(out)}],
+        "tool_requests": reqs,
+    }
 
 
 async def _agent_tools(state: AgentState, tools: Any) -> AgentState:
@@ -66,7 +76,13 @@ async def _agent_tools(state: AgentState, tools: Any) -> AgentState:
             content = str(result)
         except Exception as exc:  # noqa: BLE001
             content = f"Error: {exc}"
-        messages.append({"role": "assistant", "content": "", "tool_calls": [{"id": f"d{idx}", "name": name, "args": args}]})
+        messages.append(
+            {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [{"id": f"d{idx}", "name": name, "args": args}],
+            }
+        )
         messages.append({"role": "tool", "tool_call_id": f"d{idx}", "content": content})
     return {**state, "messages": messages, "tool_requests": []}
 
@@ -146,7 +162,11 @@ class LangGraphDualProvider(RuntimeProvider):
                 if node_name == "agent":
                     msgs = update.get("messages", [])
                     for m in reversed(msgs):
-                        if isinstance(m, dict) and m.get("role") == "assistant" and m.get("content"):
+                        if (
+                            isinstance(m, dict)
+                            and m.get("role") == "assistant"
+                            and m.get("content")
+                        ):
                             final_text = str(m.get("content"))
                             break
                 state = update
@@ -166,8 +186,12 @@ class LangGraphDualProvider(RuntimeProvider):
             reason = TerminationReason.STEP_LIMIT
         return ProviderResult(
             provider_id=self.provider_id,
-            output=TurnOutput(final_text=final_text, tool_calls=tool_calls, streamed_chars=len(final_text)),
-            termination=Termination(reason=reason, completed=reason == TerminationReason.COMPLETED, step_count=steps),
+            output=TurnOutput(
+                final_text=final_text, tool_calls=tool_calls, streamed_chars=len(final_text)
+            ),
+            termination=Termination(
+                reason=reason, completed=reason == TerminationReason.COMPLETED, step_count=steps
+            ),
             error=None,
             trace=trace,
         )

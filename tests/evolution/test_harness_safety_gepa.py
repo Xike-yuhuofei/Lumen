@@ -38,7 +38,9 @@ def test_candidate_tracks_lineage_and_generation():
 
 
 def test_generation_has_candidates_and_lineage():
-    gen = Generation(number=1, candidates=[EvolutionCandidate(candidate_id="a")], parent_lineage=["p0"])
+    gen = Generation(
+        number=1, candidates=[EvolutionCandidate(candidate_id="a")], parent_lineage=["p0"]
+    )
     assert gen.number == 1
     assert gen.candidates[0].candidate_id == "a"
 
@@ -66,7 +68,13 @@ async def test_harness_records_experiment():
 
 
 def test_allowed_whitelist_matches_phase1():
-    assert ALLOWED_LIFECYCLE_TARGETS == {"prompt", "teaching_policy", "context_policy", "provider_config", "graph_topology"}
+    assert ALLOWED_LIFECYCLE_TARGETS == {
+        "prompt",
+        "teaching_policy",
+        "context_policy",
+        "provider_config",
+        "graph_topology",
+    }
 
 
 def test_safety_gate_allows_whitelisted_targets():

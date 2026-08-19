@@ -46,10 +46,9 @@ class LegacyProvider(RuntimeProvider):
         self._emit_stream = emit_stream
 
     async def run(self, request: ProviderRequest) -> ProviderResult:
-        messages: list[dict[str, Any]] = (
-            [{"role": "user", "content": request.input.user_message}]
-            + list(request.input.conversation_history)
-        )
+        messages: list[dict[str, Any]] = [
+            {"role": "user", "content": request.input.user_message}
+        ] + list(request.input.conversation_history)
         state = request.state
         trace: list[TraceEvent] = []
         tool_calls_log: list[tuple[str, dict[str, Any]]] = []
@@ -110,7 +109,9 @@ class LegacyProvider(RuntimeProvider):
                         "tool_calls": [{"id": f"call-{step}", "name": name, "args": args}],
                     }
                 )
-                messages.append({"role": "tool", "tool_call_id": f"call-{step}", "content": str(result)})
+                messages.append(
+                    {"role": "tool", "tool_call_id": f"call-{step}", "content": str(result)}
+                )
         else:
             reason = TerminationReason.STEP_LIMIT
             final_text = final_text or _text(model_out)  # type: ignore[name-defined]

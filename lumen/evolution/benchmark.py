@@ -83,7 +83,10 @@ SCENARIOS: list[BenchmarkScenario] = [
     BenchmarkScenario(
         id="assessment",
         user_message="quiz me",
-        script=[{"tool_calls": [{"name": "ask_user", "args": {"question": "What is 2+3?"}}]}, "Correct!"],
+        script=[
+            {"tool_calls": [{"name": "ask_user", "args": {"question": "What is 2+3?"}}]},
+            "Correct!",
+        ],
         expected_tools=["ask_user"],
         expected_decision=TeachingDecisionKind.ASSESS,
     ),
@@ -166,9 +169,17 @@ def _teaching_for(scenario: BenchmarkScenario) -> Any:
         if isinstance(d, dict):
             from lumen.evolution.contract import TeachingDecision
 
-            kind = d["kind"] if isinstance(d["kind"], TeachingDecisionKind) else TeachingDecisionKind(d["kind"])
+            kind = (
+                d["kind"]
+                if isinstance(d["kind"], TeachingDecisionKind)
+                else TeachingDecisionKind(d["kind"])
+            )
             built.append(
-                {"kind": kind, "strategy": d.get("strategy", "deterministic"), "reason": d.get("reason", "")}
+                {
+                    "kind": kind,
+                    "strategy": d.get("strategy", "deterministic"),
+                    "reason": d.get("reason", ""),
+                }
             )
     from lumen.evolution.contract import TeachingDecision
 
@@ -263,11 +274,17 @@ async def run_benchmark(
                     metrics=metrics.as_dict(),
                     trace=[t.to_dict() if hasattr(t, "to_dict") else t for t in result.trace],
                 )
-                reports.append(ProviderRunReport(prov.provider_id, scenario.id, rep, metrics, record))
+                reports.append(
+                    ProviderRunReport(prov.provider_id, scenario.id, rep, metrics, record)
+                )
     # post-hoc determinism across reps
     for prov in providers:
         for scenario in scenarios:
-            reps_for = [r for r in reports if r.provider_id == prov.provider_id and r.scenario_id == scenario.id]
+            reps_for = [
+                r
+                for r in reports
+                if r.provider_id == prov.provider_id and r.scenario_id == scenario.id
+            ]
             if len(reps_for) < 2:
                 continue
             signatures = {
