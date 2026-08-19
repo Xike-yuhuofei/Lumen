@@ -23,8 +23,8 @@ import {
   ModeShellPage,
   AutomationPage,
   MarketplacePage,
+  LibraryPage,
   PluginDetailModal,
-  SkillDetailModal,
 } from './pages'
 import { listToggleableTools, setEnabledOptionalTools, type ToolItem } from '../api/tools'
 import { UnifiedWSClient, type StreamEvent } from '../api/ws'
@@ -354,6 +354,16 @@ const Icon: React.FC<IconProps> = ({
       return (
         <svg {...common} className={className} fill="currentColor" stroke="none">
           <path d="M13.373 8C13.373 5.03239 10.9676 2.62695 8 2.62695C5.03239 2.62695 2.62695 5.03239 2.62695 8C2.62695 10.9676 5.03239 13.373 8 13.373C10.9676 13.373 13.373 10.9676 13.373 8ZM7.37305 5.33333C7.37305 4.98723 7.6539 4.70638 8 4.70638C8.3461 4.70638 8.62695 4.98723 8.62695 5.33333V7.74023L10.11 9.22331C10.3548 9.46804 10.3548 9.8653 10.11 10.11C9.8653 10.3548 9.46804 10.3548 9.22331 10.11L7.55664 8.44336C7.43912 8.32584 7.37305 8.1662 7.37305 8V5.33333ZM14.627 8C14.627 11.6598 11.6598 14.627 8 14.627C4.3402 14.627 1.37305 11.6598 1.37305 8C1.37305 4.34019 4.34019 1.37305 8 1.37305C11.6598 1.37305 14.627 4.3402 14.627 8ZM2.99887 1.05728C3.24354.812617 3.64031.812292 3.88506 1.05682C4.12979 1.30155 4.12979 1.69874 3.88506 1.94346L1.94328 3.88525C1.69855 4.12997 1.30136 4.12997 1.05663 3.88525.812106 3.6405.812431 3.24372 1.05709 2.99906L2.99887 1.05728ZM13.163 1.05728C12.9183.812617 12.5216.812292 12.2768 1.05682C12.0321 1.30155 12.0321 1.69874 12.2768 1.94346L14.2186 3.88525C14.4633 4.12997 14.8605 4.12997 15.1052 3.88525 15.3498 3.6405 15.3494 3.24372 15.1048 2.99906L13.163 1.05728z" />
+        </svg>
+      )
+    case 'library':
+      return (
+        <svg {...common} className={className}>
+          <path d="M2.75 3.5V12.5" />
+          <path d="M6.75 3.5V12.5" />
+          <path d="M2.75 8h4" />
+          <path d="M8.75 2.5v11a0.75 0.75 0 0 0 0.75 0.75h3.5a0.75 0.75 0 0 0 0.75-0.75v-11a0.75 0.75 0 0 0-0.75-0.75h-3.5a0.75 0.75 0 0 0-0.75 0.75Z" />
+          <path d="M10.6 5.4v4.4" />
         </svg>
       )
     case 'download':
@@ -2665,7 +2675,7 @@ export default function App() {
     if (typeof window !== 'undefined' && window.location.hash) return initialHash.view
     try {
       const saved = sessionStorage.getItem('trae:view') as ViewId | null
-      if (saved && ['chat', 'new-task', 'automation', 'marketplace', 'my-files', 'design-system'].includes(saved)) return saved
+      if (saved && ['chat', 'new-task', 'automation', 'marketplace', 'library', 'my-files', 'design-system'].includes(saved)) return saved
     } catch { /* ignore */ }
     return 'chat'
   })
@@ -2680,7 +2690,6 @@ export default function App() {
     return readSessions().some((s) => s.id === saved) ? saved : first
   })
   const [selectedPlugin, setSelectedPlugin] = useState<{ name: string; description: string; publisher: string; color: string; icon: string } | null>(null)
-  const [selectedSkill, setSelectedSkill] = useState<{ name: string; description: string; publisher: string; icon: string; category?: string } | null>(null)
 
   const activeTaskId = view === 'chat'
     ? (sessions.some((s) => s.id === selectedTask) ? selectedTask : (sessions[0]?.id ?? ''))
@@ -3215,10 +3224,11 @@ export default function App() {
               onPinTask={handlePinTask}
               onRenameTask={handleRenameTask}
               onDeleteTask={handleDeleteTask}
-              activeNavItem={view === 'new-task' ? 'create-task' : view === 'marketplace' ? 'plugin' : view === 'automation' ? 'automation' : view === 'my-files' ? 'my-files' : view === 'design-system' ? 'design-system' : undefined}
+              activeNavItem={view === 'new-task' ? 'create-task' : view === 'marketplace' ? 'plugin' : view === 'library' ? 'library' : view === 'automation' ? 'automation' : view === 'my-files' ? 'my-files' : view === 'design-system' ? 'design-system' : undefined}
               onNavigate={(id) => {
                 if (id === 'create-task') openNewConversation()
                 else if (id === 'plugin') setView('marketplace')
+                else if (id === 'library') setView('library')
                 else if (id === 'automation') setView('automation')
                 else if (id === 'my-files') setView('my-files')
                 else if (id === 'design-system') setView('design-system')
@@ -3442,7 +3452,6 @@ export default function App() {
             <div className="contentWrapper-U1GjQr" style={{ position: 'relative' }}>
               <MarketplacePage
                 onSelectPlugin={(p) => setSelectedPlugin(p)}
-                onSelectSkill={(s) => setSelectedSkill(s)}
                 sidebarBar={sidebarBar}
               />
               {selectedPlugin && (
@@ -3451,12 +3460,12 @@ export default function App() {
                   onClose={() => setSelectedPlugin(null)}
                 />
               )}
-              {selectedSkill && (
-                <SkillDetailModal
-                  skill={selectedSkill}
-                  onClose={() => setSelectedSkill(null)}
-                />
-              )}
+            </div>
+          )}
+
+          {view === 'library' && (
+            <div className="contentWrapper-U1GjQr" style={{ position: 'relative' }}>
+              <LibraryPage sidebarBar={sidebarBar} />
             </div>
           )}
         </main>

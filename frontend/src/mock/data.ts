@@ -130,7 +130,8 @@ export interface NavItem {
 export const navItems: NavItem[] = [
   { id: 'create-task', label: '新建对话', icon: 'chat-new', shortcut: '⌘⌃N' },
   { id: 'automation',  label: '学习空间', icon: 'automation' },
-  { id: 'plugin',      label: '资料库',   icon: 'marketplace' },
+  { id: 'plugin',      label: '插件市场', icon: 'marketplace' },
+  { id: 'library',     label: '资料库',   icon: 'library' },
 ]
 
 export const navItemsByMode: Record<ModeTabId, NavItem[]> = {
@@ -138,12 +139,14 @@ export const navItemsByMode: Record<ModeTabId, NavItem[]> = {
   work: [
     { id: 'create-task', label: '新建任务', icon: 'chat-new', shortcut: '⌘⌃N' },
     { id: 'plugin', label: '插件市场', icon: 'marketplace' },
+    { id: 'library', label: '资料库', icon: 'library' },
     { id: 'automation', label: '自动化', icon: 'automation' },
     { id: 'my-files', label: '我的文件', icon: 'folder' },
   ],
   design: [
     { id: 'create-task', label: '新建任务', icon: 'chat-new', shortcut: '⌘⌃N' },
     { id: 'plugin', label: '插件市场', icon: 'marketplace' },
+    { id: 'library', label: '资料库', icon: 'library' },
     { id: 'design-system', label: '设计系统', icon: 'design' },
   ],
 }

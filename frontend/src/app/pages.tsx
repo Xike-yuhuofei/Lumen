@@ -1,6 +1,18 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import ReactDOM from 'react-dom'
-import { getLearningProgressMap, GoalMap, LearningGoal } from '../api/learning'
+import { createLearningGoal, getLearningProgressMap, GoalMap, LearningGoal } from '../api/learning'
+import {
+  KbFile,
+  LIBRARY_KB_NAME,
+  createKnowledgeBase,
+  deleteKbFile,
+  fetchKbFilePreview,
+  getKbInfo,
+  listKbFiles,
+  listKnowledgeBases,
+  retryKb,
+  uploadFilesToKb,
+} from '../api/knowledge'
 import { PRODUCT_NAME } from './brand'
 
 type IconSvgProps = { name: string; size?: number }
@@ -976,36 +988,81 @@ const goalInputStyle: React.CSSProperties = {
   padding: '0 10px',
 }
 
-/* ============ Plugin Marketplace Page ============ */
-const categories = ['全部', '推荐', '开发工具', '调研分析', '界面设计', '内容创作', '效率提升']
+/* ============ Marketplace Page (插件市场) ============ */
+// 一级分类聚焦“插件能给 Lumen 带来什么能力”，而非消费型榜单。
+const pluginCategories = ['推荐', '教学与学习', '资料处理', '搜索与研究', '工具与自动化', '集成']
+// 辅助筛选：不展示评分/下载量等消费型指标。
+const pluginFilters = ['全部', '官方', '已安装', '可更新']
 
 type PluginState = 'installed' | 'available'
+
 const plugins: PluginData[] = [
-  { name: '飞书', description: '连接你的飞书账号，让 Lumen 操作云文档、多维表格、日历、消息等飞书功能', publisher: 'Lumen', color: '📱', icon: '📱', category: '推荐', state: 'installed' },
-  { name: '企业微信', description: '企业微信插件：消息、通讯录、会议、日程、待办、文档、在线表格、智能表格、智能文档。通过 wecom-cli 与企业微信交互。', publisher: 'Lumen', color: '💼', icon: '💼', category: '推荐', state: 'installed' },
-  { name: '钉钉', description: '钉钉协作工作流，支持企业消息、文档、日历、审批和组织效率场景。', publisher: 'Lumen', color: '🔧', icon: '🔧', category: '推荐', state: 'available' },
-  { name: 'tencent-docs', description: 'Access Tencent Docs through the official MCP server.', publisher: 'Lumen', color: '📄', icon: '📄', category: '推荐', state: 'available' },
-  { name: 'CodeRabbit', description: '在 Agent 中使用由 CodeRabbit 提供支持的 AI 代码审查。', publisher: 'Lumen', color: '🐰', icon: '🐰', category: '开发工具', state: 'available' },
-  { name: 'Langfuse 可观测性', description: 'Langfuse 可观测性集成，支持查询追踪、调试异常、分析会话，并通过 MCP 工具管理提示词。', publisher: 'Lumen', color: '📊', icon: '📊', category: '开发工具', state: 'available' },
-  { name: 'Cloudflare', description: '面向 Cloudflare 平台的插件，集成了适用于 Workers、Wrangler、Agents SDK 和官方 Cloudflare API MCP Server 的精选技能。', publisher: 'Lumen', color: '☁️', icon: '☁️', category: '开发工具', state: 'available' },
-  { name: 'Chrome Dev Tools', description: '一键接入的 chrome-devtools-mcp 插件封装，聚焦浏览器调试与性能优化技能。', publisher: 'Lumen', color: '🌐', icon: '🌐', category: '开发工具', state: 'available' },
-  { name: 'NVIDIA生态开发', description: '面向 NVIDIA 生态的技能，覆盖 GPU 加速、CUDA、AI Agent、推理、机器人、Physical AI、Omniverse 与仿真。', publisher: 'Lumen', color: '🎮', icon: '🎮', category: '开发工具', state: 'available' },
-  { name: "Writer's Loop", description: 'A portable writing workflow for planning, critique, revision, style distillation, translation, and local preference learning.', publisher: 'Lumen', color: '✍️', icon: '✍️', category: '开发工具', state: 'available' },
-  { name: 'Zotero', description: '通过 Agent 与 Zotero 协作：搜索你的文献库、导出 BibTeX、插入引文，并通过 Zotero 桌面应用导入参考文献。', publisher: 'Lumen', color: '📚', icon: '📚', category: '调研分析', state: 'available' },
-  { name: 'X Twitter Scraper', description: 'X (Twitter) data and automation skill for agents using Xquik REST API, MCP, webhooks, SDKs, and confirmation-gated actions.', publisher: 'Lumen', color: '🐦', icon: '🐦', category: '调研分析', state: 'available' },
-  { name: 'ngs-analysis', description: 'Guided NGS intake, local execution, and public-pipeline routing for BCL, FASTQ, DNA variant, RNA-seq, single-cell, epigenomics, amplicon, and metagenomics analyses.', publisher: 'Lumen', color: '🧬', icon: '🧬', category: '调研分析', state: 'available' },
-  { name: 'Mixpanel', description: '借助 mixpanel_headless Python SDK 和相关技能分析 Mixpanel 数据。', publisher: 'Lumen', color: '📈', icon: '📈', category: '调研分析', state: 'available' },
-  { name: '浏览器游戏开发', description: '提供面向浏览器游戏的设计、原型开发与发布工作流，支持引导式 2D / 3D 流程、资源管线和试玩测试。', publisher: 'Lumen', color: '🎲', icon: '🎲', category: '界面设计', state: 'available' },
-  { name: 'Web 数据可视化', description: '提供 Agent 内的 Web 数据可视化工作流，支持从设计、评审到实现、测试和导出，覆盖图表、地图、仪表盘、甘特图、UML、叙事滚动、报告、幻灯片、移动端视图、可分享状态和高级 WebGL 能力。', publisher: 'Lumen', color: '📉', icon: '📉', category: '界面设计', state: 'available' },
-  { name: 'Remotion', description: '面向 Remotion 视频创作的技能，涵盖最佳实践、动画、音频、字幕、3D 等能力，帮助你用 React 构建程序化视频。', publisher: 'Lumen', color: '🎬', icon: '🎬', category: '内容创作', state: 'available' },
-  { name: 'HyperFrames', description: '面向 HyperFrames 的视频创作能力，支持用 HTML 生成视频，并实现合成编排、GSAP 动画、字幕、配音、音频响应式视觉效果和网页转视频。', publisher: 'Lumen', color: '🎞️', icon: '🎞️', category: '内容创作', state: 'available' },
-  { name: '飞书', description: '连接你的飞书账号，让 Lumen 操作云文档、多维表格、日历、消息等飞书功能', publisher: 'Lumen', color: '📱', icon: '📱', category: '效率提升', state: 'available' },
-  { name: '企业微信', description: '企业微信插件：消息、通讯录、会议、日程、待办、文档、在线表格、智能表格、智能文档。通过 wecom-cli 与企业微信交互。', publisher: 'Lumen', color: '💼', icon: '💼', category: '效率提升', state: 'available' },
-  { name: '钉钉', description: '钉钉协作工作流，支持企业消息、文档、日历、审批和组织效率场景。', publisher: 'Lumen', color: '🔧', icon: '🔧', category: '效率提升', state: 'available' },
-  { name: 'tencent-docs', description: 'Access Tencent Docs through the official MCP server.', publisher: 'Lumen', color: '📄', icon: '📄', category: '效率提升', state: 'available' },
-  { name: 'notion', description: 'Notion workflows for implementation planning, research synthesis, meeting preparation, and knowledge capture.', publisher: 'Lumen', color: '🗒️', icon: '🗒️', category: '效率提升', state: 'available' },
-  { name: 'Superpowers', description: '一套经过验证的 Agentic 技能框架与软件开发方法，帮助团队更好地完成规划、TDD、调试和协作。', publisher: 'Lumen', color: '⚡', icon: '⚡', category: '效率提升', state: 'available' },
+  { name: 'Socratic Tutor', description: '通过追问、提示和支架式教学帮助理解知识', publisher: 'Lumen', color: '🧑‍🏫', icon: '🧑‍🏫', category: '教学与学习', tags: ['对话式教学', '支架式'], version: '2.1.0', state: 'installed', official: true },
+  { name: 'Flashcards', description: '从资料和知识点生成复习卡片', publisher: 'Lumen', color: '🃏', icon: '🃏', category: '教学与学习', tags: ['记忆', '复习'], version: '1.3.0', state: 'available', official: true },
+  { name: 'Web Reader', description: '读取网页正文并转化为可学习资料', publisher: 'Lumen', color: '🌐', icon: '🌐', category: '资料处理', tags: ['网页', '提取正文'], version: '1.6.2', state: 'installed', official: true },
+  { name: 'YouTube Importer', description: '导入视频字幕并生成学习材料', publisher: 'Lumen', color: '▶️', icon: '▶️', category: '资料处理', tags: ['视频', '字幕'], version: '1.0.4', state: 'available', official: false, canUpdate: true },
+  { name: 'Deep Research', description: '围绕问题搜索、整理并综合多来源资料', publisher: 'Lumen', color: '🔎', icon: '🔎', category: '搜索与研究', tags: ['搜索', '综合'], version: '1.4.2', state: 'installed', official: true, canUpdate: true },
+  { name: 'Zotero', description: '连接你的文献库，导出 BibTeX 并插入引文', publisher: 'Community', color: '📚', icon: '📚', category: '搜索与研究', tags: ['文献', '引用'], version: '1.1.0', state: 'available', official: false },
+  { name: 'Notion Connector', description: '连接 Notion 并导入页面', publisher: 'Lumen', color: '🗒️', icon: '🗒️', category: '集成', tags: ['集成', '导入'], version: '1.2.0', state: 'available', official: true },
+  { name: '飞书', description: '连接你的飞书账号，操作云文档、日历与消息', publisher: 'Lumen', color: '📱', icon: '📱', category: '集成', tags: ['集成'], version: '3.0.1', state: 'installed', official: true },
 ]
+
+/* ============ Library Page (资料库) ============ */
+// 资料库是真实知识库（Knowledge Base）的视图：每个已导入/已索引的资料 = 某个 KB raw/ 下的一个文件。
+// 状态来自后端真实 pipeline（ready/processing/error），「导入资料」走 create/upload → 真实索引链。
+type LibraryType = '文档' | '网页' | '图书' | '视频' | '音频' | '笔记'
+type LibraryStatus = '已解析' | '处理中' | '解析失败'
+
+interface LibraryItem {
+  id: string
+  name: string
+  type: LibraryType
+  kb: string
+  path: string
+  size: number
+  addedAt: string
+  status: LibraryStatus
+  kbStatus: string
+  kbError?: string
+  icon: string
+}
+
+const libraryCategories = ['全部', '文档', '网页', '图书', '视频', '音频', '笔记']
+const libraryFilters = ['全部状态', '已解析', '处理中', '解析失败']
+
+function libraryTypeForPath(name: string): { type: LibraryType; icon: string } {
+  const ext = name.split('.').pop()?.toLowerCase() ?? ''
+  if (['mp4', 'webm', 'mov', 'mkv'].includes(ext)) return { type: '视频', icon: '🎬' }
+  if (['mp3', 'wav', 'm4a', 'aac', 'ogg'].includes(ext)) return { type: '音频', icon: '🎧' }
+  if (['html', 'htm', 'mhtml'].includes(ext)) return { type: '网页', icon: '🌐' }
+  if (['pdf'].includes(ext)) return { type: '图书', icon: '📖' }
+  if (['md', 'markdown', 'txt', 'doc', 'docx', 'rtf'].includes(ext)) return { type: '文档', icon: '📄' }
+  if (['ipynb', 'py', 'ts', 'tsx', 'js', 'jsx', 'cpp', 'c', 'java'].includes(ext)) return { type: '笔记', icon: '📝' }
+  return { type: '文档', icon: '📄' }
+}
+
+function statusForKb(
+  status: string | undefined,
+  errorMsg?: string,
+): { status: LibraryStatus; error?: string } {
+  if (status === 'processing' || status === 'initializing') return { status: '处理中' }
+  if (status === 'error') return { status: '解析失败', error: errorMsg }
+  return { status: '已解析' }
+}
+
+function formatLibraryDate(ts?: number): string {
+  if (!ts) return '—'
+  const d = new Date(ts * 1000)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+function formatFileSize(bytes: number): string {
+  if (!bytes) return ''
+  if (bytes >= 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+  if (bytes >= 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${bytes} B`
+}
 
 type SkillData = {
   name: string
@@ -1015,29 +1072,6 @@ type SkillData = {
   category?: string
 }
 
-const skills: SkillData[] = [
-  { name: 'alipay-payment-integration', description: '支付宝支付产品接入最佳实践指南，涵盖从线下到线上的全场景支付。', publisher: 'Alipay', icon: '💰', category: '推荐' },
-  { name: 'byted-bp-cdn-pagesdeploy', description: '一键部署静态网站至 BytePlus Edge Pages 平台。', publisher: 'BytePlus', icon: '🚀', category: '推荐' },
-  { name: 'composition-patterns', description: '你关于组合模式的权威参考，涵盖函数组合、管道与 compose、以及 React 组合模式等。', publisher: 'Vercel Labs', icon: '⚛️', category: '推荐' },
-  { name: 'douyin-interact-creation', description: '抖音互动创作能力，帮助你创建有趣的互动视频内容。', publisher: '抖音', icon: '🎵', category: '推荐' },
-  { name: 'vercel-deploy', description: 'Vercel 部署集成，支持一键部署你的应用。', publisher: 'Vercel', icon: '▲', category: '开发工具' },
-  { name: 'github-actions', description: 'GitHub Actions 集成，支持 CI/CD 工作流自动化。', publisher: 'GitHub', icon: '🐙', category: '开发工具' },
-  { name: 'figma-design', description: 'Figma 设计集成，支持从设计稿到代码的转换。', publisher: 'Figma', icon: '🎨', category: '界面设计' },
-]
-
-function getSkillIconUrl(name: string): string {
-  const iconMap: Record<string, string> = {
-    'alipay-payment-integration': '💰',
-    'byted-bp-cdn-pagesdeploy': '🚀',
-    'composition-patterns': '⚛️',
-    'douyin-interact-creation': '🎵',
-    'vercel-deploy': '▲',
-    'github-actions': '🐙',
-    'figma-design': '🎨',
-  }
-  return iconMap[name] || '📦'
-}
-
 export interface PluginData {
   name: string
   description: string
@@ -1045,42 +1079,35 @@ export interface PluginData {
   color: string
   icon: string
   category?: string
+  tags?: string[]
+  version?: string
+  official?: boolean
+  canUpdate?: boolean
   state?: PluginState
 }
 
 interface MarketplacePageProps {
   onSelectPlugin: (plugin: PluginData) => void
-  onSelectSkill: (skill: SkillData) => void
   sidebarBar?: React.ReactNode
 }
 
-export function MarketplacePage({ onSelectPlugin, onSelectSkill, sidebarBar }: MarketplacePageProps) {
-  const [activeTab, setActiveTab] = useState<'plugins' | 'skills'>('plugins')
-  const [activeCategory, setActiveCategory] = useState('全部')
+export function MarketplacePage({ onSelectPlugin, sidebarBar }: MarketplacePageProps) {
+  const [activeCategory, setActiveCategory] = useState('推荐')
+  const [activeFilter, setActiveFilter] = useState('全部')
   const [searchText, setSearchText] = useState('')
   const [installedPlugins, setInstalledPlugins] = useState<Set<string>>(new Set(plugins.filter(p => p.state === 'installed').map(p => p.name)))
 
   const filteredPlugins = plugins.filter((p) => {
-    const matchCategory = activeCategory === '全部' || p.category === activeCategory
-    const matchSearch = !searchText || p.name.toLowerCase().includes(searchText.toLowerCase())
-    return matchCategory && matchSearch
+    const matchCategory = activeCategory === '推荐' || activeCategory === '全部' || p.category === activeCategory
+    const hay = `${p.name} ${p.description} ${p.publisher} ${(p.tags ?? []).join(' ')}`.toLowerCase()
+    const matchSearch = !searchText || hay.includes(searchText.toLowerCase())
+    const matchFilter =
+      activeFilter === '全部' ? true :
+      activeFilter === '官方' ? !!p.official :
+      activeFilter === '已安装' ? installedPlugins.has(p.name) :
+      activeFilter === '可更新' ? installedPlugins.has(p.name) && !!p.canUpdate : true
+    return matchCategory && matchSearch && matchFilter
   })
-
-  const categorySections = categories.filter((c) => c !== '全部').map((cat) => ({
-    title: cat,
-    plugins: filteredPlugins.filter((p) => p.category === cat),
-  }))
-
-  const filteredSkills = skills.filter((s) => {
-    const matchCategory = activeCategory === '全部' || s.category === activeCategory
-    const matchSearch = !searchText || s.name.toLowerCase().includes(searchText.toLowerCase())
-    return matchCategory && matchSearch
-  })
-
-  const skillCategorySections = categories.filter((c) => c !== '全部').map((cat) => ({
-    title: cat,
-    skills: filteredSkills.filter((s) => s.category === cat),
-  }))
 
   const toggleInstall = (name: string) => {
     setInstalledPlugins(prev => {
@@ -1090,6 +1117,14 @@ export function MarketplacePage({ onSelectPlugin, onSelectSkill, sidebarBar }: M
       return next
     })
   }
+
+  // “推荐”作为精选首屏，未选中具体分类时按能力分类分组展示。
+  const shown = activeCategory === '推荐'
+    ? pluginCategories
+        .filter((c) => c !== '推荐')
+        .map((cat) => ({ title: cat, plugins: filteredPlugins.filter((p) => p.category === cat) }))
+        .filter((g) => g.plugins.length > 0)
+    : [{ title: activeCategory, plugins: filteredPlugins }]
 
   return (
     <>
@@ -1101,137 +1136,79 @@ export function MarketplacePage({ onSelectPlugin, onSelectSkill, sidebarBar }: M
         </header>
       )}
       <div className="marketplacePage-U60AB4">
-      <div className="root-Bkr7v6">
-        <div className="scrollArea-fvGujy">
-          <div className="scrollContent-Q7fN_Z">
-            <div className="headerRail-GfhRry">
-              <div className="titleGroup-R6DD_m">
-                <h1 className="title-yQrHui">资料库</h1>
-                <p className="subtitle-Gi_Tjb">发现并管理学习资料和知识内容，扩展 Lumen 的学习能力。</p>
-              </div>
-              <div className="headerActions-TKXare">
-                <button className="button-muTeiY secondary-J0eGRO large-psSWuL" style={{
-                  alignItems: 'center', background: 'transparent', border: '1px solid var(--border-border-neutral-l2)',
-                  borderRadius: '6px', color: 'var(--text-text-default)', cursor: 'pointer',
-                  display: 'inline-flex', fontSize: '13px', gap: '4px', height: '32px',
-                  justifyContent: 'center', lineHeight: '20px', padding: '0 12px',
-                }}>
-                  <PageIcon name="settings" size={14} />
-                  <span>管理</span>
-                </button>
-              </div>
-            </div>
-            <div className="stickyNavigation-vpcdcv">
-              <div className="toolbarRail-Qlt0C7">
-                <div className="tabSlider-Ol2p3T">
-                  <button
-                    className={activeTab === 'plugins' ? 'tabSliderItemActive-yIgLwL' : 'tabSliderItem-bXa2uc'}
-                    onClick={() => setActiveTab('plugins')}
-                  >
-                    插件
-                  </button>
-                  <button
-                    className={activeTab === 'skills' ? 'tabSliderItemActive-yIgLwL' : 'tabSliderItem-bXa2uc'}
-                    onClick={() => setActiveTab('skills')}
-                  >
-                    技能
-                  </button>
+        <div className="root-Bkr7v6">
+          <div className="scrollArea-fvGujy">
+            <div className="scrollContent-Q7fN_Z">
+              <div className="headerRail-GfhRry">
+                <div className="titleGroup-R6DD_m">
+                  <h1 className="title-yQrHui">插件市场</h1>
+                  <p className="subtitle-Gi_Tjb">为 {PRODUCT_NAME} 扩展新的学习、研究与知识处理能力</p>
                 </div>
-                <div className="toolbarEnd-CGhDms">
-                  <div className="searchSlot-ionH2H">
-                    <div className="searchInputInputRoot-ql5R96">
-                      <span className="searchInputInputIcon-_qGz4O">
-                        <PageIcon name="search" size={16} />
-                      </span>
-                      <input
-                        className="input-yEGQlg"
-                        placeholder={activeTab === 'plugins' ? '搜索插件' : '搜索技能'}
-                        value={searchText}
-                        onChange={(e) => setSearchText(e.target.value)}
-                        style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-text-default)', fontSize: '13px' }}
-                      />
+              </div>
+              <div className="stickyNavigation-vpcdcv">
+                <div className="toolbarRail-Qlt0C7">
+                  <div className="toolbarEnd-CGhDms">
+                    <div className="searchSlot-ionH2H">
+                      <div className="searchInputInputRoot-ql5R96">
+                        <span className="searchInputInputIcon-_qGz4O">
+                          <PageIcon name="search" size={16} />
+                        </span>
+                        <input
+                          className="input-yEGQlg"
+                          placeholder="搜索插件、能力或开发者"
+                          value={searchText}
+                          onChange={(e) => setSearchText(e.target.value)}
+                          style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-text-default)', fontSize: '13px' }}
+                        />
+                      </div>
                     </div>
                   </div>
-                  {activeTab === 'skills' && (
-                    <button className="button-muTeiY primary-ZG2S1H large-psSWuL" style={{
-                      alignItems: 'center', background: 'var(--bg-bg-invert)', borderRadius: '4px',
-                      color: 'var(--text-text-onaccent)', cursor: 'pointer', display: 'inline-flex',
-                      fontSize: '13px', gap: '4px', height: '32px', justifyContent: 'center',
-                      padding: '0 12px',
-                    }}>
-                      <span>+ 安装技能</span>
-                    </button>
-                  )}
+                </div>
+                <div className="filtersRail-_VFXr1">
+                  <div className="categoryNav-TtjHNd">
+                    {pluginCategories.map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        className={activeCategory === cat ? 'categoryNavItemActive-k6zapU' : 'categoryNavItem-HXakRf'}
+                        onClick={() => setActiveCategory(cat)}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="filtersRail-_VFXr1" style={{ paddingTop: 0 }}>
+                  <div className="categoryNav-TtjHNd">
+                    {pluginFilters.map((f) => (
+                      <button
+                        key={f}
+                        type="button"
+                        className={activeFilter === f ? 'categoryNavItemActive-k6zapU' : 'categoryNavItem-HXakRf'}
+                        onClick={() => setActiveFilter(f)}
+                      >
+                        {f}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
-              <div className="filtersRail-_VFXr1">
-                <div className="categoryNav-TtjHNd">
-                  {categories.map((cat) => (
-                    <button
-                      key={cat}
-                      className={activeCategory === cat ? 'categoryNavItemActive-k6zapU' : 'categoryNavItem-HXakRf'}
-                      onClick={() => setActiveCategory(cat)}
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div className="contentRail-dRMjXS">
-              {activeTab === 'plugins' ? (
+              <div className="contentRail-dRMjXS">
                 <div className="pluginsContentInner-amtMMJ">
-                  {activeCategory === '全部' ? (
-                    categorySections.map((section) =>
-                      section.plugins.length > 0 ? (
-                        <div key={section.title} className="categorySection-T0Z3c3">
-                          <span className="categorySectionTitle-b_hOUf">{section.title}</span>
-                          <div className="pluginsGrid-u71c96">
-                            {section.plugins.map((p) => {
-                              const isInstalled = installedPlugins.has(p.name)
-                              return (
-                                <div
-                                  key={p.name}
-                                  className="pluginCard-cq4jH5"
-                                  onClick={() => onSelectPlugin(p)}
-                                >
-                                  <div className="pluginCardHeader-RvwB47">
-                                    <div className="marketIcon-ZTaS8Y">
-                                      <span className="marketIconPluginImage-hG9jDA">{p.icon}</span>
-                                    </div>
-                                    <div className="pluginCardBody-bY5she">
-                                      <span className="pluginCardName-ncj_7T">{p.name}</span>
-                                      <span className="pluginCardDesc-bK19VV">{p.description}</span>
-                                    </div>
-                                    <button
-                                      className="pluginCardActionButton-oekY_b"
-                                      onClick={(e) => { e.stopPropagation(); toggleInstall(p.name) }}
-                                    >
-                                      {isInstalled ? (
-                                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>✓ 使用</span>
-                                      ) : (
-                                        <span style={{ display: 'inline-flex', alignItems: 'center' }}>+ 安装</span>
-                                      )}
-                                    </button>
-                                  </div>
-                                </div>
-                              )
-                            })}
-                          </div>
-                        </div>
-                      ) : null
-                    )
-                  ) : (
-                    <div className="categorySection-T0Z3c3">
+                  {shown.length === 0 ? (
+                    <div style={{ color: 'var(--text-text-secondary)', fontSize: '13px', lineHeight: '20px', padding: '24px 0' }}>没有找到匹配的插件。</div>
+                  ) : shown.map((section) => (
+                    <div key={section.title} className="categorySection-T0Z3c3">
+                      <span className="categorySectionTitle-b_hOUf">{section.title}</span>
                       <div className="pluginsGrid-u71c96">
-                        {filteredPlugins.map((p) => {
+                        {section.plugins.map((p) => {
                           const isInstalled = installedPlugins.has(p.name)
+                          const label = !isInstalled ? '安装' : (p.canUpdate ? '更新' : '打开')
+                          const actionStyle: React.CSSProperties = isInstalled
+                            ? { alignItems: 'center', background: 'transparent', border: '1px solid var(--border-border-neutral-l2)', borderRadius: '4px', color: 'var(--text-text-default)', cursor: 'pointer', display: 'inline-flex', fontSize: '12px', gap: '4px', height: '28px', justifyContent: 'center', lineHeight: '16px', padding: '0 10px' }
+                            : { alignItems: 'center', background: 'var(--bg-bg-invert)', border: 'none', borderRadius: '4px', color: 'var(--text-text-onaccent)', cursor: 'pointer', display: 'inline-flex', fontSize: '12px', gap: '4px', height: '28px', justifyContent: 'center', lineHeight: '16px', padding: '0 10px' }
                           return (
-                            <div
-                              key={p.name}
-                              className="pluginCard-cq4jH5"
-                              onClick={() => onSelectPlugin(p)}
-                            >
+                            <div key={p.name} className="pluginCard-cq4jH5" onClick={() => onSelectPlugin(p)}>
                               <div className="pluginCardHeader-RvwB47">
                                 <div className="marketIcon-ZTaS8Y">
                                   <span className="marketIconPluginImage-hG9jDA">{p.icon}</span>
@@ -1241,89 +1218,762 @@ export function MarketplacePage({ onSelectPlugin, onSelectSkill, sidebarBar }: M
                                   <span className="pluginCardDesc-bK19VV">{p.description}</span>
                                 </div>
                                 <button
-                                  className="pluginCardActionButton-oekY_b"
+                                  type="button"
+                                  style={actionStyle}
                                   onClick={(e) => { e.stopPropagation(); toggleInstall(p.name) }}
                                 >
-                                  {isInstalled ? (
-                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>✓ 使用</span>
-                                  ) : (
-                                    <span style={{ display: 'inline-flex', alignItems: 'center' }}>+ 安装</span>
-                                  )}
+                                  {label}
                                 </button>
                               </div>
+                              <div style={{ alignItems: 'center', display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px', minWidth: 0 }}>
+                                <span style={{ color: 'var(--text-text-secondary)', fontSize: '12px', lineHeight: '18px' }}>{p.publisher}</span>
+                                {p.version && <span style={{ color: 'var(--text-text-tertiary)', fontSize: '12px', lineHeight: '18px' }}>v{p.version}</span>}
+                                {p.official && (
+                                  <span style={{ background: 'var(--bg-bg-overlay-l1)', borderRadius: '4px', color: 'var(--text-text-secondary)', fontSize: '11px', lineHeight: '16px', padding: '1px 6px' }}>官方</span>
+                                )}
+                              </div>
+                              {(p.tags ?? []).length > 0 && (
+                                <div style={{ alignItems: 'center', display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
+                                  {(p.tags ?? []).map((t) => (
+                                    <span key={t} style={{ border: '1px solid var(--border-border-neutral-l1)', borderRadius: '4px', color: 'var(--text-text-secondary)', fontSize: '11px', lineHeight: '16px', padding: '1px 6px' }}>{t}</span>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           )
                         })}
                       </div>
                     </div>
-                  )}
+                  ))}
                 </div>
-              ) : (
-                <div className="pluginsContentInner-amtMMJ">
-                  {activeCategory === '全部' ? (
-                    skillCategorySections.map((section) =>
-                      section.skills.length > 0 ? (
-                        <div key={section.title} className="categorySection-T0Z3c3">
-                          <span className="categorySectionTitle-b_hOUf">{section.title}</span>
-                          <div className="skillsGrid-qtaVFy">
-                            {section.skills.map((skill) => (
-                              <div
-                                key={skill.name}
-                                className="skillCard-ZYOuVS"
-                                onClick={() => onSelectSkill(skill)}
-                              >
-                                <div className="skillCardHeader-W2sqOU">
-                                  <div className="marketIcon-ZTaS8Y">
-                                    <span className="marketIconSkillImage-BqDFkD" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>{skill.icon}</span>
-                                  </div>
-                                  <div className="skillCardBody-xR2lZi">
-                                    <div className="skillCardName-gePr1m">{skill.name}</div>
-                                    <div className="skillCardDesc-_LvYuN">{skill.description}</div>
-                                  </div>
-                                  <button className="skillCardActionButton-FLd4yA">
-                                    <span>+ 安装</span>
-                                  </button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ) : null
-                    )
-                  ) : (
-                    <div className="categorySection-T0Z3c3">
-                      <div className="skillsGrid-qtaVFy">
-                        {filteredSkills.map((skill) => (
-                          <div
-                            key={skill.name}
-                            className="skillCard-ZYOuVS"
-                            onClick={() => onSelectSkill(skill)}
-                          >
-                            <div className="skillCardHeader-W2sqOU">
-                              <div className="marketIcon-ZTaS8Y">
-                                <span className="marketIconSkillImage-BqDFkD" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>{skill.icon}</span>
-                              </div>
-                              <div className="skillCardBody-xR2lZi">
-                                <div className="skillCardName-gePr1m">{skill.name}</div>
-                                <div className="skillCardDesc-_LvYuN">{skill.description}</div>
-                              </div>
-                              <button className="skillCardActionButton-FLd4yA">
-                                <span>+ 安装</span>
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
     </>
+  )
+}
+
+/* ============ Library Page (资料库) ============ */
+interface LibraryPageProps {
+  sidebarBar?: React.ReactNode
+}
+
+const libraryStatusColor: Record<LibraryStatus, string> = {
+  '已解析': 'rgba(70,180,120,0.14)',
+  '处理中': 'rgba(230,168,64,0.16)',
+  '解析失败': 'rgba(224,80,80,0.14)',
+}
+
+const libraryItemBtn: React.CSSProperties = {
+  alignItems: 'center',
+  borderRadius: '4px',
+  cursor: 'pointer',
+  display: 'inline-flex',
+  fontSize: '12px',
+  gap: '4px',
+  height: '28px',
+  justifyContent: 'center',
+  lineHeight: '16px',
+}
+
+export function LibraryPage({ sidebarBar }: LibraryPageProps) {
+  const [activeCategory, setActiveCategory] = useState('全部')
+  const [activeFilter, setActiveFilter] = useState('全部状态')
+  const [searchText, setSearchText] = useState('')
+  const [items, setItems] = useState<LibraryItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
+  const [importFiles, setImportFiles] = useState<File[] | null>(null)
+  const [preview, setPreview] = useState<LibraryItem | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<LibraryItem | null>(null)
+  const [busyAdding, setBusyAdding] = useState<Set<string>>(new Set())
+  const [added, setAdded] = useState<Set<string>>(new Set())
+  const [toast, setToast] = useState<{ kind: 'success' | 'error'; text: string } | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const loadLibrary = useCallback(async () => {
+    setLoading(true)
+    setLoadError('')
+    try {
+      const kbs = await listKnowledgeBases()
+      const entries = await Promise.all(
+        kbs.map(async (kb) => {
+          const files = await listKbFiles(kb.name).catch(() => [] as KbFile[])
+          const st = statusForKb(kb.status, kb.progress?.error || kb.metadata?.last_error)
+          return files
+            .filter((f) => f.type === 'file')
+            .map((f) => {
+              const { type, icon } = libraryTypeForPath(f.name)
+              return {
+                id: `${kb.name}::${f.name}`,
+                name: f.name,
+                type,
+                icon,
+                kb: kb.name,
+                path: f.name,
+                size: f.size ?? 0,
+                addedAt: formatLibraryDate(f.modified),
+                status: st.status,
+                kbStatus: kb.status ?? 'unknown',
+                kbError: st.error,
+              } as LibraryItem
+            })
+        }),
+      )
+      setItems(entries.flat())
+    } catch (e) {
+      setLoadError(e instanceof Error ? e.message : '加载资料库失败，请确认后端服务已启动')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    // Deferred so loadLibrary's setState runs in a callback, not
+    // synchronously inside the effect (react-hooks/set-state-in-effect).
+    const id = window.setTimeout(loadLibrary, 0)
+    return () => window.clearTimeout(id)
+  }, [loadLibrary])
+
+  useEffect(() => {
+    if (!toast) return
+    const t = window.setTimeout(() => setToast(null), 4000)
+    return () => window.clearTimeout(t)
+  }, [toast])
+
+  const onImportComplete = useCallback(() => {
+    setImportFiles(null)
+    loadLibrary()
+  }, [loadLibrary])
+
+  const onRetry = useCallback(async (it: LibraryItem) => {
+    setToast(null)
+    try {
+      await retryKb(it.kb)
+      setToast({ kind: 'success', text: `已重新排队解析「${it.name}」所在的资料库` })
+      loadLibrary()
+      const poll = window.setInterval(async () => {
+        try {
+          const info = await getKbInfo(it.kb)
+          if (info.status === 'ready' || info.status === 'error') {
+            window.clearInterval(poll)
+            loadLibrary()
+          }
+        } catch {
+          /* transient poll errors ignored */
+        }
+      }, 3000)
+    } catch (e) {
+      setToast({ kind: 'error', text: e instanceof Error ? e.message : '重新解析失败' })
+    }
+  }, [loadLibrary])
+
+  const onAddToSpace = useCallback(async (it: LibraryItem) => {
+    setBusyAdding((cur) => new Set(cur).add(it.id))
+    setToast(null)
+    try {
+      await createLearningGoal(it.name, `围绕「${it.name}」制定学习计划`)
+      setAdded((cur) => new Set(cur).add(it.id))
+      setToast({ kind: 'success', text: `「${it.name}」已加入学习空间` })
+    } catch (e) {
+      setToast({ kind: 'error', text: e instanceof Error ? e.message : '添加到学习空间失败' })
+    } finally {
+      setBusyAdding((cur) => {
+        const next = new Set(cur)
+        next.delete(it.id)
+        return next
+      })
+    }
+  }, [])
+
+  const onDelete = useCallback(async (it: LibraryItem) => {
+    setConfirmDelete(null)
+    setToast(null)
+    try {
+      await deleteKbFile(it.kb, it.path)
+      setItems((cur) => cur.filter((x) => x.id !== it.id))
+      setToast({ kind: 'success', text: `已删除「${it.name}」` })
+    } catch (e) {
+      setToast({ kind: 'error', text: e instanceof Error ? e.message : '删除失败' })
+    }
+  }, [])
+
+  const shownItems = items.filter((it) => {
+    const matchCategory = activeCategory === '全部' || it.type === activeCategory
+    const hay = `${it.name} ${it.type} ${it.kb}`.toLowerCase()
+    const matchSearch = !searchText || hay.includes(searchText.toLowerCase())
+    const matchFilter = activeFilter === '全部状态' || it.status === activeFilter
+    return matchCategory && matchSearch && matchFilter
+  })
+
+  return (
+    <>
+      {sidebarBar && (
+        <header className="header-x7rPuS">
+          <div className="headerLeft-rH3lhm">{sidebarBar}</div>
+          <div className="headerCenter-cba9zB" />
+          <div className="headerRight-QHfr9M" />
+        </header>
+      )}
+      <div className="marketplacePage-U60AB4">
+        <div className="root-Bkr7v6">
+          <div className="scrollArea-fvGujy">
+            <div className="scrollContent-Q7fN_Z">
+              <div className="headerRail-GfhRry">
+                <div className="titleGroup-R6DD_m">
+                  <h1 className="title-yQrHui">资料库</h1>
+                  <p className="subtitle-Gi_Tjb">管理你在 {PRODUCT_NAME} 中导入的资料；导入后自动解析并建立索引，可供知识检索使用</p>
+                </div>
+                <div className="headerActions-TKXare" style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    type="button"
+                    className="button-muTeiY secondary-J0eGRO large-psSWuL"
+                    style={{
+                      ...headerBtnBase,
+                      background: 'transparent',
+                      border: '1px solid var(--border-border-neutral-l2)',
+                      color: 'var(--text-text-default)',
+                    }}
+                    onClick={loadLibrary}
+                  >
+                    <span>刷新</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="button-muTeiY primary-ZG2S1H large-psSWuL"
+                    style={{
+                      ...headerBtnBase,
+                      background: 'var(--bg-bg-invert)',
+                      border: 'none',
+                      color: 'var(--text-text-onaccent)',
+                    }}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <PageIcon name="download" size={14} />
+                    <span>导入资料</span>
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    hidden
+                    accept=".md,.markdown,.txt,.pdf,.doc,.docx,.rtf,.html,.htm,.mp3,.wav,.m4a,.mp4,.webm,.zip"
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files ?? [])
+                      if (files.length > 0) setImportFiles(files)
+                      e.target.value = ''
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="stickyNavigation-vpcdcv">
+                <div className="toolbarRail-Qlt0C7">
+                  <div className="toolbarEnd-CGhDms">
+                    <div className="searchSlot-ionH2H">
+                      <div className="searchInputInputRoot-ql5R96">
+                        <span className="searchInputInputIcon-_qGz4O">
+                          <PageIcon name="search" size={16} />
+                        </span>
+                        <input
+                          className="input-yEGQlg"
+                          placeholder="搜索资料、类型或所属知识库"
+                          value={searchText}
+                          onChange={(e) => setSearchText(e.target.value)}
+                          style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-text-default)', fontSize: '13px' }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="filtersRail-_VFXr1">
+                  <div className="categoryNav-TtjHNd">
+                    {libraryCategories.map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        className={activeCategory === cat ? 'categoryNavItemActive-k6zapU' : 'categoryNavItem-HXakRf'}
+                        onClick={() => setActiveCategory(cat)}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="filtersRail-_VFXr1" style={{ paddingTop: 0 }}>
+                  <div className="categoryNav-TtjHNd">
+                    {libraryFilters.map((f) => (
+                      <button
+                        key={f}
+                        type="button"
+                        className={activeFilter === f ? 'categoryNavItemActive-k6zapU' : 'categoryNavItem-HXakRf'}
+                        onClick={() => setActiveFilter(f)}
+                      >
+                        {f}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="contentRail-dRMjXS">
+                <div className="pluginsContentInner-amtMMJ">
+                  {loading ? (
+                    <div style={{ color: 'var(--text-text-secondary)', fontSize: '13px', lineHeight: '20px', padding: '24px 0' }}>正在加载资料库…</div>
+                  ) : loadError ? (
+                    <div
+                      style={{
+                        border: '1px solid var(--status-error-default, #f65a5a)',
+                        borderRadius: 8,
+                        padding: '12px 16px',
+                        color: 'var(--status-error-default, #f65a5a)',
+                        fontSize: 13,
+                      }}
+                    >
+                      {loadError}
+                      <button
+                        type="button"
+                        onClick={loadLibrary}
+                        style={{ background: 'transparent', border: 'none', color: 'var(--text-text-link)', cursor: 'pointer', fontSize: 13, marginLeft: 12 }}
+                      >
+                        重试
+                      </button>
+                    </div>
+                  ) : shownItems.length === 0 ? (
+                    <div style={{ color: 'var(--text-text-secondary)', fontSize: '13px', lineHeight: '20px', padding: '24px 0' }}>
+                      这里空空如也，点击右上角「导入资料」上传文档，{PRODUCT_NAME} 会自动解析并建立索引。
+                    </div>
+                  ) : (
+                    <div className="pluginsGrid-u71c96">
+                      {shownItems.map((it) => {
+                        const addedNow = added.has(it.id)
+                        const adding = busyAdding.has(it.id)
+                        return (
+                          <div key={it.id} className="pluginCard-cq4jH5">
+                            <div className="pluginCardHeader-RvwB47">
+                              <div className="marketIcon-ZTaS8Y">
+                                <span className="marketIconPluginImage-hG9jDA">{it.icon}</span>
+                              </div>
+                              <div className="pluginCardBody-bY5she">
+                                <span className="pluginCardName-ncj_7T">{it.name}</span>
+                                <span className="pluginCardDesc-bK19VV">{it.type}{it.size > 0 ? ` · ${formatFileSize(it.size)}` : ''}</span>
+                              </div>
+                              <span
+                                title={it.kbError}
+                                style={{ background: libraryStatusColor[it.status], borderRadius: '4px', color: 'var(--text-text-secondary)', flexShrink: 0, fontSize: '11px', lineHeight: '16px', padding: '2px 8px' }}
+                              >
+                                {it.status}
+                              </span>
+                            </div>
+                            <div style={{ color: 'var(--text-text-tertiary)', display: 'flex', flexWrap: 'wrap', fontSize: '12px', gap: '4px', lineHeight: '18px', marginTop: '12px' }}>
+                              <span>{it.kb}</span>
+                              <span>· 加入于 {it.addedAt}</span>
+                            </div>
+                            {it.status === '解析失败' && it.kbError && (
+                              <div style={{ color: 'var(--status-error-default, #f65a5a)', fontSize: '11px', lineHeight: '16px', marginTop: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={it.kbError}>
+                                {it.kbError}
+                              </div>
+                            )}
+                            <div style={{ alignItems: 'center', display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '14px' }}>
+                              <button
+                                type="button"
+                                onClick={() => setPreview(it)}
+                                style={{ ...libraryItemBtn, background: 'var(--bg-bg-invert)', border: 'none', color: 'var(--text-text-onaccent)', padding: '0 12px' }}
+                              >
+                                打开
+                              </button>
+                              <button
+                                type="button"
+                                disabled={adding}
+                                onClick={() => onAddToSpace(it)}
+                                style={{ ...libraryItemBtn, background: 'transparent', border: '1px solid var(--border-border-neutral-l2)', color: 'var(--text-text-default)', padding: '0 10px', opacity: adding ? 0.6 : 1 }}
+                              >
+                                {adding ? '添加中…' : (addedNow ? '已加入学习空间' : '添加到学习空间')}
+                              </button>
+                              {it.status === '解析失败' && (
+                                <button
+                                  type="button"
+                                  onClick={() => onRetry(it)}
+                                  style={{ ...libraryItemBtn, background: 'transparent', border: '1px solid var(--border-border-neutral-l2)', color: 'var(--text-text-default)', padding: '0 10px' }}
+                                >
+                                  重新解析
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => setConfirmDelete(it)}
+                                style={{ ...libraryItemBtn, background: 'transparent', border: 'none', color: 'var(--text-text-tertiary)', marginLeft: 'auto', padding: '0 8px' }}
+                              >
+                                删除
+                              </button>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {toast && (
+        <div
+          className="libraryToast"
+          style={{
+            position: 'fixed',
+            bottom: 24,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 100,
+            background: toast.kind === 'error' ? 'var(--status-error-default, #f65a5a)' : 'var(--bg-bg-invert)',
+            color: toast.kind === 'error' ? '#fff' : 'var(--text-text-onaccent)',
+            borderRadius: 6,
+            boxShadow: '0 6px 24px rgba(0,0,0,0.28)',
+            fontSize: 13,
+            lineHeight: '20px',
+            maxWidth: 480,
+            padding: '8px 16px',
+          }}
+        >
+          {toast.text}
+        </div>
+      )}
+      {importFiles && (
+        <ImportMaterialsModal files={importFiles} onClose={() => setImportFiles(null)} onComplete={onImportComplete} />
+      )}
+      {preview && <MaterialPreviewModal item={preview} onClose={() => setPreview(null)} />}
+      {confirmDelete && (
+        <ConfirmDeleteModal item={confirmDelete} onCancel={() => setConfirmDelete(null)} onConfirm={() => onDelete(confirmDelete)} />
+      )}
+    </>
+  )
+}
+
+/* ============ 导入资料 Modal ============ */
+type ImportPhase = 'confirm' | 'submitting' | 'processing' | 'done' | 'error'
+
+interface ImportMaterialsModalProps {
+  files: File[]
+  onClose: () => void
+  onComplete: () => void
+}
+
+function ImportMaterialsModal({ files, onClose, onComplete }: ImportMaterialsModalProps) {
+  const [phase, setPhase] = useState<ImportPhase>('confirm')
+  const [targetExists, setTargetExists] = useState(false)
+  const [progress, setProgress] = useState<{ percent: number; message: string } | null>(null)
+  const [error, setError] = useState('')
+  const pollRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    listKnowledgeBases()
+      .then((kbs) => { if (!cancelled) setTargetExists(kbs.some((k) => k.name === LIBRARY_KB_NAME)) })
+      .catch(() => { if (!cancelled) setTargetExists(false) })
+    return () => { cancelled = true }
+  }, [])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      if (pollRef.current !== null) window.clearInterval(pollRef.current)
+    }
+  }, [onClose])
+
+  const stopPolling = () => {
+    if (pollRef.current !== null) {
+      window.clearInterval(pollRef.current)
+      pollRef.current = null
+    }
+  }
+
+  const startPolling = () => {
+    stopPolling()
+    let elapsed = 0
+    pollRef.current = window.setInterval(async () => {
+      elapsed += 2500
+      try {
+        const info = await getKbInfo(LIBRARY_KB_NAME)
+        if (info.status === 'ready') {
+          stopPolling()
+          setProgress(null)
+          setPhase('done')
+          return
+        }
+        if (info.status === 'error') {
+          stopPolling()
+          setError(info.progress?.error || info.metadata?.last_error || '资料解析失败')
+          setPhase('error')
+          return
+        }
+        const p = info.progress
+        if (p && typeof p.percent === 'number') {
+          setProgress({ percent: p.percent, message: p.message || '' })
+        } else {
+          setProgress((cur) => cur ?? { percent: 0, message: '正在解析并建立索引…' })
+        }
+      } catch {
+        /* transient poll errors ignored */
+      }
+      if (elapsed > 10 * 60 * 1000) {
+        stopPolling()
+        setError('处理超时，请稍后在资料库中查看状态')
+        setPhase('error')
+      }
+    }, 2500)
+  }
+
+  const submit = async () => {
+    setPhase('submitting')
+    setError('')
+    try {
+      if (targetExists) {
+        await uploadFilesToKb(LIBRARY_KB_NAME, files)
+      } else {
+        await createKnowledgeBase(LIBRARY_KB_NAME, files)
+      }
+      setPhase('processing')
+      setProgress({ percent: 0, message: targetExists ? '已上传，正在解析并建立索引…' : '正在创建资料库并建立索引…' })
+      startPolling()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '导入失败，请稍后重试')
+      setPhase('error')
+    }
+  }
+
+  const busy = phase === 'submitting' || phase === 'processing'
+
+  return ReactDOM.createPortal(
+    <div className="detailMask-W8jDqu" onClick={() => { if (!busy) onClose() }}>
+      <div className="detailPanel-NZOW7g" onClick={(e) => e.stopPropagation()} style={{ width: '520px', height: 'auto' }}>
+        <div className="detailBody-mX1HCM">
+          <div className="detailInfoSection-c234JE">
+            <div className="detailTitleGroup-cpT99c">
+              <h2 className="detailTitle-X7zIZu">导入资料</h2>
+              <p className="detailDescription-kBy0Ek">上传的资料会进入「{LIBRARY_KB_NAME}」知识库，自动解析并建立索引</p>
+            </div>
+            <button className="detailCloseBtn-cE6qVp" onClick={onClose} disabled={busy} style={{
+              alignItems: 'center', background: 'transparent', border: 'none',
+              borderRadius: '4px', color: 'var(--icon-icon-secondary)',
+              cursor: busy ? 'default' : 'pointer', display: 'flex', height: '32px',
+              justifyContent: 'center', opacity: busy ? 0.5 : 1, width: '32px',
+            }}>
+              <PageIcon name="close" size={20} />
+            </button>
+          </div>
+          <div style={{ padding: '4px 20px 20px', color: 'var(--text-text-secondary)', fontSize: 14, lineHeight: '22px' }}>
+            {phase === 'confirm' && (
+              <>
+                <div style={{ maxHeight: 200, overflow: 'auto', border: '1px solid var(--border-border-neutral-l2)', borderRadius: 8, padding: '4px 12px' }}>
+                  {files.map((f) => (
+                    <div key={f.name} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '8px 0', fontSize: 13 }}>
+                      <span style={{ color: 'var(--text-text-default)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span>
+                      <span style={{ flexShrink: 0 }}>{formatFileSize(f.size)}</span>
+                    </div>
+                  ))}
+                </div>
+                <p style={{ marginTop: 12, fontSize: 12, color: 'var(--text-text-tertiary)' }}>
+                  {targetExists
+                    ? `目标知识库「${LIBRARY_KB_NAME}」已存在，将增量导入并重建索引。`
+                    : `首次导入会自动创建知识库「${LIBRARY_KB_NAME}」。`}
+                  支持 md / pdf / txt / doc / docx / html 等常见文档格式。
+                </p>
+              </>
+            )}
+            {phase === 'submitting' && <p>正在上传文件…</p>}
+            {phase === 'processing' && (
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 6 }}>
+                  <span style={{ color: 'var(--text-text-default)' }}>{progress?.message || '正在处理…'}</span>
+                  <span>{progress ? Math.round(progress.percent) : 0}%</span>
+                </div>
+                <div className="goalProgressTrack" style={{ position: 'relative', display: 'inline-block', width: '100%', height: 8, borderRadius: 4, background: 'var(--bg-bg-overlay-l1)' }}>
+                  <span
+                    className="goalProgressFill"
+                    style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: `${progress ? Math.round(progress.percent) : 0}%`, borderRadius: 4, background: 'var(--bg-bg-invert)' }}
+                    aria-hidden
+                  />
+                </div>
+                <p style={{ marginTop: 10, fontSize: 12, color: 'var(--text-text-tertiary)' }}>
+                  关闭窗口不会取消任务：资料仍会在后台解析，完成后自动出现在资料库。
+                </p>
+              </div>
+            )}
+            {phase === 'done' && (
+              <div style={{ border: '1px solid var(--border-border-neutral-l2)', borderRadius: 8, padding: '12px 16px' }}>
+                <p style={{ color: 'var(--text-text-default)', fontSize: 14, fontWeight: 500, marginBottom: 4 }}>导入完成</p>
+                <p style={{ fontSize: 13 }}>{files.length} 个文件已成功解析并建立索引，可在资料库中打开，也可在对话中通过知识检索使用。</p>
+              </div>
+            )}
+            {phase === 'error' && (
+              <div style={{ border: '1px solid var(--status-error-default, #f65a5a)', borderRadius: 8, padding: '12px 16px' }}>
+                <p style={{ color: 'var(--status-error-default, #f65a5a)', fontSize: 13 }}>导入失败</p>
+                <p style={{ fontSize: 12, marginTop: 4, wordBreak: 'break-all' }}>{error}</p>
+              </div>
+            )}
+          </div>
+          <div className="detailActionBar-BhqrLr">
+            {phase === 'confirm' && (
+              <>
+                <button className="detailBtn-j5pRnW" onClick={onClose} style={{ background: 'transparent', border: '1px solid var(--border-border-neutral-l2)', borderRadius: '4px', color: 'var(--text-text-default)', cursor: 'pointer', display: 'inline-flex', fontSize: '13px', fontWeight: 500, gap: '6px', height: '32px', justifyContent: 'center', lineHeight: '20px', padding: '0 12px' }}>
+                  取消
+                </button>
+                <button className="detailBtnPrimary-NtBx72" onClick={submit} style={{ background: 'var(--bg-bg-invert)', borderRadius: '4px', color: 'var(--text-text-onaccent)', cursor: 'pointer', display: 'inline-flex', fontSize: '13px', fontWeight: 500, gap: '6px', height: '32px', justifyContent: 'center', lineHeight: '20px', padding: '0 12px' }}>
+                  开始导入
+                </button>
+              </>
+            )}
+            {phase === 'submitting' && <p style={{ fontSize: 13, marginLeft: 'auto' }}>上传中…</p>}
+            {phase === 'processing' && (
+              <button className="detailBtn-j5pRnW" onClick={onClose} style={{ background: 'transparent', border: '1px solid var(--border-border-neutral-l2)', borderRadius: '4px', color: 'var(--text-text-default)', cursor: 'pointer', display: 'inline-flex', fontSize: '13px', fontWeight: 500, gap: '6px', height: '32px', justifyContent: 'center', lineHeight: '20px', padding: '0 12px' }}>
+                后台处理
+              </button>
+            )}
+            {phase === 'done' && (
+              <button className="detailBtnPrimary-NtBx72" onClick={onComplete} style={{ background: 'var(--bg-bg-invert)', borderRadius: '4px', color: 'var(--text-text-onaccent)', cursor: 'pointer', display: 'inline-flex', fontSize: '13px', fontWeight: 500, gap: '6px', height: '32px', justifyContent: 'center', lineHeight: '20px', padding: '0 12px' }}>
+                完成
+              </button>
+            )}
+            {phase === 'error' && (
+              <>
+                <button className="detailBtn-j5pRnW" onClick={onClose} style={{ background: 'transparent', border: '1px solid var(--border-border-neutral-l2)', borderRadius: '4px', color: 'var(--text-text-default)', cursor: 'pointer', display: 'inline-flex', fontSize: '13px', fontWeight: 500, gap: '6px', height: '32px', justifyContent: 'center', lineHeight: '20px', padding: '0 12px' }}>
+                  关闭
+                </button>
+                <button className="detailBtnPrimary-NtBx72" onClick={submit} style={{ background: 'var(--bg-bg-invert)', borderRadius: '4px', color: 'var(--text-text-onaccent)', cursor: 'pointer', display: 'inline-flex', fontSize: '13px', fontWeight: 500, gap: '6px', height: '32px', justifyContent: 'center', lineHeight: '20px', padding: '0 12px' }}>
+                  重试
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body
+  )
+}
+
+/* ============ 资料预览 Modal ============ */
+interface MaterialPreviewModalProps {
+  item: LibraryItem
+  onClose: () => void
+}
+
+function MaterialPreviewModal({ item, onClose }: MaterialPreviewModalProps) {
+  const [text, setText] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    let cancelled = false
+    // 初始 loading/error 即为目标值，异步回调里才 setState（避免 set-state-in-effect）
+    fetchKbFilePreview(item.kb, item.path)
+      .then((t) => { if (!cancelled) setText(t) })
+      .catch((e: unknown) => { if (!cancelled) setError(e instanceof Error ? e.message : '预览失败') })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [item.kb, item.path])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
+
+  return ReactDOM.createPortal(
+    <div className="detailMask-W8jDqu" onClick={onClose}>
+      <div className="detailPanel-NZOW7g" onClick={(e) => e.stopPropagation()} style={{ width: '640px', height: 'auto', maxHeight: '80vh' }}>
+        <div className="detailBody-mX1HCM">
+          <div className="detailInfoSection-c234JE">
+            <div className="detailTitleGroup-cpT99c">
+              <h2 className="detailTitle-X7zIZu">{item.name}</h2>
+              <p className="detailDescription-kBy0Ek">{item.kb} · {item.type}</p>
+            </div>
+            <button className="detailCloseBtn-cE6qVp" onClick={onClose} style={{
+              alignItems: 'center', background: 'transparent', border: 'none',
+              borderRadius: '4px', color: 'var(--icon-icon-secondary)',
+              cursor: 'pointer', display: 'flex', height: '32px',
+              justifyContent: 'center', width: '32px',
+            }}>
+              <PageIcon name="close" size={20} />
+            </button>
+          </div>
+          <div style={{ padding: '4px 20px 20px', color: 'var(--text-text-secondary)', fontSize: 13, lineHeight: '22px' }}>
+            {loading && <p>正在加载内容…</p>}
+            {error && <p style={{ color: 'var(--status-error-default, #f65a5a)' }}>{error}</p>}
+            {!loading && !error && (
+              <pre style={{ background: 'var(--bg-bg-overlay-l1)', borderRadius: 8, padding: 16, fontSize: 13, lineHeight: '22px', color: 'var(--text-text-default)', whiteSpace: 'pre-wrap', wordBreak: 'break-word', maxHeight: '52vh', overflow: 'auto', margin: 0 }}>{text}</pre>
+            )}
+          </div>
+          <div className="detailActionBar-BhqrLr">
+            <button className="detailBtn-j5pRnW" onClick={onClose} style={{ background: 'transparent', border: '1px solid var(--border-border-neutral-l2)', borderRadius: '4px', color: 'var(--text-text-default)', cursor: 'pointer', display: 'inline-flex', fontSize: '13px', fontWeight: 500, gap: '6px', height: '32px', justifyContent: 'center', lineHeight: '20px', padding: '0 12px' }}>
+              关闭
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body
+  )
+}
+
+/* ============ 删除确认 Modal ============ */
+interface ConfirmDeleteModalProps {
+  item: LibraryItem
+  onCancel: () => void
+  onConfirm: () => void
+}
+
+function ConfirmDeleteModal({ item, onCancel, onConfirm }: ConfirmDeleteModalProps) {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCancel()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onCancel])
+
+  return ReactDOM.createPortal(
+    <div className="detailMask-W8jDqu" onClick={onCancel}>
+      <div className="detailPanel-NZOW7g" onClick={(e) => e.stopPropagation()} style={{ width: '440px', height: 'auto' }}>
+        <div className="detailBody-mX1HCM">
+          <div className="detailInfoSection-c234JE">
+            <div className="detailTitleGroup-cpT99c">
+              <h2 className="detailTitle-X7zIZu">删除资料</h2>
+              <p className="detailDescription-kBy0Ek">此操作会移除该文件及其索引记录</p>
+            </div>
+            <button className="detailCloseBtn-cE6qVp" onClick={onCancel} style={{
+              alignItems: 'center', background: 'transparent', border: 'none',
+              borderRadius: '4px', color: 'var(--icon-icon-secondary)',
+              cursor: 'pointer', display: 'flex', height: '32px',
+              justifyContent: 'center', width: '32px',
+            }}>
+              <PageIcon name="close" size={20} />
+            </button>
+          </div>
+          <div style={{ padding: '20px', fontSize: 13, color: 'var(--text-text-secondary)', lineHeight: '22px' }}>
+            确定删除「<b style={{ color: 'var(--text-text-default)' }}>{item.name}</b>」吗？
+            删除后该文件将从资料库移除，若已被索引，下一次重新索引时会被清除。
+          </div>
+          <div className="detailActionBar-BhqrLr">
+            <button className="detailBtn-j5pRnW" onClick={onCancel} style={{ background: 'transparent', border: '1px solid var(--border-border-neutral-l2)', borderRadius: '4px', color: 'var(--text-text-default)', cursor: 'pointer', display: 'inline-flex', fontSize: '13px', fontWeight: 500, gap: '6px', height: '32px', justifyContent: 'center', lineHeight: '20px', padding: '0 12px' }}>
+              取消
+            </button>
+            <button className="detailBtnPrimary-NtBx72" onClick={onConfirm} style={{ background: 'var(--status-error-default, #f65a5a)', borderRadius: '4px', color: '#fff', cursor: 'pointer', display: 'inline-flex', fontSize: '13px', fontWeight: 500, gap: '6px', height: '32px', justifyContent: 'center', lineHeight: '20px', padding: '0 12px' }}>
+              删除
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body
   )
 }
 

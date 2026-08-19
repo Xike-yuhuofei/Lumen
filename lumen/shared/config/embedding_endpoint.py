@@ -100,6 +100,7 @@ EMBEDDING_PROVIDER_ALIASES = {
 EMBEDDING_PROVIDER_LABELS = {
     "openai": "OpenAI",
     "gemini": "Gemini",
+    "gitee": "Gitee AI",
     "openrouter": "OpenRouter",
     "orcarouter": "OrcaRouter",
     "jina": "Jina",
@@ -112,6 +113,7 @@ EMBEDDING_PROVIDER_LABELS = {
 EMBEDDING_PROVIDER_DEFAULT_ENDPOINTS = {
     "openai": "https://api.openai.com/v1/embeddings",
     "gemini": gemini_embedding_endpoint(GEMINI_DEFAULT_EMBEDDING_MODEL),
+    "gitee": "https://ai.gitee.com/v1/embeddings",
     "openrouter": "https://openrouter.ai/api/v1/embeddings",
     "orcarouter": "https://api.orcarouter.ai/v1/embeddings",
     "cohere": "https://api.cohere.com/v2/embed",
@@ -129,6 +131,7 @@ EMBEDDING_PROVIDERS_REQUIRING_EMBEDDINGS_PATH = {
     "openai",
     "openrouter",
     "orcarouter",
+    "gitee",
     "jina",
     "vllm",
     "siliconflow",

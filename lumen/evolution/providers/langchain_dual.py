@@ -60,7 +60,7 @@ async def _agent_run(
             "messages": messages + [{"role": "assistant", "content": _text(out)}],
             "tool_requests": [],
         }
-    reqs = [(c.get("name"), dict(c.get("args") or {})) for c in calls]
+    reqs = [(str(c.get("name")), dict(c.get("args") or {})) for c in calls]
     return {
         **state,
         "messages": messages + [{"role": "assistant", "content": _text(out)}],
@@ -126,7 +126,7 @@ class LangGraphDualProvider(RuntimeProvider):
         async def node_agent(state: AgentState) -> AgentState:
             decision = state.get("decision")
             directive = ""
-            if decision is not None:
+            if decision is not None and teaching is not None:
                 directive = teaching.scaffold(decision, request.context)
             return await _agent_run(state, request.model, request.tools, directive, request.seed)
 

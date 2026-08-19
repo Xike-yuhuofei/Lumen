@@ -201,6 +201,13 @@ EMBEDDING_PROVIDERS: dict[str, EmbeddingProviderSpec] = {
         keywords=("vllm", "lmstudio"),
         is_local=True,
     ),
+    "gitee": EmbeddingProviderSpec(
+        label="Gitee AI",
+        default_api_base=EMBEDDING_PROVIDER_DEFAULT_ENDPOINTS["gitee"],
+        keywords=("gitee", "qwen3-embedding"),
+        is_local=False,
+        default_model="Qwen3-Embedding-8B",
+    ),
     "siliconflow": EmbeddingProviderSpec(
         label="SiliconFlow",
         adapter="openai_compat",
@@ -469,7 +476,7 @@ def _choose_resolved_provider(
         if not spec.is_oauth and configured.api_key:
             return spec
 
-    return find_by_name("openai") or PROVIDERS[0]
+    return find_by_name("gitee") or find_by_name("openai") or PROVIDERS[0]
 
 
 def resolve_llm_runtime_config(
@@ -486,7 +493,7 @@ def resolve_llm_runtime_config(
     profile, model = _active_profile_and_model(loaded, catalog_service, "llm")
     resolved_model = _as_str((model or {}).get("model"))
     if not resolved_model:
-        resolved_model = "gpt-4o-mini"
+        resolved_model = "Qwen3-8B"
 
     binding_hint_raw = _as_str((profile or {}).get("binding"))
     binding_hint = canonical_provider_name(binding_hint_raw)
@@ -648,7 +655,7 @@ def _resolve_embedding_provider(
         if configured.api_key:
             return provider_name
 
-    return "openai"
+    return "gitee"
 
 
 def resolve_embedding_runtime_config(

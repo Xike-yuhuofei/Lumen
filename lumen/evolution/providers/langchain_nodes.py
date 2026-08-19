@@ -20,7 +20,7 @@ plugin supplies the *decision*.
 
 from __future__ import annotations
 
-from typing import Any, Literal, TypedDict
+from typing import Any, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
@@ -75,7 +75,7 @@ def _assess(
     return {**state, "stage": "assess"}
 
 
-def _route(state: TeachingState) -> Literal["reason", END]:
+def _route(state: TeachingState) -> str:
     """Continue acting until the model has produced a terminal plain answer.
 
     Teaching Policy is consulted on every loop; the graph terminates once
@@ -114,7 +114,7 @@ class LangGraphNodesProvider(RuntimeProvider):
             messages = list(state.get("messages", []))
             seed_segment = ""
             decision = state.get("last_decision")
-            if decision is not None:
+            if decision is not None and teaching is not None:
                 seed_segment = teaching.scaffold(decision, request.context)
             model_out = await request.model.generate(
                 messages + [{"role": "system", "content": seed_segment}]
@@ -129,7 +129,7 @@ class LangGraphNodesProvider(RuntimeProvider):
             if not calls:
                 new_messages.append({"role": "assistant", "content": text})
                 return {**state, "messages": new_messages, "tool_requests": [], "done": True}
-            reqs = [(c.get("name"), dict(c.get("args") or {})) for c in calls]
+            reqs = [(str(c.get("name")), dict(c.get("args") or {})) for c in calls]
             return {**state, "messages": new_messages, "tool_requests": reqs}
 
         async def node_tools(state: TeachingState) -> TeachingState:
