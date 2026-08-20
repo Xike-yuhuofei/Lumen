@@ -23,6 +23,7 @@ from uuid import uuid4
 from lumen.shared._util.logging.context import restore_log_context, set_log_context
 
 from .backend import get_backend
+from .exporter import dispatch_span
 from .redact import sanitize_attrs
 from .span import Span
 
@@ -113,13 +114,20 @@ def begin_span(
     tele = _tele()
     parent_span_id = tele.get("span_id")
     effective_trace = trace_id or tele.get("trace_id") or new_trace_id()
+    # Correlation fields bound via ``bind`` are also attached to the span so
+    # the trace_id↔turn_id (etc.) mapping is visible in span attributes, not
+    # only in the logging context (Observability Architecture v1 §2). Values
+    # are sanitized at finish_span / dispatch_span.
+    span_attrs = dict(attrs or {})
+    if bind:
+        span_attrs.update({key: value for key, value in bind.items() if value is not None})
     span = Span(
         name=name,
         kind=kind,
         trace_id=effective_trace,
         span_id=new_span_id(),
         parent_span_id=parent_span_id,
-        attrs=dict(attrs or {}),
+        attrs=span_attrs,
         call_id=call_id,
     )
     fields: dict[str, Any] = {
@@ -153,6 +161,12 @@ def finish_span(span: Span, token: SpanToken) -> None:
     try:
         get_backend().record_span(span)
     except Exception:  # pragma: no cover - telemetry must never break the caller
+        pass
+    # Fan the span out to any configured external exporters (sampling +
+    # redaction applied inside dispatch; no-op when no exporter is registered).
+    try:
+        dispatch_span(span)
+    except Exception:  # pragma: no cover - exporters must never break the caller
         pass
     _telemetry.reset(tele_token)
     restore_log_context(log_token)

@@ -74,13 +74,16 @@ def sanitize_attrs(attrs: dict[str, Any] | None) -> dict[str, Any]:
     """Recursively sanitize a telemetry attribute dict before it is recorded.
 
     Values under sensitive keys are fully masked; string values elsewhere are
-    run through :func:`redact_value` to strip embedded secrets.
+    run through :func:`redact_value` to strip embedded secrets. Numeric values
+    under token-looking keys (``prompt_tokens``, ``completion_tokens``,
+    ``llm.token_count.*``) are *not* masked: credentials are strings, while
+    numeric values are LLM usage metrics that observability must retain.
     """
     if not attrs:
         return dict(attrs or {})
     out: dict[str, Any] = {}
     for key, value in attrs.items():
-        if _is_sensitive_key(key):
+        if _is_sensitive_key(key) and not isinstance(value, (int, float, bool)):
             out[key] = REDACTED
         elif isinstance(value, dict):
             out[key] = sanitize_attrs(value)

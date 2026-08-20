@@ -65,9 +65,34 @@ def test_observability_does_not_import_runtime_or_modes() -> None:
 
 
 def test_observability_module_files_present() -> None:
-    expected = {"__init__.py", "backend.py", "context.py", "metrics.py", "redact.py", "span.py"}
+    expected = {
+        "__init__.py",
+        "backend.py",
+        "context.py",
+        "exporter.py",
+        "metrics.py",
+        "metrics_export.py",
+        "otlp.py",
+        "redact.py",
+        "span.py",
+    }
     present = {p.name for p in OBSERVABILITY_DIR.glob("*.py")}
     assert expected <= present, f"missing observability modules: {expected - present}"
+
+
+def test_otlp_exporter_does_not_import_otel_sdk() -> None:
+    """Candidate 3 exports OTLP/HTTP JSON by hand — no SDK or protobuf dep.
+
+    The exporter must stay dependency-free (beyond httpx/json) so it can never
+    become a non-optional cloud dependency or a version-constrained SDK bind.
+    """
+    path = OBSERVABILITY_DIR / "otlp.py"
+    targets = _import_targets(path)
+    forbidden = ("opentelemetry", "google.protobuf", "phoenix", "openinference", "sentry")
+    violations = _references(targets, forbidden)
+    assert not violations, (
+        "otlp.py must not import external observability SDKs: " + ", ".join(violations)
+    )
 
 
 @pytest.mark.parametrize(

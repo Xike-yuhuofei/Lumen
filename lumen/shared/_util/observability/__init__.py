@@ -9,6 +9,12 @@ Round-1 scope (Observability Architecture v1): correlation context, span
 records, in-process metrics, redaction, and a swappable backend (no-op by
 default; local JSONL in production).
 
+Candidate 3 scope: pluggable, OPTIONAL external exporters on top of the same
+local-first pipeline — OTLP/HTTP trace export (OpenTelemetry-compatible, with
+OpenInference attributes for AI-observability backends) and stable periodic
+metrics summaries. No exporter is required for Lumen to run; unconfigured
+behavior is identical to Candidates 1 & 2.
+
 See ``docs/architecture/observability-architecture-v1.md`` for the frozen
 architecture decisions.
 """
@@ -37,6 +43,21 @@ from .context import (
     new_trace_id,
     trace_span,
 )
+from .exporter import (
+    ExportConfig,
+    TelemetryExporter,
+    TraceSampler,
+    configure_export,
+    dispatch_span,
+    flush_metrics,
+    flush_span_batches,
+    get_exporters,
+    parse_export_config,
+    register_exporter,
+    set_sampling_ratio,
+    shutdown_exporters,
+    unregister_all,
+)
 from .instrument import span
 from .metrics import (
     MetricsRecorder,
@@ -46,6 +67,8 @@ from .metrics import (
     observe,
     reset_metrics,
 )
+from .metrics_export import MetricsSummaryExporter
+from .otlp import OtlpSpanExporter
 from .redact import REDACTED, sanitize_attrs, sanitize_text
 from .span import Span
 
@@ -75,6 +98,22 @@ __all__ = [
     "DEFAULT_TELEMETRY_RETENTION_DAYS",
     # instrumentation helper
     "span",
+    # exporters (Candidate 3)
+    "ExportConfig",
+    "TelemetryExporter",
+    "TraceSampler",
+    "OtlpSpanExporter",
+    "MetricsSummaryExporter",
+    "configure_export",
+    "dispatch_span",
+    "flush_metrics",
+    "flush_span_batches",
+    "get_exporters",
+    "parse_export_config",
+    "register_exporter",
+    "set_sampling_ratio",
+    "shutdown_exporters",
+    "unregister_all",
     # metrics
     "MetricsRecorder",
     "MetricsSnapshot",

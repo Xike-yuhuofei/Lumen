@@ -14,6 +14,9 @@ from lumen.shared._util.observability import (
 from lumen.shared._util.observability import (
     configure as configure_observability,
 )
+from lumen.shared._util.observability import (
+    configure_export as configure_observability_export,
+)
 from lumen.shared._util.path_service import get_path_service
 from lumen.shared.config import (
     ensure_runtime_settings_files,
@@ -29,6 +32,9 @@ configure_logging()
 # Local telemetry backend (span JSONL + retention). No-op when disabled —
 # telemetry must never become a hard dependency of the server.
 configure_observability()
+# Optional external exporters (OTLP / metrics summary), read from env.
+# No-op when unconfigured — local-first default.
+configure_observability_export()
 logger = logging.getLogger(__name__)
 
 
