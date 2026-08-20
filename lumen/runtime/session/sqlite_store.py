@@ -105,6 +105,19 @@ class SQLiteSessionStore:
         self._lock = asyncio.Lock()
         self._initialize()
 
+    async def ping(self) -> bool:
+        """Return ``True`` if the SQLite store is reachable (health probe)."""
+
+        def _probe() -> bool:
+            with self._connect() as conn:
+                conn.execute("SELECT 1").fetchone()
+            return True
+
+        try:
+            return await self._run(_probe)
+        except Exception:
+            return False
+
     def _migrate_legacy_db(self, path_service) -> None:
         """Move the legacy ``data/chat_history.db`` into ``data/user/`` once."""
         legacy_path = path_service.project_root / "data" / "chat_history.db"

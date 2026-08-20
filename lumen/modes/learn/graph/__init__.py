@@ -1,10 +1,9 @@
-"""Minimal Teaching Session Graph Candidate — ``mode.learn``-owned educational
-orchestration.
+"""Teaching Session Graph — ``mode.learn``-owned educational orchestration.
 
-This package is the *Candidate* that proves Learn Mode can be driven by an
-explicit teaching flow (a Teaching Session Graph) instead of the LLM
-autonomously calling teaching tools to decide the main path.  It is strictly a
-``mode.learn`` orchestration layer:
+This package is the **production default** Learn teaching architecture.  It
+drives Learn Mode through an explicit teaching flow (a Teaching Session Graph)
+instead of the LLM autonomously calling teaching tools to decide the main path.
+It is strictly a ``mode.learn`` orchestration layer:
 
 * Teaching Session Graph  — owns pedagogical orchestration + teaching state
   transition (this package).
@@ -13,11 +12,10 @@ autonomously calling teaching tools to decide the main path.  It is strictly a
 * Learner Domain          — the single authority for long-term learner state;
   every authoritative write still funnels through the Domain Commit Foundation.
 
-Candidate is **retained as an Experimental / Research Asset** (default off),
-frozen by the Teaching Architecture decision (KEEP A, see ``ARCHITECTURE_V1.md``
-§6): the Teaching Architecture Experiment is CLOSED and Candidate B is not a
-pending-promotion candidate.  It stays opt-in via
-``LUMEN_LEARN_GRAPH_CANDIDATE=1`` for experiment, research and future needs.
+The Teaching Architecture Promotion (see ``ARCHITECTURE_V1.md`` §6) made this
+the **PRODUCTION DEFAULT** and retired Candidate A (teaching-hook + generic
+Agent Loop): there is no legacy/fallback switch — Learn turns always run through
+the graph.
 """
 
 from lumen.modes.learn.graph.contract import (
@@ -28,7 +26,6 @@ from lumen.modes.learn.graph.contract import (
     TeachRunOutcome,
 )
 from lumen.modes.learn.graph.selector import (
-    LUMEN_LEARN_GRAPH_CANDIDATE_ENV,
     is_graph_candidate_enabled,
     route_learn_turn,
 )
@@ -39,7 +36,6 @@ __all__ = [
     "TeachRunOutcome",
     "TeachingNode",
     "CANDIDATE_POLICY_VERSION",
-    "LUMEN_LEARN_GRAPH_CANDIDATE_ENV",
     "is_graph_candidate_enabled",
     "route_learn_turn",
 ]

@@ -60,6 +60,8 @@ MANIFEST
 .env
 *.env
 *.env.local
+.env.production
+.env.*.local
 env/
 venv/
 ENV/

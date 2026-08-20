@@ -1,46 +1,42 @@
-"""Explicit selection of the Teaching Graph Candidate vs. the teaching-hook path.
+"""Selection of the Learn teaching control path.
 
-The candidate is a *bake-off* controller: it must coexist with and be clearly
-distinguishable from the existing teaching-hook path so a later A/B / offline
-bake-off can compare them on identical inputs.  It lives in ``mode.learn`` and
-defaults to **off** — the production Learn turn keeps its exact previous
-behaviour unless explicitly enabled.
+The **Teaching Session Graph** is the production default — and, since Candidate A
+(teaching-hook + generic Agent Loop) was retired, the **only** Learn teaching
+control path.  There is no legacy/fallback switch: Learn turns always run through
+the graph.  This module keeps a minimal routing contract for the orchestrator and
+for tests so the graph's primacy is explicit and auditable.
+
+The selector is a pure ``mode.learn`` controller: it only decides *whether* this
+is a Learn turn, never *how* the Agent Runtime (a mode-agnostic dependency)
+executes a turn.
 """
 
 from __future__ import annotations
 
-import os
-
-#: Opt-in env switch.  Set to ``1`` / ``true`` to route Learn turns through the
-#: Teaching Session Graph Candidate instead of the teaching-hook path.  Unset is
-#: the production (hook) behaviour.
-LUMEN_LEARN_GRAPH_CANDIDATE_ENV = "LUMEN_LEARN_GRAPH_CANDIDATE"
-
 
 def is_graph_candidate_enabled() -> bool:
-    """Whether the Teaching Session Graph Candidate is selected for this process."""
-    return os.environ.get(LUMEN_LEARN_GRAPH_CANDIDATE_ENV, "").strip().lower() in (
-        "1",
-        "true",
-        "yes",
-        "on",
-    )
+    """Whether the Teaching Session Graph is the active Learn control path.
+
+    The graph is the sole production Learn teaching path, so this is always
+    ``True`` (no legacy fallback exists).
+    """
+    return True
 
 
 def route_learn_turn(*, context) -> str:
     """Choose the orchestration route for a Learn turn.
 
-    Returns ``"graph"`` when the candidate is enabled (and this is a Learn
-    turn); otherwise ``"hook"`` (the existing teaching-hook path).
+    Returns ``"graph"`` (Teaching Session Graph) for Learn turns.  Non-Learn
+    turns return ``"hook"`` (a no-op route kept for the generic path's contract;
+    it is never selected for Learn turns).
     """
     is_learn = bool(getattr(getattr(context, "metadata", None), "get", lambda *a: False)(
         "mastery_mode", False
     ))
-    return "graph" if (is_learn and is_graph_candidate_enabled()) else "hook"
+    return "graph" if is_learn else "hook"
 
 
 __all__ = [
-    "LUMEN_LEARN_GRAPH_CANDIDATE_ENV",
     "is_graph_candidate_enabled",
     "route_learn_turn",
 ]

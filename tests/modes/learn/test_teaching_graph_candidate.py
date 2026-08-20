@@ -33,7 +33,6 @@ from lumen.modes.learn.graph.contract import GRAPH_TOPOLOGY, TeachingNode
 from lumen.modes.learn.graph.domain_service import TeachingGraphDomain
 from lumen.modes.learn.graph.orchestrator import TeachingSessionGraph
 from lumen.modes.learn.graph.selector import (
-    LUMEN_LEARN_GRAPH_CANDIDATE_ENV,
     is_graph_candidate_enabled,
     route_learn_turn,
 )
@@ -113,22 +112,20 @@ def _run_graph(graph, *, path_id, stream, agent, resume_input=None, execute_gen=
     )
 
 
-# ── selection: coexist with the teaching-hook path ──────────────────────────
+# ── selection: the Teaching Session Graph is the production default ────────
 
 
-def test_candidate_off_by_default(monkeypatch):
-    monkeypatch.delenv(LUMEN_LEARN_GRAPH_CANDIDATE_ENV, raising=False)
-    assert is_graph_candidate_enabled() is False
-    assert route_learn_turn(context=_ctx()) == "hook"
+def test_graph_is_production_default(monkeypatch):
+    """The Teaching Session Graph is the active Learn control path by default."""
+    assert is_graph_candidate_enabled() is True
+    assert route_learn_turn(context=_ctx()) == "graph"
+
+
+def test_non_learn_turn_routes_hook(monkeypatch):
+    """Non-Learn turns fall back to the generic path (``hook`` route)."""
     ctx_hook = _ctx()
     ctx_hook.metadata["mastery_mode"] = False
     assert route_learn_turn(context=ctx_hook) == "hook"
-
-
-def test_candidate_enabled_routes_graph(monkeypatch):
-    monkeypatch.setenv(LUMEN_LEARN_GRAPH_CANDIDATE_ENV, "1")
-    assert is_graph_candidate_enabled() is True
-    assert route_learn_turn(context=_ctx()) == "graph"
 
 
 # ── topology is explicit & auditable ────────────────────────────────────────

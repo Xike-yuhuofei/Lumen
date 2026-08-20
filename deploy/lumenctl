@@ -1,0 +1,139 @@
+#!/usr/bin/env bash
+# ============================================================
+# lumenctl — Lumen 2.0.0 production service control
+# ============================================================
+# Start / stop / restart / status / healthcheck for the Lumen API server
+# under a supervisor of your choice (systemd / launchd / plain shell).
+#
+# Usage:
+#   lumenctl start [--foreground]
+#   lumenctl stop
+#   lumenctl restart
+#   lumenctl status
+#   lumenctl health
+#   lumenctl logs
+#
+# Environment:
+#   LUMEN_HOME       runtime workspace root (owns data/user, logs, telemetry)
+#   LUMEN_BIND_HOST  bind address (default 127.0.0.1)
+#   LUMEN_BIND_PORT  bind port (default 8001)
+#   LUMEN_PYTHON     python interpreter (default: venv python or `python3`)
+#   LUMEN_PIDFILE    pid file (default $LUMEN_HOME/lumen.pid)
+#   LUMEN_LOGFILE    stdout/stderr log (default $LUMEN_HOME/lumen.log)
+# ============================================================
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+: "${LUMEN_HOME:=$(cd "$SCRIPT_DIR/.." && pwd)}"
+: "${LUMEN_BIND_HOST:=127.0.0.1}"
+: "${LUMEN_BIND_PORT:=8001}"
+: "${LUMEN_PIDFILE:=$LUMEN_HOME/lumen.pid}"
+: "${LUMEN_LOGFILE:=$LUMEN_HOME/lumen.log}"
+
+# Prefer the project venv if present; otherwise use lumen on PATH.
+if [[ -z "${LUMEN_PYTHON:-}" ]]; then
+  if [[ -x "$SCRIPT_DIR/../.venv/bin/python" ]]; then
+    LUMEN_PYTHON="$SCRIPT_DIR/../.venv/bin/python"
+  elif command -v python3 >/dev/null 2>&1; then
+    LUMEN_PYTHON="$(command -v python3)"
+  else
+    echo "error: no python interpreter found (set LUMEN_PYTHON)" >&2
+    exit 1
+  fi
+fi
+
+health_url="http://${LUMEN_BIND_HOST}:${LUMEN_BIND_PORT}/api/v1/health"
+
+_ensure_home() {
+  mkdir -p "$LUMEN_HOME"
+}
+
+_is_running() {
+  [[ -f "$LUMEN_PIDFILE" ]] || return 1
+  local pid
+  pid="$(cat "$LUMEN_PIDFILE" 2>/dev/null || true)"
+  [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null
+}
+
+_start() {
+  _ensure_home
+  if _is_running; then
+    echo "lumen: already running (pid $(cat "$LUMEN_PIDFILE"))"
+    return 0
+  fi
+  local mode="${1:-}"
+  echo "lumen: starting on ${LUMEN_BIND_HOST}:${LUMEN_BIND_PORT} (LUMEN_HOME=$LUMEN_HOME)"
+  if [[ "$mode" == "--foreground" ]]; then
+    exec env LUMEN_HOME="$LUMEN_HOME" \
+      "$LUMEN_PYTHON" -m uvicorn lumen.app.api.main:app \
+      --host "$LUMEN_BIND_HOST" --port "$LUMEN_BIND_PORT" \
+      --log-level info --no-access-log
+  fi
+  env LUMEN_HOME="$LUMEN_HOME" \
+    nohup "$LUMEN_PYTHON" -m uvicorn lumen.app.api.main:app \
+      --host "$LUMEN_BIND_HOST" --port "$LUMEN_BIND_PORT" \
+      --log-level info --no-access-log >>"$LUMEN_LOGFILE" 2>&1 &
+  echo $! >"$LUMEN_PIDFILE"
+  echo "lumen: pid $(cat "$LUMEN_PIDFILE") (log: $LUMEN_LOGFILE)"
+}
+
+_stop() {
+  if ! _is_running; then
+    echo "lumen: not running"
+    rm -f "$LUMEN_PIDFILE"
+    return 0
+  fi
+  local pid
+  pid="$(cat "$LUMEN_PIDFILE")"
+  echo "lumen: stopping pid $pid"
+  kill "$pid" 2>/dev/null || true
+  for _ in $(seq 1 30); do
+    kill -0 "$pid" 2>/dev/null || break
+    sleep 0.5
+  done
+  if kill -0 "$pid" 2>/dev/null; then
+    echo "lumen: force-killing pid $pid"
+    kill -9 "$pid" 2>/dev/null || true
+  fi
+  rm -f "$LUMEN_PIDFILE"
+  echo "lumen: stopped"
+}
+
+_status() {
+  if _is_running; then
+    echo "lumen: running (pid $(cat "$LUMEN_PIDFILE"))"
+    return 0
+  fi
+  echo "lumen: not running"
+  return 1
+}
+
+_health() {
+  local code body
+  code="$(curl -s -m 5 -o /tmp/lumen-health.$$ -w '%{http_code}' "$health_url" 2>/dev/null || echo 000)"
+  body="$(cat /tmp/lumen-health.$$ 2>/dev/null || true)"
+  rm -f /tmp/lumen-health.$$
+  echo "health ($health_url): HTTP $code $body"
+  [[ "$code" == "200" ]]
+}
+
+case "${1:-}" in
+  start) _start "${2:-}" ;;
+  start-foreground) _start --foreground ;;
+  stop) _stop ;;
+  restart) _stop; _start ;;
+  status) _status ;;
+  health) _health ;;
+  logs)
+    if [[ -f "$LUMEN_LOGFILE" ]]; then
+      tail -n 100 -f "$LUMEN_LOGFILE"
+    else
+      echo "lumen: no log file at $LUMEN_LOGFILE" >&2
+      exit 1
+    fi
+    ;;
+  *)
+    echo "usage: $0 {start|start-foreground|stop|restart|status|health|logs}" >&2
+    exit 2
+    ;;
+esac

@@ -405,6 +405,39 @@ async def root():
     return {"message": f"Welcome to {PRODUCT_NAME} API"}
 
 
+@app.get("/api/v1/health")
+async def health():
+    """Unauthenticated liveness/readiness probe for production deployments.
+
+    Returns the Lumen version, whether the Plugin Kernel assembly was booted
+    (the server refuses to start if it was not), and a minimal storage probe so
+    an orchestrator (systemd / launchd / Kubernetes / Docker HEALTHCHECK) can
+    distinguish "process up" from "service ready".  Never returns credentials,
+    configuration values, or provider secrets.
+    """
+    from lumen.__version__ import __version__
+
+    kernel_booted = bool(getattr(app.state, "lumen_root", None))
+    db_ok = False
+    try:
+        from lumen.runtime.session.sqlite_store import get_sqlite_session_store
+
+        store = get_sqlite_session_store()
+        if store is not None:
+            db_ok = bool(await store.ping())
+    except Exception:
+        db_ok = False
+
+    ready = kernel_booted and db_ok
+    return {
+        "status": "ok" if ready else "degraded",
+        "service": PRODUCT_NAME,
+        "version": __version__,
+        "kernel": "booted" if kernel_booted else "not_booted",
+        "storage": "ok" if db_ok else "error",
+    }
+
+
 if __name__ == "__main__":
     from lumen.app.api.run_server import main as run_server_main
 

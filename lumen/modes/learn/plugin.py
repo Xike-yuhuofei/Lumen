@@ -56,7 +56,7 @@ class _LearnModeServiceAdapter(LearnModeService):
         self._llm_service = llm_service
         # Lazy Teaching Session ↔ execution governor (C2).
         self._governor: Any = None
-        # Lazy Minimal Teaching Session Graph Candidate (opt-in, default off).
+        # Lazy Teaching Session Graph (production default Learn teaching path).
         self._graph: Any = None
 
     def _session_governor(self) -> Any:
@@ -148,17 +148,14 @@ class _LearnModeServiceAdapter(LearnModeService):
         self._mount_goal_source(context, path_id)
         deps = self._pipeline_deps()
 
-        # C2: Teaching Session ↔ execution identity / lifecycle.  Engage only
-        # when the injected runtime actually owns a durable execution identity
-        # (duck-typed seam, never an import).  Other providers (e.g. Legacy
-        # rollback) keep their exact previous single-run behaviour below.
+        # Teaching Session Graph is the sole production Learn teaching path
+        # (Candidate A — teaching-hook — is retired, no legacy fallback).  Engage
+        # the durable Teaching Session ↔ execution lifecycle only when the
+        # injected runtime actually owns a durable execution identity (duck-typed
+        # seam, never an import).  Other providers keep their exact single-run
+        # behaviour below.
         if getattr(self._agent_loop, "supports_durable_execution", False):
-            from lumen.modes.learn.graph.selector import route_learn_turn
-
-            if route_learn_turn(context=context) == "graph":
-                await self._handled_graph_turn(path_id, context, stream, deps)
-                return
-            await self._handled_durable_turn(path_id, context, stream, deps)
+            await self._handled_graph_turn(path_id, context, stream, deps)
             return
 
         await self._agent_loop.run(
@@ -168,74 +165,15 @@ class _LearnModeServiceAdapter(LearnModeService):
             **deps,
         )
 
-    async def _handled_durable_turn(
-        self, path_id: str, context: Any, stream: Any, deps: dict[str, Any]
-    ) -> None:
-        """Run one turn with a durable Teaching Session → execution lifecycle.
-
-        Plans / persists the execution position, drives the Agent Runtime with
-        an explicit ``execution_generation`` + ``execution_operation``, and
-        records the adapter-reported termination back into the session governor.
-        """
-        from lumen.modes.learn.teaching_session import map_termination_to_status
-
-        governor = self._session_governor()
-        teaching_session_id = governor.ensure_session(path_id)
-        retry = bool(context.metadata.get("retry_execution", False))
-        plan = governor.plan(
-            teaching_session_id,
-            retry=retry,
-            resume_input=self._resume_input_for(context),
-        )
-        governor.record_start(plan)
-
-        context.metadata["teaching_session_id"] = teaching_session_id
-        context.metadata["execution_generation"] = plan.execution_generation
-        context.metadata["execution_operation"] = plan.operation
-        deps["execution_generation"] = plan.execution_generation
-        deps["execution_operation"] = plan.operation
-        if plan.resume_input is not None:
-            deps["resume_input"] = plan.resume_input
-
-        try:
-            await self._agent_loop.run(
-                context=context,
-                stream=stream,
-                language=context.language,
-                **deps,
-            )
-        finally:
-            # The adapter reports the ACTUAL resolved identity (for ``retry`` the
-            # provider forges its own); reconcile the session map if it differs.
-            actual_gen = str(
-                context.metadata.get("execution_generation") or plan.execution_generation
-            )
-            if actual_gen != plan.execution_generation:
-                governor.rebase_execution(
-                    teaching_session_id,
-                    plan.execution_generation,
-                    actual_gen,
-                )
-            status = map_termination_to_status(
-                operation=plan.operation,
-                completed=bool(context.metadata.get("exec_completed")),
-                termination=str(context.metadata.get("exec_termination") or ""),
-            )
-            governor.record_termination(
-                teaching_session_id,
-                actual_gen,
-                status,
-            )
-
     async def _handled_graph_turn(
         self, path_id: str, context: Any, stream: Any, deps: dict[str, Any]
     ) -> None:
-        """Run one turn through the Teaching Session Graph Candidate.
+        """Run one turn through the Teaching Session Graph (production default).
 
-        Mirrors :meth:`_handled_durable_turn` (durable Teaching Session ↔
-        execution lifecycle) but the graph owns the pedagogical flow, walking
-        SNAPSHOT -> ASSESS -> DIAGNOSE -> DECIDE -> ACT -> COMMIT -> CONTINUE /
-        TERMINATE and delegating only content / interaction to ``agent_loop``.
+        Owns the durable Teaching Session ↔ execution lifecycle and lets the
+        graph drive the pedagogical flow, walking SNAPSHOT -> ASSESS -> DIAGNOSE
+        -> DECIDE -> ACT -> COMMIT -> CONTINUE / TERMINATE and delegating only
+        content / interaction to ``agent_loop``.
         """
         from lumen.modes.learn.teaching_session import map_termination_to_status
 

@@ -1,0 +1,45 @@
+# ============================================================
+# Lumen 2.0.0 — systemd service unit (Linux production)
+# ============================================================
+# Install:  sudo cp lumen.service /etc/systemd/system/lumen.service
+#           sudo systemctl daemon-reload
+#           sudo systemctl enable --now lumen
+#
+# Adjust User / Group / EnvironmentFile / paths to your deployment.
+# The EnvironmentFile must NOT contain plaintext secrets committed to git;
+# it is expected to be a private file (chmod 600) at deploy time.
+# ============================================================
+[Unit]
+Description=Lumen 2.0.0 API server (agent-native learning companion)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# System user the service runs as (create it if not present).
+User=lumen
+Group=lumen
+# Runtime workspace root (owns data/user, logs, telemetry).
+Environment=LUMEN_HOME=/srv/lumen/data
+Environment=LUMEN_BIND_HOST=127.0.0.1
+Environment=LUMEN_BIND_PORT=8001
+# Provider credentials / telemetry export config.
+EnvironmentFile=/etc/lumen/lumen.env
+WorkingDirectory=/srv/lumen
+ExecStart=/srv/lumen/venv/bin/python -m uvicorn lumen.app.api.main:app \
+    --host ${LUMEN_BIND_HOST} \
+    --port ${LUMEN_BIND_PORT} \
+    --log-level info \
+    --no-access-log
+Restart=on-failure
+RestartSec=5
+# Hardening (adjust to your sandbox policy).
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+# Healthcheck cadence.
+# ExecStartPost=/srv/lumen/deploy/lumenctl health
+
+[Install]
+WantedBy=multi-user.target

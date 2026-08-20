@@ -15,9 +15,9 @@ effect. If no candidate is stably better, the honest conclusion is
 **KEEP BASELINE / CONTINUE EXPERIMENT** (no forced promotion).
 """
 
-#: Phase 2A status — updated after each real run; a definitive report should
-#: replace this with ``KEEP BASELINE / CONTINUE EXPERIMENT`` or
-#: ``PROMOTE CANDIDATE``.
-PHASE2A_STATUS = "RUNNING"
+#: Phase 2A status — the real-LLM matrix completed with the honest verdict
+#: **KEEP BASELINE / CONTINUE EXPERIMENT** (no candidate met the promotion bar;
+#: see ``data/user/workspace/runtime/phase2a_outcome.json`` and its ``decision``).
+PHASE2A_STATUS = "KEEP BASELINE / CONTINUE EXPERIMENT"
 
 __all__ = ["PHASE2A_STATUS"]

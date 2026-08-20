@@ -18,14 +18,16 @@ Lumen 已从 **Architecture Migration 阶段** 正式进入 **Product Capability
 `LUMEN_AGENT_LOOP_PROVIDER=legacy` 一个环境变量即可。此覆盖此前「Production =
 LEGACY 不可变更」的冻结结论。
 
-**Teaching Architecture — 决策冻结 (2026-08-20 / CLOSED)：KEEP A。**
-`mode.learn` 教学架构正式采用 **Candidate A（teaching-hook + generic Agent
-Loop）作为 Production Default**；**Candidate B（Teaching Session Graph，
-`lumen/modes/learn/graph/`，`LUMEN_LEARN_GRAPH_CANDIDATE=1` opt-in）为
-Experimental / Research Asset**，不作为待 Promotion 的活动候选。Phase-3 →
-Phase-4b → Phase-4c 已收口（CLOSED）：在具备诊断力的策略敏感 learner 下 A/B
-仍稳定 parity、B 无教学效果增量，其价值属审计/重放/跨会话连续性等架构-运维能力。
-重新开启此决策需新证据（见 `ARCHITECTURE_V1.md` §6）。
+**Teaching Architecture — 决策更新 (2026-08-20 / COMPLETE)：PROMOTE B。**
+`mode.learn` 教学架构正式采用 **Candidate B（Teaching Session Graph +
+Agent Runtime）作为 Production Default**；`route_learn_turn` 对 Learn turn 恒
+返回 `"graph"`。**Candidate A（teaching-hook + generic Agent Loop）已退役**，
+从生产路径删除、不再作为默认或 fallback（无 `LUMEN_LEARN_*` 开关）。
+Teaching Architecture Promotion **COMPLETE**。Phase-3 → Phase-4b → Phase-4c 的
+A/B parity 证据保留在 `tests/modes/learn/eval/bakeoff/out_phase*/` 归档。
+**依据为长期教学架构上限与已验证生产可行性，而非实测教学效果优势**；教学
+效果 parity 仍稳定（A/B 逐字相等）。重新评估此决策需新证据（见
+`ARCHITECTURE_V1.md` §6）。
 
 详细基线见 `ARCHITECTURE_V1.md`.
 
