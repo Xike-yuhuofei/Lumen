@@ -3,7 +3,7 @@
 > **Status: PRODUCTION RELEASE** — reproducible deployment for the
 > **Production-Validated Release Baseline** (tag `production-validated-v1`,
 > commit `c624aea0`), released as **Lumen 2.0.0** (tag `v2.0.0` /
-> `production-release-v1`, commit `321a05cc`).
+> `production-release-v1`, commit `a145e427`).
 
 This runbook lets a fresh environment deploy Lumen 2.0.0 from source (or from
 the built wheel) in the same form that was production-validated. It covers
