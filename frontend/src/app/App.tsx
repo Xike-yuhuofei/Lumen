@@ -31,6 +31,12 @@ import { listToggleableTools, setEnabledOptionalTools, type ToolItem } from '../
 import { UnifiedWSClient, type StreamEvent } from '../api/ws'
 import { AssistantMarkdown } from './AssistantMarkdown'
 import { PRODUCT_NAME } from './brand'
+import {
+  PerceivedTurnTracker,
+  appendSample,
+  installPerceivedDebugHook,
+  perfClock,
+} from '../lib/perceived'
 import { SettingsModal } from './SettingsModal'
 import {
   DEFAULT_CHAT_TIMEOUT,
@@ -93,6 +99,9 @@ import {
   writeSelectedId,
   writeSessions,
 } from './sessions'
+
+/** Build version label recorded in perceived samples / baseline (T3 §9). */
+const APP_VERSION = '0.1.0'
 
 /* =============================================================
    Icons – 16×16 trae-icon style paths
@@ -1647,7 +1656,17 @@ function deriveThinkingPhase(events: StreamEvent[]): string {
       continue
     }
     if (event.type === 'thinking') return '正在思考…'
-    if (event.type === 'content') return '正在生成回答…'
+    if (event.type === 'content') {
+      // Non-decisive (empty) content must NOT regress the phase text (T4 D5).
+      // Only non-empty content carries the first meaningful result (T2 I2).
+      if ((event.content || '').trim()) return '正在生成回答…'
+      continue
+    }
+    if (event.type === 'result' || event.type === 'wait_for_input') {
+      // Text-level events that never advance P: keep the previous phase text
+      // rather than falling back to a generic "正在处理…" (T2 §6 / T4 D5).
+      continue
+    }
   }
   return '正在处理…'
 }
@@ -2891,6 +2910,12 @@ export default function App() {
   const [streamPhase, setStreamPhase] = useState('正在处理…')
   const [connectError, setConnectError] = useState('')
 
+  // --- Perceived latency (T6 / W-I1..W-I5) ---
+  // Current turn's perceived tracker; collects O-plane facts and, on terminal,
+  // produces a T3 §9 sample. Never affects the main conversation path.
+  const perceivedTurnRef = useRef<PerceivedTurnTracker | null>(null)
+  const [transportStatus, setTransportStatus] = useState<'connected' | 'reconnecting' | 'disconnected' | 'init'>('init')
+
   // --- Learning space (real goals from /api/v1/learning) ---
   const [learningGoals, setLearningGoals] = useState<LearningGoal[]>([])
   const [learningGoalsLoading, setLearningGoalsLoading] = useState(false)
@@ -3079,6 +3104,17 @@ export default function App() {
     setSessions(sessionsRef.current)
   }, [])
 
+  // Finalize the current perceived turn (if any) and persist its T3 §9 sample.
+  // Called on every terminal (done/error/cancel/timeout); samples with no terminal
+  // are dropped (T3 §8 truncated handling is left to a later stage).
+  const closePerceivedTurn = useCallback(() => {
+    const tracker = perceivedTurnRef.current
+    perceivedTurnRef.current = null
+    if (!tracker) return
+    const sample = tracker.finalize()
+    if (sample) appendSample(sample)
+  }, [])
+
   const failTurnIdle = useCallback(() => {
     const turn = turnRef.current
     if (!turn) return
@@ -3092,6 +3128,10 @@ export default function App() {
     }
     const turnId = turn.turnId
     if (turnId) wsRef.current?.send({ type: 'cancel_turn', turn_id: turnId })
+    // Perceived timeout (T3 M8-t): idle timer trigger on a non-PIN active state.
+    const at = perfClock.now()
+    perceivedTurnRef.current?.onAction({ kind: 'timeout', at })
+    perceivedTurnRef.current?.recordTimeoutBlock(at)
     // Append a timeout notice rather than replacing blocks. Preserves text the user
     // has already seen (critique, prior questions, tool results) per the same
     // non-destructive rule used by eventsToBlocks for error events.
@@ -3108,7 +3148,8 @@ export default function App() {
       patchAssistantBlocks(turn.sessionId, turn.assistantId, turn.blocks)
     }
     setStreaming(false)
-  }, [patchAssistantBlocks])
+    closePerceivedTurn()
+  }, [closePerceivedTurn, patchAssistantBlocks])
 
   const armTurnIdleTimer = useCallback(() => {
     clearTurnIdleTimer()
@@ -3122,6 +3163,30 @@ export default function App() {
     if (sid && sid !== turn.sessionId) remapSessionId(turn.sessionId, sid)
     if (event.turn_id) turn.turnId = event.turn_id
     armTurnIdleTimer()
+
+    // Perceived instrumentation (W-I1): feed the tracker with the O-plane event
+    // and its client-monotonic arrival time. Never alters business behaviour.
+    const arrival = event.clientArrivalAt ?? perfClock.now()
+    const tracker = perceivedTurnRef.current
+    if (tracker) {
+      tracker.onEvent({
+        type: event.type,
+        content: event.content,
+        metadata: event.metadata,
+        seq: event.seq,
+        arrivalAt: arrival,
+      })
+      if (event.type === 'wait_for_input') {
+        // Explicit PIN consumption (W-I4): wait_for_input → PIN, no processing UI.
+        tracker.recordQuestionCard(arrival, true)
+        tracker.recordProcessing(arrival, false)
+      }
+      if (event.type === 'content' && (event.content ?? '').trim()) {
+        tracker.recordContentRendered(arrival)
+        tracker.recordProcessing(arrival, false)
+      }
+    }
+
     if (event.type === 'session' || event.type === 'session_meta') return
     if (event.type === 'done') {
       clearTurnIdleTimer()
@@ -3129,18 +3194,28 @@ export default function App() {
       patchAssistantBlocks(turn.sessionId, turn.assistantId, turn.blocks)
       patchAssistantServerId(turn.sessionId, turn.assistantId, event)
       setStreaming(false)
+      // Finalize & persist the perceived sample (OK).
+      if (tracker) tracker.recordProcessing(arrival, false)
+      closePerceivedTurn()
       return
     }
     turn.events.push(event)
     setStreamPhase(deriveThinkingPhase(turn.events))
+    if (tracker) tracker.recordPhaseText(arrival, deriveThinkingPhase(turn.events))
     const next = eventsToBlocks(turn.events, '')
     turn.blocks = next
     patchAssistantBlocks(turn.sessionId, turn.assistantId, turn.blocks)
     if (event.type === 'error') {
       clearTurnIdleTimer()
       setStreaming(false)
+      // Finalize & persist the perceived sample (ER/CA).
+      if (tracker) {
+        tracker.recordProcessing(arrival, false)
+        tracker.recordErrorBlock(arrival)
+      }
+      closePerceivedTurn()
     }
-  }, [armTurnIdleTimer, clearTurnIdleTimer, patchAssistantBlocks, patchAssistantServerId, remapSessionId])
+  }, [armTurnIdleTimer, clearTurnIdleTimer, closePerceivedTurn, patchAssistantBlocks, patchAssistantServerId, remapSessionId])
 
   // Persisted map of question.id → selected answer label. The useState copy
   // drives re-renders (so the read-only QuizAnswerCard highlights the choice)
@@ -3155,6 +3230,10 @@ export default function App() {
     answeredQuestionsRef.current = { ...answeredQuestionsRef.current, [question.id]: answer }
     setAnsweredQuestions((prev) => ({ ...prev, [question.id]: answer }))
     wsRef.current?.send({ type: 'submit_user_reply', turn_id: turnId, answers: [{ questionId: question.id, text: answer }] })
+    // Perceived PIN exit (W-I4): record t_ur (submit_user_reply).
+    const at = perfClock.now()
+    perceivedTurnRef.current?.onAction({ kind: 'submit_user_reply', at })
+    perceivedTurnRef.current?.recordQuestionCard(at, false)
     // Reset idle timer now that the backend is about to resume the turn and
     // stream critique content. This ensures we wait the full timeout window
     // from the moment of submission rather than whatever partial time was
@@ -3168,14 +3247,31 @@ export default function App() {
     wsReadyRef.current = true
     const client = new UnifiedWSClient(
       handleStreamEvent,
-      () => setConnectError(STREAM_CONNECT_ERROR),
-      () => setConnectError(''),
+      () => {
+        setConnectError(STREAM_CONNECT_ERROR)
+        // Production-validated: the error-banner callback fires only on real
+        // transport-failure (reconnect exhausted). The perceived tracker
+        // records this as a transport fact (W-I5).
+        setTransportStatus('disconnected')
+      },
+      () => {
+        setConnectError('')
+        setTransportStatus('connected')
+      },
+      (ts) => {
+        setTransportStatus(ts.status)
+        // Feed the perceived tracker with the transport fact (W-I5).
+        const tracker = perceivedTurnRef.current
+        if (tracker) {
+          tracker.onTransport({ status: ts.status, at: ts.at })
+          tracker.recordTransportBanner(ts.at, ts.status)
+        }
+      },
     )
     wsRef.current = client
     client.connect()
-    // NOTE: no teardown here — the App is the root and never unmounts, and
-    // disconnecting on StrictMode's simulated unmount would kill the single
-    // live socket during the remount that follows.
+    // Install debug hook for perceived latency data inspection.
+    installPerceivedDebugHook(APP_VERSION)
     return () => {} // keep connection alive across StrictMode double-mount
   }, [])
 
@@ -3313,6 +3409,20 @@ export default function App() {
       events: [],
       blocks: [],
     }
+    // Perceived latency: drop any unfinished previous turn and open a new tracker
+    // (W-I1). E1 same-tick first feedback is recorded at t_submit (T4 D1).
+    const tSubmit = perfClock.now()
+    const hasPriorAssistant = (existing?.messages ?? []).some((m) => m.role === 'assistant')
+    const perceivedTracker = new PerceivedTurnTracker({
+      sessionId: titleBox.id,
+      capability: capabilityRef.current ?? 'chat',
+      appVersion: APP_VERSION,
+      warmth: hasPriorAssistant ? 'warm' : 'cold_first',
+      tSubmit,
+    })
+    perceivedTracker.recordFirstFeedback(tSubmit)
+    perceivedTracker.recordProcessing(tSubmit, true)
+    perceivedTurnRef.current = perceivedTracker
     setStreaming(true)
     setStreamPhase('正在处理…')
     setConnectError('')
@@ -3438,6 +3548,18 @@ export default function App() {
     persistSessions(sessionsRef.current)
     setSessions(sessionsRef.current)
     turnRef.current = { sessionId, assistantId, turnId: null, events: [], blocks: [] }
+    // Perceived latency: open a fresh tracker for the regenerated turn (W-I1).
+    const tSubmit = perfClock.now()
+    const perceivedTracker = new PerceivedTurnTracker({
+      sessionId,
+      capability: capabilityRef.current ?? 'chat',
+      appVersion: APP_VERSION,
+      warmth: 'warm',
+      tSubmit,
+    })
+    perceivedTracker.recordFirstFeedback(tSubmit)
+    perceivedTracker.recordProcessing(tSubmit, true)
+    perceivedTurnRef.current = perceivedTracker
     setStreaming(true)
     setStreamPhase('正在处理…')
     setConnectError('')
@@ -3454,9 +3576,13 @@ export default function App() {
   const handleCancel = useCallback(() => {
     const turnId = turnRef.current?.turnId
     if (turnId) wsRef.current?.send({ type: 'cancel_turn', turn_id: turnId })
+    // Perceived cancel (T3 M8-c): user action at t_cancel → CA.
+    const at = perfClock.now()
+    perceivedTurnRef.current?.onAction({ kind: 'cancel', at })
     clearTurnIdleTimer()
     setStreaming(false)
-  }, [clearTurnIdleTimer])
+    closePerceivedTurn()
+  }, [clearTurnIdleTimer, closePerceivedTurn])
 
   const handleAddFiles = useCallback((list: FileList) => {
     void Promise.all(Array.from(list).map(fileToAttachment)).then((next) => {
@@ -3674,6 +3800,11 @@ export default function App() {
                         {connectError && (
                           <div style={{ padding: '8px 16px', color: 'var(--status-error-default, #f65a5a)', fontSize: 13 }}>
                             {connectError}
+                          </div>
+                        )}
+                        {transportStatus === 'reconnecting' && !connectError && (
+                          <div data-testid="transport-reconnecting" role="status" aria-live="polite" style={{ padding: '8px 16px', color: 'var(--status-warning-default, #b8871f)', fontSize: 13 }}>
+                            连接已断开，正在重新连接…
                           </div>
                         )}
                         <Composer
