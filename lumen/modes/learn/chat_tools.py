@@ -33,7 +33,9 @@ from lumen.modes.learn.assessment.choices import (
     resolve_answer,
     resolve_choice_submission,
 )
+from lumen.modes.learn.assessment.grading import grade_answer
 from lumen.modes.learn.assessment.pending import public_pending_question
+from lumen.modes.learn.commit.outbox import OutboxDispatcher
 
 # ``learning.models`` and ``learning.policy`` only depend on pydantic — safe to
 # import at module load. ``learning.service`` / ``storage`` / ``scheduler``
@@ -254,7 +256,7 @@ async def _resolve_pending_choice(
     return options, resolve_answer(pending.expected_answer, options) or pending.expected_answer
 
 
-async def _sync_mastery_attempt_to_question_bank(
+def _question_bank_payload(
     *,
     session_id: str,
     turn_id: str,
@@ -263,10 +265,15 @@ async def _sync_mastery_attempt_to_question_bank(
     is_correct: bool,
     choice_options: dict[str, str] | None = None,
     correct_answer: str | None = None,
-) -> None:
-    if not session_id:
-        return
-    item = {
+) -> dict:
+    """Build the question-bank projection payload for the transactional outbox.
+
+    The payload is committed atomically with the learner commit (as an outbox
+    intent); the outbox dispatcher later upserts it into ``chat_history.db``
+    idempotently, so a crash cannot drop or duplicate the projection.
+    """
+    return {
+        "session_id": session_id,
         "turn_id": turn_id,
         "question_id": pending.question_id,
         "question": pending.prompt,
@@ -278,17 +285,6 @@ async def _sync_mastery_attempt_to_question_bank(
         "user_answer": user_answer,
         "is_correct": is_correct,
     }
-    try:
-        from lumen.runtime.session import get_sqlite_session_store
-
-        await get_sqlite_session_store().upsert_notebook_entries(session_id, [item])
-    except Exception:
-        logger.warning(
-            "Failed to sync mastery question %s to question bank for session %s",
-            pending.question_id,
-            session_id,
-            exc_info=True,
-        )
 
 
 def _json_result(payload: dict[str, Any], *, meta_key: str, success: bool = True) -> ToolResult:
@@ -667,6 +663,20 @@ class MasteryGradeTool(BaseTool):
             progress, pending.knowledge_point_id, str(kwargs.get("misconception") or "")
         )
 
+        # Grade with the same fail-closed rule the service applies, so the
+        # outbox payload's outcome matches the evidence being committed.
+        is_correct = bool(expected_answer) and grade_answer(
+            answer_for_grading, expected_answer, pending.question_type
+        )
+        question_bank_payload = _question_bank_payload(
+            session_id=_resolve_session_id(kwargs),
+            turn_id=_resolve_turn_id(kwargs),
+            pending=pending,
+            user_answer=answer,
+            is_correct=is_correct,
+            choice_options=choice_options,
+            correct_answer=expected_answer,
+        )
         is_correct = service.grade_and_record(
             progress,
             question_id=pending.question_id,
@@ -678,16 +688,14 @@ class MasteryGradeTool(BaseTool):
             scheduler=scheduler,
             misconception_node_id=misconception_node_id,
             question_kind=pending.question_kind,
-        )
-        await _sync_mastery_attempt_to_question_bank(
             session_id=_resolve_session_id(kwargs),
             turn_id=_resolve_turn_id(kwargs),
-            pending=pending,
-            user_answer=answer,
-            is_correct=is_correct,
-            choice_options=choice_options,
-            correct_answer=expected_answer,
+            question_bank=question_bank_payload,
         )
+        # Project the question-bank side effect through the transactional outbox
+        # (committed atomically with the learner commit) and best-effort dispatch
+        # now; any failure is durable and will be replayed by the next sweep.
+        OutboxDispatcher(repository=service._store._repo).dispatch(limit=16)
         service.clear_pending_question(progress)
         kp, _, _ = find_knowledge_point(progress, pending.knowledge_point_id)
         mastered = bool(kp and is_mastered(progress, kp))

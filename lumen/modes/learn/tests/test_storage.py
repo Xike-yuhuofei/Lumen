@@ -91,10 +91,10 @@ class TestExists:
 class TestDelete:
     def test_removes_progress_file(self, store, tmp_path):
         store.save(LearningProgress(book_id="book1"))
-        assert (tmp_path / "book1.json").exists()
+        assert store.exists("book1") is True
         store.delete("book1")
         assert store.load("book1") is None
-        assert not (tmp_path / "book1.json").exists()
+        assert store.exists("book1") is False
 
     def test_delete_nonexistent_no_error(self, store):
         store.delete("nonexistent")  # should not raise
