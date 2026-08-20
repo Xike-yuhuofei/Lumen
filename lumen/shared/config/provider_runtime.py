@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 import json
+import os
 from typing import Any
 from urllib.parse import urlparse
 
@@ -29,6 +30,39 @@ from .embedding_endpoint import (
 )
 from .loader import load_config_with_main
 from .model_catalog import ModelCatalogService, get_model_catalog_service
+
+#: Fixed production LLM — every LLM call point (teaching/generic turns and all
+#: other helpers) must resolve to DeepSeek V4 Flash, with **no fallback LLM**.
+#: Overridable at runtime via ``LUMEN_LLM_LOCK_MODEL`` / ``LUMEN_LLM_LOCK_BINDING``:
+#: set either to "" to bypass enforcement (test escape hatch); unset = lock on.
+EXPECTED_LLM_MODEL = "deepseek-v4-flash"
+EXPECTED_LLM_BINDING = "deepseek"
+
+
+def _enforce_llm_lock(resolved_model: str, provider_name: str) -> None:
+    """Raise unless the resolved LLM matches the fixed production model.
+
+    Sits at the single resolver funnel so every LLM call point is covered.
+    Raises instead of silently falling back to any other model/provider when
+    the locked model is unavailable.
+    """
+    from lumen.shared._util.llm.exceptions import LLMConfigError
+
+    lock_model = os.environ.get("LUMEN_LLM_LOCK_MODEL", EXPECTED_LLM_MODEL)
+    lock_binding = os.environ.get("LUMEN_LLM_LOCK_BINDING", EXPECTED_LLM_BINDING)
+    if not lock_model and not lock_binding:
+        # Explicitly cleared -> bypass enforcement (test escape hatch).
+        return
+    if lock_model and resolved_model != lock_model:
+        raise LLMConfigError(
+            f"LLM model is locked to {lock_model!r} (no fallback); resolved {resolved_model!r}.",
+            provider=provider_name or None,
+        )
+    if lock_binding and provider_name != lock_binding:
+        raise LLMConfigError(
+            f"LLM provider is locked to {lock_binding!r} (no fallback); resolved {provider_name!r}.",
+            provider=provider_name or None,
+        )
 
 
 @dataclass(frozen=True)
@@ -510,7 +544,9 @@ def resolve_llm_runtime_config(
     profile, model = _active_profile_and_model(loaded, catalog_service, "llm")
     resolved_model = _as_str((model or {}).get("model"))
     if not resolved_model:
-        resolved_model = "Qwen3-8B"
+        # No hardcoded placeholder fallback: an unresolved model must fail
+        # loudly via _enforce_llm_lock instead of silently defaulting.
+        resolved_model = ""
 
     binding_hint_raw = _as_str((profile or {}).get("binding"))
     binding_hint = canonical_provider_name(binding_hint_raw)
@@ -542,6 +578,8 @@ def resolve_llm_runtime_config(
     if not api_key and spec.is_local:
         api_key = "sk-no-key-required"
     extra_headers = active_extra_headers or ((mapped.extra_headers or {}) if mapped else {})
+
+    _enforce_llm_lock(resolved_model, spec.name)
 
     return ResolvedLLMConfig(
         model=resolved_model,

@@ -33,7 +33,9 @@ from lumen.modes.learn.assessment.choices import (
     resolve_answer,
     resolve_choice_submission,
 )
+from lumen.modes.learn.assessment.grading import grade_answer
 from lumen.modes.learn.assessment.pending import public_pending_question
+from lumen.modes.learn.commit.outbox import OutboxDispatcher
 
 # ``learning.models`` and ``learning.policy`` only depend on pydantic — safe to
 # import at module load. ``learning.service`` / ``storage`` / ``scheduler``
@@ -254,7 +256,7 @@ async def _resolve_pending_choice(
     return options, resolve_answer(pending.expected_answer, options) or pending.expected_answer
 
 
-async def _sync_mastery_attempt_to_question_bank(
+def _question_bank_payload(
     *,
     session_id: str,
     turn_id: str,
@@ -263,10 +265,15 @@ async def _sync_mastery_attempt_to_question_bank(
     is_correct: bool,
     choice_options: dict[str, str] | None = None,
     correct_answer: str | None = None,
-) -> None:
-    if not session_id:
-        return
-    item = {
+) -> dict:
+    """Build the question-bank projection payload for the transactional outbox.
+
+    The payload is committed atomically with the learner commit (as an outbox
+    intent); the outbox dispatcher later upserts it into ``chat_history.db``
+    idempotently, so a crash cannot drop or duplicate the projection.
+    """
+    return {
+        "session_id": session_id,
         "turn_id": turn_id,
         "question_id": pending.question_id,
         "question": pending.prompt,
@@ -278,17 +285,6 @@ async def _sync_mastery_attempt_to_question_bank(
         "user_answer": user_answer,
         "is_correct": is_correct,
     }
-    try:
-        from lumen.runtime.session import get_sqlite_session_store
-
-        await get_sqlite_session_store().upsert_notebook_entries(session_id, [item])
-    except Exception:
-        logger.warning(
-            "Failed to sync mastery question %s to question bank for session %s",
-            pending.question_id,
-            session_id,
-            exc_info=True,
-        )
 
 
 def _json_result(payload: dict[str, Any], *, meta_key: str, success: bool = True) -> ToolResult:
@@ -300,9 +296,15 @@ def _json_result(payload: dict[str, Any], *, meta_key: str, success: bool = True
 
 
 def _no_path_result() -> ToolResult:
+    """Designed business failure: a mastery tool invoked with no active path.
+
+    Marked ``expected_failure`` so these normal outcomes in general
+    conversations never pollute the Tool SLI (which tracks real faults).
+    """
     return ToolResult(
         content="No mastery path is active on this turn; mastery tools are unavailable.",
         success=False,
+        expected_failure=True,
     )
 
 
@@ -355,14 +357,18 @@ class TeachingPlanTool(BaseTool):
 
         teaching = TeachingService()
         action = teaching.decide(path_id)
-        node_title = _node_title(teaching, progress, action.focus_node_id)
-        instruction = action_instruction(action, node_title=node_title)
         try:
             graph = teaching.get_graph(progress.book_id)
         except Exception:
             logger.warning("Failed to load teaching graph for grounding", exc_info=True)
             graph = None
         focus_payload = _node_payload(graph, action.focus_node_id)
+        node_title = _node_title(teaching, progress, action.focus_node_id)
+        instruction = action_instruction(
+            action,
+            node_title=node_title,
+            node_type=focus_payload.get("type", ""),
+        )
         resources = [_node_payload(graph, rid) for rid in action.resource_node_ids]
         misconception = None
         if focus_payload.get("type") == "misconception":
@@ -530,19 +536,21 @@ class MasteryQuizTool(BaseTool):
             return ToolResult(
                 content="mastery_quiz needs knowledge_point_id, question, and expected_answer.",
                 success=False,
+                expected_failure=True,
             )
         try:
             q_type, options, expected = _normalize_quiz_contract(
                 kwargs.get("question_type"), kwargs.get("options"), expected
             )
         except ValueError as exc:
-            return ToolResult(content=str(exc), success=False)
+            return ToolResult(content=str(exc), success=False, expected_failure=True)
         question_kind = str(kwargs.get("question_kind") or "recall").strip().lower()
         if question_kind not in _QUESTION_KINDS:
             allowed = ", ".join(_QUESTION_KINDS)
             return ToolResult(
                 content=f"mastery_quiz.question_kind must be one of: {allowed}.",
                 success=False,
+                expected_failure=True,
             )
 
         service = _new_service()
@@ -552,6 +560,7 @@ class MasteryQuizTool(BaseTool):
             return ToolResult(
                 content=f"Unknown objective {kp_id!r}; call mastery_status for valid ids.",
                 success=False,
+                expected_failure=True,
             )
         pending = PendingQuestion(
             question_id=uuid.uuid4().hex,
@@ -642,6 +651,7 @@ class MasteryGradeTool(BaseTool):
             return ToolResult(
                 content="No question is awaiting an answer. Pose one with mastery_quiz first.",
                 success=False,
+                expected_failure=True,
             )
         submitted_question_id = str(kwargs.get("question_id") or "").strip()
         if submitted_question_id and submitted_question_id != pending.question_id:
@@ -651,6 +661,7 @@ class MasteryGradeTool(BaseTool):
                     f"call mastery_status and answer {pending.question_id!r}."
                 ),
                 success=False,
+                expected_failure=True,
             )
         choice_options: dict[str, str] = {}
         expected_answer = pending.expected_answer
@@ -667,6 +678,20 @@ class MasteryGradeTool(BaseTool):
             progress, pending.knowledge_point_id, str(kwargs.get("misconception") or "")
         )
 
+        # Grade with the same fail-closed rule the service applies, so the
+        # outbox payload's outcome matches the evidence being committed.
+        is_correct = bool(expected_answer) and grade_answer(
+            answer_for_grading, expected_answer, pending.question_type
+        )
+        question_bank_payload = _question_bank_payload(
+            session_id=_resolve_session_id(kwargs),
+            turn_id=_resolve_turn_id(kwargs),
+            pending=pending,
+            user_answer=answer,
+            is_correct=is_correct,
+            choice_options=choice_options,
+            correct_answer=expected_answer,
+        )
         is_correct = service.grade_and_record(
             progress,
             question_id=pending.question_id,
@@ -678,16 +703,14 @@ class MasteryGradeTool(BaseTool):
             scheduler=scheduler,
             misconception_node_id=misconception_node_id,
             question_kind=pending.question_kind,
-        )
-        await _sync_mastery_attempt_to_question_bank(
             session_id=_resolve_session_id(kwargs),
             turn_id=_resolve_turn_id(kwargs),
-            pending=pending,
-            user_answer=answer,
-            is_correct=is_correct,
-            choice_options=choice_options,
-            correct_answer=expected_answer,
+            question_bank=question_bank_payload,
         )
+        # Project the question-bank side effect through the transactional outbox
+        # (committed atomically with the learner commit) and best-effort dispatch
+        # now; any failure is durable and will be replayed by the next sweep.
+        OutboxDispatcher(repository=service._store._repo).dispatch(limit=16)
         service.clear_pending_question(progress)
         kp, _, _ = find_knowledge_point(progress, pending.knowledge_point_id)
         mastered = bool(kp and is_mastered(progress, kp))
@@ -743,7 +766,11 @@ class MasteryAssessTool(BaseTool):
             return _no_path_result()
         kp_id = str(kwargs.get("knowledge_point_id") or "").strip()
         if not kp_id:
-            return ToolResult(content="mastery_assess needs a knowledge_point_id.", success=False)
+            return ToolResult(
+                content="mastery_assess needs a knowledge_point_id.",
+                success=False,
+                expected_failure=True,
+            )
         passed = bool(kwargs.get("passed"))
         feedback = str(kwargs.get("feedback") or "").strip()
 
@@ -754,6 +781,7 @@ class MasteryAssessTool(BaseTool):
             return ToolResult(
                 content=f"Unknown objective {kp_id!r}; call mastery_status for valid ids.",
                 success=False,
+                expected_failure=True,
             )
         if kp.type not in QUALITATIVE_TYPES:
             return ToolResult(
@@ -762,6 +790,7 @@ class MasteryAssessTool(BaseTool):
                     "mastery_quiz + mastery_grade, not mastery_assess."
                 ),
                 success=False,
+                expected_failure=True,
             )
         from lumen.modes.learn.policy.scheduler import SpacedRepetitionScheduler
 
@@ -870,7 +899,7 @@ class MasteryBuildTool(BaseTool):
         offset = len(progress.modules) if mode == "append" else 0
         new_modules, error = _parse_modules(kwargs.get("modules"), path_id, offset)
         if error:
-            return ToolResult(content=error, success=False)
+            return ToolResult(content=error, success=False, expected_failure=True)
 
         combined = (list(progress.modules) + new_modules) if mode == "append" else new_modules
         service.replace_modules(progress, combined)
@@ -1032,6 +1061,7 @@ class MasteryGoalTool(BaseTool):
                     return ToolResult(
                         content="mastery_goal.scope_kp_ids must be an array of objective ids.",
                         success=False,
+                        expected_failure=True,
                     )
                 scope = [kp_id.strip() for kp_id in raw_scope if kp_id.strip() in known]
                 dropped = len(raw_scope) - len(scope)

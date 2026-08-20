@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- ============================================================
+     Lumen 2.0.0 — launchd service plist (macOS production)
+     ============================================================
+     Install:  cp com.lumen.server.plist ~/Library/LaunchAgents/com.lumen.server.plist
+               launchctl load ~/Library/LaunchAgents/com.lumen.server.plist
+     Unload:   launchctl unload ~/Library/LaunchAgents/com.lumen.server.plist
+     Adjust ProgramArguments / EnvironmentVariables / WorkingDirectory paths.
+     Secrets come from the process environment (shell profile) or a private
+     env file; never commit them.
+     ============================================================ -->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.lumen.server</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/srv/lumen/venv/bin/python</string>
+        <string>-m</string>
+        <string>uvicorn</string>
+        <string>lumen.app.api.main:app</string>
+        <string>--host</string>
+        <string>127.0.0.1</string>
+        <string>--port</string>
+        <string>8001</string>
+        <string>--log-level</string>
+        <string>info</string>
+        <string>--no-access-log</string>
+    </array>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>LUMEN_HOME</key>
+        <string>/srv/lumen/data</string>
+        <key>PYTHONUNBUFFERED</key>
+        <string>1</string>
+    </dict>
+
+    <key>WorkingDirectory</key>
+    <string>/srv/lumen</string>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/srv/lumen/data/user/logs/lumen.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/srv/lumen/data/user/logs/lumen.err.log</string>
+</dict>
+</plist>

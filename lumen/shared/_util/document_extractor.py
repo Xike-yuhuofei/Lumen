@@ -24,6 +24,7 @@ import logging
 from pathlib import Path, PurePosixPath
 import re
 from typing import Any
+from urllib.parse import unquote
 import zipfile
 
 from defusedxml import ElementTree as DefusedElementTree
@@ -89,6 +90,35 @@ def _current_limits() -> tuple[int, int, int, int]:
 _PDF_MAGIC = b"%PDF-"
 _OOXML_MAGIC = b"PK\x03\x04"
 
+# Block-level XHTML tags that should become newlines when flattening EPUB
+# content documents, so paragraph / list / heading boundaries survive.
+_EPUB_BLOCK_TAGS = frozenset(
+    {
+        "p",
+        "div",
+        "section",
+        "article",
+        "blockquote",
+        "pre",
+        "li",
+        "tr",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "br",
+        "table",
+        "ul",
+        "ol",
+        "dt",
+        "dd",
+        "figcaption",
+        "caption",
+    }
+)
+
 
 class DocumentExtractionError(Exception):
     """Base class for extraction failures. ``str(exc)`` is user-friendly."""
@@ -140,10 +170,10 @@ def _check_magic(ext: str, data: bytes, filename: str) -> None:
             raise CorruptDocumentError(
                 f"{filename} does not look like a PDF (bad header)", filename=filename
             )
-    elif ext in {".docx", ".xlsx", ".pptx"}:
+    elif ext in {".docx", ".xlsx", ".pptx", ".epub"}:
         if not data.startswith(_OOXML_MAGIC):
             raise CorruptDocumentError(
-                f"{filename} does not look like a valid Office file (bad header)",
+                f"{filename} does not look like a valid Office/e-book file (bad header)",
                 filename=filename,
             )
 
@@ -187,6 +217,8 @@ def extract_text_from_bytes(
         text = _extract_xlsx(data, filename)
     elif ext == ".pptx":
         text = _extract_pptx(data, filename)
+    elif ext == ".epub":
+        text = _extract_epub(data, filename)
     elif ext in TEXT_LIKE_EXTENSIONS:
         text = _extract_text_like(data, filename)
     else:  # pragma: no cover - guarded above
@@ -400,6 +432,95 @@ def _extract_text_like(data: bytes, filename: str) -> str:
         raise CorruptDocumentError(
             f"{filename}: failed to decode text ({exc})", filename=filename
         ) from exc
+
+
+def _extract_epub(data: bytes, filename: str) -> str:
+    """Extract text from an EPUB (a ZIP of XHTML content documents).
+
+    Reading order follows the OPF ``<spine>`` when present; otherwise every
+    ``.xhtml`` / ``.html`` / ``.htm`` member is read in path order.
+    """
+    with _open_ooxml(data, filename) as zf:
+        members = _epub_content_members(zf, filename)
+        if not members:
+            raise CorruptDocumentError(
+                f"{filename}: EPUB contains no readable content documents",
+                filename=filename,
+            )
+        chapters: list[str] = []
+        for member in members:
+            root = _parse_xml_member(zf, member, filename)
+            if root is None:
+                continue
+            text = _xhtml_to_text(root)
+            if text:
+                chapters.append(text)
+        return "\n\n".join(chapters)
+
+
+def _epub_content_members(zf: zipfile.ZipFile, filename: str) -> list[str]:
+    """Return EPUB content documents in reading order."""
+    container = _parse_xml_member(zf, "META-INF/container.xml", filename)
+    if container is not None:
+        for node in container.iter():
+            if _local_name(node.tag) == "rootfile":
+                opf_path = node.attrib.get("full-path")
+                if opf_path:
+                    ordered = _epub_spine_order(zf, opf_path, filename)
+                    if ordered:
+                        return ordered
+                break
+    # Fallback: any XHTML member (deterministic path order).
+    names = zf.namelist()
+    return sorted(
+        name
+        for name in names
+        if re.search(r"\.(xhtml|html|htm)$", name, re.IGNORECASE)
+        and not name.startswith("META-INF/")
+    )
+
+
+def _epub_spine_order(zf: zipfile.ZipFile, opf_path: str, filename: str) -> list[str]:
+    """Resolve the OPF ``<spine>`` into a list of ZIP member names."""
+    opf_root = _parse_xml_member(zf, opf_path, filename)
+    if opf_root is None:
+        return []
+    base_dir = str(PurePosixPath(opf_path).parent)
+    manifest: dict[str, str] = {}
+    for node in opf_root.iter():
+        if _local_name(node.tag) != "item":
+            continue
+        item_id = node.attrib.get("id")
+        href = node.attrib.get("href")
+        if item_id and href:
+            href = unquote(href.split("#", 1)[0])
+            manifest[item_id] = str(PurePosixPath(base_dir) / href)
+    ordered: list[str] = []
+    for node in opf_root.iter():
+        if _local_name(node.tag) == "itemref":
+            idref = node.attrib.get("idref")
+            if idref and idref in manifest:
+                ordered.append(manifest[idref])
+    return ordered
+
+
+def _xhtml_to_text(root: Any) -> str:
+    """Flatten an XHTML tree to plain text, preserving block boundaries."""
+    lines: list[str] = []
+    current: list[str] = []
+    for node in root.iter():
+        name = _local_name(node.tag)
+        if node.text:
+            current.append(node.text)
+        if name in _EPUB_BLOCK_TAGS:
+            if current:
+                lines.append(" ".join("".join(current).split()))
+                current = []
+        if node.tail:
+            current.append(node.tail)
+    if current:
+        lines.append(" ".join("".join(current).split()))
+    return "\n".join(line for line in lines if line)
 
 
 def _open_ooxml(data: bytes, filename: str) -> zipfile.ZipFile:

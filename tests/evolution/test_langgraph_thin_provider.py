@@ -198,8 +198,15 @@ async def test_checkpoint_is_execution_state_not_domain_state() -> None:
     snap = prov._graph.get_state({"configurable": {"thread_id": "gen-DOMAIN"}})
     keys = set(snap.values.keys())
     # Only Provider Execution State — teaching / learner / domain never stored.
-    # (``schema_version`` is execution-state bookkeeping, not domain state.)
-    assert keys <= {"messages", "tool_requests", "execution_generation", "schema_version"}
+    # (``schema_version`` / ``provider_version`` are execution-state bookkeeping,
+    # not domain state.)
+    assert keys <= {
+        "messages",
+        "tool_requests",
+        "execution_generation",
+        "schema_version",
+        "provider_version",
+    }
     forbidden = {"decision", "learner", "learner_state", "teaching", "policy"}
     assert keys.isdisjoint(forbidden)
 

@@ -1,0 +1,64 @@
+{
+  "session_continuity": {
+    "material": "textile",
+    "learner": "weak",
+    "turns_per_session": 5,
+    "n_sessions": 10,
+    "boundaries_with_open_question": 9,
+    "continuous": {
+      "completed": true,
+      "mastered": 12,
+      "attempts": 48,
+      "n_effects": 48
+    },
+    "split": {
+      "completed": true,
+      "mastered": 12,
+      "attempts": 48,
+      "n_effects": 48
+    },
+    "total_actions": 49,
+    "action_sequence_match": true,
+    "no_duplicate_effects": true,
+    "no_duplicate_decisions": true,
+    "continuity_match": true,
+    "failures": []
+  },
+  "decision_ledger": {
+    "material": "zhongcao",
+    "decisions": 15,
+    "non_terminal_decisions": 14,
+    "persisted": 14,
+    "replayable": 14,
+    "all_persisted": true,
+    "all_replayable": true,
+    "policy_version": "teaching-engine:v1",
+    "policy_versions": {
+      "teaching-engine:v1": 14
+    },
+    "lineage_ok": true,
+    "graded_effects": 14,
+    "missing": []
+  },
+  "cost_scaling": {
+    "materials": {
+      "zhongcao": {
+        "kp_count": 8,
+        "a_mean_llm_calls": 16.5,
+        "b_mean_llm_calls": 16.0,
+        "b_over_a_ratio": 0.97
+      },
+      "textile": {
+        "kp_count": 12,
+        "a_mean_llm_calls": 29.5,
+        "b_mean_llm_calls": 24.0,
+        "b_over_a_ratio": 0.814
+      }
+    },
+    "cost_gap_grows_with_curriculum": true,
+    "short": "zhongcao",
+    "long": "textile"
+  },
+  "verdict": "CONTINUE EXPERIMENT",
+  "reason": "Phase-3 discriminant evidence confirms three architecture seams Candidate B alone provides are real and reproducible: durable multi-session continuity (a fresh graph over the durable ledger reproduces the single-run classroom outcome with no duplicate/lost/stale effect), an immutable versioned decision ledger that is persisted+replayable with full effect lineage, and a modest, curriculum-scaling LLM-call cost saving (B/A mean call ratio 0.97 short → 0.81 long). These are verifiable incremental values, but they are *operational/architectural*, not a teaching-quality advantage: Candidate B remains at teaching PARITY with Candidate A (shared deterministic engine), and no real-LLM / real-learner trial exists to show the seams translate into better learning outcomes. Per the Promotion bar ('sufficient, stable, reproducible incremental teaching-value evidence'), that decisive axis is still absent — so CONTINUE EXPERIMENT rather than PROMOTE or KEEP."
+}

@@ -36,10 +36,18 @@ def main() -> None:
     from lumen.app.mode import RunMode, set_mode
     from lumen.app.setup import get_backend_port
     from lumen.shared._util.logging import configure_logging
+    from lumen.shared._util.observability import configure as configure_observability
+    from lumen.shared._util.observability import (
+        configure_export as configure_observability_export,
+    )
     from lumen.shared.config import HTTP_KEEP_ALIVE_TIMEOUT, get_ws_max_size
 
     set_mode(RunMode.SERVER)
     configure_logging()
+    configure_observability()
+    # Optional external exporters (OTLP / metrics summary), read from env.
+    # No-op when unconfigured — local-first default.
+    configure_observability_export()
     backend_port = get_backend_port(project_root)
 
     # Configure reload_excludes to skip directories that shouldn't trigger reloads

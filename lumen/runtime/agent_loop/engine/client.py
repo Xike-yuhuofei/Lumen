@@ -18,6 +18,7 @@ import json
 import threading
 from types import SimpleNamespace
 from typing import Any
+import weakref
 
 import httpx
 from openai import AsyncAzureOpenAI, AsyncOpenAI
@@ -25,6 +26,15 @@ from openai import AsyncAzureOpenAI, AsyncOpenAI
 from lumen.shared._util.llm import get_token_limit_kwargs, supports_tools
 from lumen.shared._util.llm.reasoning_params import (
     build_openai_compatible_reasoning_kwargs,
+)
+from lumen.shared._util.observability import (
+    begin_span,
+    finish_span,
+    increment,
+    observe,
+)
+from lumen.shared._util.observability import (
+    span as telemetry_span,
 )
 from lumen.shared._util.provider_registry import find_by_name
 from lumen.shared._util.system_settings import load_system_settings
@@ -56,6 +66,10 @@ _NATIVE_TOOL_BACKENDS: frozenset[str] = frozenset({"anthropic"})
 _AGENTIC_CLIENT_POOL_MAXSIZE = 2
 _agentic_client_pool: "OrderedDict[tuple[Any, ...], Any]" = OrderedDict()
 _agentic_client_pool_lock = threading.RLock()
+
+#: Clients already wrapped with the telemetry ``llm_call`` seam (weak so the
+#: set never retains a closed client).
+_WRAPPED_CLIENTS: "weakref.WeakSet[Any]" = weakref.WeakSet()
 
 
 @dataclass(frozen=True)
@@ -134,6 +148,98 @@ def _schedule_client_close(client: Any, loop: asyncio.AbstractEventLoop) -> None
     loop.create_task(_close())
 
 
+def _to_int(value: Any) -> int | None:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _telemetry_instrumented(client: Any, config: LLMClientConfig) -> Any:
+    """Wrap ``client.chat.completions.create`` to record one ``llm_call`` span.
+
+    Provider-agnostic seam: both the P0 legacy loop and the P1 langgraph-thin
+    loop build their OpenAI-compatible client through :func:`build_openai_client`,
+    so every completion (streaming or not) is observable here without binding
+    to any provider implementation. Wrapping is idempotent per client (tracked
+    in a weak set so it is never persisted on the client object itself).
+    """
+    if client in _WRAPPED_CLIENTS:
+        return client
+    completions = getattr(getattr(client, "chat", None), "completions", None)
+    if completions is None:
+        return client
+    original_create = completions.create
+    if not callable(original_create):
+        return client
+
+    async def _create(**kwargs: Any) -> Any:
+        model = str(kwargs.get("model") or config.model or "")
+        stream = bool(kwargs.get("stream"))
+        if stream:
+            # ``original_create`` is async on the AsyncOpenAI client — awaiting
+            # here yields the real async iterator before the span wraps it.
+            # Missing this ``await`` leaked an un-awaited ``AsyncCompletions.create``
+            # coroutine (observed in production-environment validation: WS turns
+            # through langgraph-thin failed with ``llm_call stream status=error``
+            # while the coroutine was never awaited).
+            stream_obj = original_create(**kwargs)
+            if inspect.isawaitable(stream_obj):
+                stream_obj = await stream_obj
+            return _instrumented_stream(stream_obj, model)
+        with telemetry_span(
+            "llm_call",
+            kind="llm",
+            attrs={"model": model, "stream": False},
+            metric="llm",
+        ) as sp:
+            result = original_create(**kwargs)
+            if inspect.isawaitable(result):
+                response = await result
+            else:
+                response = result
+            usage = getattr(response, "usage", None)
+            if usage is not None:
+                sp.attrs["prompt_tokens"] = _to_int(getattr(usage, "prompt_tokens", None))
+                sp.attrs["completion_tokens"] = _to_int(
+                    getattr(usage, "completion_tokens", None)
+                )
+            return response
+
+    completions.create = _create
+    _WRAPPED_CLIENTS.add(client)
+    return client
+
+
+async def _instrumented_stream(stream: Any, model: str):
+    """Wrap a streaming completion: one ``llm_call`` span spanning the stream."""
+    span_obj, token = begin_span(
+        "llm_call",
+        kind="llm",
+        attrs={"model": model, "stream": True},
+    )
+    usage = None
+    try:
+        async for chunk in stream:
+            chunk_usage = getattr(chunk, "usage", None)
+            if chunk_usage is not None:
+                usage = chunk_usage
+            yield chunk
+    except BaseException:
+        span_obj.attrs["status"] = "error"
+        increment("llm.errors")
+        raise
+    finally:
+        if usage is not None:
+            span_obj.attrs["prompt_tokens"] = _to_int(getattr(usage, "prompt_tokens", None))
+            span_obj.attrs["completion_tokens"] = _to_int(
+                getattr(usage, "completion_tokens", None)
+            )
+        finish_span(span_obj, token)
+        observe("llm.latency", span_obj.duration)
+        increment("llm.total")
+
+
 def build_openai_client(config: LLMClientConfig) -> Any:
     """Return a bounded, event-loop-local OpenAI-compatible client.
 
@@ -145,7 +251,9 @@ def build_openai_client(config: LLMClientConfig) -> Any:
     try:
         loop = asyncio.get_running_loop()
     except RuntimeError:
-        return _build_openai_client(config, disable_ssl_verify=disable_ssl_verify)
+        return _telemetry_instrumented(
+            _build_openai_client(config, disable_ssl_verify=disable_ssl_verify), config
+        )
 
     key = _client_cache_key(config, loop, disable_ssl_verify)
     with _agentic_client_pool_lock:
@@ -153,7 +261,9 @@ def build_openai_client(config: LLMClientConfig) -> Any:
         if cached is not None:
             _agentic_client_pool.move_to_end(key)
             return cached
-        client = _build_openai_client(config, disable_ssl_verify=disable_ssl_verify)
+        client = _telemetry_instrumented(
+            _build_openai_client(config, disable_ssl_verify=disable_ssl_verify), config
+        )
         _agentic_client_pool[key] = client
         _agentic_client_pool.move_to_end(key)
         while len(_agentic_client_pool) > _AGENTIC_CLIENT_POOL_MAXSIZE:

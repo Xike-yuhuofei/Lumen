@@ -1,0 +1,493 @@
+{
+  "learning_outcomes_matrix": {
+    "materials": [
+      "zhongcao",
+      "textile"
+    ],
+    "n_cells": 10,
+    "action_sequence_equal_across_matrix": false,
+    "mechanism_fingerprint_equal_across_matrix": false,
+    "outcome_equal_across_matrix": true,
+    "any_divergence": true,
+    "cells": [
+      {
+        "material": "zhongcao",
+        "learner": "strong",
+        "action_sequence_equal": true,
+        "mechanism_fingerprint_equal": true,
+        "outcome_equal": true,
+        "outcomes": {
+          "a": {
+            "completed": true,
+            "mastered": 8,
+            "steps": 11,
+            "unprompted_success": 1.0,
+            "retention": 1.0,
+            "transfer": 1.0,
+            "capability_gain_per_step": 0.7272727272727273
+          },
+          "b": {
+            "completed": true,
+            "mastered": 8,
+            "steps": 11,
+            "unprompted_success": 1.0,
+            "retention": 1.0,
+            "transfer": 1.0,
+            "capability_gain_per_step": 0.7272727272727273
+          }
+        },
+        "steps": {
+          "a": 11,
+          "b": 11
+        },
+        "completion": {
+          "a": true,
+          "b": true
+        },
+        "unprompted_success": {
+          "a": 1.0,
+          "b": 1.0
+        },
+        "retention": {
+          "a": 1.0,
+          "b": 1.0
+        },
+        "transfer": {
+          "a": 1.0,
+          "b": 1.0
+        }
+      },
+      {
+        "material": "zhongcao",
+        "learner": "weak",
+        "action_sequence_equal": true,
+        "mechanism_fingerprint_equal": true,
+        "outcome_equal": true,
+        "outcomes": {
+          "a": {
+            "completed": true,
+            "mastered": 8,
+            "steps": 22,
+            "unprompted_success": 0.5714285714285714,
+            "retention": 1.0,
+            "transfer": 1.0,
+            "capability_gain_per_step": 0.36363636363636365
+          },
+          "b": {
+            "completed": true,
+            "mastered": 8,
+            "steps": 22,
+            "unprompted_success": 0.5714285714285714,
+            "retention": 1.0,
+            "transfer": 1.0,
+            "capability_gain_per_step": 0.36363636363636365
+          }
+        },
+        "steps": {
+          "a": 22,
+          "b": 22
+        },
+        "completion": {
+          "a": true,
+          "b": true
+        },
+        "unprompted_success": {
+          "a": 0.5714285714285714,
+          "b": 0.5714285714285714
+        },
+        "retention": {
+          "a": 1.0,
+          "b": 1.0
+        },
+        "transfer": {
+          "a": 1.0,
+          "b": 1.0
+        }
+      },
+      {
+        "material": "zhongcao",
+        "learner": "misconception",
+        "action_sequence_equal": true,
+        "mechanism_fingerprint_equal": true,
+        "outcome_equal": true,
+        "outcomes": {
+          "a": {
+            "completed": true,
+            "mastered": 8,
+            "steps": 15,
+            "unprompted_success": 0.8571428571428571,
+            "retention": 1.0,
+            "transfer": 1.0,
+            "capability_gain_per_step": 0.5333333333333333
+          },
+          "b": {
+            "completed": true,
+            "mastered": 8,
+            "steps": 15,
+            "unprompted_success": 0.8571428571428571,
+            "retention": 1.0,
+            "transfer": 1.0,
+            "capability_gain_per_step": 0.5333333333333333
+          }
+        },
+        "steps": {
+          "a": 15,
+          "b": 15
+        },
+        "completion": {
+          "a": true,
+          "b": true
+        },
+        "unprompted_success": {
+          "a": 0.8571428571428571,
+          "b": 0.8571428571428571
+        },
+        "retention": {
+          "a": 1.0,
+          "b": 1.0
+        },
+        "transfer": {
+          "a": 1.0,
+          "b": 1.0
+        }
+      },
+      {
+        "material": "zhongcao",
+        "learner": "guessing",
+        "action_sequence_equal": false,
+        "mechanism_fingerprint_equal": false,
+        "outcome_equal": true,
+        "outcomes": {
+          "a": {
+            "completed": false,
+            "mastered": 4,
+            "steps": 400,
+            "unprompted_success": 0.505,
+            "retention": 0.0,
+            "transfer": 1.0,
+            "capability_gain_per_step": 0.01
+          },
+          "b": {
+            "completed": false,
+            "mastered": 4,
+            "steps": 400,
+            "unprompted_success": 0.5074626865671642,
+            "retention": 0.0,
+            "transfer": 1.0,
+            "capability_gain_per_step": 0.01
+          }
+        },
+        "steps": {
+          "a": 400,
+          "b": 400
+        },
+        "completion": {
+          "a": false,
+          "b": false
+        },
+        "unprompted_success": {
+          "a": 0.505,
+          "b": 0.5074626865671642
+        },
+        "retention": {
+          "a": 0.0,
+          "b": 0.0
+        },
+        "transfer": {
+          "a": 1.0,
+          "b": 1.0
+        }
+      },
+      {
+        "material": "zhongcao",
+        "learner": "forgetting",
+        "action_sequence_equal": true,
+        "mechanism_fingerprint_equal": true,
+        "outcome_equal": true,
+        "outcomes": {
+          "a": {
+            "completed": true,
+            "mastered": 8,
+            "steps": 11,
+            "unprompted_success": 1.0,
+            "retention": 0.0,
+            "transfer": 1.0,
+            "capability_gain_per_step": 0.7272727272727273
+          },
+          "b": {
+            "completed": true,
+            "mastered": 8,
+            "steps": 11,
+            "unprompted_success": 1.0,
+            "retention": 0.0,
+            "transfer": 1.0,
+            "capability_gain_per_step": 0.7272727272727273
+          }
+        },
+        "steps": {
+          "a": 11,
+          "b": 11
+        },
+        "completion": {
+          "a": true,
+          "b": true
+        },
+        "unprompted_success": {
+          "a": 1.0,
+          "b": 1.0
+        },
+        "retention": {
+          "a": 0.0,
+          "b": 0.0
+        },
+        "transfer": {
+          "a": 1.0,
+          "b": 1.0
+        }
+      },
+      {
+        "material": "textile",
+        "learner": "strong",
+        "action_sequence_equal": true,
+        "mechanism_fingerprint_equal": true,
+        "outcome_equal": true,
+        "outcomes": {
+          "a": {
+            "completed": true,
+            "mastered": 12,
+            "steps": 19,
+            "unprompted_success": 1.0,
+            "retention": 1.0,
+            "transfer": 1.0,
+            "capability_gain_per_step": 0.631578947368421
+          },
+          "b": {
+            "completed": true,
+            "mastered": 12,
+            "steps": 19,
+            "unprompted_success": 1.0,
+            "retention": 1.0,
+            "transfer": 1.0,
+            "capability_gain_per_step": 0.631578947368421
+          }
+        },
+        "steps": {
+          "a": 19,
+          "b": 19
+        },
+        "completion": {
+          "a": true,
+          "b": true
+        },
+        "unprompted_success": {
+          "a": 1.0,
+          "b": 1.0
+        },
+        "retention": {
+          "a": 1.0,
+          "b": 1.0
+        },
+        "transfer": {
+          "a": 1.0,
+          "b": 1.0
+        }
+      },
+      {
+        "material": "textile",
+        "learner": "weak",
+        "action_sequence_equal": true,
+        "mechanism_fingerprint_equal": true,
+        "outcome_equal": true,
+        "outcomes": {
+          "a": {
+            "completed": true,
+            "mastered": 12,
+            "steps": 40,
+            "unprompted_success": 0.6153846153846154,
+            "retention": 1.0,
+            "transfer": 1.0,
+            "capability_gain_per_step": 0.3
+          },
+          "b": {
+            "completed": true,
+            "mastered": 12,
+            "steps": 40,
+            "unprompted_success": 0.6153846153846154,
+            "retention": 1.0,
+            "transfer": 1.0,
+            "capability_gain_per_step": 0.3
+          }
+        },
+        "steps": {
+          "a": 40,
+          "b": 40
+        },
+        "completion": {
+          "a": true,
+          "b": true
+        },
+        "unprompted_success": {
+          "a": 0.6153846153846154,
+          "b": 0.6153846153846154
+        },
+        "retention": {
+          "a": 1.0,
+          "b": 1.0
+        },
+        "transfer": {
+          "a": 1.0,
+          "b": 1.0
+        }
+      },
+      {
+        "material": "textile",
+        "learner": "misconception",
+        "action_sequence_equal": true,
+        "mechanism_fingerprint_equal": true,
+        "outcome_equal": true,
+        "outcomes": {
+          "a": {
+            "completed": true,
+            "mastered": 12,
+            "steps": 22,
+            "unprompted_success": 0.8571428571428571,
+            "retention": 1.0,
+            "transfer": 1.0,
+            "capability_gain_per_step": 0.5454545454545454
+          },
+          "b": {
+            "completed": true,
+            "mastered": 12,
+            "steps": 22,
+            "unprompted_success": 0.8571428571428571,
+            "retention": 1.0,
+            "transfer": 1.0,
+            "capability_gain_per_step": 0.5454545454545454
+          }
+        },
+        "steps": {
+          "a": 22,
+          "b": 22
+        },
+        "completion": {
+          "a": true,
+          "b": true
+        },
+        "unprompted_success": {
+          "a": 0.8571428571428571,
+          "b": 0.8571428571428571
+        },
+        "retention": {
+          "a": 1.0,
+          "b": 1.0
+        },
+        "transfer": {
+          "a": 1.0,
+          "b": 1.0
+        }
+      },
+      {
+        "material": "textile",
+        "learner": "guessing",
+        "action_sequence_equal": false,
+        "mechanism_fingerprint_equal": false,
+        "outcome_equal": true,
+        "outcomes": {
+          "a": {
+            "completed": false,
+            "mastered": 1,
+            "steps": 400,
+            "unprompted_success": 0.5025,
+            "retention": 0.0,
+            "transfer": 1.0,
+            "capability_gain_per_step": 0.0025
+          },
+          "b": {
+            "completed": false,
+            "mastered": 1,
+            "steps": 400,
+            "unprompted_success": 0.50187265917603,
+            "retention": 0.0,
+            "transfer": 1.0,
+            "capability_gain_per_step": 0.0025
+          }
+        },
+        "steps": {
+          "a": 400,
+          "b": 400
+        },
+        "completion": {
+          "a": false,
+          "b": false
+        },
+        "unprompted_success": {
+          "a": 0.5025,
+          "b": 0.50187265917603
+        },
+        "retention": {
+          "a": 0.0,
+          "b": 0.0
+        },
+        "transfer": {
+          "a": 1.0,
+          "b": 1.0
+        }
+      },
+      {
+        "material": "textile",
+        "learner": "forgetting",
+        "action_sequence_equal": true,
+        "mechanism_fingerprint_equal": true,
+        "outcome_equal": true,
+        "outcomes": {
+          "a": {
+            "completed": true,
+            "mastered": 12,
+            "steps": 19,
+            "unprompted_success": 1.0,
+            "retention": 0.0,
+            "transfer": 1.0,
+            "capability_gain_per_step": 0.631578947368421
+          },
+          "b": {
+            "completed": true,
+            "mastered": 12,
+            "steps": 19,
+            "unprompted_success": 1.0,
+            "retention": 0.0,
+            "transfer": 1.0,
+            "capability_gain_per_step": 0.631578947368421
+          }
+        },
+        "steps": {
+          "a": 19,
+          "b": 19
+        },
+        "completion": {
+          "a": true,
+          "b": true
+        },
+        "unprompted_success": {
+          "a": 1.0,
+          "b": 1.0
+        },
+        "retention": {
+          "a": 0.0,
+          "b": 0.0
+        },
+        "transfer": {
+          "a": 1.0,
+          "b": 1.0
+        }
+      }
+    ]
+  },
+  "real_llm_probe": {
+    "real_llm_available": false,
+    "configured_providers": [],
+    "n_configured": 0,
+    "note": "A real-LLM trial (the decisive axis) is only runnable when at least one provider API key is present in the environment. None are configured in this environment, so real-LLM / real-learner evidence cannot be produced here; the finding below is limited to deterministic, symmetric-condition teaching evidence."
+  },
+  "verdict": "CONTINUE EXPERIMENT",
+  "reason": "learning outcomes (independent success / retention / transfer / time-to-mastery) are equal across all 10 cells; the action-sequence fingerprints differ only on the unstable 'guessing' learner, where both candidates correctly fail to award mastery with identical mastered counts. No learning-outcome increment for Candidate B.; real-LLM / real-learner evidence is unobtainable in this environment: no provider credential is configured, so the decisive axis of whether B's architecture advantage converts into learning gains under a live-LLM teacher cannot be run here.; Candidate B shows no measured learning-value increment over Candidate A in this environment, and the conclusive real-LLM trial cannot be executed without provisioning a provider credential; so Promotion is not evidenced and no switch is made."
+}

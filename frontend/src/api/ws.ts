@@ -15,6 +15,7 @@ export type StreamEventType =
   | 'session'
   | 'session_meta'
   | 'done'
+  | 'wait_for_input'
 
 export interface StreamEvent {
   type: StreamEventType
@@ -26,6 +27,10 @@ export interface StreamEvent {
   turn_id?: string
   seq?: number
   timestamp: number
+  /** Client monotonic arrival time (ms) — set by the transport layer at onmessage
+   *  boundary. This is the O-plane perception clock (T2 I11 / T3 §1); never
+   *  sent back to the server. */
+  clientArrivalAt?: number
 }
 
 export interface StartTurnMessage {
@@ -95,6 +100,21 @@ export type ClientMessage =
 
 export type EventHandler = (event: StreamEvent) => void
 
+/** Transport overlay state exposed to the UI (T2 §1.2) — ONLY real transport facts. */
+export interface TransportState {
+  status: 'connected' | 'reconnecting' | 'disconnected'
+  /** Client monotonic time (ms) of the transition. */
+  at: number
+}
+
+/** Client monotonic clock (O-plane perception clock, T3 §1). */
+function perfNow(): number {
+  if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
+    return performance.now()
+  }
+  return Date.now()
+}
+
 const HEARTBEAT_INTERVAL_MS = 30_000
 const HEARTBEAT_TIMEOUT_MS = 45_000
 const MAX_RECONNECT_ATTEMPTS = 5
@@ -105,6 +125,8 @@ export class UnifiedWSClient {
   private onEvent: EventHandler
   private onClose?: () => void
   private onOpen?: () => void
+  /** Transport-state listener (W-I5): reconnecting/disconnected/connected. */
+  private onTransportState?: (state: TransportState) => void
 
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null
   private lastReceivedAt = 0
@@ -117,10 +139,20 @@ export class UnifiedWSClient {
   private lastSeq = 0
   private pending: ClientMessage[] = []
 
-  constructor(onEvent: EventHandler, onClose?: () => void, onOpen?: () => void) {
+  constructor(
+    onEvent: EventHandler,
+    onClose?: () => void,
+    onOpen?: () => void,
+    onTransportState?: (state: TransportState) => void,
+  ) {
     this.onEvent = onEvent
     this.onClose = onClose
     this.onOpen = onOpen
+    this.onTransportState = onTransportState
+  }
+
+  private reportTransport(status: TransportState['status']): void {
+    this.onTransportState?.({ status, at: perfNow() })
   }
 
   setResumeState(turnId: string | null, seq: number): void {
@@ -139,6 +171,7 @@ export class UnifiedWSClient {
       this.lastReceivedAt = Date.now()
       this.startHeartbeat()
       this.onOpen?.()
+      this.reportTransport('connected')
       for (const msg of this.pending) {
         this.ws?.send(JSON.stringify(msg))
       }
@@ -153,11 +186,13 @@ export class UnifiedWSClient {
     }
 
     this.ws.onmessage = (ev) => {
+      const arrival = perfNow()
       this.lastReceivedAt = Date.now()
       try {
         const event = JSON.parse(ev.data) as StreamEvent
         const type = (event as { type?: string }).type
         if (type === 'ping' || type === 'pong') return
+        event.clientArrivalAt = arrival
         if (event.turn_id) this.activeTurnId = event.turn_id
         if (event.seq != null) this.lastSeq = Math.max(this.lastSeq, event.seq)
         this.onEvent(event)
@@ -225,10 +260,14 @@ export class UnifiedWSClient {
 
   private attemptReconnect(): void {
     if (this.reconnectAttempt >= MAX_RECONNECT_ATTEMPTS) {
+      // Reconnect exhausted → transport is truly gone (T2 §1.2 disconnected).
+      this.reportTransport('disconnected')
       this.resetResumeState()
       this.onClose?.()
       return
     }
+    // Seeking to reconnect (T2 §1.2 reconnecting).
+    this.reportTransport('reconnecting')
     const delay = BASE_RECONNECT_DELAY_MS * 2 ** this.reconnectAttempt
     this.reconnectAttempt += 1
     this.reconnectTimer = setTimeout(() => {

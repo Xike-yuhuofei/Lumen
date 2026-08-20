@@ -273,7 +273,7 @@ def test_source_frontend_dev_mode_is_explicit_and_skips_production_build(
         "dev",
         "--",
         "--host",
-        "0.0.0.0",
+        "localhost",
         "--port",
         "3782",
     ]

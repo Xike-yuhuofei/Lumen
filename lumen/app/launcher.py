@@ -563,7 +563,7 @@ def _spa_server_command(frontend_port: int) -> list[str]:
         "uvicorn",
         "lumen.app.spa_server:app",
         "--host",
-        "0.0.0.0",
+        "127.0.0.1",
         "--port",
         str(frontend_port),
         "--no-access-log",
@@ -615,7 +615,7 @@ def _resolve_frontend(
                 "dev",
                 "--",
                 "--host",
-                "0.0.0.0",
+                "localhost",
                 "--port",
                 str(frontend_port),
             ],
@@ -748,7 +748,7 @@ def start(home: str | Path | None = None, *, dev: bool = False) -> None:
     common_env["BACKEND_PORT"] = str(backend_port)
     common_env["FRONTEND_PORT"] = str(frontend_port)
     common_env["PORT"] = str(frontend_port)
-    common_env["HOSTNAME"] = "0.0.0.0"
+    common_env["HOSTNAME"] = "localhost"
     common_env["NEXT_PUBLIC_API_BASE"] = api_base
     common_env["NEXT_PUBLIC_AUTH_ENABLED"] = "true" if auth_enabled else "false"
     # The SPA server (and Vite in --dev) read these at request time to forward

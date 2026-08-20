@@ -18,6 +18,8 @@ from typing import Any
 from lumen.runtime.tool_protocol import BaseTool, ToolDefinition, ToolPromptHints
 from lumen.runtime.tools.builtin import BUILTIN_TOOL_TYPES, TOOL_ALIASES
 from lumen.runtime.tools.prompting import compose_prompt_text
+from lumen.shared._util.observability import increment
+from lumen.shared._util.observability import span as telemetry_span
 
 logger = logging.getLogger(__name__)
 
@@ -142,7 +144,22 @@ class ToolRegistry:
         tool = self._tools.get(resolved_name)
         if tool is None:
             raise KeyError(f"Unknown tool: {name}")
-        return await tool.execute(**resolved_kwargs)
+        with telemetry_span(
+            "tool", kind="tool", attrs={"tool": resolved_name}, metric="tool"
+        ) as sp:
+            result = await tool.execute(**resolved_kwargs)
+            if getattr(result, "success", True) is False:
+                if getattr(result, "expected_failure", False):
+                    # Designed business outcome (e.g. mastery tool invoked
+                    # without an active path): a real fault, but not an
+                    # infrastructure error — tracked separately, never against
+                    # the Tool SLO.
+                    sp.attrs["status"] = "business_failure"
+                    increment("tool.expected_errors")
+                else:
+                    sp.attrs["status"] = "error"
+                    increment("tool.errors")
+        return result
 
 
 _default_registry: ToolRegistry | None = None

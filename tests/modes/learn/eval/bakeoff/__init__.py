@@ -1,0 +1,1 @@
+"""Teaching Architecture Bake-off — A (teaching-hook) vs B (Teaching Graph)."""

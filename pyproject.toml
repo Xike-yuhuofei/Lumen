@@ -70,6 +70,13 @@ dependencies = [
     "psutil>=5.9.0,<8.0.0",
     # MCP client (core MCP service; kept after partners prune)
     "mcp>=1.26.0,<2.0.0",
+    # Production-default Agent Loop provider (P1 agent_loop.langgraph_thin).
+    # The LangGraph Thin provider imports lumen.evolution.providers, which
+    # requires langgraph + langchain-core at turn runtime — these must be part
+    # of the runtime set (not only the dev extra) or a fresh production install
+    # boots but fails every turn with "No module named 'langgraph'".
+    "langchain-core>=0.3.0,<0.4",
+    "langgraph>=0.3,<0.4",
 ]
 
 [project.scripts]
@@ -170,6 +177,15 @@ dev = [
 # Everything: server + dev tools.
 all = [
     "lumen[dev]",
+]
+
+# Optional OTLP protobuf wire encoding for the trace exporter (required by
+# Phoenix / the OTel Collector's default OTLP/HTTP receiver). The default
+# ``json`` encoding is zero-dependency; install this extra to enable
+# ``LUMEN_OTEL_ENCODING=protobuf``. Kept out of the base install so the
+# local-first telemetry pipeline stays free of external observability SDKs.
+otel = [
+    "opentelemetry-proto>=1.25,<2.0",
 ]
 
 [tool.setuptools]
@@ -351,7 +367,7 @@ max-complexity = 10
 # Pytest configuration
 # ============================================
 [tool.pytest.ini_options]
-testpaths = ["tests", "lumen/modes/learn/tests"]
+testpaths = ["tests", "lumen/modes/learn/tests", "lumen/cert/tests"]
 pythonpath = ["."]
 markers = [
     "asyncio: mark async tests that require pytest-asyncio",

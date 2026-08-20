@@ -7,6 +7,16 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from lumen.shared._util.brand import PRODUCT_NAME
 from lumen.shared._util.logging import configure_logging
+from lumen.shared._util.observability import (
+    begin_request,
+    end_request,
+)
+from lumen.shared._util.observability import (
+    configure as configure_observability,
+)
+from lumen.shared._util.observability import (
+    configure_export as configure_observability_export,
+)
 from lumen.shared._util.path_service import get_path_service
 from lumen.shared.config import (
     ensure_runtime_settings_files,
@@ -19,6 +29,12 @@ from lumen.shared.config.origins import normalize_origins
 ensure_runtime_settings_files()
 export_runtime_settings_to_env(overwrite=True)
 configure_logging()
+# Local telemetry backend (span JSONL + retention). No-op when disabled —
+# telemetry must never become a hard dependency of the server.
+configure_observability()
+# Optional external exporters (OTLP / metrics summary), read from env.
+# No-op when unconfigured — local-first default.
+configure_observability_export()
 logger = logging.getLogger(__name__)
 
 
@@ -262,6 +278,25 @@ async def selective_access_log(request, call_next):
     return response
 
 
+@app.middleware("http")
+async def request_id_context(request, call_next):
+    """Bind one request_id per HTTP request and echo it on the response.
+
+    The id is pinned into the telemetry + logging context for the whole
+    request, so REST logs (including the selective access log above) can be
+    correlated back to a single request. Turns started inside this scope
+    (WS/CLI/SDK) inherit the request_id via contextvars copy.
+    """
+    request_id = request.headers.get("X-Request-ID") or None
+    token = begin_request(request_id)
+    try:
+        response = await call_next(request)
+    finally:
+        end_request(token)
+    response.headers.setdefault("X-Request-ID", request_id or "")
+    return response
+
+
 _cors_settings = _build_cors_settings()
 logger.info(
     "CORS configured: mode=%s allow_origins=%s allow_origin_regex=%s",
@@ -368,6 +403,84 @@ app.include_router(unified_ws.router, prefix="/api/v1", tags=["unified-ws"])
 @app.get("/")
 async def root():
     return {"message": f"Welcome to {PRODUCT_NAME} API"}
+
+
+@app.get("/api/v1/health")
+async def health():
+    """Unauthenticated liveness/readiness probe for production deployments.
+
+    Returns the Lumen version, whether the Plugin Kernel assembly was booted
+    (the server refuses to start if it was not), and a minimal storage probe so
+    an orchestrator (systemd / launchd / Kubernetes / Docker HEALTHCHECK) can
+    distinguish "process up" from "service ready".  Never returns credentials,
+    configuration values, or provider secrets.
+    """
+    from lumen.__version__ import __version__
+
+    kernel_booted = bool(getattr(app.state, "lumen_root", None))
+    db_ok = False
+    try:
+        from lumen.runtime.session.sqlite_store import get_sqlite_session_store
+
+        store = get_sqlite_session_store()
+        if store is not None:
+            db_ok = bool(await store.ping())
+    except Exception:
+        db_ok = False
+
+    ready = kernel_booted and db_ok
+    return {
+        "status": "ok" if ready else "degraded",
+        "service": PRODUCT_NAME,
+        "version": __version__,
+        "kernel": "booted" if kernel_booted else "not_booted",
+        "storage": "ok" if db_ok else "error",
+    }
+
+
+@app.get("/api/v1/health/detailed")
+async def health_detailed():
+    """Unauthenticated SLI/SLO + capacity monitoring probe (Production Ops).
+
+    Extends the basic probe with the Production Operations health report: the
+    aggregated SLIs for the Turn / LLM / Tool / Retrieval / Persistence /
+    Telemetry links, the SLO thresholds applied, the local telemetry pipeline
+    freshness, and the runtime data-tree capacity & retention status.
+
+    This endpoint exposes only aggregated counters, rates, thresholds and
+    directory sizes — never user content, prompts, responses or credentials.
+    It is the primary data source for continuous health monitoring and
+    incident discovery.
+    """
+    from lumen.__version__ import __version__
+    from lumen.ops.monitor import build_health_report
+    from lumen.shared._util.observability import get_metrics
+    from lumen.shared._util.path_service import get_path_service
+
+    persistence_ok = False
+    try:
+        from lumen.runtime.session.sqlite_store import get_sqlite_session_store
+
+        store = get_sqlite_session_store()
+        if store is not None:
+            persistence_ok = bool(await store.ping())
+    except Exception:
+        persistence_ok = False
+
+    path_service = None
+    try:
+        path_service = get_path_service()
+    except Exception:
+        path_service = None
+
+    report = build_health_report(
+        snapshot=get_metrics().snapshot(),
+        persistence_ok=persistence_ok,
+        path_service=path_service,
+    )
+    report["service"] = PRODUCT_NAME
+    report["version"] = __version__
+    return report
 
 
 if __name__ == "__main__":

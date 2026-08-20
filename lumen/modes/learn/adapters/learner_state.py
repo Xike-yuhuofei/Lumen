@@ -211,6 +211,7 @@ def action_instruction(
     action: TeachingAction,
     *,
     node_title: str = "",
+    node_type: str = "",
 ) -> dict:
     """Translate a TeachingAction into concrete instructions the agent executes
     with the existing mastery tools (the agent never overrides the action).
@@ -266,13 +267,40 @@ def action_instruction(
             ),
         }
     if action.action == TeachingActionType.EXPLAIN:
+        # The first-check that follows an explanation MUST be persisted through
+        # the mastery tools so the deterministic engine can advance past the
+        # first-exposure EXPLAIN (attempts==0). Printing the question in prose
+        # and ending the turn leaves no evidence, so the next decide() re-emits
+        # the identical EXPLAIN. Qualitative objectives (concept / design) use a
+        # Feynman mastery_assess; quantitative ones (memory / procedure) use a
+        # registered mastery_quiz presented via ask_user and graded.
+        qualitative = str(node_type or "").strip().lower() in {
+            "concept",
+            "learning_objective",
+        }
+        if qualitative:
+            mastery_tool = "mastery_assess"
+            first_check = (
+                f"then run a Feynman first-check on {label}: ask the learner to "
+                "explain the idea in their own words and record your judgement "
+                "with mastery_assess (passed only when the explanation shows real "
+                "understanding). Do NOT print the question as prose and end the turn."
+            )
+        else:
+            mastery_tool = "mastery_quiz"
+            first_check = (
+                f"then register a first-check question on {label} with mastery_quiz "
+                "(set expected_answer), present it via ask_user and wait for the "
+                "answer, then grade it with mastery_grade. Do NOT print the "
+                "question as prose and end the turn."
+            )
         return {
             "action": action.action.value,
             "focus": focus,
-            "mastery_tool": "explain",
+            "mastery_tool": mastery_tool,
             "instruction": (
                 f"Teach {label}: give a clear explanation (scaffold={action.scaffold_level.value}), "
-                "grounded in the learner's materials, then do a first-check."
+                f"grounded in the learner's materials, {first_check}"
             ),
         }
     if action.action == TeachingActionType.SHOW_EXAMPLE:

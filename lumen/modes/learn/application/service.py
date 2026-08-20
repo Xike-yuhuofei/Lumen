@@ -171,6 +171,43 @@ class LearningService:
         progress.mastery_levels[kp_id] = level
         progress.updated_at = time.time()
 
+    def _commit_service(self):
+        from lumen.modes.learn.commit.commit_service import DomainCommitService
+
+        return DomainCommitService(self._store._repo)
+
+    def _commit_evidence_update(
+        self,
+        progress: LearningProgress,
+        *,
+        evidence_specs: list,
+        session_id: str = "",
+        turn_id: str = "",
+        question_bank: dict | None = None,
+    ) -> object:
+        """Route one evidence-bearing mutation through an atomic DomainCommit.
+
+        This is the single authoritative write path for assessment/qualitative
+        outcomes: evidence is appended to the canonical ledger, mastery is
+        recomputed by the reducer (a caller mastery snapshot is never blindly
+        trusted), the aggregate advances under optimistic concurrency, and a
+        question-bank projection is committed as a transactional outbox intent.
+        """
+        from lumen.modes.learn.commit.contract import DomainCommitRequest, OutboxIntent
+        from lumen.modes.learn.commit.identity import new_uuid4
+
+        outbox = [OutboxIntent(payload=question_bank)] if question_bank else []
+        expected = self._store.current_version(progress.book_id)
+        request = DomainCommitRequest(
+            learner_id=progress.book_id,
+            action_id=new_uuid4(),
+            expected_learner_version=expected,
+            proposed_state=progress.model_dump(mode="json"),
+            evidence=evidence_specs,
+            outbox=outbox,
+        )
+        return self._commit_service().commit(request)
+
     def grade_and_record(
         self,
         progress: LearningProgress,
@@ -185,6 +222,9 @@ class LearningService:
         scheduler: SpacedRepetitionScheduler | None = None,
         misconception_node_id: str = "",
         question_kind: str = "recall",
+        session_id: str = "",
+        turn_id: str = "",
+        question_bank: dict | None = None,
     ) -> bool:
         """Grade one answer and fold it through the full post-answer pipeline.
 
@@ -235,7 +275,41 @@ class LearningService:
                 progress.repetition_states[knowledge_point_id] = state
                 scheduler.schedule_next(state, kp_type, is_correct)
                 progress.review_queue = scheduler.build_review_queue(progress)
-        self.save(progress)
+        latest = progress.quiz_attempts[-1]
+        from lumen.modes.learn.commit.contract import Evidence
+
+        error_type = (
+            latest.error_type.value if latest.error_type is not None else None
+        )
+        self._commit_evidence_update(
+            progress,
+            evidence_specs=[
+                Evidence(
+                    target_type="knowledge_point",
+                    target_id=knowledge_point_id,
+                    evidence_type="quiz_answer",
+                    outcome=is_correct,
+                    outcome_json={
+                        "is_correct": is_correct,
+                        "question_id": question_id,
+                        "module_id": module_id,
+                        "question_kind": question_kind,
+                        "error_type": error_type,
+                        "self_attribution": self_attribution,
+                        "misconception_node_id": misconception_node_id,
+                    },
+                    raw_response_json={"user_answer": user_answer},
+                    evaluator_kind="deterministic",
+                    evaluator_version="v1",
+                    observed_at_ms=int(time.time() * 1000),
+                    session_id=session_id,
+                    turn_id=turn_id,
+                )
+            ],
+            session_id=session_id,
+            turn_id=turn_id,
+            question_bank=question_bank,
+        )
         return is_correct
 
     # ── Loop-driven tutoring helpers ─────────────────────────────────────
@@ -324,7 +398,35 @@ class LearningService:
                     scheduler.schedule_next(state, kp_type, is_correct=True)
                     progress.review_queue = scheduler.build_review_queue(progress)
         progress.updated_at = time.time()
-        self.save(progress)
+
+        # Funnel through the canonical commit: feynman/qualitative evidence is
+        # appended to the ledger so the qualitative gate carries provenance and
+        # the derived ``qualitative_mastery`` is reducer-derived, not a naked bool.
+        from lumen.modes.learn.commit.contract import Evidence
+
+        error_type = None if passed else ErrorType.APPLICATION_ERROR
+        self._commit_evidence_update(
+            progress,
+            evidence_specs=[
+                Evidence(
+                    target_type="knowledge_point",
+                    target_id=kp_id,
+                    evidence_type="feynman_explanation",
+                    outcome=bool(passed),
+                    outcome_json={
+                        "passed": bool(passed),
+                        "question_id": f"feynman:{kp_id}",
+                        "module_id": module_id,
+                        "question_kind": "application",
+                        "error_type": error_type.value if error_type else None,
+                    },
+                    raw_response_json={"user_answer": evidence or ""},
+                    evaluator_kind="llm",
+                    evaluator_version="mastery-assess:evaluator-v1",
+                    observed_at_ms=int(time.time() * 1000),
+                )
+            ],
+        )
 
     def list_progress(self) -> dict:
         """Return summary of all book progress with per-book error info."""

@@ -398,6 +398,102 @@ class TestHandleTurnMountsGoalSource:
         assert ctx.knowledge_bases == []
 
 
+# 6c. A terminal Teaching-Session Graph outcome surfaces its feedback instead of
+# producing a blank assistant reply (fix: "无回复" for empty-module goals).
+class TestGraphTerminalFeedbackReachesChat:
+    def _adapter(self, *, store, agent_loop, governor, graph):
+        from lumen.modes.learn.plugin import _LearnModeServiceAdapter
+
+        adapter = _LearnModeServiceAdapter(agent_loop=agent_loop, store=store)
+        adapter._governor = governor
+        adapter._graph = graph
+        return adapter
+
+    @pytest.mark.asyncio
+    async def test_terminal_outcome_feedback_is_emitted(self, tmp_path):
+        from lumen.modes.learn.adapters.storage import LearningStore
+
+        class _Recorder:
+            def __init__(self):
+                self.texts = []
+
+            async def content(self, text, source="", stage="", metadata=None):
+                self.texts.append(text)
+
+        store = LearningStore(root=tmp_path)
+
+        class _DurableAgent:
+            supports_durable_execution = True
+
+            async def run(self, *, context, stream, language="en", **config):
+                return None
+
+        class _Governor:
+            def __init__(self):
+                self.plan_called = False
+
+            def ensure_session(self, path_id):  # noqa: ARG002
+                return "ts-test"
+
+            def plan(self, teaching_session_id, *, retry=False, resume_input=None):  # noqa: ARG002
+                self.plan_called = True
+                return _Plan()
+
+            def record_start(self, plan):  # noqa: ARG002
+                return None
+
+            def rebase_execution(self, *args, **kwargs):  # noqa: ARG002
+                return None
+
+            def record_termination(self, *args, **kwargs):  # noqa: ARG002
+                return None
+
+        class _Plan:
+            execution_generation = "exec-1"
+            operation = "start"
+            resume_input = None
+
+        from lumen.modes.learn.graph.contract import (
+            Lineage,
+            PolicyDecision,
+            TeachingNode,
+            TeachRunOutcome,
+        )
+
+        class _TerminalGraph:
+            async def run_turn(self, *, context, stream, agent_loop, deps, **kwargs):  # noqa: ARG002
+                context.metadata["exec_completed"] = True
+                context.metadata["exec_termination"] = "completed"
+                return TeachRunOutcome(
+                    node=TeachingNode.TERMINATE,
+                    decision=PolicyDecision(decision_id=""),
+                    lineage=Lineage(
+                        teaching_session_id="ts-test", execution_generation="exec-1"
+                    ),
+                    is_terminal=True,
+                    feedback="No learning path exists for this path_id.",
+                )
+
+        rec = _Recorder()
+        adapter = self._adapter(
+            store=store,
+            agent_loop=_DurableAgent(),
+            governor=_Governor(),
+            graph=_TerminalGraph(),
+        )
+        from lumen.runtime.context import UnifiedContext
+
+        ctx = UnifiedContext(
+            session_id="s1",
+            user_message="继续学习",
+            metadata={"mastery_path_id": "empty-goal"},
+        )
+        await adapter.handle_turn(ctx, rec)
+        # The terminal feedback is surfaced instead of a blank assistant reply.
+        assert rec.texts, "expected terminal feedback to be emitted to the stream"
+        assert any("No learning path exists" in t for t in rec.texts)
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 # 7. binding replaceability still holds in the full profile
 # ═══════════════════════════════════════════════════════════════════════════

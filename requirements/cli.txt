@@ -62,3 +62,9 @@ ddgs>=9.9.1
 typer>=0.9.0
 rich>=13.0.0
 prompt_toolkit>=3.0.36
+
+# --- Production-default Agent Loop provider (P1 agent_loop.langgraph_thin) ---
+# Required at turn runtime by lumen.evolution.providers; must be in the
+# production set (not only dev) or fresh installs fail every turn.
+langchain-core>=0.3.0,<0.4
+langgraph>=0.3,<0.4

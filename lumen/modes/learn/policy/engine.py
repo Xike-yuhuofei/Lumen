@@ -45,6 +45,7 @@ from lumen.modes.learn.domain.teaching_models import (
     TeachingRelationType,
     TeachingStrategy,
 )
+from lumen.shared._util.observability import span as telemetry_span
 
 # A policy returns an action when it applies, else None (fall through).
 Policy = Callable[
@@ -100,22 +101,41 @@ class TeachingEngine:
         goal: LearningGoal,
         learner: LearnerState,
     ) -> TeachingAction:
-        """Choose the next teaching action for this context."""
-        self._validate(graph, goal)
-        trace = DecisionTrace()
+        """Choose the next teaching action for this context.
 
-        for name in self._priority:
-            policy = self._policies.get(name)
-            if policy is None:
-                continue
-            trace.policies_evaluated.append(name)
-            action = policy(graph, goal, learner, trace)
-            if action is not None:
-                action.trace = trace.model_copy(update={"policy_applied": name})
-                return action
+        Telemetry: each deterministic decision is one ``teaching`` span carrying
+        the applied policy, action type, strategy and focus node — so the
+        "why this is taught next" is observable without re-deriving it from the
+        LLM output.
+        """
+        with telemetry_span(
+            "teaching_decision",
+            kind="teaching",
+            attrs={
+                "goal": ",".join(goal.target_node_ids or []),
+                "pending_answer": bool(learner.pending_answer),
+            },
+            metric="teaching",
+        ) as sp:
+            self._validate(graph, goal)
+            trace = DecisionTrace()
 
-        # Unreachable: the ``complete`` policy always matches.
-        raise RuntimeError("teaching engine policy stack exhausted without a decision")
+            for name in self._priority:
+                policy = self._policies.get(name)
+                if policy is None:
+                    continue
+                trace.policies_evaluated.append(name)
+                action = policy(graph, goal, learner, trace)
+                if action is not None:
+                    sp.attrs["policy_applied"] = name
+                    sp.attrs["action_type"] = str(getattr(action.action, "value", action.action))
+                    sp.attrs["strategy"] = str(getattr(action.strategy, "value", action.strategy))
+                    sp.attrs["focus_node"] = action.focus_node_id
+                    action.trace = trace.model_copy(update={"policy_applied": name})
+                    return action
+
+            # Unreachable: the ``complete`` policy always matches.
+            raise RuntimeError("teaching engine policy stack exhausted without a decision")
 
     # ── hard constraints ─────────────────────────────────────────────────
 

@@ -65,7 +65,7 @@ from uuid import uuid4
 
 from langgraph.errors import GraphInterrupt, GraphRecursionError
 from langgraph.graph import END, START, StateGraph
-from langgraph.types import RunnableConfig
+from langgraph.types import Command, RunnableConfig
 
 from lumen.evolution.contract import (
     ProviderRequest,
@@ -99,14 +99,15 @@ class AgentState(TypedDict, total=False):
 
     ``messages`` / ``tool_requests`` are the execution artifact of the loop;
     ``execution_generation`` is the Lumen Run identity mirrored onto the thread;
-    ``schema_version`` pins the execution-state schema for version-safe resume.
-    No teaching / learner / domain field is ever placed here.
+    ``schema_version`` / ``provider_version`` pin the execution-state schema for
+    version-safe resume. No teaching / learner / domain field is ever placed here.
     """
 
     messages: list[dict[str, Any]]
     tool_requests: list[tuple[str, dict[str, Any]]]
     execution_generation: str
     schema_version: int
+    provider_version: str
 
 
 @dataclass(frozen=True)
@@ -302,39 +303,46 @@ class LangGraphThinProvider(RuntimeProvider):
             "schema_version": SCHEMA_VERSION,
         }
 
-    def _safe_thread(self, candidate: str, request: ProviderRequest) -> str:
+    async def _safe_thread(self, candidate: str, request: ProviderRequest) -> str:
         """Resolve the LangGraph thread for an execution with version safety.
 
         Default (no explicit ``config.resume``) honours the caller's
         ``execution_generation`` unchanged — every turn is an atomic attempt and
         retry is a *new* execution_generation.  Only an explicit ``resume=True``
         (with a checkpointer configured) continues a durable thread, and even
-        then only when the persisted execution-state ``schema_version`` matches
-        the current one.  An incompatible / unversioned thread is **never**
-        silently resumed: a fresh generation is minted instead, and the reason is
-        recorded on the Lumen snapshot so the guard is observable/auditable.
+        then only when the persisted execution-state ``schema_version`` AND
+        ``provider_version`` match the current ones.  An incompatible /
+        unversioned thread is **never** silently resumed: a fresh generation is
+        minted instead, and the reason is recorded on the Lumen snapshot so the
+        guard is observable/auditable.
 
-        This is a *guard on top of* the unmodified LangGraph runtime — it does not
-        re-implement checkpoint/resume/durability, which remain owned by LangGraph.
+        The read uses the *async* ``aget_state`` so the guard works identically
+        under a durable async checkpointer (``LumenSqliteCheckpointer`` /
+        ``AsyncSqliteSaver``) — the sync ``get_state`` path is not async-safe.
         """
         if self._checkpointer is None or not request.config.get("resume"):
             if request.config.get("resume") and self._checkpointer is None:
                 request.state.snapshot["resume_ignored"] = "no_checkpointer_configured"
             return candidate
         try:
-            snap = self._graph.get_state({"configurable": {"thread_id": candidate}})
+            snap = await self._graph.aget_state(
+                {"configurable": {"thread_id": candidate}}
+            )
             persisted = (snap.values or {}) if snap is not None else {}
         except Exception:  # noqa: BLE001 — unreadable thread is treated as fresh
             persisted = {}
         if not persisted:
             return candidate  # fresh thread — safe to start
-        stored = persisted.get("schema_version")
-        if stored is not None and stored == SCHEMA_VERSION:
+        stored_schema = persisted.get("schema_version")
+        stored_provider = persisted.get("provider_version")
+        schema_ok = stored_schema is not None and stored_schema == SCHEMA_VERSION
+        provider_ok = stored_provider is None or stored_provider == PROVIDER_VERSION
+        if schema_ok and provider_ok:
             return candidate  # compatible persisted thread; caller-requested resume
         fresh = f"turn-{uuid4().hex[:12]}"
         request.state.snapshot["version_guard"] = (
-            f"thread_schema_version={stored!r} incompatible; refraining from resume; "
-            f"fresh_thread={fresh}"
+            f"thread_schema={stored_schema!r} provider={stored_provider!r} "
+            f"incompatible; refraining from resume; fresh_thread={fresh}"
         )
         return fresh
 
@@ -354,15 +362,39 @@ class LangGraphThinProvider(RuntimeProvider):
         )
 
     async def run(self, request: ProviderRequest) -> ProviderResult:
-        messages: list[dict[str, Any]] = [{"role": "user", "content": request.input.user_message}]
+        # Execution operation contract: explicit caller intent overrides the
+        # legacy boolean ``resume`` flag, so Start / Resume / Retry never blur.
+        operation = str(
+            request.config.get("execution_operation")
+            or ("resume" if request.config.get("resume") else "start")
+        ).strip().lower()
+        if operation not in ("start", "resume", "retry"):
+            operation = "start"
+        if operation == "retry":
+            # Retry = a NEW attempt on a NEW execution identity, isolated from any
+            # original checkpoint. It is NOT a resume.
+            request.state.snapshot.pop("execution_generation", None)
+            request.state.turn_id = ""
+        if operation == "resume" and self._checkpointer is None:
+            # Resume needs a durable checkpointer to continue from; without one it
+            # degrades to an atomic start (no silent corruption, no LangGraph error).
+            request.state.snapshot.setdefault(
+                "resume_ignored", "no_checkpointer_configured"
+            )
+            operation = "start"
+
+        messages: list[dict[str, Any]] = [
+            {"role": "user", "content": request.input.user_message}
+        ]
         messages = list(request.input.conversation_history) + messages
         system = self._teaching_seed(request) if request.teaching is not None else None
         messages.insert(0, {"role": "system", "content": system or "You are a helpful assistant."})
 
         # Execution identity: Lumen Run/execution_generation ↔ LangGraph thread.
-        gen = self._safe_thread(_resolve_generation(request), request)
+        gen = await self._safe_thread(_resolve_generation(request), request)
         request.state.snapshot["execution_generation"] = gen
         request.state.snapshot["checkpoint_scope"] = "provider_execution_state_only"
+        request.state.snapshot["execution_operation"] = operation
 
         # Budget / safety: we do NOT re-implement a loop counter.  The caller's
         # step budget is translated into LangGraph's native recursion_limit.
@@ -380,6 +412,21 @@ class LangGraphThinProvider(RuntimeProvider):
             },
         }
 
+        # Resume continues the existing thread from its LAST checkpoint via a
+        # LangGraph ``Command(resume=...)`` — it NEVER re-submits the full initial
+        # state (which would re-run completed nodes). The resume input is injected
+        # at the interrupt/pending point.
+        if operation == "resume":
+            resume_input = request.config.get("resume_input") or ""
+            graph_initial: Any = Command(resume=resume_input)
+        else:
+            graph_initial = {
+                "messages": messages,
+                "execution_generation": gen,
+                "schema_version": SCHEMA_VERSION,
+                "provider_version": PROVIDER_VERSION,
+            }
+
         trace: list[TraceEvent] = []
         steps = 0
         final_text = ""
@@ -391,11 +438,7 @@ class LangGraphThinProvider(RuntimeProvider):
 
         try:
             async for batch in self._graph.astream(
-                {
-                    "messages": messages,
-                    "execution_generation": gen,
-                    "schema_version": SCHEMA_VERSION,
-                },
+                graph_initial,
                 config=config,
                 stream_mode="updates",
             ):

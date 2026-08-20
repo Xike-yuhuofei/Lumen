@@ -66,7 +66,6 @@ def test_production_profile_declares_canonical_set():
         "runtime.tools",
         "runtime.llm",
         "runtime.agent",
-        "runtime.agent_loop",
         "knowledge.sources",
         "knowledge.retrieval",
         "knowledge.parsing",
@@ -74,13 +73,16 @@ def test_production_profile_declares_canonical_set():
         "notebook",
         "rendering",
         "mode.learn",
+        "runtime.agent_loop",
+        "agent_loop.langgraph_thin",
     ]
     assert len(ids) == len(set(ids))  # no duplicates
 
 
 def test_production_profile_selects_every_plugin():
     selected = {m.id for m in PRODUCTION_PROFILE.select([p.manifest for p in PRODUCTION_PLUGINS])}
-    assert selected == set(EXPECTED_SERVICES)
+    assert selected == {p.manifest.id for p in PRODUCTION_PLUGINS}
+    assert set(EXPECTED_SERVICES) <= selected
 
 
 # ═══════════════════════════════════════════════════════════════════════════

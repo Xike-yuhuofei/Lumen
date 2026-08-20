@@ -46,6 +46,10 @@ dependencies = [
     "python-pptx>=1.0.0",
     "pypdf>=4.0.0",
     "defusedxml>=0.7.1",
+    # Production-default Agent Loop provider (P1 agent_loop.langgraph_thin).
+    # Required at turn runtime by lumen.evolution.providers.
+    "langchain-core>=0.3.0,<0.4",
+    "langgraph>=0.3,<0.4",
 ]
 
 [project.scripts]

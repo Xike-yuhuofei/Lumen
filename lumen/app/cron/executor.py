@@ -11,6 +11,7 @@ import uuid
 
 from lumen.app.cron.service import CronJob
 from lumen.shared._util.brand import PRODUCT_NAME
+from lumen.shared._util.observability import new_trace_id, trace_span
 
 logger = logging.getLogger(__name__)
 
@@ -126,7 +127,22 @@ async def _execute_chat_job(job: CronJob) -> tuple[str, str | None]:
             agent_loop = await resolve_agent_loop_service()
 
             async def _run_turn(context, bus):
-                await agent_loop.run(context=context, stream=bus, language=context.language)
+                # Cron turns get their own telemetry root span (trace_id
+                # independently generated, one-to-one with the cron turn_id),
+                # so cron execution correlates in logs like any other turn.
+                with trace_span(
+                    "turn",
+                    kind="turn",
+                    trace_id=new_trace_id(),
+                    bind={
+                        "turn_id": turn_id,
+                        "session_id": job.owner.session_id,
+                        "task_id": f"cron:{job.id}",
+                    },
+                ):
+                    await agent_loop.run(
+                        context=context, stream=bus, language=context.language
+                    )
 
             bus = StreamBus()
             register_bus(turn_id, bus)

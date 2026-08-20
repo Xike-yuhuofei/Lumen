@@ -60,6 +60,8 @@ MANIFEST
 .env
 *.env
 *.env.local
+.env.production
+.env.*.local
 env/
 venv/
 ENV/
@@ -91,6 +93,11 @@ out/
 dist/
 frontend/dist/
 build/
+# Generated web package data (prepare_web_package.py builds lumen_web assets)
+lumen_web/assets/
+lumen_web/index.html
+lumen_web/favicon.svg
+lumen_web/BUILD_INFO
 .open-next/
 **/.open-next/
 .wrangler/

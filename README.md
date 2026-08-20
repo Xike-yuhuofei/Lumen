@@ -201,9 +201,9 @@ Everything under `data/user/settings/` is plain JSON/YAML. The **Settings** page
 | `main.yaml` | Runtime behavior defaults and path injection |
 | `agents.yaml` | Capability/tool temperature and token settings |
 
-Project-root `.env` is **not** read as an application config file. For a minimal model setup, open **Settings → Models**, add an LLM profile (Base URL / API key / model name), and save. Add an embedding profile only if you plan to use Knowledge Base / RAG features.
+Project-root `.env` is **not** read as an application config file. For a minimal model setup, open **Settings → Models**, add an LLM profile (Base URL / model name), and save. Add an embedding profile only if you plan to use Knowledge Base / RAG features.
 
-**API keys can be injected through environment variables** instead of being stored in plaintext. `model_catalog.json` keeps each provider's key in its `api_key` field as plaintext, but when that field is **left empty**, the runtime falls back to the provider's environment variable: `GITEE_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `DASHSCOPE_API_KEY`, and so on (the LLM and embedding resolvers both read them). Precedence is **profile key in `model_catalog.json` > environment variable** — set `export GITEE_API_KEY=…` and leave the profile `api_key` empty to keep keys out of the config file.
+**API keys are read ONLY from environment variables — never stored in config files.** `model_catalog.json` carries no keys: any `api_key` field is stripped on load/save (`ModelCatalogService._normalize`), and the runtime resolvers read credentials exclusively from the process environment via `get_provider_api_key` (`lumen/shared/config/credentials.py`). Set `export GITEE_API_KEY=…`, `DEEPSEEK_API_KEY=…`, `ZHIPU_API_KEY=…`, `OPENAI_API_KEY=…` (convention: `<BINDING>_API_KEY`), and leave the profile `api_key` empty. Do not write plaintext keys into code, config files, logs, or Git.
 
 </details>
 
@@ -485,23 +485,13 @@ Add more registries in `settings/skill_hubs.json`: a `type: "clawhub"` entry poi
 
 ## 🌐 Community
 
-### 📮 Contact
-
-Lumen is an open-source project led by [Bingxi Zhao](https://github.com/pancacake) within the [HKUDS](https://github.com/HKUDS) Group, and it iterates in a **fully open-source form**, built together with the community. So far, we **DO NOT** have paid online products of any form. Feel free to reach out at **bingxizhao39@gmail.com** for discussions, ideas, or collaboration.
-
 ### 🙏 Appreciation
 
-Heartfelt thanks to [**Chao Huang**](https://sites.google.com/view/chaoh), director of the Data Intelligence Lab @ HKU, and to our HKUDS labmates for their warm support — especially [**Jiahao Zhang**](https://github.com/zzhtx258), [**Zirui Guo**](https://github.com/LarFii), and [**Xubin Ren**](https://github.com/Re-bin). We're also deeply grateful to the **open-source community**: your stars, issues, pull requests, and discussions shape Lumen every single day.
-
-Lumen also stands on the shoulders of outstanding open-source projects that gave us both tools and inspiration:
+Lumen stands on the shoulders of outstanding open-source projects that gave us both tools and inspiration:
 
 | Project | Role / Inspiration |
 |:---|:---|
 | [**LlamaIndex**](https://github.com/run-llama/llama_index) | RAG pipeline and document-indexing backbone |
-| [**nanobot**](https://github.com/HKUDS/nanobot) | Ultra-lightweight agent engine that powered the original TutorBot *(HKUDS)* |
-| [**LightRAG**](https://github.com/HKUDS/LightRAG) | Simple & fast RAG *(HKUDS)* |
-| [**AutoAgent**](https://github.com/HKUDS/AutoAgent) | Zero-code agent framework *(HKUDS)* |
-| [**AI-Researcher**](https://github.com/HKUDS/AI-Researcher) | Automated research pipeline *(HKUDS)* |
 | [**OpenClaw**](https://github.com/openclaw/openclaw) | Open agent gateway and skill ecosystem behind ClawHub |
 | [**Codex**](https://github.com/openai/codex) | Agent-native coding CLI that inspired our CLI workflow |
 | [**Claude Code**](https://github.com/anthropics/claude-code) | Agentic coding CLI that inspired the Lumen agent loop |

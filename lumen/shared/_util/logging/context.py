@@ -9,6 +9,9 @@ from typing import Any
 
 LOG_CONTEXT_FIELDS = (
     "request_id",
+    "trace_id",
+    "span_id",
+    "parent_span_id",
     "turn_id",
     "session_id",
     "task_id",
@@ -27,13 +30,28 @@ def current_log_context() -> dict[str, Any]:
     return dict(_context.get())
 
 
+def set_log_context(**fields: Any) -> contextvars.Token[dict[str, Any]]:
+    """Merge *fields* into the active logging context, returning a restore token.
+
+    Unlike :func:`bind_log_context` this is not a context manager: the caller
+    must restore the returned token later (see :func:`restore_log_context`).
+    Used by the observability span machinery so a span can pin
+    ``trace_id/span_id/…`` for every log record emitted inside it.
+    """
+    clean_fields = {key: value for key, value in fields.items() if value is not None}
+    return _context.set({**_context.get(), **clean_fields})
+
+
+def restore_log_context(token: contextvars.Token[dict[str, Any]]) -> None:
+    """Restore the logging context captured by :func:`set_log_context`."""
+    _context.reset(token)
+
+
 @contextmanager
 def bind_log_context(**fields: Any) -> Iterator[dict[str, Any]]:
     """Temporarily bind structured fields to all log records in this context."""
-    clean_fields = {key: value for key, value in fields.items() if value is not None}
-    previous = _context.get()
-    token = _context.set({**previous, **clean_fields})
+    token = set_log_context(**fields)
     try:
         yield current_log_context()
     finally:
-        _context.reset(token)
+        restore_log_context(token)
