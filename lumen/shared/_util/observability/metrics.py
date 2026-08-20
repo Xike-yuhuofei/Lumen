@@ -11,7 +11,14 @@ from __future__ import annotations
 import threading
 from typing import Any
 
-__all__ = ["MetricsRecorder", "MetricsSnapshot"]
+__all__ = [
+    "MetricsRecorder",
+    "MetricsSnapshot",
+    "get_metrics",
+    "increment",
+    "observe",
+    "reset_metrics",
+]
 
 _HISTOGRAM_BUCKETS = (0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0)
 
@@ -35,6 +42,12 @@ class MetricsRecorder:
         self._lock = threading.Lock()
         self._counters: dict[str, int] = {}
         self._histograms: dict[str, list[float]] = {}
+
+    def reset(self) -> None:
+        """Drop all accumulated counters and histograms (tests / summary flush)."""
+        with self._lock:
+            self._counters.clear()
+            self._histograms.clear()
 
     def increment(self, name: str, value: int = 1) -> None:
         """Increment a named counter (value defaults to 1)."""
@@ -87,3 +100,34 @@ class MetricsRecorder:
             "p99": percentile(0.99),
             "max": sorted_series[-1],
         }
+
+
+# ── process-global recorder ────────────────────────────────────────────────
+
+_metrics = MetricsRecorder()
+
+
+def get_metrics() -> MetricsRecorder:
+    """Return the process-wide metrics recorder (never raises)."""
+    return _metrics
+
+
+def increment(name: str, value: int = 1) -> None:
+    """Increment a process-wide counter (best-effort, never raises)."""
+    try:
+        _metrics.increment(name, value)
+    except Exception:  # pragma: no cover - metrics must never break the producer
+        pass
+
+
+def observe(name: str, value: float) -> None:
+    """Record one sample into a process-wide histogram (best-effort)."""
+    try:
+        _metrics.observe(name, value)
+    except Exception:  # pragma: no cover
+        pass
+
+
+def reset_metrics() -> None:
+    """Clear the process-wide recorder (tests)."""
+    _metrics.reset()

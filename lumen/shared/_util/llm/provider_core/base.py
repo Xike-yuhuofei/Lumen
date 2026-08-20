@@ -13,6 +13,14 @@ from typing import Any
 from loguru import logger
 
 
+def _to_int(value: Any) -> int | None:
+    """Best-effort int coercion for telemetry attributes (never raises)."""
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
 @dataclass
 class ToolCallRequest:
     """A tool call request from the LLM."""
@@ -296,46 +304,31 @@ class LLMProvider(ABC):
             strip_image_parts,
             strip_image_parts_inplace,
         )
+        from lumen.shared._util.observability import (
+            begin_span,
+            finish_span,
+            increment,
+            observe,
+        )
 
-        delays = self._normalize_retry_delays(retry_delays)
-        attempt = 0
+        # One logical LLM call (including retries) is one telemetry span.
+        span_obj, token = begin_span(
+            "llm_call",
+            kind="llm",
+            attrs={"model": model or ""},
+        )
+        final: LLMResponse | None = None
+        error = False
+        attempts = 0
 
-        while True:
-            attempt += 1
-            try:
-                response = await call(
-                    messages=messages,
-                    tools=tools,
-                    model=model,
-                    max_tokens=max_tokens,
-                    temperature=temperature,
-                    reasoning_effort=reasoning_effort,
-                    tool_choice=tool_choice,
-                    **kwargs,
-                )
-            except asyncio.CancelledError:
-                raise
-            except Exception as exc:
-                response = LLMResponse(
-                    content=f"Error calling LLM: {exc}",
-                    finish_reason="error",
-                )
+        try:
+            delays = self._normalize_retry_delays(retry_delays)
 
-            if response.finish_reason != "error":
-                return response
-
-            if not self._is_transient_error(response.content):
-                # Stage-2 vision fallback: only degrade to text-only when the
-                # caller opted in (model is *not* in the known-vision
-                # allowlist). For allowlisted models we trust the images and
-                # let the real error surface rather than masking it.
-                if allow_image_fallback and has_image_parts(messages):
-                    logger.warning(
-                        "Non-transient LLM error with image content; model is not"
-                        " known vision-capable, retrying once without images"
-                    )
-                    retry_response = await call(
-                        messages=strip_image_parts(messages),
+            while True:
+                attempts += 1
+                try:
+                    response = await call(
+                        messages=messages,
                         tools=tools,
                         model=model,
                         max_tokens=max_tokens,
@@ -344,23 +337,80 @@ class LLMProvider(ABC):
                         tool_choice=tool_choice,
                         **kwargs,
                     )
-                    if retry_response.finish_reason != "error":
-                        strip_image_parts_inplace(messages)
-                    return retry_response
-                return response
+                except asyncio.CancelledError:
+                    raise
+                except Exception as exc:
+                    response = LLMResponse(
+                        content=f"Error calling LLM: {exc}",
+                        finish_reason="error",
+                    )
 
-            if attempt > len(delays):
-                return response
+                if response.finish_reason != "error":
+                    final = response
+                    return response
 
-            delay = delays[attempt - 1]
-            logger.warning(
-                "LLM transient error (attempt {}/{}), retrying in {}s: {}",
-                attempt,
-                len(delays) + 1,
-                delay,
-                (response.content or "")[:120].lower(),
-            )
-            await asyncio.sleep(delay)
+                if not self._is_transient_error(response.content):
+                    # Stage-2 vision fallback: only degrade to text-only when the
+                    # caller opted in (model is *not* in the known-vision
+                    # allowlist). For allowlisted models we trust the images and
+                    # let the real error surface rather than masking it.
+                    if allow_image_fallback and has_image_parts(messages):
+                        logger.warning(
+                            "Non-transient LLM error with image content; model is not"
+                            " known vision-capable, retrying once without images"
+                        )
+                        retry_response = await call(
+                            messages=strip_image_parts(messages),
+                            tools=tools,
+                            model=model,
+                            max_tokens=max_tokens,
+                            temperature=temperature,
+                            reasoning_effort=reasoning_effort,
+                            tool_choice=tool_choice,
+                            **kwargs,
+                        )
+                        if retry_response.finish_reason != "error":
+                            strip_image_parts_inplace(messages)
+                        final = retry_response
+                        return retry_response
+                    final = response
+                    return response
+
+                if attempts > len(delays):
+                    final = response
+                    return response
+
+                delay = delays[attempts - 1]
+                logger.warning(
+                    "LLM transient error (attempt {}/{}), retrying in {}s: {}",
+                    attempts,
+                    len(delays) + 1,
+                    delay,
+                    (response.content or "")[:120].lower(),
+                )
+                await asyncio.sleep(delay)
+        except BaseException:
+            error = True
+            raise
+        finally:
+            if final is not None:
+                ok = final.finish_reason != "error"
+                span_obj.attrs["status"] = "ok" if ok else "error"
+                span_obj.attrs["attempts"] = attempts
+                usage = final.usage or {}
+                if usage:
+                    span_obj.attrs["prompt_tokens"] = _to_int(usage.get("prompt_tokens"))
+                    span_obj.attrs["completion_tokens"] = _to_int(usage.get("completion_tokens"))
+            elif error:
+                span_obj.attrs["status"] = "error"
+                span_obj.attrs["attempts"] = attempts
+            finish_span(span_obj, token)
+            observe("llm.latency", span_obj.duration)
+            increment("llm.total")
+            if error or (final is not None and final.finish_reason == "error"):
+                increment("llm.errors")
+            if attempts > 1:
+                increment("llm.retries", attempts - 1)
 
     async def chat_with_retry(
         self,

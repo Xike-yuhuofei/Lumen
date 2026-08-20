@@ -53,6 +53,7 @@ from lumen.modes.learn.commit.repository import (
     now_ms,
     rows_to_evidence_dicts,
 )
+from lumen.shared._util.observability import span as telemetry_span
 
 logger = logging.getLogger(__name__)
 
@@ -117,15 +118,24 @@ class DomainCommitService:
         if not request.proposed_state:
             raise InvalidCommit("proposed_state is required")
         req_hash = build_request_hash(request)
-        try:
-            with self._repo.tx():
-                receipt = self._commit_in_tx(request, req_hash)
-            return receipt
-        except sqlite3.OperationalError as exc:  # database is locked / busy
-            msg = str(exc).lower()
-            if "locked" in msg or "busy" in msg:
-                raise StoreBusy("learner.db is busy; retry the same action_id") from exc
-            raise
+        # One telemetry span per learner-domain commit: the state-transition
+        # outcome (committed / replayed / error) is observable directly.
+        with telemetry_span(
+            "teaching_commit",
+            kind="teaching",
+            attrs={"learner_id": request.learner_id, "action_id": request.action_id},
+            metric="teaching_commit",
+        ) as sp:
+            try:
+                with self._repo.tx():
+                    receipt = self._commit_in_tx(request, req_hash)
+                sp.attrs["commit_status"] = str(getattr(receipt.status, "value", receipt.status))
+                return receipt
+            except sqlite3.OperationalError as exc:  # database is locked / busy
+                msg = str(exc).lower()
+                if "locked" in msg or "busy" in msg:
+                    raise StoreBusy("learner.db is busy; retry the same action_id") from exc
+                raise
 
     def replay(self, learner_id: str, action_id: str) -> DomainCommitReceipt | None:
         """Return the stored receipt for an already-committed action (``None``

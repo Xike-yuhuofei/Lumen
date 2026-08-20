@@ -11,6 +11,8 @@ from pathlib import Path
 import shutil
 from typing import Any, Dict, List, Optional
 
+from lumen.shared._util.observability import increment
+from lumen.shared._util.observability import span as telemetry_span
 from lumen.shared._util.runtime_home import get_runtime_data_root
 
 from .factory import DEFAULT_PROVIDER, get_pipeline, list_pipelines, normalize_provider_name
@@ -88,84 +90,97 @@ class RAGService:
         **kwargs,
     ) -> Dict[str, Any]:
         provider = self._resolve_provider(kb_name)
-        with self._capture_raw_logs(event_sink):
-            await self._emit_tool_event(
-                event_sink,
-                "status",
-                f"Query: {query}",
-                {"query": query, "kb_name": kb_name, "trace_layer": "summary"},
-            )
-
-            self.logger.info(f"Searching KB '{kb_name}' with query: {query[:50]}...")
-            pipeline = self._get_pipeline(provider)
-
-            await self._emit_tool_event(
-                event_sink,
-                "status",
-                f"Retrieving from knowledge base '{kb_name}'...",
-                {"provider": provider, "trace_layer": "summary"},
-            )
-
-            result = await pipeline.search(query=query, kb_name=kb_name, **kwargs)
-
-            if "query" not in result:
-                result["query"] = query
-            if "answer" not in result and "content" in result:
-                result["answer"] = result["content"]
-            if "content" not in result and "answer" in result:
-                result["content"] = result["answer"]
-            # The service is authoritative about which engine ran (resolved from
-            # the KB's binding), so it overwrites whatever the pipeline reports.
-            result["provider"] = provider
-
-            if result.get("error_type") or result.get("needs_reindex"):
+        with telemetry_span(
+            "retrieval",
+            kind="retrieval",
+            attrs={
+                "kb_name": kb_name,
+                "provider": provider,
+                "query": query[:100],
+            },
+            metric="retrieval",
+        ) as sp:
+            with self._capture_raw_logs(event_sink):
                 await self._emit_tool_event(
                     event_sink,
                     "status",
-                    result.get("answer") or result.get("content") or "RAG search failed.",
+                    f"Query: {query}",
+                    {"query": query, "kb_name": kb_name, "trace_layer": "summary"},
+                )
+
+                self.logger.info(f"Searching KB '{kb_name}' with query: {query[:50]}...")
+                pipeline = self._get_pipeline(provider)
+
+                await self._emit_tool_event(
+                    event_sink,
+                    "status",
+                    f"Retrieving from knowledge base '{kb_name}'...",
+                    {"provider": provider, "trace_layer": "summary"},
+                )
+
+                result = await pipeline.search(query=query, kb_name=kb_name, **kwargs)
+
+                if "query" not in result:
+                    result["query"] = query
+                if "answer" not in result and "content" in result:
+                    result["answer"] = result["content"]
+                if "content" not in result and "answer" in result:
+                    result["content"] = result["answer"]
+                # The service is authoritative about which engine ran (resolved from
+                # the KB's binding), so it overwrites whatever the pipeline reports.
+                result["provider"] = provider
+
+                if result.get("error_type") or result.get("needs_reindex"):
+                    sp.attrs["status"] = "error"
+                    increment("retrieval.errors")
+                    await self._emit_tool_event(
+                        event_sink,
+                        "status",
+                        result.get("answer") or result.get("content") or "RAG search failed.",
+                        {
+                            "provider": provider,
+                            "kb_name": kb_name,
+                            "trace_layer": "summary",
+                            "call_state": "error",
+                            "error_type": result.get("error_type"),
+                            "needs_reindex": bool(result.get("needs_reindex")),
+                        },
+                    )
+                    return result
+
+                answer = result.get("answer") or result.get("content") or ""
+                sp.attrs["result_chars"] = len(answer)
+                await self._emit_tool_event(
+                    event_sink,
+                    "status",
+                    f"Retrieved {len(answer)} characters of grounded context.",
                     {
                         "provider": provider,
                         "kb_name": kb_name,
                         "trace_layer": "summary",
-                        "call_state": "error",
-                        "error_type": result.get("error_type"),
-                        "needs_reindex": bool(result.get("needs_reindex")),
                     },
                 )
-                return result
 
-            answer = result.get("answer") or result.get("content") or ""
-            await self._emit_tool_event(
-                event_sink,
-                "status",
-                f"Retrieved {len(answer)} characters of grounded context.",
-                {
-                    "provider": provider,
-                    "kb_name": kb_name,
-                    "trace_layer": "summary",
-                },
-            )
+                # L1 memory trace — best-effort, never blocks the search path.
+                try:
+                    from lumen.shared.memory.store import get_memory_store
+                    from lumen.shared.memory.trace import TraceEvent
 
-            # L1 memory trace — best-effort, never blocks the search path.
-            try:
-                from lumen.shared.memory.store import get_memory_store
-                from lumen.shared.memory.trace import TraceEvent
-
-                await get_memory_store().emit(
-                    TraceEvent.new(
-                        "kb",
-                        "query",
-                        {
-                            "query": query,
-                            "kb_name": kb_name,
-                            "answer_chars": len(answer),
-                        },
+                    await get_memory_store().emit(
+                        TraceEvent.new(
+                            "kb",
+                            "query",
+                            {
+                                "query": query,
+                                "kb_name": kb_name,
+                                "answer_chars": len(answer),
+                            },
+                        )
                     )
-                )
-            except Exception:
-                pass
+                except Exception:
+                    pass
 
-            return result
+                return result
 
     async def _emit_tool_event(
         self,

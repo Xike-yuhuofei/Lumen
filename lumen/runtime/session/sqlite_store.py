@@ -17,6 +17,7 @@ import time
 from typing import Any
 import uuid
 
+from lumen.shared._util.observability import span as telemetry_span
 from lumen.shared._util.path_service import get_path_service
 
 
@@ -576,7 +577,13 @@ class SQLiteSessionStore:
         }
 
     async def create_turn(self, session_id: str, capability: str = "") -> dict[str, Any]:
-        return await self._run(self._create_turn_sync, session_id, capability)
+        with telemetry_span(
+            "persist.create_turn",
+            kind="persistence",
+            attrs={"op": "create_turn"},
+            metric="persistence",
+        ):
+            return await self._run(self._create_turn_sync, session_id, capability)
 
     def _get_turn_sync(self, turn_id: str) -> dict[str, Any] | None:
         with self._connect() as conn:
@@ -652,7 +659,13 @@ class SQLiteSessionStore:
         return cur.rowcount > 0
 
     async def update_turn_status(self, turn_id: str, status: str, error: str = "") -> bool:
-        return await self._run(self._update_turn_status_sync, turn_id, status, error)
+        with telemetry_span(
+            "persist.update_turn_status",
+            kind="persistence",
+            attrs={"op": "update_turn_status", "status": status},
+            metric="persistence",
+        ):
+            return await self._run(self._update_turn_status_sync, turn_id, status, error)
 
     def _append_turn_event_sync(self, turn_id: str, event: dict[str, Any]) -> dict[str, Any]:
         now = time.time()
@@ -768,7 +781,13 @@ class SQLiteSessionStore:
     async def append_turn_events(
         self, turn_id: str, events: list[dict[str, Any]]
     ) -> list[dict[str, Any]]:
-        return await self._run(self._append_turn_events_sync, turn_id, events)
+        with telemetry_span(
+            "persist.append_turn_events",
+            kind="persistence",
+            attrs={"op": "append_turn_events", "count": len(events)},
+            metric="persistence",
+        ):
+            return await self._run(self._append_turn_events_sync, turn_id, events)
 
     def _get_turn_events_sync(self, turn_id: str, after_seq: int = 0) -> list[dict[str, Any]]:
         with self._connect() as conn:
@@ -907,17 +926,23 @@ class SQLiteSessionStore:
         # returned (``str`` is accepted to satisfy SessionStoreProtocol).
         parent_message_id: int | str | None | _Unset = _PARENT_AUTO,
     ) -> int:
-        return await self._run(
-            self._add_message_sync,
-            session_id,
-            role,
-            content,
-            capability,
-            events,
-            attachments,
-            metadata,
-            parent_message_id,
-        )
+        with telemetry_span(
+            "persist.add_message",
+            kind="persistence",
+            attrs={"op": "add_message", "role": role},
+            metric="persistence",
+        ):
+            return await self._run(
+                self._add_message_sync,
+                session_id,
+                role,
+                content,
+                capability,
+                events,
+                attachments,
+                metadata,
+                parent_message_id,
+            )
 
     @staticmethod
     def _backfill_import_meta_sync(

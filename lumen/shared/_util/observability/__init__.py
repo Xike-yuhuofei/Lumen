@@ -37,7 +37,15 @@ from .context import (
     new_trace_id,
     trace_span,
 )
-from .metrics import MetricsRecorder, MetricsSnapshot
+from .instrument import span
+from .metrics import (
+    MetricsRecorder,
+    MetricsSnapshot,
+    get_metrics,
+    increment,
+    observe,
+    reset_metrics,
+)
 from .redact import REDACTED, sanitize_attrs, sanitize_text
 from .span import Span
 
@@ -65,9 +73,15 @@ __all__ = [
     "set_backend",
     "configure",
     "DEFAULT_TELEMETRY_RETENTION_DAYS",
+    # instrumentation helper
+    "span",
     # metrics
     "MetricsRecorder",
     "MetricsSnapshot",
+    "get_metrics",
+    "increment",
+    "observe",
+    "reset_metrics",
     # redaction
     "REDACTED",
     "sanitize_attrs",

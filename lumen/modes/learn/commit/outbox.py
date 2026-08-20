@@ -22,6 +22,7 @@ import time
 from typing import Any
 
 from lumen.modes.learn.commit.repository import LearnerDomainRepository, now_ms
+from lumen.shared._util.observability import increment
 
 logger = logging.getLogger(__name__)
 
@@ -93,10 +94,12 @@ class OutboxDispatcher:
                 stats["ok"] += 1
             except OutboxSessionGone as exc:
                 stats["permanent_fail"] += 1
+                increment("teaching.outbox_failures")
                 self._record_error(event["event_id"], str(exc))
                 logger.warning("Permanent outbox failure for %s: %s", event["event_id"], exc)
             except Exception as exc:  # noqa: BLE001 - report, keep going
                 stats["retryable_fail"] += 1
+                increment("teaching.outbox_failures")
                 self._record_error(event["event_id"], f"{type(exc).__name__}: {exc}")
                 logger.warning("Outbox delivery failed for %s: %s", event["event_id"], exc)
         return stats

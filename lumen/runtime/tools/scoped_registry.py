@@ -32,6 +32,8 @@ from typing import Any
 from lumen.runtime.tool_protocol import BaseTool, ToolDefinition, ToolLookup, ToolResult
 from lumen.runtime.tools.prompting import compose_prompt_text
 from lumen.runtime.tools.providers.allowlist import Allowlist
+from lumen.shared._util.observability import increment
+from lumen.shared._util.observability import span as telemetry_span
 
 logger = logging.getLogger(__name__)
 
@@ -135,12 +137,24 @@ class ScopedToolRegistry:
 
         ``name`` is positional-only to match the process registry: a tool's
         own schema may declare a ``name`` parameter.
+
+        Only the overlay/refusal branches are instrumented here — the shared
+        path delegates to ``self._base.execute`` (``ToolRegistry.execute``)
+        which already records the ``tool`` telemetry span.
         """
         overlay_tool = self._overlay.get(name)
         if overlay_tool is not None:
-            if not self._allowed.allows(overlay_tool.name):
-                return self._refuse(overlay_tool.name)
-            return await overlay_tool.execute(**kwargs)
+            with telemetry_span(
+                "tool", kind="tool", attrs={"tool": name}, metric="tool"
+            ) as sp:
+                if not self._allowed.allows(overlay_tool.name):
+                    result = self._refuse(overlay_tool.name)
+                else:
+                    result = await overlay_tool.execute(**kwargs)
+                if getattr(result, "success", True) is False:
+                    sp.attrs["status"] = "error"
+                    increment("tool.errors")
+                return result
 
         # Shared path: resolve through the base registry so tool aliases keep
         # working, but gate provider tools before anything runs.
@@ -150,7 +164,13 @@ class ScopedToolRegistry:
             and getattr(base_tool, "deferred", False)
             and not self._allowed.allows(base_tool.name)
         ):
-            return self._refuse(base_tool.name)
+            with telemetry_span(
+                "tool", kind="tool", attrs={"tool": name}, metric="tool"
+            ) as sp:
+                result = self._refuse(base_tool.name)
+                sp.attrs["status"] = "error"
+                increment("tool.errors")
+                return result
         return await self._base.execute(name, **kwargs)
 
     def _refuse(self, name: str) -> ToolResult:

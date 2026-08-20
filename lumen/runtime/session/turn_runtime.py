@@ -24,7 +24,9 @@ from lumen.shared._util.llm.utils import clean_thinking_tags
 from lumen.shared._util.observability import (
     begin_span,
     finish_span,
+    increment,
     new_trace_id,
+    observe,
     trace_span,
 )
 from lumen.shared._util.path_service import get_path_service
@@ -1510,6 +1512,8 @@ class TurnRuntimeManager:
         # the same trace (see Observability Architecture v1).
         telemetry_span: Any = None
         telemetry_token: Any = None
+        # Final turn outcome for telemetry: completed / failed / cancelled.
+        turn_outcome = "completed"
         # One queue per turn for ``ask_user`` style pause-resume.
         # Created here (BEFORE the agent loop runs) so the pipeline can
         # await on the awaitable we publish into ``context.metadata``.
@@ -2133,8 +2137,10 @@ class TurnRuntimeManager:
                     )
             with contextlib.suppress(Exception):
                 await self.store.update_turn_status(turn_id, "cancelled", "Turn cancelled")
+            turn_outcome = "cancelled"
             raise
         except Exception as exc:
+            turn_outcome = "failed"
             if stream_done_sent:
                 logger.error(
                     "Post-stream persistence for turn %s failed: %s",
@@ -2176,7 +2182,11 @@ class TurnRuntimeManager:
             # pre-turn logging context). Safe on every exit path, including
             # cancellation and exceptions.
             if telemetry_span is not None:
+                telemetry_span.attrs["status"] = turn_outcome
+                telemetry_span.attrs["turn_id"] = turn_id
                 finish_span(telemetry_span, telemetry_token)
+                observe("turn.duration", telemetry_span.duration)
+                increment(f"turn.{turn_outcome}")
             if llm_scope_token is not None and reset_active_llm_selection is not None:
                 reset_active_llm_selection(llm_scope_token)
             # Drop the reply queue first — any in-flight ``submit_user_reply``
