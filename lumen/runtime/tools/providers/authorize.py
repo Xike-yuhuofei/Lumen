@@ -8,7 +8,7 @@ so the shared plumbing (the deferred-tool manifest, the loader, the session's
 loaded names) is shared without pretending different policies are one policy.
 
 Canonical home: ``lumen/runtime/tools/providers`` (migrated from
-``deeptutor/runtime/providers/authorize``).
+``lumen/runtime/providers/authorize``).
 """
 
 from __future__ import annotations

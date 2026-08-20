@@ -75,7 +75,7 @@ async def run_test(
 
         t0 = time.perf_counter()
         resp = await complete(
-            "Reply with exactly: HELLO_DEEPTUTOR",
+            "Reply with exactly: HELLO_LUMEN",
             system_prompt="You are a test bot. Follow instructions exactly.",
             model=effective_model,
             api_key=effective_key,

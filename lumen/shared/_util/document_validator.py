@@ -2,7 +2,7 @@
 Document Validator - Validation utilities for document uploads.
 
 Shared util owned by ``lumen/shared/_util`` (migrated from
-``deeptutor/utils/document_validator``).
+``lumen/utils/document_validator``).
 """
 
 import mimetypes

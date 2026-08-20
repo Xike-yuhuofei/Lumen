@@ -5,6 +5,7 @@ export interface LearningGoal {
   name: string
   goal_name: string
   description: string
+  source_kb?: string
   modules_count: number
   kp_count: number
   current_stage: string
@@ -74,11 +75,12 @@ export async function getLearningProgressMap(bookId: string, signal?: AbortSigna
 export async function createLearningGoal(
   title: string,
   description = '',
+  kbName = '',
 ): Promise<{ book_id: string; goal_name: string }> {
   const response = await apiFetch(apiUrl('/api/v1/learning/goals'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ title, description }),
+    body: JSON.stringify({ title, description, kb_name: kbName }),
   })
   return expectJson<{ book_id: string; goal_name: string }>(response)
 }

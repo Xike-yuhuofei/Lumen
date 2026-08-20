@@ -150,7 +150,7 @@ def test_assert_path_allowed_enforces_allowlist(tmp_path: Path, monkeypatch) -> 
     allowed.mkdir()
     outside = tmp_path / "outside"
     outside.mkdir()
-    monkeypatch.setenv("DEEPTUTOR_LINKED_FOLDER_ROOTS", str(allowed))
+    monkeypatch.setenv("LUMEN_LINKED_FOLDER_ROOTS", str(allowed))
 
     inside = allowed / "kb"
     inside.mkdir()

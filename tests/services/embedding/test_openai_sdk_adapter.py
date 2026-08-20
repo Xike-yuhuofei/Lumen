@@ -166,9 +166,9 @@ async def test_embed_omits_dimensions_for_unknown_model_under_auto(
 
 @pytest.mark.asyncio
 async def test_embed_forwards_extra_headers(stub_client: type[_ClientStub]) -> None:
-    adapter = _make_adapter(extra_headers={"X-App": "deeptutor"})
+    adapter = _make_adapter(extra_headers={"X-App": "lumen"})
     await adapter.embed(EmbeddingRequest(texts=["x"], model="text-embedding-3-large"))
-    assert stub_client.constructor_kwargs["default_headers"] == {"X-App": "deeptutor"}
+    assert stub_client.constructor_kwargs["default_headers"] == {"X-App": "lumen"}
 
 
 @pytest.mark.asyncio

@@ -1,7 +1,7 @@
 """Structured prompt assembly for the chat agent loop.
 
 Canonical home: ``lumen/runtime/agent_loop/providers/legacy/prompt_blocks``
-(migrated from ``deeptutor/agents/chat/prompt_blocks``).
+(migrated from ``lumen/agents/chat/prompt_blocks``).
 """
 
 from __future__ import annotations

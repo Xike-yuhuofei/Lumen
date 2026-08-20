@@ -1,7 +1,7 @@
 """Shared language directives for prompt-driven LLM calls.
 
 Owned by ``lumen`` (single real implementation).
-``deeptutor.services.prompt.language`` re-exports this module for existing
+``lumen.services.prompt.language`` re-exports this module for existing
 importers only.
 
 This helper centralizes the "stay in the requested language" instruction so

@@ -5,7 +5,7 @@ chat attachments to disk so the frontend can preview them after the original
 base64 payload is dropped from the message record.
 
 Canonical home: ``lumen/shared/_util/storage`` (migrated from
-``deeptutor/services/storage``).
+``lumen/services/storage``).
 """
 
 from __future__ import annotations

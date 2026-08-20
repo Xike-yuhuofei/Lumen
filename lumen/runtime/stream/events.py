@@ -6,7 +6,7 @@ Unified streaming event format used by all tools, capabilities, and agents
 to communicate progress and results to consumers (CLI, WebSocket, SDK).
 
 Owned by ``lumen/runtime/stream`` since Phase 6B2 (Worker A physical
-migration); ``deeptutor.core.stream`` re-exports it for legacy importers.
+migration); ``lumen.core.stream`` re-exports it for legacy importers.
 """
 
 from __future__ import annotations

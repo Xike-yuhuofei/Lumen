@@ -137,7 +137,7 @@ has_cycle()             → False；topological_order() 合法
 | 22 | assess | 情绪是早期商业机会信号 | assess_gate | 再次正确 | 0.76 → **0.82 ✓** |
 | 23 | **complete** | — | complete | 全部目标达成 | — |
 
-**mastery 变化规律**（与 `deeptutor/learning/mastery.py` 的 `compute_mastery` 一致）：
+**mastery 变化规律**（与 `lumen/learning/mastery.py` 的 `compute_mastery` 一致）：
 - 单个正确：`[T] → 0.50`（被置信度上限压住，一次答对不能算掌握）；
 - 两个正确：`[T,T] → 0.80`（仍受上限 0.8 约束）；
 - 先错后对：`[T,F] → 0.4872`、`[T,F,T] → 0.6607`（错误立即拉低 mastery，正确后回升）；
@@ -147,7 +147,7 @@ has_cycle()             → False；topological_order() 合法
 
 ## 6. Decision Trace（决策轨迹）
 
-Teaching Engine 是**确定性策略栈**（`deeptutor/teaching_core/engine.py`），`decide(graph, goal, learner)` 不产生任何 LLM 调用，同一输入必得同一动作。每次决策输出 `DecisionTrace{version, policy_applied, policies_evaluated, gates}`。
+Teaching Engine 是**确定性策略栈**（`lumen/teaching_core/engine.py`），`decide(graph, goal, learner)` 不产生任何 LLM 调用，同一输入必得同一动作。每次决策输出 `DecisionTrace{version, policy_applied, policies_evaluated, gates}`。
 
 策略优先级（自上而下，先命中者生效）：
 
@@ -204,10 +204,10 @@ success: Assessment ... is correct and mastery reaches 0.80.
 
 ### 测试与修复文件
 
-- 修改：`deeptutor/teaching_extraction/validator.py`（证据校验容错，§9 问题 2）
-- 修改：`deeptutor/teaching_core/models.py`（`requires` 语义契约 + `ORDERING_RELATIONS` 补 `REQUIRES`，§9 问题 1、3）
-- 修改：`deeptutor/teaching_extraction/extractor.py`（`requires` 关系提示词方向修正，§9 问题 3）
-- 新增测试：`deeptutor/teaching_extraction/tests/test_teaching_extraction.py`、`deeptutor/teaching_core/tests/test_graph_queries.py`
+- 修改：`lumen/teaching_extraction/validator.py`（证据校验容错，§9 问题 2）
+- 修改：`lumen/teaching_core/models.py`（`requires` 语义契约 + `ORDERING_RELATIONS` 补 `REQUIRES`，§9 问题 1、3）
+- 修改：`lumen/teaching_extraction/extractor.py`（`requires` 关系提示词方向修正，§9 问题 3）
+- 新增测试：`lumen/teaching_extraction/tests/test_teaching_extraction.py`、`lumen/teaching_core/tests/test_graph_queries.py`
 - 数据文件：`种草-道层面的经验哲学.md`（本轮验证材料）
 - E2E 脚本：`/tmp/lumen_e2e/e2e_teaching.py`（临时验证脚本，不入库）
 
@@ -216,8 +216,8 @@ success: Assessment ... is correct and mastery reaches 0.80.
 ```bash
 # 单元回归（extraction + graph）：68 passed
 PYTHONPATH=/Users/xike/Documents/Docs/Lumen python -m pytest \
-  deeptutor/teaching_extraction/tests/test_teaching_extraction.py \
-  deeptutor/teaching_core/tests/ -q
+  lumen/teaching_extraction/tests/test_teaching_extraction.py \
+  lumen/teaching_core/tests/ -q
 
 # 端到端闭环（输出 JSON 到 stdout）
 PYTHONPATH=/Users/xike/Documents/Docs/Lumen python /tmp/lumen_e2e/e2e_teaching.py
@@ -229,9 +229,9 @@ PYTHONPATH=/Users/xike/Documents/Docs/Lumen python /tmp/lumen_e2e/e2e_teaching.p
 
 ### 已修复（本轮验证中发现并直接修复，修复后重新跑通全部测试与 E2E）
 
-1. **`ORDERING_RELATIONS` 遗漏 `requires`** — 修复前 `requires` 不参与前置门控，`种草作为组织能力 --requires--> 种草的核心目标` 这类边无法约束学习顺序。修复：在 `deeptutor/teaching_core/models.py` 的 `ORDERING_RELATIONS` 中补入 `REQUIRES`，并新增 `test_requires_is_an_ordering_relation` 断言其参与前置与拓扑排序。第 9–10 轮的 `review_prerequisite` 即依赖此修复。
+1. **`ORDERING_RELATIONS` 遗漏 `requires`** — 修复前 `requires` 不参与前置门控，`种草作为组织能力 --requires--> 种草的核心目标` 这类边无法约束学习顺序。修复：在 `lumen/teaching_core/models.py` 的 `ORDERING_RELATIONS` 中补入 `REQUIRES`，并新增 `test_requires_is_an_ordering_relation` 断言其参与前置与拓扑排序。第 9–10 轮的 `review_prerequisite` 即依赖此修复。
 
-2. **证据引用校验对 Markdown 结构过度敏感** — 块引用 `>`、标题 `#`、列表、加粗、尾部标点会导致 LLM 抽取的合法证据被误判为「不在原文中」，进而整批丢弃。修复：`deeptutor/teaching_extraction/validator.py` 新增 `_strip_markdown`（剥离结构性标记）+ `_ground_evidence`（紧致化后匹配、容忍尾部标点、SequenceMatcher 兜底），并新增 3 个测试用例。
+2. **证据引用校验对 Markdown 结构过度敏感** — 块引用 `>`、标题 `#`、列表、加粗、尾部标点会导致 LLM 抽取的合法证据被误判为「不在原文中」，进而整批丢弃。修复：`lumen/teaching_extraction/validator.py` 新增 `_strip_markdown`（剥离结构性标记）+ `_ground_evidence`（紧致化后匹配、容忍尾部标点、SequenceMatcher 兜底），并新增 3 个测试用例。
 
 3. **`requires` 语义契约与图行为不一致** — 图与测试实际按「`A -requires-> B` ⇒ A 先于 B」处理（`graph.prerequisites` 走 incoming + ORDERING_RELATIONS），但 `models.py` 文档与 `extractor.py` 提示词描述为「A requires B（B 在前）」，方向相反，存在抽取反向边的隐患。修复：统一为「A 是 B 的 required learning（A 必须先学）」，同步更新 docstring 与抽取提示词，使契约、代码、测试三者一致。
 

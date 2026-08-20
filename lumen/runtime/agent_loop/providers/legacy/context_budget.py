@@ -1,7 +1,7 @@
 """Per-turn accounting of what the chat loop put in the model's context window.
 
 Canonical home: ``lumen/runtime/agent_loop/providers/legacy/context_budget``
-(migrated from ``deeptutor/agents/chat/context_budget``).
+(migrated from ``lumen/agents/chat/context_budget``).
 
 The composer surfaces "how full is the window, and what is filling it". Those
 numbers only mean something if they describe the request the provider actually

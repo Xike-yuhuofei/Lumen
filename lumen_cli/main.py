@@ -1,4 +1,4 @@
-"""CLI entry point for the standalone ``deeptutor-cli`` package."""
+"""CLI entry point for the standalone ``lumen-cli`` package."""
 
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ set_mode(RunMode.CLI)
 configure_logging()
 
 app = typer.Typer(
-    name="deeptutor",
+    name="lumen",
     help=f"{PRODUCT_NAME} CLI – agent-first interface for capabilities, tools, and knowledge.",
     no_args_is_help=True,
     add_completion=False,
@@ -62,7 +62,7 @@ def run_capability(
     fmt: str = typer.Option("rich", "--format", "-f", help="Output format: rich | json."),
 ) -> None:
     """Run any capability in a single turn (agent-first entry point)."""
-    from lumen.app.facade import DeepTutorApp
+    from lumen.app.facade import LumenApp
 
     from .common import run_turn_and_render
 
@@ -78,7 +78,7 @@ def run_capability(
         notebook_refs=notebook_ref,
         history_refs=history_ref,
     )
-    maybe_run(run_turn_and_render(app=DeepTutorApp(), request=request, fmt=fmt))
+    maybe_run(run_turn_and_render(app=LumenApp(), request=request, fmt=fmt))
 
 
 @app.command()
@@ -123,7 +123,7 @@ def serve(
     except ImportError:
         console.print(
             "[bold red]Error:[/] API server dependencies not installed.\n"
-            "Run: pip install -U deeptutor"
+            "Run: pip install -U lumen"
         )
         raise typer.Exit(code=1)
 

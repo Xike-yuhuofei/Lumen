@@ -1,7 +1,7 @@
 """Label-driven iteration scheduler.
 
 Canonical home: ``lumen/runtime/agent_loop/engine/loop`` (migrated from
-``deeptutor/core/agentic/loop``).
+``lumen/core/agentic/loop``).
 
 The agentic loop drives a conversation with the LLM until one of the
 caller-declared *terminal labels* fires. Each iteration is one

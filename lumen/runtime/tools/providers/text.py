@@ -18,7 +18,7 @@ the *full* text for the on-demand schema (``load_tools``) and render the
 capped, flattened form in the manifest.
 
 Canonical home: ``lumen/runtime/tools/providers`` (migrated from
-``deeptutor/runtime/providers/text``).
+``lumen/runtime/providers/text``).
 """
 
 from __future__ import annotations

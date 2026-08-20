@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 # Legacy fallback only — frozen at admin scope at import time. Production code
 # must enter through ``get_kb_config_service()`` (not used directly here, see
-# ``deeptutor/services/config/__init__.py``) which resolves the path lazily.
+# ``lumen/services/config/__init__.py``) which resolves the path lazily.
 DEFAULT_CONFIG_PATH = get_path_service().get_knowledge_bases_root() / "kb_config.json"
 
 

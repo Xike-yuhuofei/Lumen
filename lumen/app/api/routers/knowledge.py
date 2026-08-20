@@ -1528,7 +1528,7 @@ def _resolve_kb_raw_dir(kb_name: str, *, allow_unsupported: bool = False) -> Pat
     """Resolve a KB's managed ``raw/`` directory without inventing one.
 
     Connected KBs are external-resource pointers and intentionally have no
-    DeepTutor-managed raw directory.  File listing treats that as an empty
+    Lumen-managed raw directory.  File listing treats that as an empty
     collection for backwards compatibility; endpoints that require a local
     file receive an explicit conflict response.
     """
@@ -1978,7 +1978,7 @@ async def run_reindex_task(kb_name: str, base_dir: str, task_id: str, signature_
 
             from lumen.shared.knowledge.rag.service import RAGService
 
-            # provider=None → RAGService resolves the KB's DeepTutor-bound
+            # provider=None → RAGService resolves the KB's Lumen-bound
             # engine, so re-indexing stays on that provider rather than forcing
             # the default pipeline.
             rag_service = RAGService(kb_base_dir=str(base_path), provider=None)

@@ -1,7 +1,7 @@
 """Serve the packaged Vite SPA and reverse-proxy API traffic to the backend.
 
 The browser talks only to the frontend origin. ``/api/*`` and ``/ws/*`` are
-forwarded to ``DEEPTUTOR_API_BASE_URL`` (the IPv4 loopback on the resolved
+forwarded to ``LUMEN_API_BASE_URL`` (the IPv4 loopback on the resolved
 backend port, unless a split deployment set an in-network base).
 """
 
@@ -25,8 +25,8 @@ from starlette.websockets import WebSocket, WebSocketDisconnect
 from lumen.shared._util.brand import PRODUCT_NAME
 
 DEFAULT_API_BASE = "http://127.0.0.1:8001"
-SPA_DIR_ENV = "DEEPTUTOR_SPA_DIR"
-API_BASE_ENV = "DEEPTUTOR_API_BASE_URL"
+SPA_DIR_ENV = "LUMEN_SPA_DIR"
+API_BASE_ENV = "LUMEN_API_BASE_URL"
 
 _HOP_BY_HOP = {
     "connection",
@@ -52,10 +52,10 @@ def resolve_spa_dir(raw: str | None = None) -> Path | None:
         path = Path(value)
         return path if (path / "index.html").is_file() else None
     try:
-        import deeptutor_web
+        import lumen_web
     except ImportError:
         return None
-    path = Path(deeptutor_web.__file__).resolve().parent
+    path = Path(lumen_web.__file__).resolve().parent
     return path if (path / "index.html").is_file() else None
 
 

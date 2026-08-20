@@ -4,9 +4,9 @@ Sandbox configuration and backend selection.
 The active backend is chosen from environment so it tracks the deployment
 shape without per-user config:
 
-* ``DEEPTUTOR_SANDBOX_RUNNER_URL`` set ⇒ runner sidecar (Docker deployment);
+* ``LUMEN_SANDBOX_RUNNER_URL`` set ⇒ runner sidecar (Docker deployment);
 * else on Linux with a functional ``bwrap`` ⇒ bwrap (bare-metal);
-* else, only when ``DEEPTUTOR_SANDBOX_ALLOW_SUBPROCESS=1`` ⇒ restricted
+* else, only when ``LUMEN_SANDBOX_ALLOW_SUBPROCESS=1`` ⇒ restricted
   subprocess (admin-opt-in local dev — APPLICATION isolation only);
 * else ⇒ no sandbox (code_execution disabled).
 
@@ -29,13 +29,13 @@ from lumen.shared.sandbox.backends import (
 )
 from lumen.shared.sandbox.spec import ResourceLimits
 
-RUNNER_URL_ENV = "DEEPTUTOR_SANDBOX_RUNNER_URL"
-ALLOW_SUBPROCESS_ENV = "DEEPTUTOR_SANDBOX_ALLOW_SUBPROCESS"
+RUNNER_URL_ENV = "LUMEN_SANDBOX_RUNNER_URL"
+ALLOW_SUBPROCESS_ENV = "LUMEN_SANDBOX_ALLOW_SUBPROCESS"
 
 # Per-user execution quotas (see quota.py). Conservative defaults; override
 # via the matching env vars.
-MAX_CONCURRENT_ENV = "DEEPTUTOR_SANDBOX_MAX_CONCURRENT"
-MAX_PER_MINUTE_ENV = "DEEPTUTOR_SANDBOX_MAX_PER_MINUTE"
+MAX_CONCURRENT_ENV = "LUMEN_SANDBOX_MAX_CONCURRENT"
+MAX_PER_MINUTE_ENV = "LUMEN_SANDBOX_MAX_PER_MINUTE"
 
 
 @dataclass(frozen=True)

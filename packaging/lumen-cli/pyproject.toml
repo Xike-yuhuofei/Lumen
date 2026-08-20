@@ -3,10 +3,10 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "deeptutor-cli"
+name = "lumen-cli"
 dynamic = ["version"]
 description = "CLI-only distribution for Lumen"
-# Capped below 3.14 to match the main `deeptutor` package (issue #664): 3.14
+# Capped below 3.14 to match the main `lumen` package (issue #664): 3.14
 # lacks wheels for some compiled base deps (e.g. faiss-cpu), so pip falls back
 # to a source build that fails. Refuse 3.14 cleanly instead.
 requires-python = ">=3.11,<3.14"
@@ -49,7 +49,7 @@ dependencies = [
 ]
 
 [project.scripts]
-deeptutor = "deeptutor_cli.main:main"
+lumen = "lumen_cli.main:main"
 
 [tool.setuptools]
 package-dir = {"" = "../.."}
@@ -60,13 +60,13 @@ version = {attr = "lumen.__version__.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["../.."]
-include = ["deeptutor*", "deeptutor_cli*"]
-exclude = ["deeptutor_web*"]
+include = ["lumen*", "lumen_cli*"]
+exclude = ["lumen_web*"]
 
 # This distribution includes the shared agent implementations. Keep their
 # runtime prompt/config assets in the wheel as the full distribution does.
 [tool.setuptools.package-data]
-deeptutor = [
+lumen = [
     "**/*.yaml",
     "**/*.yml",
     "**/*.md",
@@ -75,4 +75,4 @@ deeptutor = [
     "**/*.j2",
     "**/*.jinja",
 ]
-deeptutor_cli = ["**/*.md"]
+lumen_cli = ["**/*.md"]

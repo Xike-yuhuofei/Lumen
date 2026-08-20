@@ -1,7 +1,7 @@
 """Built-in tool implementations and metadata.
 
 Canonical home: ``lumen/runtime/tools/builtin`` (migrated from
-``deeptutor/tools/builtin``).  ``deeptutor.tools.builtin`` re-exports these
+``lumen/tools/builtin``).  ``lumen.tools.builtin`` re-exports these
 for existing importers and tests only.
 """
 

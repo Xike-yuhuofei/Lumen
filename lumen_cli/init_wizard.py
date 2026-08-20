@@ -1,4 +1,4 @@
-"""Interactive setup helpers used by ``deeptutor init``.
+"""Interactive setup helpers used by ``lumen init``.
 
 Drives the multi-step wizard: provider menu, API-key capture (with env-var
 auto-detect), live model-list fetch from ``GET {base_url}/models`` with a
@@ -390,7 +390,7 @@ def _all_providers_except(featured: set[str]) -> list[ProviderSpec]:
     return [
         spec
         for spec in PROVIDERS
-        if spec.name not in featured and not spec.is_oauth  # OAuth flows use `deeptutor login`
+        if spec.name not in featured and not spec.is_oauth  # OAuth flows use `lumen login`
     ]
 
 

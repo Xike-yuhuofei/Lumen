@@ -55,7 +55,7 @@ Mounts note:
   the directory is already visible here and no action is needed. We only
   read/record the ``mounts`` field; what is visible is decided by the compose
   volume layout, and ``workdir`` is validated against the same roots
-  (``DEEPTUTOR_RUNNER_ALLOWED_WORKDIRS``) as defence in depth.
+  (``LUMEN_RUNNER_ALLOWED_WORKDIRS``) as defence in depth.
 """
 
 from __future__ import annotations
@@ -155,7 +155,7 @@ def _build_preexec_fn(memory_mb: int, cpu_seconds: int):
 _ALLOWED_WORKDIR_ROOTS = [
     root
     for root in os.environ.get(
-        "DEEPTUTOR_RUNNER_ALLOWED_WORKDIRS",
+        "LUMEN_RUNNER_ALLOWED_WORKDIRS",
         "/app/data/user/workspace:/app/data/users",
     ).split(":")
     if root

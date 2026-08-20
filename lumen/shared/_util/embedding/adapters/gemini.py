@@ -360,7 +360,7 @@ class GeminiEmbeddingAdapter(OpenAICompatibleEmbeddingAdapter):
             "dimensions": model_info["default"],
             "supported_dimensions": list(model_info["dimensions"]),
             "supports_variable_dimensions": True,
-            # The current DeepTutor content contract is text-only. Advertising
+            # The current Lumen content contract is text-only. Advertising
             # multimodal here would route images into an unsupported payload.
             "multimodal": False,
             "provider": "gemini",

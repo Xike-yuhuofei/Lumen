@@ -1,10 +1,10 @@
 """Interactive runtime settings initializer.
 
-``deeptutor init`` walks the user through a four-step wizard (ports → LLM →
+``lumen init`` walks the user through a four-step wizard (ports → LLM →
 embedding → review) that writes the same files as the Web Settings page.
 
 Heavy lifting (provider menu, live ``/models`` fetch, connectivity probe,
-review panel) lives in :mod:`deeptutor_cli.init_wizard`. This module is
+review panel) lives in :mod:`lumen_cli.init_wizard`. This module is
 intentionally thin so the order of steps is easy to read top-to-bottom.
 """
 
@@ -16,15 +16,15 @@ from typing import Any
 from rich.console import Console
 import typer
 
-from lumen.shared._util.runtime_home import DEEPTUTOR_HOME_ENV, get_runtime_home
+from lumen.shared._util.runtime_home import LUMEN_HOME_ENV, get_runtime_home
 
 from . import init_wizard as wiz
 
 
 def _reset_runtime_singletons() -> None:
-    """Drop cached service instances so the new DEEPTUTOR_HOME takes effect.
+    """Drop cached service instances so the new LUMEN_HOME takes effect.
 
-    ``deeptutor init`` may pass ``--home`` to target a different workspace; the
+    ``lumen init`` may pass ``--home`` to target a different workspace; the
     singletons cache paths from the *previous* PathService and will silently
     write to the wrong place if not cleared.
     """
@@ -412,7 +412,7 @@ def run_init(*, cli_only: bool = False, home: str | Path | None = None) -> None:
     runtime_home.mkdir(parents=True, exist_ok=True)
     import os
 
-    os.environ[DEEPTUTOR_HOME_ENV] = str(runtime_home)
+    os.environ[LUMEN_HOME_ENV] = str(runtime_home)
     _reset_runtime_singletons()
 
     from lumen.app.banner import labels_for, print_banner, resolve_language

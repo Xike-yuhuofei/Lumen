@@ -44,7 +44,7 @@ async function main() {
   fs.mkdirSync(OUT, { recursive: true })
   const browser = await chromium.connectOverCDP(CDP)
   const page = browser.contexts().flatMap((c) => c.pages()).find((p) => p.url().includes('127.0.0.1:5174'))
-  if (!page) throw new Error('DeepTutor tab not found')
+  if (!page) throw new Error('Lumen tab not found')
   await page.bringToFront()
   const windowInfo = await setFixedWindow(page)
   await page.reload({ waitUntil: 'domcontentloaded' })

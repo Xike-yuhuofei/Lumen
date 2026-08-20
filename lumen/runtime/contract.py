@@ -2,7 +2,7 @@
 
 Each contract is a minimal abstract interface describing what a consumer
 genuinely needs from the runtime layer.  Adapter plugins implement these
-by wrapping the existing ``deeptutor`` implementations.
+by wrapping the existing ``lumen`` implementations.
 """
 
 from __future__ import annotations

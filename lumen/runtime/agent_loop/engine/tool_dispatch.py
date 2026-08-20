@@ -1,7 +1,7 @@
 """Parallel tool-call dispatch with per-tool sub-traces.
 
 Canonical home: ``lumen/runtime/agent_loop/engine/tool_dispatch`` (migrated
-from ``deeptutor/core/agentic/tool_dispatch``).
+from ``lumen/core/agentic/tool_dispatch``).
 
 Lifted from chat's pipeline. Capability-agnostic: the caller supplies:
 

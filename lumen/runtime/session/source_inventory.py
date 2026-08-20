@@ -560,7 +560,7 @@ def _resolve_book_section(book_reference: dict[str, Any]) -> tuple[str, str]:
 
 # Human labels for the external agents a session can be imported from. The
 # import source is recorded at import time in ``preferences["import"]["source"]``
-# (see ``deeptutor/api/routers/imports.py``).
+# (see ``lumen/api/routers/imports.py``).
 _EXTERNAL_AGENT_LABELS: dict[str, str] = {
     "claude_code": "Claude Code",
 }

@@ -1,4 +1,4 @@
-"""Runtime adapter plugin — bridge existing ``deeptutor`` tool registry
+"""Runtime adapter plugin — bridge existing ``lumen`` tool registry
 into the Plugin Kernel via :class:`ToolService`."""
 
 from __future__ import annotations

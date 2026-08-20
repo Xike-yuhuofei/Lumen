@@ -1,6 +1,6 @@
 """Tests for the CLI turn-stream renderer against the chat-loop protocol.
 
-The chat agent loop (deeptutor/agents/chat/agent_loop.py) streams every
+The chat agent loop (lumen/agents/chat/agent_loop.py) streams every
 round's text as ``content`` chunks with ``trace_kind=llm_chunk`` and labels
 the round afterwards via a ``call_status`` marker carrying ``call_role``
 (``narration`` | ``finish``). These tests feed that exact event shape into
@@ -16,10 +16,10 @@ from typing import Any
 
 from typer.testing import CliRunner
 
-from deeptutor_cli import common as cli_common
-from deeptutor_cli.common import _resolve_answer
-from deeptutor_cli.main import app
 from lumen.app.facade import TurnRequest
+from lumen_cli import common as cli_common
+from lumen_cli.common import _resolve_answer
+from lumen_cli.main import app
 
 runner = CliRunner()
 
@@ -124,9 +124,9 @@ def _install_fake_runtime(
             replies.append({"turn_id": turn_id, "text": text, "answers": answers})
         return True
 
-    monkeypatch.setattr("lumen.app.facade.DeepTutorApp.start_turn", _start_turn)
-    monkeypatch.setattr("lumen.app.facade.DeepTutorApp.stream_turn", _stream_turn)
-    monkeypatch.setattr("lumen.app.facade.DeepTutorApp.submit_user_reply", _submit_user_reply)
+    monkeypatch.setattr("lumen.app.facade.LumenApp.start_turn", _start_turn)
+    monkeypatch.setattr("lumen.app.facade.LumenApp.stream_turn", _stream_turn)
+    monkeypatch.setattr("lumen.app.facade.LumenApp.submit_user_reply", _submit_user_reply)
 
 
 def test_narration_renders_before_tools_and_finish_is_answer(monkeypatch) -> None:

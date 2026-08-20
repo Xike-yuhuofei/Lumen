@@ -1,7 +1,7 @@
 """Workspace file tools for chat skill/script workflows.
 
 Canonical home: ``lumen/runtime/tools/builtin/file_tools`` (migrated from
-``deeptutor/tools/file_tools``).  ``deeptutor.tools.file_tools`` re-exports
+``lumen/tools/file_tools``).  ``lumen.tools.file_tools`` re-exports
 these for existing importers and tests only.
 """
 

@@ -1,7 +1,7 @@
 """Per-turn tool composition policy shared by chat / quiz pipelines.
 
 Canonical home: ``lumen/runtime/tools/composition`` (migrated from
-``deeptutor/agents/_shared/tool_composition``).
+``lumen/agents/_shared/tool_composition``).
 
 Owns the rule "given the user's composer toggles + the turn's context
 flags, what tools should be enabled?". Lives outside any single pipeline

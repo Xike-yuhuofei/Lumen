@@ -14,7 +14,7 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
     "metadata_path",
     [
         REPOSITORY_ROOT / "pyproject.toml",
-        REPOSITORY_ROOT / "packaging" / "deeptutor-cli" / "pyproject.toml",
+        REPOSITORY_ROOT / "packaging" / "lumen-cli" / "pyproject.toml",
     ],
 )
 def test_typer_dependency_does_not_request_removed_all_extra(metadata_path: Path) -> None:

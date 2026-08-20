@@ -8,7 +8,7 @@ type and pay for it with per-kind branches hidden inside it. The branches
 live in :mod:`lumen.runtime.tools.providers.authorize`, named and readable.
 
 Canonical home: ``lumen/runtime/tools/providers`` (migrated from
-``deeptutor/runtime/providers/scope``).
+``lumen/runtime/providers/scope``).
 """
 
 from __future__ import annotations

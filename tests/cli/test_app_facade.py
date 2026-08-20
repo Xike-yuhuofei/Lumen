@@ -14,7 +14,7 @@ from typing import Any
 
 import pytest
 
-from lumen.app.facade import DeepTutorApp, TurnRequest
+from lumen.app.facade import LumenApp, TurnRequest
 
 
 def _broken_registry():
@@ -34,7 +34,7 @@ def _broken_registry():
 
 
 def test_learn_names_resolve_to_canonical_mode_learn():
-    app = DeepTutorApp()
+    app = LumenApp()
     app.capabilities = _broken_registry()  # type: ignore[assignment]
 
     assert app.resolve_capability("mode.learn") == "mode.learn"
@@ -51,19 +51,19 @@ def test_learn_names_resolve_to_canonical_mode_learn():
     ],
 )
 def test_generic_chat_resolution_unaffected(value, expected):
-    app = DeepTutorApp()
+    app = LumenApp()
     assert app.resolve_capability(value) == expected
 
 
 @pytest.mark.parametrize("value", ["auto", "quiz", "foo"])
 def test_unknown_capabilities_rejected(value):
-    app = DeepTutorApp()
+    app = LumenApp()
     with pytest.raises(ValueError, match="Unknown capability"):
         app.resolve_capability(value)
 
 
 def test_get_capability_availability_exposes_canonical_name():
-    app = DeepTutorApp()
+    app = LumenApp()
     app.capabilities = _broken_registry()  # type: ignore[assignment]
 
     assert app.get_capability_availability("mastery_path").name == "mode.learn"
@@ -73,7 +73,7 @@ def test_get_capability_availability_exposes_canonical_name():
 
 
 def test_get_capability_contract_learn_returns_canonical_snapshot():
-    app = DeepTutorApp()
+    app = LumenApp()
 
     contract = app.get_capability_contract("mastery")
     assert contract["name"] == "mode.learn"
@@ -86,7 +86,7 @@ def test_get_capability_contract_learn_returns_canonical_snapshot():
 def test_start_turn_hands_canonical_mode_learn_to_runtime(monkeypatch):
     """A Learn request from the facade reaches the runtime as ``mode.learn``
     without flowing through the legacy MasteryPathCapability path."""
-    app = DeepTutorApp()
+    app = LumenApp()
     app.capabilities = _broken_registry()  # type: ignore[assignment]
 
     captured: dict[str, Any] = {}

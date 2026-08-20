@@ -3,7 +3,7 @@
 Canonical home for the user's toggleable-tool list, the interface settings
 file, and the "enabled optional tools" resolution the chat pipeline uses when a
 turn doesn't carry an explicit ``tools`` list.  Migrated from
-``deeptutor/api/routers/settings`` and ``deeptutor/tools/builtin``.
+``lumen/api/routers/settings`` and ``lumen/tools/builtin``.
 """
 
 from __future__ import annotations

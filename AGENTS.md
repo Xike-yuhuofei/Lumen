@@ -9,7 +9,7 @@ Lumen 已从 **Architecture Migration 阶段** 正式进入 **Product Capability
 
 **冻结规则：**
 - 不得重新讨论已冻结的架构决策（见 `ARCHITECTURE_V1.md`）
-- 不得主动清理 `deeptutor/` 历史痕迹
+- 不得主动清理 `lumen/` 历史痕迹
 - 不得在无 bake-off 证据的情况下切换 Production Agent Loop Provider
 - 所有架构变更必须通过 Architecture Gates 验证
 
@@ -28,7 +28,7 @@ entry points: CLI, WebSocket API, and Python SDK.
 Entry Points:  CLI (Typer)  |  WebSocket /api/v1/ws  |  Python SDK  |  Cron
                     ↓                   ↓                   ↓            ↓
               ┌──────────────────────────────────────────────────────────┐
-              │  TurnRuntimeManager / DeepTutorApp (turn orchestration)  │
+              │  TurnRuntimeManager / LumenApp (turn orchestration)  │
               └────────────────────────────┬─────────────────────────────┘
                                           ↓
                      LumenBootstrap (Plugin Kernel: profile → boot)
@@ -89,22 +89,22 @@ the Learn (mode.learn) mastery tools.
 
 ```bash
 # Install
-pip install deeptutor      # Full app (CLI + Web/API + packaged Web assets)
-pip install deeptutor-cli  # CLI-only
+pip install lumen      # Full app (CLI + Web/API + packaged Web assets)
+pip install lumen-cli  # CLI-only
 
 # Run a turn
-deeptutor run chat "Explain Fourier transform"
-deeptutor run mastery_path "Master vector calculus" --kb textbook   # Learn (mode.learn); CLI compat name mastery_path
+lumen run chat "Explain Fourier transform"
+lumen run mastery_path "Master vector calculus" --kb textbook   # Learn (mode.learn); CLI compat name mastery_path
 
 # Interactive REPL
-deeptutor chat
+lumen chat
 # (inside the REPL: /regenerate or /retry re-runs the last user message)
 
 # Sessions, config, server
-deeptutor session list
-deeptutor config show
-deeptutor serve --port 8001       # API server only
-deeptutor start                   # backend + frontend together
+lumen session list
+lumen config show
+lumen serve --port 8001       # API server only
+lumen start                   # backend + frontend together
 ```
 
 ## Key Files
@@ -128,8 +128,8 @@ deeptutor start                   # backend + frontend together
 | `lumen/runtime/tool_protocol.py`           | `BaseTool` + `ToolDefinition`         |
 | `lumen/runtime/context.py`                 | `UnifiedContext` dataclass            |
 | `lumen/runtime/tools/builtin/__init__.py`  | All built-in tool wrappers           |
-| `lumen/app/facade.py`                      | `DeepTutorApp` — Python SDK facade    |
-| `deeptutor_cli/main.py`                    | Typer CLI entry point                |
+| `lumen/app/facade.py`                      | `LumenApp` — Python SDK facade    |
+| `lumen_cli/main.py`                    | Typer CLI entry point                |
 | `lumen/app/api/routers/unified_ws.py`      | Unified WebSocket endpoint           |
 
 ## Dependency Layers
@@ -138,8 +138,8 @@ Public install paths and source extras are defined in `pyproject.toml`.
 Requirements files mirror the same dependency groups for Docker/CI installs.
 
 ```
-pip install deeptutor      — Full app (CLI + Web/API + packaged Web assets)
-pip install deeptutor-cli  — CLI-only (LLM + RAG + providers + document parsing)
+pip install lumen      — Full app (CLI + Web/API + packaged Web assets)
+pip install lumen-cli  — CLI-only (LLM + RAG + providers + document parsing)
 pip install -e .           — Source install for development
 
 Source extras (.[ extra ], defined in pyproject.toml):

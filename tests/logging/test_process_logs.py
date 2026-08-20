@@ -5,7 +5,7 @@ from lumen.shared._util.logging import ProcessLogEvent, bind_log_context, captur
 
 def test_capture_process_logs_emits_structured_event_for_matching_task():
     events: list[ProcessLogEvent] = []
-    logger = logging.getLogger("deeptutor.tests.process")
+    logger = logging.getLogger("lumen.tests.process")
 
     with bind_log_context(task_id="task-1", capability="knowledge", stage="indexing"):
         with capture_process_logs(events.append, task_id="task-1"):
@@ -16,7 +16,7 @@ def test_capture_process_logs_emits_structured_event_for_matching_task():
     assert event["type"] == "process_log"
     assert event["level"] == "INFO"
     assert event["message"] == "Embedding batches: 2/8"
-    assert event["logger"] == "deeptutor.tests.process"
+    assert event["logger"] == "lumen.tests.process"
     assert event["context"] == {
         "task_id": "task-1",
         "capability": "knowledge",
@@ -26,7 +26,7 @@ def test_capture_process_logs_emits_structured_event_for_matching_task():
 
 def test_capture_process_logs_filters_other_tasks():
     events: list[ProcessLogEvent] = []
-    logger = logging.getLogger("deeptutor.tests.process")
+    logger = logging.getLogger("lumen.tests.process")
 
     with capture_process_logs(events.append, task_id="task-1"):
         with bind_log_context(task_id="task-2"):

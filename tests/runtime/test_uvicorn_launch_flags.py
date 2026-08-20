@@ -7,8 +7,8 @@ ends do not race to close the same socket. A FIN landing on a socket the pool
 was handing to a new request used to kill it with ``ECONNRESET``, which the
 proxy turned into a 500 ("Failed to load sessions" in the UI).
 ``--timeout-keep-alive`` fixes it, and ``--ws-max-size`` has the same shape:
-correct only if *every* launch point passes it, and DeepTutor has three (the
-``deeptutor start`` launcher, the CLI, run_server). A
+correct only if *every* launch point passes it, and Lumen has three (the
+``lumen start`` launcher, the CLI, run_server). A
 launch point that forgets one reintroduces the bug for whoever starts the
 backend that way, which no per-module test would catch.
 """
@@ -27,7 +27,7 @@ _CLI_FLAGS = ("--ws-max-size", "--timeout-keep-alive")
 _LAUNCH_POINTS = [
     ("lumen/app/launcher.py", '"uvicorn",', _CLI_FLAGS),
     ("lumen/app/api/run_server.py", "uvicorn.run(", _PYTHON_FLAGS),
-    ("deeptutor_cli/main.py", "uvicorn.run(", _PYTHON_FLAGS),
+    ("lumen_cli/main.py", "uvicorn.run(", _PYTHON_FLAGS),
 ]
 
 

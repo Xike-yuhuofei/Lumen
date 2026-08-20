@@ -1,7 +1,7 @@
 """Single-loop chat agent.
 
 Canonical home: ``lumen/runtime/agent_loop/providers/legacy/agent_loop``
-(migrated from ``deeptutor/agents/chat/agent_loop``).
+(migrated from ``lumen/agents/chat/agent_loop``).
 
 One chat turn = ONE agent loop over a single growing conversation:
 
@@ -29,6 +29,7 @@ tells the frontend how to render that round's text.
 
 from __future__ import annotations
 
+import asyncio
 from contextlib import suppress
 from dataclasses import dataclass, field
 import logging
@@ -51,10 +52,13 @@ from lumen.shared._util.llm import clean_thinking_tags
 from lumen.shared._util.llm.capabilities import threads_session_id
 from lumen.shared._util.llm.multimodal import should_degrade_to_text, strip_image_parts_inplace
 from lumen.shared._util.llm.request_compat import (
+    error_text,
     is_image_input_unsupported,
     is_stream_options_unsupported,
     is_tool_schema_unsupported,
+    is_transient_provider_error,
 )
+from lumen.shared._util.llm.settings import settings as llm_retry_settings
 
 if TYPE_CHECKING:  # pragma: no cover
     from lumen.runtime.agent_loop.providers.legacy.agentic_pipeline import AgenticChatPipeline
@@ -616,7 +620,7 @@ class AgentLoop:
             **self.pipeline._completion_kwargs(max_tokens=max_tokens),
         }
         if threads_session_id(self.pipeline.binding):
-            kwargs["deeptutor_session_id"] = self.context.session_id
+            kwargs["lumen_session_id"] = self.context.session_id
         if self.pipeline.usage is not None:
             kwargs["stream_options"] = {"include_usage": True}
         if tool_schemas:
@@ -797,19 +801,48 @@ class AgentLoop:
             finish_reason=finish_reason,
         )
 
+    @staticmethod
+    def _transient_retry_delays() -> tuple[float, ...]:
+        """Bounded retry delays for transient upstream outages.
+
+        Reads the same ``LLM_RETRY__*`` settings the services-layer LLM stack
+        uses, so operator tuning applies uniformly. Delays are capped so an
+        interactive turn never stalls indefinitely behind one provider.
+        """
+        cfg = llm_retry_settings.retry
+        try:
+            max_retries = int(cfg.max_retries)
+        except (TypeError, ValueError):
+            max_retries = 3
+        if max_retries <= 0:
+            return ()
+        try:
+            base = float(cfg.base_delay)
+        except (TypeError, ValueError):
+            base = 1.0
+        backoff = bool(cfg.exponential_backoff)
+        delays: list[float] = []
+        for attempt in range(max_retries):
+            delay = base * (2**attempt) if backoff else base
+            delays.append(min(delay, 30.0))
+        return tuple(delays)
+
     async def _create_response_stream(
         self,
         kwargs: dict[str, Any],
         trace_meta: dict[str, Any],
         stage: str,
     ) -> Any:
+        async def _create(**kw: Any) -> Any:
+            return await self.client.chat.completions.create(**kw)
+
         try:
-            return await self.client.chat.completions.create(**kwargs)
+            return await _create(**kwargs)
         except Exception as exc:
             if "stream_options" in kwargs and is_stream_options_unsupported(exc):
                 retry_kwargs = dict(kwargs)
                 retry_kwargs.pop("stream_options", None)
-                return await self.client.chat.completions.create(**retry_kwargs)
+                return await _create(**retry_kwargs)
             if kwargs.get("tools") and is_tool_schema_unsupported(exc):
                 await self.stream.progress(
                     self.pipeline._t(
@@ -827,7 +860,7 @@ class AgentLoop:
                 retry_kwargs.pop("tools", None)
                 retry_kwargs.pop("tool_choice", None)
                 self.tool_schemas = None
-                return await self.client.chat.completions.create(**retry_kwargs)
+                return await _create(**retry_kwargs)
             if is_image_input_unsupported(exc) and should_degrade_to_text(
                 self.pipeline.binding,
                 self.pipeline.model,
@@ -846,7 +879,42 @@ class AgentLoop:
                         {"trace_kind": "warning", "image_fallback": True},
                     ),
                 )
-                return await self.client.chat.completions.create(**kwargs)
+                return await _create(**kwargs)
+
+            # Transient upstream outage (e.g. Gitee AI 503 "no available
+            # account") — the account-serving pool briefly has no idle model
+            # account. Retry with a bounded backoff so a normal request
+            # survives the window; only when the retry budget is exhausted do
+            # we surface an error, and never for non-transient (4xx) failures.
+            if is_transient_provider_error(exc):
+                delays = self._transient_retry_delays()
+                if delays:
+                    await self.stream.progress(
+                        self.pipeline._t(
+                            "notices.provider_transient",
+                            default="Model service is temporarily unavailable; retrying.",
+                        ),
+                        source="chat",
+                        stage=stage,
+                        metadata=merge_trace_metadata(
+                            trace_meta,
+                            {"trace_kind": "warning", "provider_transient": True},
+                        ),
+                    )
+                    for attempt, delay in enumerate(delays, start=1):
+                        await asyncio.sleep(delay)
+                        try:
+                            return await _create(**kwargs)
+                        except Exception as retry_exc:
+                            if not is_transient_provider_error(retry_exc):
+                                raise
+                            logger.warning(
+                                "LLM transient outage (attempt %d/%d): %s",
+                                attempt,
+                                len(delays),
+                                error_text(retry_exc)[:120],
+                            )
+                raise exc
             raise
 
 

@@ -1,4 +1,4 @@
-"""Runtime adapter plugin — bridge existing ``deeptutor`` agent pipeline
+"""Runtime adapter plugin — bridge existing ``lumen`` agent pipeline
 factory into the Plugin Kernel via :class:`AgentService`."""
 
 from __future__ import annotations

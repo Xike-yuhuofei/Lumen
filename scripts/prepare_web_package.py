@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Prepare ``deeptutor_web`` package data from a Vite production build."""
+"""Prepare ``lumen_web`` package data from a Vite production build."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ import subprocess
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 WEB_DIR = PROJECT_ROOT / "frontend"
-PACKAGE_DIR = PROJECT_ROOT / "deeptutor_web"
+PACKAGE_DIR = PROJECT_ROOT / "lumen_web"
 
 
 def _clean_package_dir(package_dir: Path) -> None:

@@ -37,17 +37,17 @@ def test_configure_logging_writes_jsonl_and_respects_level(monkeypatch, tmp_path
     )
 
     configure_module.configure_logging(force=True)
-    logger = logging.getLogger("deeptutor.tests.config")
+    logger = logging.getLogger("lumen.tests.config")
     with bind_log_context(request_id="req-1", task_id="task-1"):
         logger.info("filtered")
         logger.warning("written")
     _flush_root_handlers()
 
-    lines = (tmp_path / "deeptutor.jsonl").read_text(encoding="utf-8").splitlines()
+    lines = (tmp_path / "lumen.jsonl").read_text(encoding="utf-8").splitlines()
     assert len(lines) == 1
     entry = json.loads(lines[0])
     assert entry["level"] == "WARNING"
-    assert entry["logger"] == "deeptutor.tests.config"
+    assert entry["logger"] == "lumen.tests.config"
     assert entry["message"] == "written"
     assert entry["context"] == {"request_id": "req-1", "task_id": "task-1"}
 
@@ -68,10 +68,10 @@ def test_configure_logging_uses_rotation_settings(monkeypatch, tmp_path: Path):
     )
 
     configure_module.configure_logging(force=True)
-    logger = logging.getLogger("deeptutor.tests.rotation")
+    logger = logging.getLogger("lumen.tests.rotation")
     for index in range(20):
         logger.info("rotation line %02d %s", index, "x" * 40)
     _flush_root_handlers()
 
-    assert (tmp_path / "deeptutor.jsonl").exists()
-    assert (tmp_path / "deeptutor.jsonl.1").exists()
+    assert (tmp_path / "lumen.jsonl").exists()
+    assert (tmp_path / "lumen.jsonl.1").exists()

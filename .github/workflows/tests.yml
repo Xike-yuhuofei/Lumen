@@ -6,8 +6,8 @@ on:
       - main
       - dev
     paths:
-      - "deeptutor/**"
-      - "deeptutor_cli/**"
+      - "lumen/**"
+      - "lumen_cli/**"
       - "tests/**"
       - "requirements/**"
       - "requirements.txt"
@@ -19,8 +19,8 @@ on:
       - main
       - dev
     paths:
-      - "deeptutor/**"
-      - "deeptutor_cli/**"
+      - "lumen/**"
+      - "lumen_cli/**"
       - "tests/**"
       - "requirements/**"
       - "requirements.txt"

@@ -1279,3 +1279,116 @@ def test_build_llm_tool_schemas_kb_name_enum_matches_attached() -> None:
     )
 
     assert schemas[0]["function"]["parameters"]["additionalProperties"] is False
+
+
+@pytest.mark.asyncio
+async def test_transient_503_no_available_account_is_retried(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A first-round Gitee 503 ``no_available_account`` must be retried (bounded
+    backoff) instead of surfacing raw — then complete normally.
+
+    Regression for the producer-side outage that previously escaped the agent
+    loop's streaming create call untouched (it only special-cased unsupported
+    stream_options / tools / images), so the raw SDK body reached the user.
+    """
+    from lumen.runtime.agent_loop.providers.legacy.agent_loop import AgentLoop
+
+    class _InternalServerError(Exception):
+        status_code = 503
+        body = (
+            "{'error': {'code': 'no_available_account', "
+            "'message': 'no available account', 'type': 'server_error'}}"
+        )
+
+        def __init__(self) -> None:
+            super().__init__(f"Error code: 503 - {self.body}")
+
+    class _TransientThenSuccessClient:
+        def __init__(self, transient_failures: int, chunks: list[SimpleNamespace]) -> None:
+            self._remaining = transient_failures
+            self.chunks = chunks
+            self.call_count = 0
+            parent = self
+
+            class _Completions:
+                async def create(self, **kwargs):
+                    parent.call_count += 1
+                    if parent._remaining > 0:
+                        parent._remaining -= 1
+                        raise _InternalServerError()
+                    return _async_llm_stream(parent.chunks)
+
+            class _Chat:
+                def __init__(self) -> None:
+                    self.completions = _Completions()
+
+            self.chat = _Chat()
+
+    # Collapse the backoff so the test runs in milliseconds.
+    monkeypatch.setattr(AgentLoop, "_transient_retry_delays", lambda cls: (0.001, 0.001))
+
+    registry = _Registry()
+    client = _TransientThenSuccessClient(
+        transient_failures=2, chunks=[_llm_chunk(content="A recovered answer.")]
+    )
+    pipeline = AgenticChatPipeline(language="en")
+    pipeline.registry = registry
+    monkeypatch.setattr(pipeline, "_compose_enabled_tools", lambda _context: [])
+    monkeypatch.setattr(pipeline, "_build_openai_client", lambda: client)
+
+    events = await _run(pipeline, UnifiedContext(session_id="s1", user_message="Hello"))
+
+    # Two transient 503s, then a successful stream = three create() calls.
+    assert client.call_count == 3
+    assert _contents(events) == ["A recovered answer."]
+    result = _result(events)
+    assert result.metadata["completed"] is True
+    assert result.metadata["response"] == "A recovered answer."
+
+
+@pytest.mark.asyncio
+async def test_transient_503_with_zero_budget_propagates(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """With LLM_RETRY__MAX_RETRIES=0 (no delay budget) the transient error still
+    propagates as a first-round failure rather than being swallowed."""
+    from lumen.runtime.agent_loop.providers.legacy.agent_loop import AgentLoop
+
+    class _InternalServerError(Exception):
+        status_code = 503
+        body = "{'error': {'code': 'no_available_account', 'message': 'no available account', 'type': 'server_error'}}"
+
+        def __init__(self) -> None:
+            super().__init__(f"Error code: 503 - {self.body}")
+
+    class _Always503Client:
+        def __init__(self) -> None:
+            self.calls = 0
+            parent = self
+
+            class _Completions:
+                async def create(self, **kwargs):
+                    parent.calls += 1
+                    raise _InternalServerError()
+
+            class _Chat:
+                def __init__(self) -> None:
+                    self.completions = _Completions()
+
+            self.chat = _Chat()
+
+    monkeypatch.setattr(AgentLoop, "_transient_retry_delays", lambda cls: ())
+
+    pipeline = AgenticChatPipeline(language="en")
+    pipeline.registry = _Registry()
+    monkeypatch.setattr(pipeline, "_compose_enabled_tools", lambda _context: [])
+    monkeypatch.setattr(pipeline, "_build_openai_client", lambda: _Always503Client())
+
+    bus = StreamBus()
+    events, consumer = await _collect_bus_events(bus)
+    with pytest.raises(_InternalServerError):
+        await pipeline.run(UnifiedContext(session_id="s1", user_message="Hello"), bus)
+    await bus.close()
+    await consumer
+    assert not _contents(events)

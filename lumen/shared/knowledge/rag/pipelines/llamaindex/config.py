@@ -1,4 +1,4 @@
-"""Configuration helpers for DeepTutor's LlamaIndex RAG pipeline."""
+"""Configuration helpers for Lumen's LlamaIndex RAG pipeline."""
 
 from __future__ import annotations
 
@@ -43,7 +43,7 @@ def retrieval_config_from_env() -> RetrievalConfig:
 
     return RetrievalConfig(
         profile=normalize_retrieval_profile(
-            os.getenv("DEEPTUTOR_RAG_RETRIEVAL_PROFILE") or os.getenv("RAG_RETRIEVAL_PROFILE")
+            os.getenv("LUMEN_RAG_RETRIEVAL_PROFILE") or os.getenv("RAG_RETRIEVAL_PROFILE")
         )
     )
 

@@ -12,7 +12,7 @@ from rich.panel import Panel
 from rich.text import Text
 import typer
 
-from lumen.app.facade import DeepTutorApp, TurnRequest
+from lumen.app.facade import LumenApp, TurnRequest
 from lumen.shared._util.brand import PRODUCT_NAME
 
 from .common import (
@@ -56,7 +56,7 @@ def register(app: typer.Typer) -> None:
             None, "--config-json", help="Initial config as JSON."
         ),
     ) -> None:
-        """Enter interactive chat REPL. Use `deeptutor run` for single-turn execution."""
+        """Enter interactive chat REPL. Use `lumen run` for single-turn execution."""
         if ctx.invoked_subcommand is not None:
             return
 
@@ -80,7 +80,7 @@ def register(app: typer.Typer) -> None:
 
 
 async def _chat_repl(state: ChatState) -> None:
-    client = DeepTutorApp()
+    client = LumenApp()
     cron_service = None
     try:
         from lumen.app.cron import get_cron_service
@@ -120,7 +120,7 @@ async def _chat_repl(state: ChatState) -> None:
             "  /notebook add <ref> | /notebook clear\n"
             "  /show last|<n> — expand a tool result or captured thinking\n"
             "  /refs  /config show|set|clear",
-            title="deeptutor chat",
+            title="lumen chat",
         )
     )
     _print_state(state)

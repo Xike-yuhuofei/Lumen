@@ -128,7 +128,7 @@ class LLMConfig:
 
 _LLM_CONFIG_CACHE: LLMConfig | None = None
 _SCOPED_LLM_CONFIG: ContextVar[LLMConfig | None] = ContextVar(
-    "deeptutor_scoped_llm_config",
+    "lumen_scoped_llm_config",
     default=None,
 )
 

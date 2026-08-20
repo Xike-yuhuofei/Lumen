@@ -6,7 +6,7 @@ from types import SimpleNamespace
 
 from typer.testing import CliRunner
 
-from deeptutor_cli.main import app
+from lumen_cli.main import app
 
 runner = CliRunner()
 

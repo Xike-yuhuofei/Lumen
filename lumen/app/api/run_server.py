@@ -61,7 +61,7 @@ def main() -> None:
     # Reload launches a supervisor plus a worker and retains file-watcher state,
     # so keep it opt-in for local development. ws_max_size tracks the configured
     # chat-attachment total so base64 uploads fit in one WS frame.
-    dev_reload = os.environ.get("DEEPTUTOR_DEV_RELOAD", "").strip().lower() in {
+    dev_reload = os.environ.get("LUMEN_DEV_RELOAD", "").strip().lower() in {
         "1",
         "true",
         "yes",

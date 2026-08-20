@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 
 const apiTarget =
   (globalThis as { process?: { env?: Record<string, string | undefined> } }).process
-    ?.env?.DEEPTUTOR_API_BASE_URL || 'http://127.0.0.1:8001'
+    ?.env?.LUMEN_API_BASE_URL || 'http://127.0.0.1:8001'
 
 const proxy = {
   '/api': {

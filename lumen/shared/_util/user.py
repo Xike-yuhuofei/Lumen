@@ -227,7 +227,7 @@ def user_context(user: CurrentUser) -> Iterator[None]:
 # Request-local current identity context
 # ---------------------------------------------------------------------------
 
-_current_user: ContextVar[CurrentUser | None] = ContextVar("deeptutor_current_user", default=None)
+_current_user: ContextVar[CurrentUser | None] = ContextVar("lumen_current_user", default=None)
 
 
 def set_current_user(user: CurrentUser) -> Token[CurrentUser | None]:

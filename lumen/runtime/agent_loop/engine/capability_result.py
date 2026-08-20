@@ -1,7 +1,7 @@
 """Shared plumbing for capability ``run()`` endpoints.
 
 Canonical home: ``lumen/runtime/agent_loop/engine/capability_result``
-(migrated from ``deeptutor/agents/_shared/capability_result``).
+(migrated from ``lumen/agents/_shared/capability_result``).
 
 Capabilities all converge on the same final emission:
 

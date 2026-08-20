@@ -9,6 +9,7 @@ import {
   ChatMessage,
   MessageBlock,
   ModeTabId,
+  QuizQuestion,
   TaskItem,
   TaskNode,
   contextUsage,
@@ -1482,7 +1483,67 @@ function highlightQuery(text: string, query: string) {
 /* =============================================================
    Message Renderer
    ============================================================= */
-function renderBlock(block: MessageBlock, idx: number) {
+type QuizAnswerHandler = (question: QuizQuestion, answer: string) => void
+
+/** Interactive multiple-choice card for an ``ask_user`` question. Selecting an
+ *  option sends ``submit_user_reply`` to resume the paused turn.
+ *
+ *  ``answeredValue`` is the single source of truth persisted by the parent.
+ *  When present the card is read-only: the option matching ``answeredValue``
+ *  is highlighted (invert chip) and every other option is dimmed. Local
+ *  ``useState`` provides optimistic visual feedback for the click itself
+ *  until the parent re-renders with the committed ``answeredValue``. */
+function QuizAnswerCard({ question, onAnswer, answeredValue }: { question: QuizQuestion; onAnswer: QuizAnswerHandler; answeredValue?: string }) {
+  const [localSelected, setLocalSelected] = useState<string | null>(null)
+  const effective = answeredValue ?? localSelected
+  const locked = answeredValue !== undefined
+  return (
+    <div className="quiz-card" style={{ margin: '6px 0 10px' }}>
+      <div style={{ fontSize: 13, lineHeight: '20px', color: 'var(--text-text-default)', marginBottom: 8 }}>
+        {question.prompt}
+      </div>
+      {question.options.length > 0 ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {question.options.map((opt) => {
+            const isSelected = effective === opt.label
+            return (
+              <button
+                key={opt.label}
+                type="button"
+                disabled={locked}
+                onClick={() => {
+                  if (locked) return
+                  setLocalSelected(opt.label)
+                  onAnswer(question, opt.label)
+                }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left',
+                  border: '1px solid var(--border-border-neutral-l2)',
+                  borderRadius: 6, padding: '7px 10px', cursor: locked ? 'default' : 'pointer',
+                  background: isSelected ? 'var(--bg-bg-overlay-l1)' : 'transparent',
+                  color: 'var(--text-text-default)', fontSize: 13, lineHeight: '18px',
+                  opacity: locked && !isSelected ? 0.55 : 1,
+                }}
+              >
+                <span style={{
+                  flexShrink: 0, width: 22, height: 22, borderRadius: 4, display: 'inline-flex',
+                  alignItems: 'center', justifyContent: 'center', fontSize: 12,
+                  background: isSelected ? 'var(--bg-bg-invert)' : 'var(--bg-bg-overlay-l1)',
+                  color: isSelected ? 'var(--text-text-onaccent)' : 'var(--text-text-secondary)',
+                }}>{opt.label}</span>
+                <span>{opt.description || opt.label}</span>
+              </button>
+            )
+          })}
+        </div>
+      ) : (
+        <div style={{ fontSize: 12, color: 'var(--text-text-tertiary)' }}>请在输入框中作答以继续</div>
+      )}
+    </div>
+  )
+}
+
+function renderBlock(block: MessageBlock, idx: number, onAnswer?: QuizAnswerHandler, answeredMap?: Record<string, string>) {
   switch (block.type) {
     case 'text':
       return <AssistantMarkdown key={idx} content={block.content} />
@@ -1508,6 +1569,17 @@ function renderBlock(block: MessageBlock, idx: number) {
           {block.content}
         </div>
       )
+    case 'question':
+      return block.question
+        ? (
+          <QuizAnswerCard
+            key={block.question.id}
+            question={block.question}
+            onAnswer={onAnswer ?? (() => {})}
+            answeredValue={answeredMap?.[block.question.id]}
+          />
+        )
+        : null
   }
 }
 
@@ -1687,7 +1759,7 @@ function AssistantActionBar({ text, onRetry }: { text: string; onRetry?: () => v
   )
 }
 
-function ConversationView({ messages, streaming, phase, onRetry }: { messages: ChatMessage[]; streaming?: boolean; phase?: string; onRetry?: (agent: ChatMessage) => void }) {
+function ConversationView({ messages, streaming, phase, onRetry, onAnswer, answeredMap }: { messages: ChatMessage[]; streaming?: boolean; phase?: string; onRetry?: (agent: ChatMessage) => void; onAnswer?: QuizAnswerHandler; answeredMap?: Record<string, string> }) {
   const turns: { user?: ChatMessage; agent?: ChatMessage }[] = []
   for (let i = 0; i < messages.length; i++) {
     const msg = messages[i]
@@ -1788,7 +1860,7 @@ function ConversationView({ messages, streaming, phase, onRetry }: { messages: C
                         <div className="core-finish-card">
                           <div className="core-finish-card__summary">
                             <div className="markdown-renderer">
-                              {visible.map((b, i) => renderBlock(b, i))}
+                              {visible.map((b, i) => renderBlock(b, i, onAnswer, answeredMap))}
                             </div>
                           </div>
                         </div>
@@ -2944,6 +3016,11 @@ export default function App() {
   }, [persistSessions])
 
   const wsRef = useRef<UnifiedWSClient | null>(null)
+  // Guard against StrictMode's dev double-mount creating two WebSocket clients:
+  // only the first effect invocation may create + connect, so start_turn is never
+  // queued onto a second, non-open socket. The simulated unmount must not tear
+  // down the single live connection.
+  const wsReadyRef = useRef(false)
   const turnRef = useRef<{ sessionId: string; assistantId: string; turnId: string | null; events: StreamEvent[]; blocks: MessageBlock[] } | null>(null)
   const capabilityRef = useRef(capability)
   const masteryPathIdRef = useRef<string | null>(null)
@@ -3005,14 +3082,31 @@ export default function App() {
   const failTurnIdle = useCallback(() => {
     const turn = turnRef.current
     if (!turn) return
+    // If the turn is currently paused on ask_user (there are unanswered question
+    // cards for the learner to click), idle timeout is not meaningful — the user
+    // may be actively thinking about the answer. Cancel nothing, surface no error.
+    const waitingForUserAnswer = turn.blocks.some((b) => b.type === 'question' && b.question)
+    if (waitingForUserAnswer) {
+      setStreaming(false)
+      return
+    }
     const turnId = turn.turnId
     if (turnId) wsRef.current?.send({ type: 'cancel_turn', turn_id: turnId })
-    turn.blocks = [{
+    // Append a timeout notice rather than replacing blocks. Preserves text the user
+    // has already seen (critique, prior questions, tool results) per the same
+    // non-destructive rule used by eventsToBlocks for error events.
+    const timeoutBlock: MessageBlock = {
       type: 'status',
       title: '错误',
       content: '等待回复超时，请稍后重试或在设置中延长等待时间。',
-    }]
-    patchAssistantBlocks(turn.sessionId, turn.assistantId, turn.blocks)
+    }
+    const alreadyHasTimeout = turn.blocks.some(
+      (b) => b.type === 'status' && b.title === '错误' && b.content === timeoutBlock.content,
+    )
+    if (!alreadyHasTimeout) {
+      turn.blocks = [...turn.blocks, timeoutBlock]
+      patchAssistantBlocks(turn.sessionId, turn.assistantId, turn.blocks)
+    }
     setStreaming(false)
   }, [patchAssistantBlocks])
 
@@ -3048,7 +3142,30 @@ export default function App() {
     }
   }, [armTurnIdleTimer, clearTurnIdleTimer, patchAssistantBlocks, patchAssistantServerId, remapSessionId])
 
+  // Persisted map of question.id → selected answer label. The useState copy
+  // drives re-renders (so the read-only QuizAnswerCard highlights the choice)
+  // while the ref is a stable handle for callbacks that must not re-create.
+  const [answeredQuestions, setAnsweredQuestions] = useState<Record<string, string>>({})
+  const answeredQuestionsRef = useRef<Record<string, string>>({})
+  // Deliver an ``ask_user`` answer back to the paused turn so it can resume.
+  const handleAnswerQuestion = useCallback((question: QuizQuestion, answer: string) => {
+    const turn = turnRef.current
+    const turnId = turn?.turnId
+    if (!turnId) return
+    answeredQuestionsRef.current = { ...answeredQuestionsRef.current, [question.id]: answer }
+    setAnsweredQuestions((prev) => ({ ...prev, [question.id]: answer }))
+    wsRef.current?.send({ type: 'submit_user_reply', turn_id: turnId, answers: [{ questionId: question.id, text: answer }] })
+    // Reset idle timer now that the backend is about to resume the turn and
+    // stream critique content. This ensures we wait the full timeout window
+    // from the moment of submission rather than whatever partial time was
+    // left over from the user-thinking pause above.
+    armTurnIdleTimer()
+  }, [armTurnIdleTimer])
+
   useEffect(() => {
+    // StrictMode double-invokes this effect (setup → cleanup → setup) in dev.
+    if (wsReadyRef.current) return
+    wsReadyRef.current = true
     const client = new UnifiedWSClient(
       handleStreamEvent,
       () => setConnectError(STREAM_CONNECT_ERROR),
@@ -3056,12 +3173,11 @@ export default function App() {
     )
     wsRef.current = client
     client.connect()
-    return () => {
-      clearTurnIdleTimer()
-      client.disconnect()
-      wsRef.current = null
-    }
-  }, [clearTurnIdleTimer, handleStreamEvent])
+    // NOTE: no teardown here — the App is the root and never unmounts, and
+    // disconnecting on StrictMode's simulated unmount would kill the single
+    // live socket during the remount that follows.
+    return () => {} // keep connection alive across StrictMode double-mount
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -3547,7 +3663,7 @@ export default function App() {
                               <div className="virtualized-message-list-view__content">
                                 <div className="virtualized-message-list-view__scroller virtualized-message-list-view__scroller--hide-scrollbar">
                                   <div className="virtualized-message-list-view__virtuoso" style={{ position: 'relative' }}>
-                                    <ConversationView messages={messages} streaming={streaming} phase={streamPhase} onRetry={handleRetry} />
+                                    <ConversationView messages={messages} streaming={streaming} phase={streamPhase} onRetry={handleRetry} onAnswer={handleAnswerQuestion} answeredMap={answeredQuestions} />
                                     <div ref={chatEndRef} />
                                   </div>
                                 </div>

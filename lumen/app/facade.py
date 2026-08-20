@@ -1,7 +1,7 @@
 """Stable application-layer facade for Lumen entry points.
 
 Canonical home: ``lumen/app/facade`` (migrated from
-``deeptutor/app/facade``).  The legacy path re-exports these for existing
+``lumen/app/facade``).  The legacy path re-exports these for existing
 importers and tests only.
 """
 
@@ -56,7 +56,7 @@ class CapabilityAvailability:
     install_hint: str = ""
 
 
-class DeepTutorApp:
+class LumenApp:
     """Facade around runtime, session, notebook, and capability contracts."""
 
     def __init__(self) -> None:

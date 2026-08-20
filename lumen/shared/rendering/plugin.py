@@ -7,7 +7,7 @@ from lumen.shared.contract import RenderingService
 
 
 class _RenderingServiceAdapter(RenderingService):
-    """Wraps existing deeptutor text-processing utilities.
+    """Wraps existing lumen text-processing utilities.
 
     Only lightweight text cleaning exists in the backend today; full
     Markdown / formula / Mermaid rendering lives in the frontend and is

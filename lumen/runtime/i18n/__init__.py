@@ -1,6 +1,6 @@
 """Runtime i18n helpers.
 
-Two complementary pieces live here (migrated from ``deeptutor/i18n``):
+Two complementary pieces live here (migrated from ``lumen/i18n``):
 
 * :mod:`~lumen.runtime.i18n.metadata_i18n` — static localized display copy
   for built-in capabilities and tools (used by the settings UI / API).
@@ -8,7 +8,7 @@ Two complementary pieces live here (migrated from ``deeptutor/i18n``):
   lookup wired into the :class:`~lumen.runtime.prompt.manager.PromptManager`,
   used by capability pipelines to stream locale-aware progress messages.
 
-``deeptutor.i18n`` re-exports these for existing importers and tests only.
+``lumen.i18n`` re-exports these for existing importers and tests only.
 """
 
 from __future__ import annotations

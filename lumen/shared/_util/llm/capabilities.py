@@ -297,7 +297,7 @@ MODEL_OVERRIDES: dict[str, dict[str, object]] = {
     # handled by PROVIDER_CAPABILITIES["anthropic"] / ["claude"] above.
     # Only model-intrinsic capabilities (like has_thinking_tags) belong here.
     # Reasoning models - only support temperature=1.0
-    # See: https://github.com/HKUDS/DeepTutor/issues/141
+    # See: https://github.com/HKUDS/Lumen/issues/141
     "gpt-5": {
         "forced_temperature": 1.0,
     },
@@ -570,7 +570,7 @@ SESSION_SCOPED_BINDINGS: frozenset[str] = frozenset()
 
 
 def threads_session_id(binding: str | None) -> bool:
-    """Whether *binding* expects ``deeptutor_session_id`` on each request."""
+    """Whether *binding* expects ``lumen_session_id`` on each request."""
     return (binding or "").strip().lower() in SESSION_SCOPED_BINDINGS
 
 

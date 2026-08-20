@@ -1,4 +1,4 @@
-"""Nanobot-style normalized runtime configuration for DeepTutor."""
+"""Nanobot-style normalized runtime configuration for Lumen."""
 
 from __future__ import annotations
 
@@ -49,8 +49,8 @@ class SearchProviderSpec:
     blocked on the networks those are chosen for, so a silent fallback would
     turn "no API key" into a mystery timeout.
 
-    The provider registry (``deeptutor/services/search/providers``), the
-    Settings dropdown (``deeptutor/api/routers/settings.py``) and the web
+    The provider registry (``lumen/services/search/providers``), the
+    Settings dropdown (``lumen/api/routers/settings.py``) and the web
     connection-field form all derive from this table — keep new providers here
     and they show up everywhere at once.
     """

@@ -2,7 +2,7 @@
 mastery engine (:mod:`lumen.modes.learn`).
 
 Canonical home: ``lumen/modes/learn/chat_tools`` (migrated from
-``deeptutor/capabilities/mastery/tools``).  The legacy path re-exports these
+``lumen/capabilities/mastery/tools``).  The legacy path re-exports these
 for existing importers and tests only.
 
 These tools are auto-mounted only when a mastery path is active on the

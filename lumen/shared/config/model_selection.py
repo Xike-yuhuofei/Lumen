@@ -1,7 +1,7 @@
 """Helpers for selecting configured LLM models without mutating settings.
 
 Canonical home: ``lumen/shared/config`` (migrated from
-``deeptutor/services/model_selection/llm``).
+``lumen/services/model_selection/llm``).
 """
 
 from __future__ import annotations

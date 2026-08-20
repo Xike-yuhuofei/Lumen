@@ -64,11 +64,34 @@ export interface CancelTurnMessage {
   turn_id: string
 }
 
+export interface RegenerateMessage {
+  type: 'regenerate'
+  session_id: string
+  /** Backend message id of the turn to re-run (rolls back it + everything after). */
+  message_id?: number
+  /** 0-based position of the target message within the session's message list —
+   *  fallback used when the persisted message id is unknown. */
+  message_index?: number
+  overrides?: Record<string, unknown>
+}
+
+/** Answer a paused ``ask_user`` question and resume the turn. */
+export interface SubmitUserReplyMessage {
+  type: 'submit_user_reply'
+  turn_id: string
+  /** Legacy single free-form reply. */
+  text?: string
+  /** Structured per-question answers ``{questionId, text}`` (v2 shape). */
+  answers?: { questionId: string; text: string }[]
+}
+
 export type ClientMessage =
   | StartTurnMessage
   | SubscribeSessionMessage
   | ResumeTurnMessage
   | CancelTurnMessage
+  | RegenerateMessage
+  | SubmitUserReplyMessage
 
 export type EventHandler = (event: StreamEvent) => void
 

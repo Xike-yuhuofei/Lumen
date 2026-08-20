@@ -161,7 +161,7 @@ class LLMStats:
             return
 
         if logger is None:
-            logger = logging.getLogger(f"deeptutor.stats.{self.module_name}")
+            logger = logging.getLogger(f"lumen.stats.{self.module_name}")
 
         total_tokens = self.total_prompt_tokens + self.total_completion_tokens
 

@@ -1,7 +1,7 @@
 """Shared i18n helper for capability status / UI strings.
 
 Canonical home: ``lumen/runtime/i18n/status_i18n`` (migrated from
-``deeptutor/i18n/status_i18n``).  ``deeptutor.i18n`` re-exports these for
+``lumen/i18n/status_i18n``).  ``lumen.i18n`` re-exports these for
 existing importers and tests only.
 
 Capability ``run()`` methods stream short status messages to the chat UI
@@ -9,7 +9,7 @@ Capability ``run()`` methods stream short status messages to the chat UI
 must respect the user's locale. This helper wires them into the existing
 ``PromptManager`` so each capability keeps its UI copy alongside its LLM
 prompts under that capability's own prompt module, e.g.
-``deeptutor/agents/<module>/prompts/{en,zh}/<name>.yaml``.
+``lumen/agents/<module>/prompts/{en,zh}/<name>.yaml``.
 
 Conventions:
 

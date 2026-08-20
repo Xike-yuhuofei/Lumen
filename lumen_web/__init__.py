@@ -1,4 +1,4 @@
-"""Packaged DeepTutor Web static assets.
+"""Packaged Lumen Web static assets.
 
 Release builds populate this package with the Vite ``dist`` output
 (``index.html`` plus hashed ``assets/``). Source checkouts normally leave it

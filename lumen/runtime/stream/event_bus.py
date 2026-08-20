@@ -6,7 +6,7 @@ Asynchronous event bus for inter-module communication.
 Supports publish/subscribe pattern with non-blocking event delivery.
 
 Canonical home: ``lumen/runtime/stream/event_bus`` (migrated from
-``deeptutor/events/event_bus``).
+``lumen/events/event_bus``).
 """
 
 from __future__ import annotations

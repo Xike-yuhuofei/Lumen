@@ -357,6 +357,7 @@ class LearningService:
                         "name": display_name or progress.book_id,
                         "goal_name": progress.goal_name,
                         "description": progress.description,
+                        "source_kb": progress.source_kb,
                         "modules_count": len(progress.modules),
                         "kp_count": total_kps,
                         "current_stage": progress.current_stage.value

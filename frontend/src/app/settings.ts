@@ -20,9 +20,9 @@ export type GeneralSettings = {
 }
 
 export const LS_LANGUAGE = 'trae:language'
-export const LS_RESPONSE_LANGUAGE = 'deeptutor:response-language'
-export const LS_CHAT_TIMEOUT = 'deeptutor:chat-timeout'
-export const LS_GENERAL = 'deeptutor:general-settings'
+export const LS_RESPONSE_LANGUAGE = 'lumen:response-language'
+export const LS_CHAT_TIMEOUT = 'lumen:chat-timeout'
+export const LS_GENERAL = 'lumen:general-settings'
 
 export const DEFAULT_VOICE_SHORTCUT: VoiceShortcut = {
   enabled: true,
@@ -36,7 +36,7 @@ export const DEFAULT_VOICE_SHORTCUT: VoiceShortcut = {
 export const DEFAULT_GENERAL: GeneralSettings = {
   voiceShortcut: DEFAULT_VOICE_SHORTCUT,
   localLinkOpen: 'ask',
-  artifactPath: '~/Library/Application Support/DeepTutor',
+  artifactPath: '~/Library/Application Support/Lumen',
 }
 
 export const DEFAULT_CHAT_TIMEOUT = 180

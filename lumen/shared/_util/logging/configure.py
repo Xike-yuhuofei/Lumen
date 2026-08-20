@@ -1,4 +1,4 @@
-"""DeepTutor logging bootstrap."""
+"""Lumen logging bootstrap."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from .formatters import ConsoleFormatter, ContextFilter, JsonlFormatter
 from .loguru_bridge import install_loguru_bridge
 
 _CONFIGURED = False
-_MANAGED_ATTR = "_deeptutor_managed"
+_MANAGED_ATTR = "_lumen_managed"
 
 
 def _level(value: str | int) -> int:
@@ -60,7 +60,7 @@ def configure_logging(force: bool = False) -> LoggingConfig:
         log_dir.mkdir(parents=True, exist_ok=True)
         file_handler = _managed(
             RotatingFileHandler(
-                log_dir / "deeptutor.jsonl",
+                log_dir / "lumen.jsonl",
                 maxBytes=config.max_bytes,
                 backupCount=config.backup_count,
                 encoding="utf-8",
@@ -70,8 +70,8 @@ def configure_logging(force: bool = False) -> LoggingConfig:
         file_handler.setFormatter(JsonlFormatter())
         root.addHandler(file_handler)
 
-    logging.getLogger("deeptutor").setLevel(logging.DEBUG)
-    logging.getLogger("deeptutor").propagate = True
+    logging.getLogger("lumen").setLevel(logging.DEBUG)
+    logging.getLogger("lumen").propagate = True
     install_loguru_bridge(logging.DEBUG)
     _CONFIGURED = True
     return config

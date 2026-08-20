@@ -99,7 +99,7 @@ class DoclingParser:
             return ReadinessReport(
                 ready=False,
                 reason="not_configured",
-                message="Docling isn't installed (pip install deeptutor[parse-docling]).",
+                message="Docling isn't installed (pip install lumen[parse-docling]).",
             )
         if config.allow_local_model_download or _docling_models_ready():
             return ReadinessReport(ready=True)

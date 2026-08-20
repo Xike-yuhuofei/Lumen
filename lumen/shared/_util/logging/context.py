@@ -18,7 +18,7 @@ LOG_CONTEXT_FIELDS = (
 )
 
 _context: contextvars.ContextVar[dict[str, Any]] = contextvars.ContextVar(
-    "deeptutor_log_context", default={}
+    "lumen_log_context", default={}
 )
 
 

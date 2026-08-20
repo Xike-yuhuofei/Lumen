@@ -550,3 +550,41 @@ class TestBookIdValidation:
         elif method == "DELETE":
             resp = client.delete(path, **kwargs)
         assert resp.status_code == 400, f"{method} {path} should return 400, got {resp.status_code}"
+
+
+# -- POST /goals (learning-space creation with material binding) -----------
+#
+# A goal created from a Library item records the knowledge space (KB) that
+# holds its material, so Learn turns can mount it for the tutor.
+
+
+class TestCreateGoalSourceKb:
+    def test_create_goal_with_kb_name_stores_binding(self, client):
+        resp = client.post(
+            "/api/v1/learning/goals",
+            json={
+                "title": "001.md",
+                "description": "围绕「001.md」制定学习计划",
+                "kb_name": "资料库",
+            },
+        )
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["goal_name"] == "001.md"
+
+        book_id = body["book_id"]
+        prog = client.get(f"/api/v1/learning/progress/{book_id}").json()
+        assert prog["source_kb"] == "资料库"
+
+    def test_create_goal_without_kb_name_leaves_binding_empty(self, client):
+        resp = client.post("/api/v1/learning/goals", json={"title": "线性代数"})
+        assert resp.status_code == 200
+        book_id = resp.json()["book_id"]
+        prog = client.get(f"/api/v1/learning/progress/{book_id}").json()
+        assert prog["source_kb"] == ""
+
+    def test_list_progress_includes_source_kb(self, client):
+        client.post("/api/v1/learning/goals", json={"title": "001.md", "kb_name": "资料库"})
+        data = client.get("/api/v1/learning/progress").json()
+        with_kb = [p for p in data["summaries"] if p["goal_name"] == "001.md"]
+        assert with_kb and with_kb[0]["source_kb"] == "资料库"

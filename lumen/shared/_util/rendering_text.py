@@ -1,6 +1,6 @@
 """Pure text-cleaning helpers for model output and speech rendering.
 
-Owned by ``lumen`` (single real implementation). ``deeptutor`` re-exports
+Owned by ``lumen`` (single real implementation). ``lumen`` re-exports
 these from here for existing importers only.
 """
 

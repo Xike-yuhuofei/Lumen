@@ -84,7 +84,13 @@ class LLMProvider(ABC):
         "timed out",
         "connection",
         "server error",
+        "server_error",
         "temporarily unavailable",
+        # Gitee AI account-pool outage: the model-serving pool temporarily has
+        # no idle account. Retrying with the configured backoff is the correct
+        # response so normal requests survive these brief upstream windows.
+        "no_available_account",
+        "no available account",
     )
     _SENTINEL = object()
 

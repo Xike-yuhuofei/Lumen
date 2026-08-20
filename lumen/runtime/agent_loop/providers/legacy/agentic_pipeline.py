@@ -1,7 +1,7 @@
 """Chat capability assembly for the exploring-loop agent.
 
 Canonical home: ``lumen/runtime/agent_loop/providers/legacy/agentic_pipeline``
-(migrated from ``deeptutor/agents/chat/agentic_pipeline``).
+(migrated from ``lumen/agents/chat/agentic_pipeline``).
 """
 
 from __future__ import annotations

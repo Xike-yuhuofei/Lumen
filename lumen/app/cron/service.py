@@ -3,7 +3,7 @@
 A trimmed-down take on nanobot's CronService (docs/ref/nanobot): same job
 semantics (``at`` / ``every`` / ``cron`` schedules, JSON persistence, run
 bookkeeping) without the multi-process file-lock/action-log machinery —
-DeepTutor runs one server process, so a single in-process scheduler owns
+Lumen runs one server process, so a single in-process scheduler owns
 the store.
 
 Jobs carry an *owner*: a chat session (the reply is appended to that

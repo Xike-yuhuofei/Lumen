@@ -5,7 +5,7 @@ Unified Context (Runtime)
 A single data object that flows through the runtime into every
 tool / capability / plugin invocation.
 
-Canonical implementation — ``deeptutor.core.context`` re-exports this module
+Canonical implementation — ``lumen.core.context`` re-exports this module
 for legacy importers.
 """
 

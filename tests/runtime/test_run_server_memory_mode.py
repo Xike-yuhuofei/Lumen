@@ -17,9 +17,9 @@ def uvicorn_kwargs(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> dict[str,
     monkeypatch.setattr(run_server.uvicorn, "run", lambda *args, **kwargs: captured.update(kwargs))
 
     from lumen.app import mode, setup
-    from lumen.shared._util import logging as deeptutor_logging
+    from lumen.shared._util import logging as lumen_logging
 
-    monkeypatch.setattr(deeptutor_logging, "configure_logging", lambda: None)
+    monkeypatch.setattr(lumen_logging, "configure_logging", lambda: None)
     monkeypatch.setattr(mode, "set_mode", lambda _mode: None)
     monkeypatch.setattr(setup, "get_backend_port", lambda _root: 8001)
     return captured
@@ -28,7 +28,7 @@ def uvicorn_kwargs(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> dict[str,
 def test_run_server_disables_reload_by_default(
     monkeypatch: pytest.MonkeyPatch, uvicorn_kwargs: dict[str, Any]
 ) -> None:
-    monkeypatch.delenv("DEEPTUTOR_DEV_RELOAD", raising=False)
+    monkeypatch.delenv("LUMEN_DEV_RELOAD", raising=False)
 
     run_server.main()
 
@@ -41,7 +41,7 @@ def test_run_server_reload_remains_available_for_development(
     tmp_path: Path,
     uvicorn_kwargs: dict[str, Any],
 ) -> None:
-    monkeypatch.setenv("DEEPTUTOR_DEV_RELOAD", "true")
+    monkeypatch.setenv("LUMEN_DEV_RELOAD", "true")
     (tmp_path / "data").mkdir()
 
     run_server.main()

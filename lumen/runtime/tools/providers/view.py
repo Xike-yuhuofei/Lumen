@@ -1,7 +1,7 @@
 """Assemble one turn's external-provider tool surface.
 
 Canonical home: ``lumen/runtime/tools/providers/view`` (migrated from
-``deeptutor/runtime/providers/view``).
+``lumen/runtime/providers/view``).
 
 This is the composition seam that used to live inline in the chat pipeline:
 start the providers, work out what this caller may use, filter the pool,
@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 
 #: Ceiling on connecting a caller's own servers. This runs before the turn's
 #: first stream event, so it is the one place a slow third-party host could
-#: present as "DeepTutor hung".
+#: present as "Lumen hung".
 _OWNER_SCOPE_TIMEOUT_S = 3.0
 
 

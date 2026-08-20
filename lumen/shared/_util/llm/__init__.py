@@ -2,7 +2,7 @@
 LLM Service
 ===========
 
-Unified LLM service for all DeepTutor modules.
+Unified LLM service for all Lumen modules.
 
 Architecture:
     Agentic loop (core.agentic)

@@ -9,7 +9,7 @@ Public entry points:
   :class:`KnowledgeParsingPlugin`, :class:`ParsedDocument`
 
 ``ParseService`` / ``get_parse_service`` are imported lazily so this package
-stays importable without pulling the deeptutor config chain (which itself
+stays importable without pulling the lumen config chain (which itself
 depends on the shared package) — no import cycle at package load.
 """
 

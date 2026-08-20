@@ -54,8 +54,8 @@ class ProgressTracker:
     def _notify(self, progress: dict):
         """Notify progress update (call all callbacks).
 
-        Server-side progress broadcasting (the DeepTutor task/progress stream) is
-        a transport-layer concern owned by ``deeptutor.api``; this lumen copy only
+        Server-side progress broadcasting (the Lumen task/progress stream) is
+        a transport-layer concern owned by ``lumen.api``; this lumen copy only
         drives the in-process callbacks.
         """
         for callback in self._callbacks:
@@ -174,7 +174,7 @@ class ProgressTracker:
                 logger.info(progress_msg)
         except Exception:
             # If unified logging fails unexpectedly, use stdlib logger as fallback.
-            fallback_logger = logging.getLogger("deeptutor.ProgressTracker")
+            fallback_logger = logging.getLogger("lumen.ProgressTracker")
             prefix = f"[{self.task_id}]" if self.task_id else ""
             fallback_logger.warning(
                 "%s [ProgressTracker] %s (%s/%s)",

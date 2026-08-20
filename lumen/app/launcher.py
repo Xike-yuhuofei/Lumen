@@ -1,4 +1,4 @@
-"""Local Web launcher for the installed DeepTutor app."""
+"""Local Web launcher for the installed Lumen app."""
 
 from __future__ import annotations
 
@@ -21,17 +21,17 @@ from urllib import request as urlrequest
 
 from lumen.app.banner import labels_for, print_banner, resolve_language
 from lumen.shared._util.brand import PRODUCT_NAME
-from lumen.shared._util.runtime_home import DEEPTUTOR_HOME_ENV, PACKAGE_ROOT, get_runtime_home
+from lumen.shared._util.runtime_home import LUMEN_HOME_ENV, PACKAGE_ROOT, get_runtime_home
 
 # Stamped by the launcher onto every child's environment so the backend can
-# find the root of the DeepTutor process tree.
-SUPERVISOR_PID_ENV = "DEEPTUTOR_SUPERVISOR_PID"
+# find the root of the Lumen process tree.
+SUPERVISOR_PID_ENV = "LUMEN_SUPERVISOR_PID"
 
 BACKEND_READY_TIMEOUT = 60
 FRONTEND_READY_TIMEOUT = 120
 KILL_SIGNAL = getattr(signal, "SIGKILL", signal.SIGTERM)
 SOURCE_PRODUCTION_DIST_DIR = "dist"
-SOURCE_BUILD_MARKER = ".deeptutor-build.json"
+SOURCE_BUILD_MARKER = ".lumen-build.json"
 SOURCE_BUILD_EXCLUDED_DIRS = {
     "node_modules",
     "dist",
@@ -83,7 +83,7 @@ def _log(message: str) -> None:
 
 
 def _reset_runtime_singletons() -> None:
-    """Make a just-selected DEEPTUTOR_HOME visible to path/config singletons."""
+    """Make a just-selected LUMEN_HOME visible to path/config singletons."""
     try:
         from lumen.shared._util.path_service import PathService
 
@@ -459,10 +459,10 @@ def _wait_for_http(
 
 def _packaged_web_dir() -> Path | None:
     try:
-        import deeptutor_web
+        import lumen_web
     except ImportError:
         return None
-    path = Path(deeptutor_web.__file__).resolve().parent
+    path = Path(lumen_web.__file__).resolve().parent
     return path if (path / "index.html").is_file() else None
 
 
@@ -492,7 +492,7 @@ def _ensure_web_dependencies(source: Path, npm: str) -> None:
     if result.returncode != 0:
         raise SystemExit(
             f"`npm {action}` failed (exit {result.returncode}). "
-            "Fix the error above, then retry `deeptutor start`."
+            "Fix the error above, then retry `lumen start`."
         )
 
 
@@ -546,7 +546,7 @@ def _ensure_source_production_build(source: Path, npm: str) -> Path:
     if result.returncode != 0:
         raise SystemExit(
             f"`npm run build` failed (exit {result.returncode}). "
-            "Fix the error above, then retry `deeptutor start`."
+            "Fix the error above, then retry `lumen start`."
         )
     if not (dist / "index.html").is_file():
         raise SystemExit(f"`npm run build` completed without creating {dist / 'index.html'}.")
@@ -623,7 +623,7 @@ def _resolve_frontend(
         )
 
     raise SystemExit(
-        f"{PRODUCT_NAME} Web assets are not installed. Install the full app with `pip install -U deeptutor`, "
+        f"{PRODUCT_NAME} Web assets are not installed. Install the full app with `pip install -U lumen`, "
         "or run from a source checkout that contains `frontend/`."
     )
 
@@ -669,7 +669,7 @@ def start(home: str | Path | None = None, *, dev: bool = False) -> None:
     _relax_console_encoding()
     runtime_home = get_runtime_home(home)
     runtime_home.mkdir(parents=True, exist_ok=True)
-    os.environ[DEEPTUTOR_HOME_ENV] = str(runtime_home)
+    os.environ[LUMEN_HOME_ENV] = str(runtime_home)
     _reset_runtime_singletons()
 
     from lumen.app.setup import init_user_directories
@@ -744,7 +744,7 @@ def start(home: str | Path | None = None, *, dev: bool = False) -> None:
 
     common_env = os.environ.copy()
     common_env.update(runtime_env)
-    common_env[DEEPTUTOR_HOME_ENV] = str(runtime_home)
+    common_env[LUMEN_HOME_ENV] = str(runtime_home)
     common_env["BACKEND_PORT"] = str(backend_port)
     common_env["FRONTEND_PORT"] = str(frontend_port)
     common_env["PORT"] = str(frontend_port)
@@ -755,14 +755,14 @@ def start(home: str | Path | None = None, *, dev: bool = False) -> None:
     # /api/* and /ws/* to the backend. The browser uses relative paths, so the
     # frontend server reaches the backend on the IPv4 loopback at the resolved
     # port — use backend_url (not api_base, which may be an external browser URL).
-    common_env["DEEPTUTOR_API_BASE_URL"] = backend_url
-    common_env["DEEPTUTOR_AUTH_ENABLED"] = "true" if auth_enabled else "false"
+    common_env["LUMEN_API_BASE_URL"] = backend_url
+    common_env["LUMEN_AUTH_ENABLED"] = "true" if auth_enabled else "false"
     if frontend.spa_dir is not None:
-        common_env["DEEPTUTOR_SPA_DIR"] = str(frontend.spa_dir)
+        common_env["LUMEN_SPA_DIR"] = str(frontend.spa_dir)
     common_env["PYTHONUNBUFFERED"] = "1"
     common_env["PYTHONIOENCODING"] = "utf-8:replace"
     # The backend and the frontend are siblings under this process, so the
-    # supervisor's pid identifies the tree that is "DeepTutor".
+    # supervisor's pid identifies the tree that is "Lumen".
     common_env[SUPERVISOR_PID_ENV] = str(os.getpid())
     _apply_single_user_allocator_env(common_env)
 

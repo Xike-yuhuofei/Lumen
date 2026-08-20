@@ -1,7 +1,7 @@
 """Protocol shared by the chat loop and its loop capabilities.
 
 Canonical home: ``lumen/runtime/agent_loop/capability`` (migrated from
-``deeptutor/capabilities/protocol``).  The legacy path re-exports these for
+``lumen/capabilities/protocol``).  The legacy path re-exports these for
 existing importers and tests only.
 """
 

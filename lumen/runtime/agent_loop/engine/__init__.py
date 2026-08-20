@@ -5,7 +5,7 @@ reusable building blocks. Any capability that wants a streaming, label-driven
 LLM loop (chat, solve step, etc.) composes them.
 
 Canonical home: ``lumen/runtime/agent_loop/engine`` (migrated from
-``deeptutor/core/agentic``).  ``deeptutor.core.agentic`` re-exports these for
+``lumen/core/agentic``).  ``lumen.core.agentic`` re-exports these for
 existing importers and tests only.
 
 Layering:
@@ -18,7 +18,7 @@ Layering:
 * :mod:`labeled_step`   — one streaming LLM call with label routing.
 
 The remaining engine modules (``tool_dispatch`` / ``loop``) still live under
-``deeptutor.core.agentic`` until their ``deeptutor.runtime.registry`` /
+``lumen.core.agentic`` until their ``lumen.runtime.registry`` /
 tool-registry dependencies are canonicalized; they import these primitives
 from this package.
 """

@@ -1,4 +1,4 @@
-# Python project configuration for DeepTutor
+# Python project configuration for Lumen
 # This file configures Black, Ruff, and other Python tools
 
 [build-system]
@@ -6,7 +6,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "deeptutor"
+name = "lumen"
 dynamic = ["version"]
 description = "Lumen — an agent-native intelligent learning companion with multi-agent collaboration and RAG"
 # Capped below 3.14 on purpose (issue #664): on 3.14 pip can't find wheels for
@@ -35,7 +35,7 @@ dependencies = [
     "typer>=0.9.0",
     "rich>=13.0.0",
     "prompt_toolkit>=3.0.36",
-    # Full app dependencies included by default for `pip install deeptutor`.
+    # Full app dependencies included by default for `pip install lumen`.
     "anthropic>=0.30.0",
     "dashscope>=1.14.0",
     "perplexityai>=0.1.0",
@@ -65,7 +65,7 @@ dependencies = [
     "loguru>=0.7.3,<1.0.0",
     "json-repair>=0.57.0,<1.0.0",
     # Process-tree memory readings for /api/v1/system/memory. Soft dependency:
-    # deeptutor.runtime.memory_probe imports it lazily and falls back to /proc,
+    # lumen.runtime.memory_probe imports it lazily and falls back to /proc,
     # so a missing wheel costs the settings strip, not the app.
     "psutil>=5.9.0,<8.0.0",
     # MCP client (core MCP service; kept after partners prune)
@@ -73,12 +73,12 @@ dependencies = [
 ]
 
 [project.scripts]
-deeptutor = "deeptutor_cli.main:main"
+lumen = "lumen_cli.main:main"
 
 [project.optional-dependencies]
 # Compatibility extra for source installs and older docs. These packages are
-# already included in the public `deeptutor` wheel; the local CLI-only project
-# under `packaging/deeptutor-cli` uses the same list without Web assets/server deps.
+# already included in the public `lumen` wheel; the local CLI-only project
+# under `packaging/lumen-cli` uses the same list without Web assets/server deps.
 cli = [
     # LLM provider SDKs
     "anthropic>=0.30.0",
@@ -106,9 +106,9 @@ cli = [
 ]
 
 # Compatibility extra for source installs and older docs. These packages are
-# already included in the public `deeptutor` wheel.
+# already included in the public `lumen` wheel.
 server = [
-    "deeptutor[cli]",
+    "lumen[cli]",
     "fastapi>=0.100.0",
     "uvicorn[standard]>=0.24.0",
     "websockets>=12.0",
@@ -124,7 +124,7 @@ server = [
 ]
 
 # Optional document-parsing engines for the shared parse layer
-# (deeptutor/services/parsing). MinerU is an external CLI / hosted API and is
+# (lumen/services/parsing). MinerU is an external CLI / hosted API and is
 # not a pip dependency. Engines import lazily, so these stay opt-in and an
 # absent engine simply reports unavailable in Settings → Document Parsing.
 parse-markitdown = ["markitdown[pdf,docx,pptx,xlsx]>=0.0.1a2"]
@@ -140,16 +140,16 @@ parse-pymupdf4llm = ["pymupdf4llm>=0.0.17,<1.0"]
 # cache keys on). Pin the major like parse-pymupdf4llm does.
 parse-liteparse = ["liteparse>=2.11.1,<3.0"]
 parse = [
-    "deeptutor[parse-markitdown]",
-    "deeptutor[parse-docling]",
-    "deeptutor[parse-pymupdf4llm]",
-    "deeptutor[parse-liteparse]",
+    "lumen[parse-markitdown]",
+    "lumen[parse-docling]",
+    "lumen[parse-pymupdf4llm]",
+    "lumen[parse-liteparse]",
 ]
 
 
 # Dev/test tooling. Mirrors requirements/dev.txt.
 dev = [
-    "deeptutor[server]",
+    "lumen[server]",
     "pytest>=7.0.0",
     "pytest-asyncio>=0.23.0",
     # LangChain agent-loop provider (bake-off A/B tests in tests/kernel)
@@ -169,7 +169,7 @@ dev = [
 
 # Everything: server + dev tools.
 all = [
-    "deeptutor[dev]",
+    "lumen[dev]",
 ]
 
 [tool.setuptools]
@@ -180,13 +180,13 @@ version = {attr = "lumen.__version__.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["deeptutor_cli*", "deeptutor_web*", "lumen*"]
+include = ["lumen_cli*", "lumen_web*", "lumen*"]
 
 [tool.setuptools.package-data]
 # Runtime data shipped inside the lumen package: prompt YAMLs (loaded by
 # PromptManager from PACKAGE_ROOT/lumen/.../prompts/*.yaml), markdown
 # templates (builtin SKILL.md files), and helper shell
-# scripts. Without these, ``pip install deeptutor`` ships a wheel missing
+# scripts. Without these, ``pip install lumen`` ships a wheel missing
 # every agent prompt and capability fails at first use.
 lumen = [
     "**/*.yaml",
@@ -197,8 +197,8 @@ lumen = [
     "**/*.j2",
     "**/*.jinja",
 ]
-deeptutor_cli = ["**/*.md"]
-deeptutor_web = ["**/*"]
+lumen_cli = ["**/*.md"]
+lumen_web = ["**/*"]
 
 # ============================================
 # Black code formatter configuration
@@ -328,7 +328,7 @@ line-ending = "auto"
 # Ruff import sorting (isort replacement)
 # ============================================
 [tool.ruff.lint.isort]
-known-first-party = ["deeptutor_cli", "scripts", "lumen"]
+known-first-party = ["lumen_cli", "scripts", "lumen"]
 force-sort-within-sections = true
 split-on-trailing-comma = true
 

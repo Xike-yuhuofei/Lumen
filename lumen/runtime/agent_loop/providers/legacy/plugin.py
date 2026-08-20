@@ -1,4 +1,4 @@
-"""Runtime adapter plugin — bridge existing ``deeptutor`` agent loop runner
+"""Runtime adapter plugin — bridge existing ``lumen`` agent loop runner
 into the Plugin Kernel via :class:`AgentLoopService` (legacy provider)."""
 
 from __future__ import annotations

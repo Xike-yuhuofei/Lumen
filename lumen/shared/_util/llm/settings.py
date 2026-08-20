@@ -1,7 +1,7 @@
 """LLM retry configuration settings.
 
 Canonical home: ``lumen/shared/_util/llm`` (migrated from
-``deeptutor/config/settings``).
+``lumen/config/settings``).
 
 Environment Variables:
     LLM_RETRY__MAX_RETRIES: Maximum retry attempts for LLM calls (default: 3)
