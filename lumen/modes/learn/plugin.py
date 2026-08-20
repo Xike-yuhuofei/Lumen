@@ -197,7 +197,7 @@ class _LearnModeServiceAdapter(LearnModeService):
 
         graph = self._graph_candidate()
         try:
-            await graph.run_turn(
+            outcome = await graph.run_turn(
                 path_id=path_id,
                 teaching_session_id=teaching_session_id,
                 execution_generation=plan.execution_generation,
@@ -208,6 +208,19 @@ class _LearnModeServiceAdapter(LearnModeService):
                 agent_loop=self._agent_loop,
                 deps=deps,
             )
+            # A terminal outcome (with no rendered content — the graph only
+            # terminates empty-plan / all-mastered without delegating content)
+            # must still give the learner a readable reply instead of a blank
+            # assistant message. Surface its feedback to the chat stream.
+            if getattr(outcome, "is_terminal", False) and getattr(outcome, "feedback", ""):
+                try:
+                    await stream.content(
+                        str(outcome.feedback),
+                        source="teaching_graph",
+                        stage="responding",
+                    )
+                except Exception:  # noqa: BLE001 - a non-rendering stream must not fail the turn
+                    pass
         finally:
             actual_gen = str(
                 context.metadata.get("execution_generation") or plan.execution_generation

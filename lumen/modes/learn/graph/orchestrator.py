@@ -98,17 +98,31 @@ class TeachingSessionGraph:
         progress, version = self._domain.snapshot(path_id)
         self._record(teaching_session_id, execution_generation, TeachingNode.SNAPSHOT, version)
         if progress is None or not progress.modules:
-            outcome = TeachRunOutcome(
-                node=TeachingNode.TERMINATE,
-                decision=PolicyDecision(decision_id=""),
-                lineage=self._lineage(teaching_session_id, execution_generation),
-                is_terminal=True,
-                feedback="No learning path exists for this path_id.",
-            )
+            # A goal created without modules (e.g. ``POST /goals``) has nothing
+            # to teach yet.  Delegate one plan-build pass to the Agent Runtime
+            # (the tutor designs the path and calls ``mastery_build``); if it
+            # succeeds, fall through to the normal loop, otherwise terminate with
+            # a readable reason instead of silently producing no content.
             self._record(
-                teaching_session_id, execution_generation, TeachingNode.TERMINATE, version
+                teaching_session_id, execution_generation, TeachingNode.ACT, version
             )
-            return outcome
+            built = await self._delegate_plan_build(agent_loop, context, stream, deps)
+            re_snapshot = False
+            if built:
+                progress, version = self._domain.snapshot(path_id)
+                re_snapshot = True
+            if not re_snapshot or progress is None or not progress.modules:
+                outcome = TeachRunOutcome(
+                    node=TeachingNode.TERMINATE,
+                    decision=PolicyDecision(decision_id=""),
+                    lineage=self._lineage(teaching_session_id, execution_generation),
+                    is_terminal=True,
+                    feedback="No learning path exists for this path_id.",
+                )
+                self._record(
+                    teaching_session_id, execution_generation, TeachingNode.TERMINATE, version
+                )
+                return outcome
 
         graph = self._teaching.get_graph(path_id)
 
@@ -516,6 +530,32 @@ class TeachingSessionGraph:
             )
         except Exception as exc:  # noqa: BLE001 - keep the graph resilient
             logger.error("Teaching content pass failed: %s", exc, exc_info=True)
+            return False
+        return True
+
+    async def _delegate_plan_build(self, agent_loop, context, stream, deps) -> bool:
+        """Let the Agent Runtime design and build the learning path.
+
+        Used when a goal was created with empty ``modules``: the tutor reads the
+        goal's mounted material (``rag`` / ``read_source``, already bound via
+        ``_mount_goal_source``) and calls ``mastery_build`` to construct the
+        path. Mirrors :meth:`_delegate_content`'s delegation seam, but does NOT
+        disable the mastery tools, so the tutor can actually commit the plan.
+        Returns ``True`` when the pass rendered without exception; the caller
+        re-snapshots and only continues if modules were produced.
+        """
+        context.metadata["graph_directive"] = {"action": "build_plan"}
+        deps = dict(deps)
+        deps.setdefault("graph_directive", {"action": "build_plan"})
+        try:
+            await agent_loop.run(
+                context=context,
+                stream=stream,
+                language=str(getattr(context, "language", "en")),
+                **deps,
+            )
+        except Exception as exc:  # noqa: BLE001 - keep the graph resilient
+            logger.error("Teaching plan-build pass failed: %s", exc, exc_info=True)
             return False
         return True
 

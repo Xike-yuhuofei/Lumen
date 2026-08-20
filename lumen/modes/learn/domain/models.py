@@ -214,15 +214,16 @@ class PendingQuestion(BaseModel):
     question_kind: str = "recall"
     expected_answer: str = ""
     options: list[str] = Field(default_factory=list)
-    # Teaching Graph Candidate lineage: the decision_id / action_id that posed
-    # this question.  Persisted with the question so grading after a restart can
+    # Teaching Graph lineage: the decision_id / action_id that posed this
+    # question.  Persisted with the question so grading after a restart can
     # attribute its evidence back to the exact pedagogical decision — the
-    # graph, not the LLM, chose to assess.  Empty for the teaching-hook path.
+    # graph, not the LLM, chose to assess.  May be empty for questions posed
+    # outside a graph decision.
     decision_id: str = ""
     action_id: str = ""
     # The immutable decision payload (the pose decision) so the graph can commit
     # the resulting evidence under the SAME decision_id (idempotent) on grade —
-    # from a fresh process, with no guesswork.  Empty for the teaching-hook path.
+    # from a fresh process, with no guesswork.
     decision_payload: dict[str, Any] = Field(default_factory=dict)
     created_at: float = Field(default_factory=time.time)
 

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from lumen.shared.config.provider_runtime import (
     SEARCH_PROVIDERS,
     resolve_llm_runtime_config,
@@ -10,6 +12,17 @@ from lumen.shared.config.provider_runtime import (
     search_missing_credential,
     search_provider_credentials,
 )
+
+
+@pytest.fixture(autouse=True)
+def _clear_llm_lock(monkeypatch):
+    """These tests exercise resolver mechanics with arbitrary catalogs; the
+    fixed-production DeepSeek LLM lock (default ON) does not apply here."""
+    monkeypatch.delenv("LUMEN_LLM_LOCK_MODEL", raising=False)
+    monkeypatch.delenv("LUMEN_LLM_LOCK_BINDING", raising=False)
+    # Bypass enforcement for catalogs that intentionally resolve non-DeepSeek.
+    monkeypatch.setenv("LUMEN_LLM_LOCK_MODEL", "")
+    monkeypatch.setenv("LUMEN_LLM_LOCK_BINDING", "")
 
 
 def _build_catalog(
@@ -551,3 +564,68 @@ def test_llm_env_key_wins_over_legacy_catalog_api_key(monkeypatch) -> None:
     resolved = resolve_llm_runtime_config(catalog=catalog)
     assert resolved.api_key == "sk-env-only"
     assert "legacy" not in resolved.api_key
+
+
+def test_llm_lock_blocks_non_deepseek_model(monkeypatch) -> None:
+    from lumen.shared._util.llm.exceptions import LLMConfigError
+
+    monkeypatch.delenv("LUMEN_LLM_LOCK_MODEL", raising=False)
+    monkeypatch.delenv("LUMEN_LLM_LOCK_BINDING", raising=False)
+    catalog = _build_catalog(
+        llm_profile={
+            "id": "llm-p",
+            "name": "LLM",
+            "binding": "openai",
+            "base_url": "https://api.openai.com/v1",
+            "api_key": "sk-test",
+            "api_version": "",
+            "extra_headers": {},
+            "models": [{"id": "llm-m", "name": "m", "model": "gpt-4o-mini"}],
+        }
+    )
+    # Default lock is ON -> resolving a non-DeepSeek model must fail loudly.
+    try:
+        resolve_llm_runtime_config(catalog=catalog)
+        raise AssertionError("expected LLMConfigError for non-DeepSeek model")
+    except LLMConfigError as exc:
+        assert "deepseek-v4-flash" in str(exc)
+
+
+def test_llm_lock_allows_deepseek_v4_flash(monkeypatch) -> None:
+    monkeypatch.delenv("LUMEN_LLM_LOCK_MODEL", raising=False)
+    monkeypatch.delenv("LUMEN_LLM_LOCK_BINDING", raising=False)
+    catalog = _build_catalog(
+        llm_profile={
+            "id": "llm-p",
+            "name": "DeepSeek",
+            "binding": "deepseek",
+            "base_url": "https://api.deepseek.com",
+            "api_key": "sk-deepseek",
+            "api_version": "",
+            "extra_headers": {},
+            "models": [{"id": "llm-m", "name": "deepseek-v4-flash", "model": "deepseek-v4-flash"}],
+        }
+    )
+    resolved = resolve_llm_runtime_config(catalog=catalog)
+    assert resolved.model == "deepseek-v4-flash"
+    assert resolved.provider_name == "deepseek"
+
+
+def test_llm_lock_bypass_when_env_cleared(monkeypatch) -> None:
+    monkeypatch.setenv("LUMEN_LLM_LOCK_MODEL", "")
+    monkeypatch.setenv("LUMEN_LLM_LOCK_BINDING", "")
+    catalog = _build_catalog(
+        llm_profile={
+            "id": "llm-p",
+            "name": "LLM",
+            "binding": "openai",
+            "base_url": "https://api.openai.com/v1",
+            "api_key": "sk-test",
+            "api_version": "",
+            "extra_headers": {},
+            "models": [{"id": "llm-m", "name": "m", "model": "gpt-4o-mini"}],
+        }
+    )
+    # Explicitly cleared env vars skip enforcement (test escape hatch).
+    resolved = resolve_llm_runtime_config(catalog=catalog)
+    assert resolved.model == "gpt-4o-mini"
