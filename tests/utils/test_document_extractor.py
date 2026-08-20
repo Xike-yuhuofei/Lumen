@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import io
+import zipfile
 
 from docx import Document as DocxDocument
 from openpyxl import Workbook
@@ -66,6 +67,53 @@ def _make_pptx(slides_text: list[list[str]]) -> bytes:
     return buf.getvalue()
 
 
+def _make_epub(chapters: list[str], *, with_container: bool = True) -> bytes:
+    """Build a minimal EPUB3 ZIP: container.xml → OPF spine → XHTML chapters."""
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        zf.writestr("mimetype", "application/epub+zip")
+        if with_container:
+            zf.writestr(
+                "META-INF/container.xml",
+                (
+                    '<?xml version="1.0" encoding="UTF-8"?>\n'
+                    '<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">'
+                    "<rootfiles><rootfile full-path=\"OEBPS/content.opf\" "
+                    'media-type="application/oebps-package+xml"/></rootfiles></container>'
+                ),
+            )
+            items = []
+            itemrefs = []
+            for i in range(1, len(chapters) + 1):
+                items.append(
+                    f'<item id="c{i}" href="chap{i}.xhtml" media-type="application/xhtml+xml"/>'
+                )
+                itemrefs.append(f'<itemref idref="c{i}"/>')
+            zf.writestr(
+                "OEBPS/content.opf",
+                (
+                    '<?xml version="1.0" encoding="UTF-8"?>\n'
+                    '<package xmlns="http://www.idpf.org/2007/opf" version="3.0" '
+                    'unique-identifier="id">'
+                    "<metadata/>"
+                    f"<manifest>{''.join(items)}</manifest>"
+                    f"<spine>{''.join(itemrefs)}</spine>"
+                    "</package>"
+                ),
+            )
+        for i, text in enumerate(chapters, 1):
+            zf.writestr(
+                f"OEBPS/chap{i}.xhtml",
+                (
+                    '<?xml version="1.0" encoding="UTF-8"?>\n'
+                    '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
+                    f"<h1>Chapter {i}</h1><p>{text}</p>"
+                    "</body></html>"
+                ),
+            )
+    return buf.getvalue()
+
+
 # ---------------------------------------------------------------------------
 # is_document_extension
 # ---------------------------------------------------------------------------
@@ -77,6 +125,8 @@ class TestIsDocumentExtension:
         assert is_document_extension("foo.DOCX")
         assert is_document_extension("report.xlsx")
         assert is_document_extension("deck.pptx")
+        assert is_document_extension("book.epub")
+        assert is_document_extension("NOVEL.EPUB")
 
     def test_text_and_code(self) -> None:
         # Any extension in FileTypeRouter.TEXT_EXTENSIONS should be supported.
@@ -171,6 +221,40 @@ class TestExtractPptx:
         assert "--- Slide 1 ---" in text
         assert "Fallback slide" in text
         assert "第二行" in text
+
+
+class TestExtractEpub:
+    def test_basic_chapters_in_spine_order(self) -> None:
+        data = _make_epub(["Hello world", "Second chapter text"])
+        text = extract_text_from_bytes("book.epub", data)
+        assert "Chapter 1" in text
+        assert "Hello world" in text
+        assert "Chapter 2" in text
+        assert "Second chapter text" in text
+        # Spine order preserved: chapter 1 precedes chapter 2.
+        assert text.index("Hello world") < text.index("Second chapter text")
+
+    def test_path_helper(self, tmp_path) -> None:
+        path = tmp_path / "book.epub"
+        path.write_bytes(_make_epub(["Path-based content"]))
+        text = extract_text_from_path(path)
+        assert "Path-based content" in text
+
+    def test_fallback_without_container_xml(self) -> None:
+        data = _make_epub(["Fallback chapter"], with_container=False)
+        text = extract_text_from_bytes("book.epub", data)
+        assert "Fallback chapter" in text
+
+    def test_empty_zip_raises(self) -> None:
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w"):
+            pass
+        with pytest.raises(CorruptDocumentError):
+            extract_text_from_bytes("book.epub", buf.getvalue())
+
+    def test_bad_header_raises(self) -> None:
+        with pytest.raises(CorruptDocumentError):
+            extract_text_from_bytes("book.epub", b"not a zip at all")
 
 
 class TestExtractTextLike:

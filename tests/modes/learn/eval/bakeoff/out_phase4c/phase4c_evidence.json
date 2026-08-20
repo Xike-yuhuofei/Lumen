@@ -1,0 +1,131 @@
+{
+  "strategy_discrimination_probe": {
+    "kp": "kp_selfcheck",
+    "samples": 40,
+    "assessment_only_success_ratio": 0.225,
+    "scaffolded_success_ratio": 1.0,
+    "delta": 0.775,
+    "learner_discriminates_strategy": true
+  },
+  "learner_realism_matrix": {
+    "learner": "strategy_sensitive",
+    "materials": [
+      "zhongcao",
+      "textile"
+    ],
+    "n_cells": 2,
+    "action_sequence_equal_across_matrix": true,
+    "strategy_sequence_equal_across_matrix": true,
+    "mechanism_fingerprint_equal_across_matrix": true,
+    "outcome_equal_across_matrix": true,
+    "completed_cells": 2,
+    "cells": [
+      {
+        "material": "zhongcao",
+        "learner": "strategy_sensitive",
+        "action_sequence_equal": true,
+        "strategy_sequence_equal": true,
+        "mechanism_fingerprint_equal": true,
+        "outcome_equal": true,
+        "outcomes": {
+          "a": {
+            "completed": true,
+            "mastered": 8,
+            "steps": 18,
+            "unprompted_success": 0.7058823529411765,
+            "retention": 0.375,
+            "transfer": 0.625
+          },
+          "b": {
+            "completed": true,
+            "mastered": 8,
+            "steps": 18,
+            "unprompted_success": 0.7058823529411765,
+            "retention": 0.375,
+            "transfer": 0.625
+          }
+        },
+        "completed": {
+          "a": true,
+          "b": true
+        },
+        "mastered": {
+          "a": 8,
+          "b": 8
+        },
+        "steps": {
+          "a": 18,
+          "b": 18
+        }
+      },
+      {
+        "material": "textile",
+        "learner": "strategy_sensitive",
+        "action_sequence_equal": true,
+        "strategy_sequence_equal": true,
+        "mechanism_fingerprint_equal": true,
+        "outcome_equal": true,
+        "outcomes": {
+          "a": {
+            "completed": true,
+            "mastered": 12,
+            "steps": 39,
+            "unprompted_success": 0.6052631578947368,
+            "retention": 0.8333333333333334,
+            "transfer": 0.8333333333333334
+          },
+          "b": {
+            "completed": true,
+            "mastered": 12,
+            "steps": 39,
+            "unprompted_success": 0.6052631578947368,
+            "retention": 0.8333333333333334,
+            "transfer": 0.8333333333333334
+          }
+        },
+        "completed": {
+          "a": true,
+          "b": true
+        },
+        "mastered": {
+          "a": 12,
+          "b": 12
+        },
+        "steps": {
+          "a": 39,
+          "b": 39
+        }
+      }
+    ]
+  },
+  "multi_session_increment": {
+    "material": "zhongcao",
+    "learner": "strategy_sensitive",
+    "turns_per_session": 6,
+    "continuous": {
+      "completed": true,
+      "mastered": 8,
+      "steps": 18,
+      "retention": 0.375,
+      "transfer": 0.625,
+      "n_sessions": 1
+    },
+    "split": {
+      "completed": true,
+      "mastered": 8,
+      "steps": 18,
+      "retention": 0.375,
+      "transfer": 0.625,
+      "n_sessions": 3
+    },
+    "continuity_preserves_outcome": true,
+    "increment_from_continuity": {
+      "mastered": 0,
+      "retention": 0.0,
+      "transfer": 0.0
+    },
+    "split_failures": []
+  },
+  "verdict": "KEEP A",
+  "reason": "the realistic learner demonstrably discriminates teaching strategy: 1.0 scaffolded success vs 0.225 assessment-only success (delta +0.775), so the learner CAN tell different pedagogy apart; under that discriminating learner across all 2 material cells, Candidate A and Candidate B still executed identical action sequences (action_equal=True, strategy_equal=True) with identical outcomes (outcome_equal=True; 2/2 cells reached completion); Candidate B's multi-session continuity add a learning increment: splitting one uninterrupted episode across 3 sessions returns the same outcome (continuity_preserves_outcome=True, increment_from_continuity={'mastered': 0, 'retention': 0.0, 'transfer': 0.0}). Continuity preserves teaching state; it does not improve it, so B's multi-session seam is operational, not pedagogical.; The learner is provably strategy-sensitive, yet A and B reach the same designated outcomes with the same executed pedagogy — because both are driven by the same TeachingEngine. Candidate B's architecture does not change the pedagogy, so no teaching-value increment can appear; its documented value remains operational/architectural, not a learning effect. This is sufficient evidence to keep Candidate A as production rather than indefinitely continue the experiment."
+}

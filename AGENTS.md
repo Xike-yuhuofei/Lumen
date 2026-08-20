@@ -10,8 +10,22 @@ Lumen 已从 **Architecture Migration 阶段** 正式进入 **Product Capability
 **冻结规则：**
 - 不得重新讨论已冻结的架构决策（见 `ARCHITECTURE_V1.md`）
 - 不得主动清理 `lumen/` 历史痕迹
-- 不得在无 bake-off 证据的情况下切换 Production Agent Loop Provider
 - 所有架构变更必须通过 Architecture Gates 验证
+
+**Production Agent Loop — 决策更新 (2026-08-20)：** Production Provider 已
+从 Legacy (P0) 切换为 **P1 `agent_loop.langgraph_thin`** (`PRODUCTION_PROFILE`
+绑定 elect)。Legacy `AgentLoopPlugin` 仍注册为 shadowed provider，回退 P0 通过
+`LUMEN_AGENT_LOOP_PROVIDER=legacy` 一个环境变量即可。此覆盖此前「Production =
+LEGACY 不可变更」的冻结结论。
+
+**Teaching Architecture — 决策冻结 (2026-08-20 / CLOSED)：KEEP A。**
+`mode.learn` 教学架构正式采用 **Candidate A（teaching-hook + generic Agent
+Loop）作为 Production Default**；**Candidate B（Teaching Session Graph，
+`lumen/modes/learn/graph/`，`LUMEN_LEARN_GRAPH_CANDIDATE=1` opt-in）为
+Experimental / Research Asset**，不作为待 Promotion 的活动候选。Phase-3 →
+Phase-4b → Phase-4c 已收口（CLOSED）：在具备诊断力的策略敏感 learner 下 A/B
+仍稳定 parity、B 无教学效果增量，其价值属审计/重放/跨会话连续性等架构-运维能力。
+重新开启此决策需新证据（见 `ARCHITECTURE_V1.md` §6）。
 
 详细基线见 `ARCHITECTURE_V1.md`.
 
@@ -21,6 +35,21 @@ Lumen is an **agent-native** intelligent learning companion organized
 around a Plugin Kernel runtime — single-shot **Tools** invoked by the
 LLM plus one product **Mode** (`mode.learn`) — exposed through three
 entry points: CLI, WebSocket API, and Python SDK.
+
+## Credential Policy (凭据规则)
+
+- Provider API keys are read **only from environment variables** — the unified
+  entry is `lumen/shared/config/credentials.py` (`get_provider_api_key`).
+  Convention: `<BINDING>_API_KEY` (e.g. `GITEE_API_KEY`, `DEEPSEEK_API_KEY`,
+  `ZHIPU_API_KEY`, `OPENAI_API_KEY`, `CODEXMANAGER_API_KEY`).
+- Never write a plaintext API key into code, config files, logs, or Git.
+  `model_catalog.json` intentionally stores no keys — any `api_key` field is
+  stripped on load/save (`ModelCatalogService._normalize`), so it is never a
+  credential source of truth.
+- Local providers (ollama / vllm) may use the `sk-no-key-required` placeholder.
+- Do not ask the user for API keys during development; read them from the
+  environment (e.g. `source ~/.zshrc`). The `lumen init` wizard auto-detects
+  env vars and only falls back to an interactive prompt when none is set.
 
 ## Architecture
 
@@ -120,7 +149,8 @@ lumen start                   # backend + frontend together
 | `lumen/compat.py`                          | `mastery_path` / `mastery` → `mode.learn` alias mapping |
 | `lumen/runtime/session/turn_runtime.py`   | `TurnRuntimeManager` — turn orchestration (WS/CLI/Cron/SDK turns) |
 | `lumen/app/cron/executor.py`              | Cron job execution via `runtime.agent_loop` |
-| `lumen/runtime/agent_loop/providers/legacy/` | Legacy Agent Loop Provider (`AgenticChatPipeline` — production agent loop) |
+| `lumen/runtime/agent_loop/providers/legacy/` | Legacy Agent Loop Provider (`AgenticChatPipeline` — P0 rollback; production default is P1 `langgraph_thin`) |
+| `lumen/runtime/agent_loop/providers/langgraph_thin/` | P1 LangGraph Thin Agent Loop Provider — production Active Provider |
 | `lumen/app/launcher.py`                    | Backend + frontend lifecycle / port discovery |
 | `lumen/runtime/tools/registry.py`          | Tool registry                      |
 | `lumen/shared/config/runtime_settings.py`  | JSON settings + process-env overrides |

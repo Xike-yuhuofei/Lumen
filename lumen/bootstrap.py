@@ -16,24 +16,25 @@ from typing import Any
 from lumen.kernel import Bootstrap, PluginContext
 from lumen.profile import PRODUCTION_PLUGINS, PRODUCTION_PROFILE
 
-#: Env var that elects the dev Active Provider for ``runtime.agent_loop``.
-#: ``langgraph_thin`` = P1 (dev default); ``legacy`` / unset = P0 (production
-#: default, unchanged).
+#: Env var that elects the Active Provider for ``runtime.agent_loop``.
+#: Production default (env unset or ``langgraph_thin``) = ``PRODUCTION_PROFILE``
+#: (P1 / LangGraph Thin).  ``legacy`` selects the pure P0 rollback assembly.
 AGENT_LOOP_PROVIDER_ENV = "LUMEN_AGENT_LOOP_PROVIDER"
 
 
 def resolve_active_assembly() -> tuple[Any, list[Any]]:
     """Return ``(profile, plugins)`` for the process's Active Provider.
 
-    Production default (env unset or ``legacy``) = ``PRODUCTION_PROFILE``
-    (P0 / Legacy — unchanged).  Dev selects P1 (``langgraph_thin``) via the
-    env var; P0 fast-fallback is one env change away.
+    Production default (env unset or ``langgraph_thin``) =
+    ``PRODUCTION_PROFILE`` (P1 / LangGraph Thin).  ``legacy`` selects the
+    pure P0 rollback assembly (``LEGACY_AGENT_LOOP_PROFILE``); P0 is one
+    env change away.
     """
     provider = os.environ.get(AGENT_LOOP_PROVIDER_ENV, "").strip().lower()
-    if provider == "langgraph_thin":
-        from lumen.dev_profile import DEV_PLUGINS, DEV_PROFILE
+    if provider == "legacy":
+        from lumen.profile import LEGACY_AGENT_LOOP_PLUGINS, LEGACY_AGENT_LOOP_PROFILE
 
-        return DEV_PROFILE, list(DEV_PLUGINS)
+        return LEGACY_AGENT_LOOP_PROFILE, list(LEGACY_AGENT_LOOP_PLUGINS)
     return PRODUCTION_PROFILE, list(PRODUCTION_PLUGINS)
 
 

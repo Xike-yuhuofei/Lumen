@@ -211,9 +211,14 @@ def test_vertical_slice_full_loop() -> None:
     assert action1.action == TeachingActionType.EXPLAIN
     assert action1.focus_node_id == "path_m0_kp0"  # first KP in module order
     assert action1.strategy == TeachingStrategy.EXPLAIN_DIRECT
-    instruction1 = action_instruction(action1, node_title="Definition of a Function")
-    assert instruction1["mastery_tool"] == "explain"
+    instruction1 = action_instruction(
+        action1, node_title="Definition of a Function", node_type="concept"
+    )
+    assert instruction1["mastery_tool"] == "mastery_assess"
     assert "Definition of a Function" in instruction1["instruction"]
+    # Quantitative EXPLAIN routes the first-check through mastery_quiz.
+    instruction_quiz = action_instruction(action1, node_type="principle")
+    assert instruction_quiz["mastery_tool"] == "mastery_quiz"
     assert action1.trace.policy_applied == "first_exposure"
 
     # ═══════════════ 3. AFTER LEARNING (first kp mastered) ═════════════

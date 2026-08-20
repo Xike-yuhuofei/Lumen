@@ -126,10 +126,19 @@ def test_dev_active_provider_is_p1(monkeypatch: pytest.MonkeyPatch) -> None:
     assert "mode.learn" in ids
 
 
-def test_production_default_stays_legacy(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_production_default_is_p1(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("LUMEN_AGENT_LOOP_PROVIDER", raising=False)
     profile, plugins = resolve_active_assembly()
-    assert profile.bindings == {}  # no binding → single provider (Legacy)
+    assert profile.bindings["runtime.agent_loop"] == "agent_loop.langgraph_thin"
+    ids = {p.manifest.id for p in plugins}
+    assert "agent_loop.langgraph_thin" in ids
+    assert "runtime.agent_loop" in ids  # Legacy present for fast fallback
+
+
+def test_legacy_rollback_is_p0(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LUMEN_AGENT_LOOP_PROVIDER", "legacy")
+    profile, plugins = resolve_active_assembly()
+    assert profile.bindings == {}  # single provider → no binding
     ids = {p.manifest.id for p in plugins}
     assert "agent_loop.langgraph_thin" not in ids
     assert "runtime.agent_loop" in ids

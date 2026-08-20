@@ -227,18 +227,16 @@ async def unified_websocket(ws: WebSocket) -> None:
                 from lumen.runtime.session import get_turn_runtime_manager
 
                 runtime = get_turn_runtime_manager()
-                cancelled = await runtime.cancel_turn(turn_id)
-                if not cancelled:
-                    # cancel_turn returns False both for a genuinely missing
-                    # turn and for a turn that already reached a terminal
-                    # status (completed/failed/cancelled). The latter is a
-                    # benign idempotent no-op (e.g. the frontend's idle-timeout
-                    # fallback firing after DONE was lost); only surface an
-                    # error when the turn truly does not exist, otherwise the
-                    # error text would replace the user's real answer in the UI.
-                    turn = await runtime.store.get_turn(turn_id)
-                    if turn is None:
-                        await safe_send({"type": "error", "content": f"Turn not found: {turn_id}"})
+                await runtime.cancel_turn(turn_id)
+                # ``cancel_turn`` returning False is always a benign idempotent
+                # no-op and must never be surfaced as an error. It happens both
+                # when the turn already reached a terminal status
+                # (completed/failed/cancelled) — e.g. the frontend's
+                # idle-timeout fallback firing after DONE was lost — and when
+                # the turn genuinely no longer exists (its row already deleted
+                # via session/message deletion, leaving a stale turn_id on the
+                # client). Surfacing "Turn not found" in either case would
+                # replace the user's real answer with a spurious error.
                 continue
 
             if msg_type == "submit_user_reply":

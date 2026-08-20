@@ -1,0 +1,68 @@
+{
+  "material": "zhongcao",
+  "learner": "weak",
+  "call_budget": 12,
+  "real_calls_made": 12,
+  "approx_tokens_requested": 2160,
+  "budget_exhausted": true,
+  "content_samples": [
+    {
+      "action": "explain",
+      "focus": "rllm_b_zhongcao_weak_m0_kp0",
+      "content_preview": "A weak “zhongcao” signal means a user shows mild interest in a product or idea, such as viewing related content or liking a post, but has not shown strong purch",
+      "used_real_call": true
+    },
+    {
+      "action": "explain",
+      "focus": "rllm_b_zhongcao_weak_m0_kp0",
+      "content_preview": "Effective product recommendations focus on the user’s real need, not just on listing features. Explain how a specific feature creates a clear benefit, and suppo",
+      "used_real_call": true
+    },
+    {
+      "action": "explain",
+      "focus": "rllm_b_zhongcao_weak_m0_kp1",
+      "content_preview": "“Seeding” content is designed to make people interested in a product by sharing appealing experiences, recommendations, or reviews. Its goal is to build desire ",
+      "used_real_call": true
+    },
+    {
+      "action": "explain",
+      "focus": "rllm_b_zhongcao_weak_m0_kp1",
+      "content_preview": "In weak recommendation (“soft seeding”), the goal is to spark interest rather than demand an immediate purchase. Start with a relatable need or experience, then",
+      "used_real_call": true
+    },
+    {
+      "action": "explain",
+      "focus": "rllm_b_zhongcao_weak_m0_kp2",
+      "content_preview": "A convincing product recommendation should connect a specific user need to clear product benefits, using concrete evidence such as features, prices, or real-use",
+      "used_real_call": true
+    },
+    {
+      "action": "explain",
+      "focus": "rllm_b_zhongcao_weak_m0_kp2",
+      "content_preview": "A weak “planting” signal is a subtle cue—such as a casual mention, a small number of likes, or limited engagement—that may indicate interest in a product but is",
+      "used_real_call": true
+    }
+  ],
+  "a": {
+    "completed": true,
+    "mastered": 8,
+    "steps": 22,
+    "unprompted_success": 0.5714285714285714,
+    "retention": 1.0,
+    "transfer": 1.0,
+    "capability_gain_per_step": 0.36363636363636365
+  },
+  "b": {
+    "completed": true,
+    "mastered": 8,
+    "steps": 22,
+    "unprompted_success": 0.5714285714285714,
+    "retention": 1.0,
+    "transfer": 1.0,
+    "capability_gain_per_step": 0.36363636363636365
+  },
+  "outcome_equal": true,
+  "b_completed": true,
+  "verdict": "CONTINUE EXPERIMENT",
+  "reason": "real-LLM bounded trial on zhongcao/weak: Candidate B's content delegation produced real teaching text via the prioritized model under a hard budget (12/12 real calls, ~2160 max tokens), and the designated outcome variables stayed equal between A and B (outcome_equal=True). So the decisive real-LLM axis now has real evidence — real LLM teaching content is deliverable by B's content seam and does NOT introduce an A/B learning-outcome difference: Candidate B still shows no measurable teaching-value increment, and Promotion remains unevidenced."
+}

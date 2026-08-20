@@ -1,0 +1,877 @@
+{
+  "verdict": "KEEP A",
+  "reason": "Candidate A (teaching-hook) completes 80% of the matrix while the as-shipped Candidate B completes 0% — the existing teaching-hook is measurably more effective today; B's architecture is not yet evidence-ready for promotion.",
+  "matrix_summary": {
+    "a": {
+      "runs": 10,
+      "completed": 8,
+      "completion_rate": 0.8,
+      "avg_steps_on_completed": 19.875,
+      "avg_capability_gain_per_step_on_completed": 0.5575159489633174,
+      "avg_diagnosis_detected": 0.5,
+      "avg_remediation_steps": 0.5,
+      "avg_retention_on_completed": 0.75,
+      "avg_transfer_on_completed": 1.0,
+      "avg_modeled_llm_calls": 95.9,
+      "avg_agent_calls": 0.0
+    },
+    "b_seeded": {
+      "runs": 10,
+      "completed": 0,
+      "completion_rate": 0.0,
+      "avg_steps_on_completed": null,
+      "avg_capability_gain_per_step_on_completed": null,
+      "avg_diagnosis_detected": 0.0,
+      "avg_remediation_steps": 0.0,
+      "avg_retention_on_completed": null,
+      "avg_transfer_on_completed": null,
+      "avg_modeled_llm_calls": 400.0,
+      "avg_agent_calls": 400.0
+    },
+    "b_virgin": {
+      "runs": 10,
+      "completed": 0,
+      "completion_rate": 0.0,
+      "avg_steps_on_completed": null,
+      "avg_capability_gain_per_step_on_completed": null,
+      "avg_diagnosis_detected": 0.0,
+      "avg_remediation_steps": 0.0,
+      "avg_retention_on_completed": null,
+      "avg_transfer_on_completed": null,
+      "avg_modeled_llm_calls": 400.0,
+      "avg_agent_calls": 400.0
+    }
+  },
+  "architecture": {
+    "code_complexity": {
+      "candidate_a_x_files_loc": 1086,
+      "candidate_b_graph_commit_loc": 2886,
+      "shared_engine_policy_loc": 3126,
+      "note": "B adds a graph orchestrator + durable governor + domain-commit foundation (~per-KB LOC) on top of the SAME deterministic engine A uses. A's 'complexity' is the tool surface + loop capability, but its runtime cost is an LLM deciding the whole loop."
+    },
+    "rows": [
+      {
+        "dimension": "PolicyDecision / teaching-path interpretability",
+        "a": "advisory DecisionTrace via teaching_plan; the ACTUAL executed path is LLM-authored and not persisted deterministically",
+        "b": "explicit immutable PolicyDecision (decision_id/policy_version/trace) committed and replayable"
+      },
+      {
+        "dimension": "Lineage / auditability",
+        "a": "evidence trail in the domain ledger, but no stable teaching_session->decision engine decision id for the executed flow",
+        "b": "teaching_session_id -> decision_id -> action_id -> evidence_id -> commit_id persisted chain"
+      },
+      {
+        "dimension": "Crash / resume / replay correctness",
+        "a": "depends on the LLM re-observing state each turn (no deterministic replay knob)",
+        "b": "passed the Fault / Concurrency / Replay Hard Gate; durable checkpoint + idempotent domain commits"
+      },
+      {
+        "dimension": "Latency",
+        "a": "one full LLM agent-loop (a large, multi-tool, multi-token turn) per teaching round — the highest-latency path",
+        "b": "every decision is deterministic (0 LLM); only the decided content action calls the Agent Runtime — low latency when it runs"
+      },
+      {
+        "dimension": "Token / model-call overhead",
+        "a": "~96 whole-loop LLM turns/episode (expensive, per round)",
+        "b": "0 decision LLM calls + ~400 content-fill calls/episode on average (cheap generations); note B's count is inflated here by its stall loop"
+      },
+      {
+        "dimension": "Checkpoint / storage overhead",
+        "a": "domain ledger only; no execution-path checkpoint",
+        "b": "adds teaching_graph checkpoint + teaching_session governor + policy_decisions ledger (separate DBs, small)"
+      },
+      {
+        "dimension": "Runtime / Mode / Domain ownership clarity",
+        "a": "pedagogy split across tools + LLM; Agent Runtime owns the loop",
+        "b": "explicit 3-way separation: graph (flow) | Agent Runtime (content primitive) | DomainCommit (authority)"
+      },
+      {
+        "dimension": "Future deterministic policy / experiment / bandit",
+        "a": "harder: the flow is not a replayable deterministic artifact",
+        "b": "designed for it: deterministic engine + immutable decisions are a direct experiment/bandit seam"
+      }
+    ],
+    "measured_overhead": {
+      "a_avg_llm_calls": 95.9,
+      "b_avg_llm_calls": 400.0,
+      "a_avg_agent_content_fills": 0.0,
+      "b_avg_agent_content_fills": 400.0
+    }
+  },
+  "episodes": [
+    {
+      "candidate": "a",
+      "material": "zhongcao",
+      "learner": "strong",
+      "completed": true,
+      "steps": 11,
+      "mastered": 8,
+      "total": 8,
+      "completion": 1.0,
+      "unprompted_success": 1.0,
+      "retention": 1.0,
+      "transfer": 1.0,
+      "action_counts": {
+        "explain": 8,
+        "assess": 2,
+        "complete": 1
+      },
+      "diagnosis_detected": 0,
+      "remediation_steps": 0,
+      "capability_gain_per_step": 0.7272727272727273,
+      "agent_calls": 0,
+      "modeled_cost": {
+        "llm_orchestration_calls": 11,
+        "llm_content_fill_calls": 0,
+        "total_llm_calls": 11
+      }
+    },
+    {
+      "candidate": "b_virgin",
+      "material": "zhongcao",
+      "learner": "strong",
+      "completed": false,
+      "steps": 400,
+      "mastered": 0,
+      "total": 8,
+      "completion": 0.0,
+      "unprompted_success": 0.0,
+      "retention": 0.0,
+      "transfer": 0.0,
+      "action_counts": {
+        "explain": 400
+      },
+      "diagnosis_detected": 0,
+      "remediation_steps": 0,
+      "capability_gain_per_step": 0.0,
+      "agent_calls": 400,
+      "modeled_cost": {
+        "llm_orchestration_calls": 400,
+        "llm_content_fill_calls": 400,
+        "total_llm_calls": 400
+      }
+    },
+    {
+      "candidate": "b_seeded",
+      "material": "zhongcao",
+      "learner": "strong",
+      "completed": false,
+      "steps": 400,
+      "mastered": 0,
+      "total": 8,
+      "completion": 0.0,
+      "unprompted_success": 1.0,
+      "retention": 0.0,
+      "transfer": 0.0,
+      "action_counts": {
+        "explain": 400
+      },
+      "diagnosis_detected": 0,
+      "remediation_steps": 0,
+      "capability_gain_per_step": 0.0,
+      "agent_calls": 400,
+      "modeled_cost": {
+        "llm_orchestration_calls": 400,
+        "llm_content_fill_calls": 400,
+        "total_llm_calls": 400
+      }
+    },
+    {
+      "candidate": "a",
+      "material": "zhongcao",
+      "learner": "weak",
+      "completed": true,
+      "steps": 22,
+      "mastered": 8,
+      "total": 8,
+      "completion": 1.0,
+      "unprompted_success": 0.5714285714285714,
+      "retention": 1.0,
+      "transfer": 1.0,
+      "action_counts": {
+        "explain": 17,
+        "practice": 1,
+        "assess": 3,
+        "complete": 1
+      },
+      "diagnosis_detected": 0,
+      "remediation_steps": 0,
+      "capability_gain_per_step": 0.36363636363636365,
+      "agent_calls": 0,
+      "modeled_cost": {
+        "llm_orchestration_calls": 22,
+        "llm_content_fill_calls": 0,
+        "total_llm_calls": 22
+      }
+    },
+    {
+      "candidate": "b_virgin",
+      "material": "zhongcao",
+      "learner": "weak",
+      "completed": false,
+      "steps": 400,
+      "mastered": 0,
+      "total": 8,
+      "completion": 0.0,
+      "unprompted_success": 0.0,
+      "retention": 0.0,
+      "transfer": 0.0,
+      "action_counts": {
+        "explain": 400
+      },
+      "diagnosis_detected": 0,
+      "remediation_steps": 0,
+      "capability_gain_per_step": 0.0,
+      "agent_calls": 400,
+      "modeled_cost": {
+        "llm_orchestration_calls": 400,
+        "llm_content_fill_calls": 400,
+        "total_llm_calls": 400
+      }
+    },
+    {
+      "candidate": "b_seeded",
+      "material": "zhongcao",
+      "learner": "weak",
+      "completed": false,
+      "steps": 400,
+      "mastered": 0,
+      "total": 8,
+      "completion": 0.0,
+      "unprompted_success": 1.0,
+      "retention": 0.0,
+      "transfer": 0.0,
+      "action_counts": {
+        "explain": 400
+      },
+      "diagnosis_detected": 0,
+      "remediation_steps": 0,
+      "capability_gain_per_step": 0.0,
+      "agent_calls": 400,
+      "modeled_cost": {
+        "llm_orchestration_calls": 400,
+        "llm_content_fill_calls": 400,
+        "total_llm_calls": 400
+      }
+    },
+    {
+      "candidate": "a",
+      "material": "zhongcao",
+      "learner": "misconception",
+      "completed": true,
+      "steps": 15,
+      "mastered": 8,
+      "total": 8,
+      "completion": 1.0,
+      "unprompted_success": 0.8571428571428571,
+      "retention": 1.0,
+      "transfer": 1.0,
+      "action_counts": {
+        "explain": 8,
+        "remediate_misconception": 2,
+        "assess": 4,
+        "complete": 1
+      },
+      "diagnosis_detected": 2,
+      "remediation_steps": 2,
+      "capability_gain_per_step": 0.5333333333333333,
+      "agent_calls": 0,
+      "modeled_cost": {
+        "llm_orchestration_calls": 15,
+        "llm_content_fill_calls": 0,
+        "total_llm_calls": 15
+      }
+    },
+    {
+      "candidate": "b_virgin",
+      "material": "zhongcao",
+      "learner": "misconception",
+      "completed": false,
+      "steps": 400,
+      "mastered": 0,
+      "total": 8,
+      "completion": 0.0,
+      "unprompted_success": 0.0,
+      "retention": 0.0,
+      "transfer": 0.0,
+      "action_counts": {
+        "explain": 400
+      },
+      "diagnosis_detected": 0,
+      "remediation_steps": 0,
+      "capability_gain_per_step": 0.0,
+      "agent_calls": 400,
+      "modeled_cost": {
+        "llm_orchestration_calls": 400,
+        "llm_content_fill_calls": 400,
+        "total_llm_calls": 400
+      }
+    },
+    {
+      "candidate": "b_seeded",
+      "material": "zhongcao",
+      "learner": "misconception",
+      "completed": false,
+      "steps": 400,
+      "mastered": 0,
+      "total": 8,
+      "completion": 0.0,
+      "unprompted_success": 1.0,
+      "retention": 0.0,
+      "transfer": 0.0,
+      "action_counts": {
+        "explain": 400
+      },
+      "diagnosis_detected": 0,
+      "remediation_steps": 0,
+      "capability_gain_per_step": 0.0,
+      "agent_calls": 400,
+      "modeled_cost": {
+        "llm_orchestration_calls": 400,
+        "llm_content_fill_calls": 400,
+        "total_llm_calls": 400
+      }
+    },
+    {
+      "candidate": "a",
+      "material": "zhongcao",
+      "learner": "guessing",
+      "completed": false,
+      "steps": 400,
+      "mastered": 4,
+      "total": 8,
+      "completion": 0.5,
+      "unprompted_success": 0.505,
+      "retention": 0.0,
+      "transfer": 1.0,
+      "action_counts": {
+        "explain": 6,
+        "assess": 198,
+        "practice": 196
+      },
+      "diagnosis_detected": 0,
+      "remediation_steps": 0,
+      "capability_gain_per_step": 0.01,
+      "agent_calls": 0,
+      "modeled_cost": {
+        "llm_orchestration_calls": 400,
+        "llm_content_fill_calls": 0,
+        "total_llm_calls": 400
+      }
+    },
+    {
+      "candidate": "b_virgin",
+      "material": "zhongcao",
+      "learner": "guessing",
+      "completed": false,
+      "steps": 400,
+      "mastered": 0,
+      "total": 8,
+      "completion": 0.0,
+      "unprompted_success": 0.0,
+      "retention": 0.0,
+      "transfer": 0.0,
+      "action_counts": {
+        "explain": 400
+      },
+      "diagnosis_detected": 0,
+      "remediation_steps": 0,
+      "capability_gain_per_step": 0.0,
+      "agent_calls": 400,
+      "modeled_cost": {
+        "llm_orchestration_calls": 400,
+        "llm_content_fill_calls": 400,
+        "total_llm_calls": 400
+      }
+    },
+    {
+      "candidate": "b_seeded",
+      "material": "zhongcao",
+      "learner": "guessing",
+      "completed": false,
+      "steps": 400,
+      "mastered": 0,
+      "total": 8,
+      "completion": 0.0,
+      "unprompted_success": 1.0,
+      "retention": 0.0,
+      "transfer": 0.0,
+      "action_counts": {
+        "explain": 400
+      },
+      "diagnosis_detected": 0,
+      "remediation_steps": 0,
+      "capability_gain_per_step": 0.0,
+      "agent_calls": 400,
+      "modeled_cost": {
+        "llm_orchestration_calls": 400,
+        "llm_content_fill_calls": 400,
+        "total_llm_calls": 400
+      }
+    },
+    {
+      "candidate": "a",
+      "material": "zhongcao",
+      "learner": "forgetting",
+      "completed": true,
+      "steps": 11,
+      "mastered": 8,
+      "total": 8,
+      "completion": 1.0,
+      "unprompted_success": 1.0,
+      "retention": 0.0,
+      "transfer": 1.0,
+      "action_counts": {
+        "explain": 8,
+        "assess": 2,
+        "complete": 1
+      },
+      "diagnosis_detected": 0,
+      "remediation_steps": 0,
+      "capability_gain_per_step": 0.7272727272727273,
+      "agent_calls": 0,
+      "modeled_cost": {
+        "llm_orchestration_calls": 11,
+        "llm_content_fill_calls": 0,
+        "total_llm_calls": 11
+      }
+    },
+    {
+      "candidate": "b_virgin",
+      "material": "zhongcao",
+      "learner": "forgetting",
+      "completed": false,
+      "steps": 400,
+      "mastered": 0,
+      "total": 8,
+      "completion": 0.0,
+      "unprompted_success": 0.0,
+      "retention": 0.0,
+      "transfer": 0.0,
+      "action_counts": {
+        "explain": 400
+      },
+      "diagnosis_detected": 0,
+      "remediation_steps": 0,
+      "capability_gain_per_step": 0.0,
+      "agent_calls": 400,
+      "modeled_cost": {
+        "llm_orchestration_calls": 400,
+        "llm_content_fill_calls": 400,
+        "total_llm_calls": 400
+      }
+    },
+    {
+      "candidate": "b_seeded",
+      "material": "zhongcao",
+      "learner": "forgetting",
+      "completed": false,
+      "steps": 400,
+      "mastered": 0,
+      "total": 8,
+      "completion": 0.0,
+      "unprompted_success": 1.0,
+      "retention": 0.0,
+      "transfer": 0.0,
+      "action_counts": {
+        "explain": 400
+      },
+      "diagnosis_detected": 0,
+      "remediation_steps": 0,
+      "capability_gain_per_step": 0.0,
+      "agent_calls": 400,
+      "modeled_cost": {
+        "llm_orchestration_calls": 400,
+        "llm_content_fill_calls": 400,
+        "total_llm_calls": 400
+      }
+    },
+    {
+      "candidate": "a",
+      "material": "textile",
+      "learner": "strong",
+      "completed": true,
+      "steps": 19,
+      "mastered": 12,
+      "total": 12,
+      "completion": 1.0,
+      "unprompted_success": 1.0,
+      "retention": 1.0,
+      "transfer": 1.0,
+      "action_counts": {
+        "explain": 12,
+        "assess": 6,
+        "complete": 1
+      },
+      "diagnosis_detected": 0,
+      "remediation_steps": 0,
+      "capability_gain_per_step": 0.631578947368421,
+      "agent_calls": 0,
+      "modeled_cost": {
+        "llm_orchestration_calls": 19,
+        "llm_content_fill_calls": 0,
+        "total_llm_calls": 19
+      }
+    },
+    {
+      "candidate": "b_virgin",
+      "material": "textile",
+      "learner": "strong",
+      "completed": false,
+      "steps": 400,
+      "mastered": 0,
+      "total": 12,
+      "completion": 0.0,
+      "unprompted_success": 0.0,
+      "retention": 0.0,
+      "transfer": 0.0,
+      "action_counts": {
+        "explain": 400
+      },
+      "diagnosis_detected": 0,
+      "remediation_steps": 0,
+      "capability_gain_per_step": 0.0,
+      "agent_calls": 400,
+      "modeled_cost": {
+        "llm_orchestration_calls": 400,
+        "llm_content_fill_calls": 400,
+        "total_llm_calls": 400
+      }
+    },
+    {
+      "candidate": "b_seeded",
+      "material": "textile",
+      "learner": "strong",
+      "completed": false,
+      "steps": 400,
+      "mastered": 0,
+      "total": 12,
+      "completion": 0.0,
+      "unprompted_success": 1.0,
+      "retention": 0.0,
+      "transfer": 0.0,
+      "action_counts": {
+        "explain": 400
+      },
+      "diagnosis_detected": 0,
+      "remediation_steps": 0,
+      "capability_gain_per_step": 0.0,
+      "agent_calls": 400,
+      "modeled_cost": {
+        "llm_orchestration_calls": 400,
+        "llm_content_fill_calls": 400,
+        "total_llm_calls": 400
+      }
+    },
+    {
+      "candidate": "a",
+      "material": "textile",
+      "learner": "weak",
+      "completed": true,
+      "steps": 40,
+      "mastered": 12,
+      "total": 12,
+      "completion": 1.0,
+      "unprompted_success": 0.6153846153846154,
+      "retention": 1.0,
+      "transfer": 1.0,
+      "action_counts": {
+        "explain": 27,
+        "practice": 3,
+        "assess": 9,
+        "complete": 1
+      },
+      "diagnosis_detected": 0,
+      "remediation_steps": 0,
+      "capability_gain_per_step": 0.3,
+      "agent_calls": 0,
+      "modeled_cost": {
+        "llm_orchestration_calls": 40,
+        "llm_content_fill_calls": 0,
+        "total_llm_calls": 40
+      }
+    },
+    {
+      "candidate": "b_virgin",
+      "material": "textile",
+      "learner": "weak",
+      "completed": false,
+      "steps": 400,
+      "mastered": 0,
+      "total": 12,
+      "completion": 0.0,
+      "unprompted_success": 0.0,
+      "retention": 0.0,
+      "transfer": 0.0,
+      "action_counts": {
+        "explain": 400
+      },
+      "diagnosis_detected": 0,
+      "remediation_steps": 0,
+      "capability_gain_per_step": 0.0,
+      "agent_calls": 400,
+      "modeled_cost": {
+        "llm_orchestration_calls": 400,
+        "llm_content_fill_calls": 400,
+        "total_llm_calls": 400
+      }
+    },
+    {
+      "candidate": "b_seeded",
+      "material": "textile",
+      "learner": "weak",
+      "completed": false,
+      "steps": 400,
+      "mastered": 0,
+      "total": 12,
+      "completion": 0.0,
+      "unprompted_success": 1.0,
+      "retention": 0.0,
+      "transfer": 0.0,
+      "action_counts": {
+        "explain": 400
+      },
+      "diagnosis_detected": 0,
+      "remediation_steps": 0,
+      "capability_gain_per_step": 0.0,
+      "agent_calls": 400,
+      "modeled_cost": {
+        "llm_orchestration_calls": 400,
+        "llm_content_fill_calls": 400,
+        "total_llm_calls": 400
+      }
+    },
+    {
+      "candidate": "a",
+      "material": "textile",
+      "learner": "misconception",
+      "completed": true,
+      "steps": 22,
+      "mastered": 12,
+      "total": 12,
+      "completion": 1.0,
+      "unprompted_success": 0.8571428571428571,
+      "retention": 1.0,
+      "transfer": 1.0,
+      "action_counts": {
+        "explain": 12,
+        "remediate_misconception": 3,
+        "assess": 6,
+        "complete": 1
+      },
+      "diagnosis_detected": 3,
+      "remediation_steps": 3,
+      "capability_gain_per_step": 0.5454545454545454,
+      "agent_calls": 0,
+      "modeled_cost": {
+        "llm_orchestration_calls": 22,
+        "llm_content_fill_calls": 0,
+        "total_llm_calls": 22
+      }
+    },
+    {
+      "candidate": "b_virgin",
+      "material": "textile",
+      "learner": "misconception",
+      "completed": false,
+      "steps": 400,
+      "mastered": 0,
+      "total": 12,
+      "completion": 0.0,
+      "unprompted_success": 0.0,
+      "retention": 0.0,
+      "transfer": 0.0,
+      "action_counts": {
+        "explain": 400
+      },
+      "diagnosis_detected": 0,
+      "remediation_steps": 0,
+      "capability_gain_per_step": 0.0,
+      "agent_calls": 400,
+      "modeled_cost": {
+        "llm_orchestration_calls": 400,
+        "llm_content_fill_calls": 400,
+        "total_llm_calls": 400
+      }
+    },
+    {
+      "candidate": "b_seeded",
+      "material": "textile",
+      "learner": "misconception",
+      "completed": false,
+      "steps": 400,
+      "mastered": 0,
+      "total": 12,
+      "completion": 0.0,
+      "unprompted_success": 1.0,
+      "retention": 0.0,
+      "transfer": 0.0,
+      "action_counts": {
+        "explain": 400
+      },
+      "diagnosis_detected": 0,
+      "remediation_steps": 0,
+      "capability_gain_per_step": 0.0,
+      "agent_calls": 400,
+      "modeled_cost": {
+        "llm_orchestration_calls": 400,
+        "llm_content_fill_calls": 400,
+        "total_llm_calls": 400
+      }
+    },
+    {
+      "candidate": "a",
+      "material": "textile",
+      "learner": "guessing",
+      "completed": false,
+      "steps": 400,
+      "mastered": 1,
+      "total": 12,
+      "completion": 0.08333333333333333,
+      "unprompted_success": 0.5025,
+      "retention": 0.0,
+      "transfer": 1.0,
+      "action_counts": {
+        "explain": 3,
+        "assess": 199,
+        "practice": 198
+      },
+      "diagnosis_detected": 0,
+      "remediation_steps": 0,
+      "capability_gain_per_step": 0.0025,
+      "agent_calls": 0,
+      "modeled_cost": {
+        "llm_orchestration_calls": 400,
+        "llm_content_fill_calls": 0,
+        "total_llm_calls": 400
+      }
+    },
+    {
+      "candidate": "b_virgin",
+      "material": "textile",
+      "learner": "guessing",
+      "completed": false,
+      "steps": 400,
+      "mastered": 0,
+      "total": 12,
+      "completion": 0.0,
+      "unprompted_success": 0.0,
+      "retention": 0.0,
+      "transfer": 0.0,
+      "action_counts": {
+        "explain": 400
+      },
+      "diagnosis_detected": 0,
+      "remediation_steps": 0,
+      "capability_gain_per_step": 0.0,
+      "agent_calls": 400,
+      "modeled_cost": {
+        "llm_orchestration_calls": 400,
+        "llm_content_fill_calls": 400,
+        "total_llm_calls": 400
+      }
+    },
+    {
+      "candidate": "b_seeded",
+      "material": "textile",
+      "learner": "guessing",
+      "completed": false,
+      "steps": 400,
+      "mastered": 0,
+      "total": 12,
+      "completion": 0.0,
+      "unprompted_success": 1.0,
+      "retention": 0.0,
+      "transfer": 0.0,
+      "action_counts": {
+        "explain": 400
+      },
+      "diagnosis_detected": 0,
+      "remediation_steps": 0,
+      "capability_gain_per_step": 0.0,
+      "agent_calls": 400,
+      "modeled_cost": {
+        "llm_orchestration_calls": 400,
+        "llm_content_fill_calls": 400,
+        "total_llm_calls": 400
+      }
+    },
+    {
+      "candidate": "a",
+      "material": "textile",
+      "learner": "forgetting",
+      "completed": true,
+      "steps": 19,
+      "mastered": 12,
+      "total": 12,
+      "completion": 1.0,
+      "unprompted_success": 1.0,
+      "retention": 0.0,
+      "transfer": 1.0,
+      "action_counts": {
+        "explain": 12,
+        "assess": 6,
+        "complete": 1
+      },
+      "diagnosis_detected": 0,
+      "remediation_steps": 0,
+      "capability_gain_per_step": 0.631578947368421,
+      "agent_calls": 0,
+      "modeled_cost": {
+        "llm_orchestration_calls": 19,
+        "llm_content_fill_calls": 0,
+        "total_llm_calls": 19
+      }
+    },
+    {
+      "candidate": "b_virgin",
+      "material": "textile",
+      "learner": "forgetting",
+      "completed": false,
+      "steps": 400,
+      "mastered": 0,
+      "total": 12,
+      "completion": 0.0,
+      "unprompted_success": 0.0,
+      "retention": 0.0,
+      "transfer": 0.0,
+      "action_counts": {
+        "explain": 400
+      },
+      "diagnosis_detected": 0,
+      "remediation_steps": 0,
+      "capability_gain_per_step": 0.0,
+      "agent_calls": 400,
+      "modeled_cost": {
+        "llm_orchestration_calls": 400,
+        "llm_content_fill_calls": 400,
+        "total_llm_calls": 400
+      }
+    },
+    {
+      "candidate": "b_seeded",
+      "material": "textile",
+      "learner": "forgetting",
+      "completed": false,
+      "steps": 400,
+      "mastered": 0,
+      "total": 12,
+      "completion": 0.0,
+      "unprompted_success": 1.0,
+      "retention": 0.0,
+      "transfer": 0.0,
+      "action_counts": {
+        "explain": 400
+      },
+      "diagnosis_detected": 0,
+      "remediation_steps": 0,
+      "capability_gain_per_step": 0.0,
+      "agent_calls": 400,
+      "modeled_cost": {
+        "llm_orchestration_calls": 400,
+        "llm_content_fill_calls": 400,
+        "total_llm_calls": 400
+      }
+    }
+  ]
+}

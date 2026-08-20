@@ -1327,7 +1327,7 @@ export function LibraryPage({ sidebarBar }: LibraryPageProps) {
                     type="file"
                     multiple
                     hidden
-                    accept=".md,.markdown,.txt,.pdf,.doc,.docx,.rtf,.html,.htm,.mp3,.wav,.m4a,.mp4,.webm,.zip"
+                    accept=".md,.markdown,.txt,.pdf,.doc,.docx,.rtf,.html,.htm,.epub,.mp3,.wav,.m4a,.mp4,.webm,.zip"
                     onChange={(e) => {
                       const files = Array.from(e.target.files ?? [])
                       if (files.length > 0) setImportFiles(files)
@@ -1661,7 +1661,7 @@ function ImportMaterialsModal({ files, onClose, onComplete }: ImportMaterialsMod
                   {targetExists
                     ? `目标知识库「${LIBRARY_KB_NAME}」已存在，将增量导入并重建索引。`
                     : `首次导入会自动创建知识库「${LIBRARY_KB_NAME}」。`}
-                  支持 md / pdf / txt / doc / docx / html 等常见文档格式。
+                  支持 md / pdf / txt / doc / docx / html / epub 等常见文档格式。
                 </p>
               </>
             )}

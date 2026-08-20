@@ -21,13 +21,13 @@ const proxy = {
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: '127.0.0.1',
+    host: 'localhost',
     port: 5174,
     strictPort: true,
     proxy,
   },
   preview: {
-    host: '127.0.0.1',
+    host: 'localhost',
     port: 5174,
     strictPort: true,
     proxy,

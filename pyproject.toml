@@ -351,7 +351,7 @@ max-complexity = 10
 # Pytest configuration
 # ============================================
 [tool.pytest.ini_options]
-testpaths = ["tests", "lumen/modes/learn/tests"]
+testpaths = ["tests", "lumen/modes/learn/tests", "lumen/cert/tests"]
 pythonpath = ["."]
 markers = [
     "asyncio: mark async tests that require pytest-asyncio",

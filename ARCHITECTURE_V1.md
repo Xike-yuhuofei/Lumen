@@ -243,13 +243,12 @@ class LearnModeService(ABC):
 ## 6. Production Profile
 
 ```python
-PRODUCTION_PLUGINS = [
+SHARED_PLUGINS = [
     SessionPlugin(),  # runtime.session
     PromptPlugin(),  # runtime.prompt
     ToolPlugin(),  # runtime.tools
     LLMPlugin(),  # runtime.llm
     AgentPlugin(),  # runtime.agent
-    AgentLoopPlugin(),  # runtime.agent_loop
     KnowledgeSourcesPlugin(),  # knowledge.sources
     KnowledgeRetrievalPlugin(),  # knowledge.retrieval
     KnowledgeParsingPlugin(),  # knowledge.parsing
@@ -258,10 +257,40 @@ PRODUCTION_PLUGINS = [
     RenderingPlugin(),  # rendering
     ModeLearnPlugin(),  # mode.learn
 ]
+
+# Production Active Provider = P1 (LangGraph Thin); Legacy kept for rollback.
+PRODUCTION_PLUGINS = [*SHARED_PLUGINS, AgentLoopPlugin(), LangGraphThinAgentLoopPlugin()]
+PRODUCTION_PROFILE.bindings = {"runtime.agent_loop": "agent_loop.langgraph_thin"}
+legacy rollback:  LUMEN_AGENT_LOOP_PROVIDER=legacy → 纯 P0 (LEGACY_AGENT_LOOP_PROFILE)
 ```
 
-**Provider (Production):** Legacy Agent Loop (`AgenticChatPipeline`)
-**Provider (Evaluation):** LangChain Agent Loop (`create_react_agent` + LangGraph)
+**Provider (Production):** P1 LangGraph Thin (`agent_loop.langgraph_thin` / `LangGraphThinProvider`) — Active Provider，通过 Profile binding elect。
+**Provider (Rollback):** Legacy (`AgenticChatPipeline`) — shadowed provider，`LUMEN_AGENT_LOOP_PROVIDER=legacy` 一键回退。
+**Provider (Evaluation):** LangChain Agent Loop (`create_react_agent` + LangGraph) — `bakeoff_profiles` 专用。
+
+> 决策更新 (2026-08-20)：Production Provider 由 Legacy (P0) 切换为 P1 `langgraph_thin`
+> （覆盖此前「Production = LEGACY 不可变更」的冻结结论）。
+
+### Teaching Architecture — KEEP A（冻结 2026-08-20 / CLOSED）
+
+**决策：Continue Candidate A — teaching-hook + generic Agent Loop 是 `mode.learn` 的正式生产教学架构。**
+
+- **Candidate A = Production Default**：Learn turn 默认走 teaching-hook 路径（`route_learn_turn` 返回 `"hook"`），生产行为不变。
+- **Candidate B = Experimental / Research Asset**：Teaching Session Graph（`lumen/modes/learn/graph/`）为 opt-in 实验资产（`LUMEN_LEARN_GRAPH_CANDIDATE=1`，默认 off），不作为待 Promotion 的活动候选。仅作实验、研究与未来需求参考。
+- **Teaching Architecture Experiment：CLOSED**（Phase-3 → Phase-4b → Phase-4c 已收口红温，详见 `tests/modes/learn/eval/bakeoff/out_phase*/` 各报告与 `phase4c_report.md`）。
+
+**证据要点（可复现）：**
+- Phase-4c 策略敏感 learner（`StrategySensitiveLearner`）证明自身具备诊断力（scaffolded 1.0 vs assessment-only 0.225，delta +0.775），说明 A/B 若存在真实教学差异会被观测到。
+- 在该可区分 learner 下，A/B 在全部 material 细胞仍逐字 parity：action / strategy / mechanism 序列全等，outcome（independent success / mastery / retention / transfer）相等。
+- Candidate B 的 multi-session continuity 仅 preserve 教学状态、不产出学习增量（increment_from_continuity = 0）。
+- 结论：A 与 B 由同一共享 TeachingEngine 驱动，B 的图/运行时表示不改变教学决策，无法产生教学效果增量；其已验证价值属**审计 / 重放 / 跨会话连续性等架构-运维能力**，不足以抵消额外复杂度。
+
+**重新开启 A/B Teaching Architecture 决策的触发条件（需出现其一）：**
+1. 出现新的真实产品需求或教学机制，仅 B（明确教学 Session Graph / 显式教学流程）能承载且 A 无法等效替代；
+2. 出现足以推翻上述 parity 结论的新事实（如真实 learner 上 A/B 存在可测量且稳定的教学效果差异）；
+3. 出现新的、在真实场景下必须由显式图化教学流程才能满足的运维/审计强约束。
+
+**冻结语义：** 不 Promotion B、不删除 B、不因本次决策进行无必要的大规模重构或架构清理；不得在没有上述新证据的情况下重新开启 Teaching Architecture 实验。
 
 ---
 

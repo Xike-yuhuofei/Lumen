@@ -1,10 +1,17 @@
-"""OpenTelemetry (OTLP/HTTP, JSON encoding) trace exporter (Candidate 3).
+"""OpenTelemetry (OTLP/HTTP) trace exporter (Candidate 3).
 
 Exports completed telemetry spans to any OTLP-compatible collector
-(OpenTelemetry Collector, Phoenix, …) using the standard OTLP/HTTP **JSON**
-encoding — no OpenTelemetry SDK or protobuf dependency is required. The
-payload is built by hand from the frozen C1/C2 :class:`Span` model and posted
-with ``httpx`` (already a core dependency).
+(OpenTelemetry Collector, Phoenix, …) using the standard OTLP/HTTP encoding.
+Two wire encodings are supported:
+
+* **JSON** (default) — ``application/json``; built by hand from the frozen
+  C1/C2 :class:`Span` model with no OpenTelemetry SDK or protobuf dependency.
+* **protobuf** — ``application/x-protobuf``; required by some AI-observability
+  backends (Phoenix only accepts protobuf on ``/v1/traces``). The payload is
+  built by :mod:`otlp_protobuf` (which uses ``opentelemetry.proto`` when
+  available); when that package is absent the exporter logs once and falls
+  back to JSON. Keeping the SDK import in ``otlp_protobuf`` preserves this
+  module's dependency-free frozen contract.
 
 Semantics:
 
@@ -25,6 +32,7 @@ Semantics:
 
 from __future__ import annotations
 
+import logging
 import threading
 import time
 from typing import Any, Sequence
@@ -32,13 +40,24 @@ from typing import Any, Sequence
 import httpx
 
 from .exporter import TelemetryExporter
+from .otlp_protobuf import build_trace_request_protobuf, is_protobuf_available
 from .redact import sanitize_attrs
 from .span import Span
 
-__all__ = ["OtlpSpanExporter", "build_trace_request", "convert_span"]
+logger = logging.getLogger(__name__)
+
+__all__ = [
+    "OtlpSpanExporter",
+    "build_trace_request",
+    "build_trace_request_protobuf",
+    "convert_span",
+]
 
 # OTLP/HTTP JSON content type.
 _JSON_CONTENT_TYPE = "application/json"
+#: OTLP/HTTP protobuf content type (required by Phoenix and the OpenTelemetry
+#: Collector's default OTLP/HTTP receiver).
+_PROTOBUF_CONTENT_TYPE = "application/x-protobuf"
 
 # OpenTelemetry SpanKind enum values (no SDK dependency).
 _SPAN_KIND_INTERNAL = 1
@@ -183,9 +202,16 @@ class OtlpSpanExporter(TelemetryExporter):
         batch_size: int = 64,
         timeout_seconds: float = 3.0,
         http_client: httpx.Client | None = None,
+        encoding: str = "json",
     ) -> None:
         self._endpoint = endpoint
-        self._headers = {"Content-Type": _JSON_CONTENT_TYPE, **(headers or {})}
+        self._encoding = (encoding or "json").strip().lower()
+        content_type = (
+            _PROTOBUF_CONTENT_TYPE
+            if self._encoding == "protobuf"
+            else _JSON_CONTENT_TYPE
+        )
+        self._headers = {"Content-Type": content_type, **(headers or {})}
         self._batch_size = max(1, int(batch_size))
         self._timeout = max(0.1, float(timeout_seconds))
         self._client = http_client or httpx.Client(timeout=self._timeout)
@@ -195,6 +221,14 @@ class OtlpSpanExporter(TelemetryExporter):
         #: Counters for diagnostics / tests.
         self.spans_sent = 0
         self.failed_flushes = 0
+        if self._encoding == "protobuf" and not is_protobuf_available():
+            # Optional dependency missing → keep running, fall back to JSON.
+            logger.warning(
+                "OTLP exporter encoding 'protobuf' requested but "
+                "'opentelemetry-proto' is not installed; falling back to JSON"
+            )
+            self._encoding = "json"
+            self._headers = {"Content-Type": _JSON_CONTENT_TYPE, **(headers or {})}
 
     def export_span(self, span: Span) -> bool:
         with self._lock:
@@ -212,9 +246,19 @@ class OtlpSpanExporter(TelemetryExporter):
             self._queue = []
         if not batch:
             return True
-        body = build_trace_request(batch)
         try:
-            response = self._client.post(self._endpoint, json=body, headers=self._headers)
+            if self._encoding == "protobuf":
+                body = build_trace_request_protobuf(batch)
+                if body is None:  # pragma: no cover - guarded at init
+                    return False
+                response = self._client.post(
+                    self._endpoint, content=body, headers=self._headers
+                )
+            else:
+                json_body = build_trace_request(batch)
+                response = self._client.post(
+                    self._endpoint, json=json_body, headers=self._headers
+                )
             ok = 200 <= response.status_code < 400
         except Exception:
             ok = False

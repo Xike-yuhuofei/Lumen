@@ -5,6 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>Lumen</title>
+    <script>
+      // 首帧同步主题引导：在 React 挂载前，按「存储值 + 系统偏好」落定 data-theme，
+      // 避免首帧闪烁，并保证「跟随系统」首次绘制即生效。与 App.tsx 的 ThemeId/解析保持一致。
+      (function () {
+        try {
+          var saved = (typeof localStorage !== 'undefined' && localStorage.getItem('trae:theme')) || ''
+          var theme = saved === 'light' || saved === 'dark' || saved === 'system' ? saved : 'system'
+          var effective = theme
+          if (theme === 'system') {
+            var mql = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-color-scheme: light)')
+            effective = mql && mql.matches ? 'light' : 'dark'
+          }
+          document.documentElement.setAttribute('data-theme', effective)
+        } catch (e) {
+          // 保持 index.html 默认 data-theme="dark"，忽略快照/存储异常
+        }
+      })()
+    </script>
   </head>
   <body data-sidebar-collapsed="false">
     <div id="root"></div>

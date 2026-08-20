@@ -177,7 +177,16 @@ def _telemetry_instrumented(client: Any, config: LLMClientConfig) -> Any:
         model = str(kwargs.get("model") or config.model or "")
         stream = bool(kwargs.get("stream"))
         if stream:
-            return _instrumented_stream(original_create(**kwargs), model)
+            # ``original_create`` is async on the AsyncOpenAI client — awaiting
+            # here yields the real async iterator before the span wraps it.
+            # Missing this ``await`` leaked an un-awaited ``AsyncCompletions.create``
+            # coroutine (observed in production-environment validation: WS turns
+            # through langgraph-thin failed with ``llm_call stream status=error``
+            # while the coroutine was never awaited).
+            stream_obj = original_create(**kwargs)
+            if inspect.isawaitable(stream_obj):
+                stream_obj = await stream_obj
+            return _instrumented_stream(stream_obj, model)
         with telemetry_span(
             "llm_call",
             kind="llm",

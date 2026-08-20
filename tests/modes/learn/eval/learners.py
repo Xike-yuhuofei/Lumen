@@ -20,6 +20,7 @@ Profiles (mirroring the goal's scenario list):
 from __future__ import annotations
 
 from dataclasses import dataclass
+import random
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -33,6 +34,7 @@ __all__ = [
     "MisconceptionLearner",
     "GuessingLearner",
     "ForgettingLearner",
+    "StrategySensitiveLearner",
 ]
 
 
@@ -195,6 +197,91 @@ class ForgettingLearner(Learner):
         return True
 
 
+class StrategySensitiveLearner(Learner):
+    """A more *realistic* learner the phase-4c architecture experiment asks for.
+
+    Models the behaviours the goal lists — uncertain responses, a stable /
+    interpretable misconception, and a measurable reaction to *which* teaching
+    strategy it receives — while staying deterministic and reproducible:
+
+    * **uncertain responses** — reality is not attempt-count-gated like
+      ``WeakLearner``: correctness is a seeded probability that only *rises*
+      when the engine actually **teaches** the point (``explain`` /
+      ``practice`` / ``review`` / ``remediate_misconception``).  Being quizzed
+      again without any new teaching keeps the learner near guessing level, so
+      a strategy of "drill until it sticks" cannot fake mastery.
+    * **stable misconception** — reuses the registered-belief mechanism: while
+      un-remediated it answers wrong with the misconception's statement, and
+      ``prefer_quiz`` surfaces it as a graded probe so remediation is reachable
+      (exactly the engine's detection seam).
+    * **strategy / scaffold sensitivity** — success probability is
+      ``base_skill + STRATEGY_STEP * taught``, so *how much teaching was
+      delivered* (the strategy) is the single lever that moves the learner's
+      mastery, and a learner that is taught only after it has already failed
+      must actually receive the teaching before it recovers.
+
+    Seeded (``random.Random(seed)``) so every A and B cell is reproducible; a
+    fixed seed + identical call order yields identical transcripts, and that is
+    the property the phase-4c matrix asserts between the two candidates.
+    """
+
+    name = "strategy_sensitive"
+    #: Success probability added per *teaching* exposure of a knowledge point.
+    STRATEGY_STEP = 0.2
+    #: Base success probability before any teaching (assessment-only ≈ guessing).
+    DEFAULT_BASE_SKILL = 0.4
+    #: Teaching actions that consolidate (``on_plan`` focus may be a kp or a
+    #: ``"__mis"`` misconception node id).
+    _TEACHING_ACTIONS = frozenset(
+        {"explain", "practice", "review", "remediate_misconception"}
+    )
+
+    def __init__(self, *, seed: int = 0, base_skill: float = DEFAULT_BASE_SKILL) -> None:
+        super().__init__()
+        self._rng = random.Random(seed)
+        self._base_skill = base_skill
+        #: teaching-exposure count per knowledge point id.
+        self._taught: dict[str, int] = {}
+
+    @staticmethod
+    def _kp_id(focus: str) -> str:
+        return focus.split("__mis", 1)[0] if "__mis" in focus else focus
+
+    def on_plan(self, action: str, focus: str) -> None:
+        super().on_plan(action, focus)
+        if action in self._TEACHING_ACTIONS and focus:
+            kp = self._kp_id(focus)
+            self._taught[kp] = self._taught.get(kp, 0) + 1
+
+    def _success_prob(self, kp: KnowledgePoint) -> float:
+        taught = self._taught.get(kp.id, 0)
+        return min(1.0, self._base_skill + self.STRATEGY_STEP * taught)
+
+    def _draw(self, kp: KnowledgePoint) -> bool:
+        return self._rng.random() < self._success_prob(kp)
+
+    def quiz(self, kp: KnowledgePoint, *, question_kind: str = "recall") -> QuizOutcome:
+        self._bump(kp.id)
+        mis = self._misconception_of(kp)
+        if mis is not None and kp.id not in self._remediated:
+            return QuizOutcome(
+                is_correct=False, answer=mis["statement"], misconception=mis["statement"]
+            )
+        if self._draw(kp):
+            return QuizOutcome(is_correct=True, answer=kp.answer)
+        return QuizOutcome(is_correct=False, answer=f"我对 {kp.name} 还不确定")
+
+    def qualitative(self, kp: KnowledgePoint) -> bool:
+        self._bump(kp.id)
+        mis = self._misconception_of(kp)
+        if mis is not None and kp.id not in self._remediated:
+            return False
+        return self._draw(kp)
+
+    def prefer_quiz(self, kp: KnowledgePoint) -> bool:
+        return self._misconception_of(kp) is not None and kp.id not in self._remediated
+
+
 def build_learner(learner_name: str) -> Learner:
     """Instantiate a learner by its canonical name (for the benchmark runner)."""
     table = {
@@ -205,8 +292,10 @@ def build_learner(learner_name: str) -> Learner:
             MisconceptionLearner,
             GuessingLearner,
             ForgettingLearner,
+            StrategySensitiveLearner,
         )
     }
     if learner_name not in table:
         raise KeyError(f"unknown learner: {learner_name!r}")
-    return table[learner_name]()
+    cls = table[learner_name]
+    return cls(seed=0) if cls is StrategySensitiveLearner else cls()

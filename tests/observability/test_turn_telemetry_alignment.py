@@ -58,7 +58,7 @@ def _fake_persona_service() -> SimpleNamespace:
     return SimpleNamespace(load_for_context=lambda name: "")
 
 
-def _install_fakes(monkeypatch: pytest.MonkeyPatch, pipeline_cls) -> None:
+def _install_fakes(monkeypatch: pytest.MonkeyPatch, provider_cls) -> None:
     class _FakeContextBuilder:
         def __init__(self, *_args, **_kwargs) -> None:
             pass
@@ -84,9 +84,12 @@ def _install_fakes(monkeypatch: pytest.MonkeyPatch, pipeline_cls) -> None:
 
     monkeypatch.setattr("lumen.shared._util.llm.config.get_llm_config", lambda: SimpleNamespace())
     monkeypatch.setattr("lumen.runtime.session.context_builder.ContextBuilder", _FakeContextBuilder)
+    # Production ``runtime.agent_loop`` is P1 (``agent_loop.langgraph_thin``);
+    # drive the internal-failure scenario through the ACTIVE provider by
+    # replacing the provider returned to the plugin.
     monkeypatch.setattr(
-        "lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.AgenticChatPipeline",
-        pipeline_cls,
+        "lumen.evolution.providers.LangGraphThinProvider",
+        provider_cls,
     )
     monkeypatch.setattr(
         "lumen.shared._util.memory.get_memory_store",
@@ -95,20 +98,41 @@ def _install_fakes(monkeypatch: pytest.MonkeyPatch, pipeline_cls) -> None:
     monkeypatch.setattr("lumen.shared._util.persona.get_persona_service", _fake_persona_service)
 
 
-class _InternallyFailingPipeline:
-    """Agent loop that resolves failure internally: terminal ERROR + DONE."""
+class _InternallyFailingProvider:
+    """LangGraphThinProvider stand-in that resolves failure internally.
+
+    Returns a ``ProviderResult`` whose ``termination`` is a generic ERROR and
+    whose ``error`` (TurnError) carries the message — the same shape the real
+    provider produces on a runtime error (e.g. provider/auth failure). The P1
+    plugin must surface this as a terminal ERROR event so the persisted turn
+    ``error`` is populated.
+    """
+
+    provider_id = "langgraph_thin"
 
     def __init__(self, *args, **kwargs) -> None:
         pass
 
-    async def run(self, context, stream):
-        await stream.error(
-            "provider unavailable",
-            source="chat",
-            metadata={"turn_terminal": True, "status": "failed"},
+    async def run(self, request):
+        from lumen.evolution.contract import (
+            ProviderResult,
+            Termination,
+            TerminationReason,
+            TurnError,
+            TurnOutput,
         )
-        await stream.emit(
-            StreamEvent(type=StreamEventType.DONE, source="chat", metadata={"status": "failed"})
+
+        return ProviderResult(
+            provider_id=self.provider_id,
+            output=TurnOutput(final_text="", tool_calls=[], streamed_chars=0),
+            termination=Termination(
+                reason=TerminationReason.ERROR,
+                completed=False,
+                detail="provider unavailable",
+                step_count=0,
+            ),
+            error=TurnError(kind="runtime_error", message="provider unavailable"),
+            trace=[],
         )
 
 
@@ -124,7 +148,7 @@ async def test_agent_loop_internal_failure_aligns_turn_telemetry(
     try:
         store = SQLiteSessionStore(tmp_path / "chat_history.db")
         runtime = TurnRuntimeManager(store)
-        _install_fakes(monkeypatch, _InternallyFailingPipeline)
+        _install_fakes(monkeypatch, _InternallyFailingProvider)
 
         session, turn = await runtime.start_turn(
             {

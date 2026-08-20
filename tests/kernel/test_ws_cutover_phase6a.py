@@ -350,26 +350,34 @@ async def test_ws_chat_turn_fails_when_agent_loop_missing(
 
 
 @pytest.mark.asyncio
-async def test_ws_chat_turn_boots_kernel_on_demand(
+async def test_ws_chat_turn_boots_p1_on_demand(
     monkeypatch: pytest.MonkeyPatch, tmp_path
 ) -> None:
     """Without an attached assembly the first turn boots the production
-    assembly on demand and still runs through the kernel's
-    ``runtime.agent_loop`` (the pipeline is built by the kernel's
-    ``runtime.agent`` factory)."""
-    from lumen.bootstrap import LumenBootstrap, get_active_bootstrap
+    assembly on demand and runs through the P1 (LangGraph Thin)
+    ``runtime.agent_loop`` adapter."""
+    from lumen.bootstrap import LumenBootstrap, get_active_bootstrap, resolve_agent_loop_service
+    from lumen.runtime.agent_loop.providers.langgraph_thin.plugin import (
+        _LangGraphThinAgentLoopAdapter,
+    )
 
-    probe = _ProbePipeline()
     previous = _attach_bootstrap(None)
     try:
-        monkeypatch.setattr(
-            "lumen.runtime.agent_loop.providers.legacy.agentic_pipeline.AgenticChatPipeline",
-            lambda **kw: probe,
-        )
-        _patch_legacy_runtime(monkeypatch)
-
         store = SQLiteSessionStore(tmp_path / "chat_history.db")
         runtime = TurnRuntimeManager(store)
+
+        # Boot the production assembly on demand and resolve P1's adapter.
+        service = await resolve_agent_loop_service()
+        assert isinstance(service, _LangGraphThinAgentLoopAdapter)
+
+        # Stub the adapter's run so no live model is contacted.
+        runs: list[dict[str, Any]] = []
+
+        async def fake_run(**kwargs) -> None:
+            runs.append(kwargs)
+            await kwargs["stream"].content("Chat reply", source="chat")
+
+        monkeypatch.setattr(service, "run", fake_run)
 
         _session, turn = await runtime.start_turn(
             {
@@ -388,10 +396,10 @@ async def test_ws_chat_turn_boots_kernel_on_demand(
         async for _event in runtime.subscribe_turn(turn["id"], after_seq=0):
             pass
 
-        # The kernel booted on demand and its AgentService built the pipeline.
+        # The kernel booted on demand; the turn ran through the P1 adapter.
         booted = get_active_bootstrap()
         assert isinstance(booted, LumenBootstrap)
-        assert probe.calls, "turn never reached the pipeline through the kernel"
+        assert runs, "turn never reached the P1 adapter through the kernel"
     finally:
         booted = get_active_bootstrap()
         _attach_bootstrap(previous)
@@ -410,7 +418,9 @@ async def test_resolve_learn_service_with_real_kernel_attached() -> None:
     real ``mode.learn`` adapter for every Learn name and nothing for chat."""
     from lumen.bootstrap import LumenBootstrap, get_active_bootstrap
     from lumen.modes.learn.plugin import _LearnModeServiceAdapter
-    from lumen.runtime.agent_loop.providers.legacy.plugin import _AgentLoopServiceAdapter
+    from lumen.runtime.agent_loop.providers.langgraph_thin.plugin import (
+        _LangGraphThinAgentLoopAdapter,
+    )
 
     bootstrap = LumenBootstrap()
     await bootstrap.boot()
@@ -422,8 +432,10 @@ async def test_resolve_learn_service_with_real_kernel_attached() -> None:
         for name in ("mastery_path", "mastery", "mode.learn"):
             service = await runtime._resolve_learn_service(name)
             assert isinstance(service, _LearnModeServiceAdapter), name
-            # Production Agent Loop stays the Legacy provider — not LangChain.
-            assert isinstance(root.require("runtime.agent_loop"), _AgentLoopServiceAdapter)
+            # Production Agent Loop is P1 (LangGraph Thin) — not LangChain.
+            assert isinstance(
+                root.require("runtime.agent_loop"), _LangGraphThinAgentLoopAdapter
+            )
         assert await runtime._resolve_learn_service("chat") is None
         assert await runtime._resolve_learn_service(None) is None
     finally:
@@ -457,10 +469,12 @@ async def test_resolve_learn_service_boots_kernel_on_demand() -> None:
 @pytest.mark.asyncio
 async def test_resolve_agent_loop_service_with_real_kernel_attached() -> None:
     """With the real production kernel attached, the WS runtime resolves the
-    real ``runtime.agent_loop`` adapter (the Legacy provider) for generic
+    real ``runtime.agent_loop`` adapter (P1 / LangGraph Thin) for generic
     turns."""
     from lumen.bootstrap import LumenBootstrap
-    from lumen.runtime.agent_loop.providers.legacy.plugin import _AgentLoopServiceAdapter
+    from lumen.runtime.agent_loop.providers.langgraph_thin.plugin import (
+        _LangGraphThinAgentLoopAdapter,
+    )
 
     bootstrap = LumenBootstrap()
     await bootstrap.boot()
@@ -468,8 +482,8 @@ async def test_resolve_agent_loop_service_with_real_kernel_attached() -> None:
     try:
         runtime = TurnRuntimeManager(SQLiteSessionStore.__new__(SQLiteSessionStore))
         service = await runtime._resolve_agent_loop_service()
-        # Production Agent Loop stays the Legacy provider — not LangChain.
-        assert isinstance(service, _AgentLoopServiceAdapter)
+        # Production Agent Loop is P1 (LangGraph Thin) — not LangChain.
+        assert isinstance(service, _LangGraphThinAgentLoopAdapter)
     finally:
         _attach_bootstrap(previous)
         await bootstrap.shutdown()
@@ -479,15 +493,17 @@ async def test_resolve_agent_loop_service_with_real_kernel_attached() -> None:
 async def test_resolve_agent_loop_service_boots_kernel_on_demand() -> None:
     """Without an attached assembly the first generic-turn resolution boots
     the production assembly and resolves the real ``runtime.agent_loop``
-    (the Legacy provider)."""
+    (P1 / LangGraph Thin)."""
     from lumen.bootstrap import LumenBootstrap, get_active_bootstrap
-    from lumen.runtime.agent_loop.providers.legacy.plugin import _AgentLoopServiceAdapter
+    from lumen.runtime.agent_loop.providers.langgraph_thin.plugin import (
+        _LangGraphThinAgentLoopAdapter,
+    )
 
     previous = _attach_bootstrap(None)
     runtime = TurnRuntimeManager(SQLiteSessionStore.__new__(SQLiteSessionStore))
     try:
         service = await runtime._resolve_agent_loop_service()
-        assert isinstance(service, _AgentLoopServiceAdapter)
+        assert isinstance(service, _LangGraphThinAgentLoopAdapter)
         assert isinstance(get_active_bootstrap(), LumenBootstrap)
     finally:
         booted = get_active_bootstrap()

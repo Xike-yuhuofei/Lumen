@@ -53,6 +53,9 @@ class LoopRecord:
     final_state: dict[str, Any] = field(default_factory=dict)
     failures: list[dict[str, Any]] = field(default_factory=list)
     completed: bool = False
+    # Candidate B only: number of Agent Runtime (content-fill) calls made.
+    # Candidate A leaves this 0 (A's whole loop is the LLM run).
+    agent_calls: int = 0
 
     def to_dict(self) -> dict[str, Any]:
         return {

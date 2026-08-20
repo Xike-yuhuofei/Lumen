@@ -290,6 +290,10 @@ class ExportConfig:
     otlp_headers: dict[str, str] = field(default_factory=dict)
     otlp_batch_size: int = DEFAULT_OTLP_BATCH_SIZE
     otlp_timeout_seconds: float = DEFAULT_EXPORT_TIMEOUT_SECONDS
+    #: Wire encoding for the OTLP/HTTP trace export — ``"json"`` (default,
+    #: zero-dependency) or ``"protobuf"`` (required by Phoenix / the OTel
+    #: Collector's default OTLP/HTTP receiver).
+    otlp_encoding: str = "json"
     metrics_summary_enabled: bool = False
     metrics_summary_dir: str | None = None
     metrics_interval_seconds: float = DEFAULT_METRICS_INTERVAL_SECONDS
@@ -310,6 +314,8 @@ def parse_export_config(env: dict[str, str] | None = None) -> ExportConfig:
 
     * ``LUMEN_TELEMETRY_EXPORTERS`` — comma list: ``otlp`` / ``metrics_summary``
     * ``LUMEN_OTEL_ENDPOINT`` — OTLP/HTTP endpoint (default ``:4318/v1/traces``)
+    * ``LUMEN_OTEL_ENCODING`` — OTLP/HTTP wire encoding: ``json`` (default)
+      or ``protobuf`` (required by Phoenix / the Collector's default receiver)
     * ``LUMEN_OTEL_HEADERS`` — JSON object of extra HTTP headers
     * ``LUMEN_OTEL_BATCH_SIZE`` — spans buffered before a flush
     * ``LUMEN_TELEMETRY_EXPORT_TIMEOUT_SECONDS`` — per-request timeout
@@ -352,11 +358,16 @@ def parse_export_config(env: dict[str, str] | None = None) -> ExportConfig:
         except (ValueError, TypeError):
             logger.warning("LUMEN_OTEL_HEADERS is not valid JSON; ignoring")
 
+    encoding = (_env(env, "LUMEN_OTEL_ENCODING") or "json").strip().lower()
+    if encoding not in {"json", "protobuf"}:
+        encoding = "json"
+
     return ExportConfig(
         otlp_enabled="otlp" in enabled,
         otlp_endpoint=_env(env, "LUMEN_OTEL_ENDPOINT") or DEFAULT_OTLP_ENDPOINT,
         otlp_headers=headers,
         otlp_batch_size=max(1, _int("LUMEN_OTEL_BATCH_SIZE", DEFAULT_OTLP_BATCH_SIZE)),
+        otlp_encoding=encoding,
         otlp_timeout_seconds=max(
             0.1, _float("LUMEN_TELEMETRY_EXPORT_TIMEOUT_SECONDS", DEFAULT_EXPORT_TIMEOUT_SECONDS)
         ),
@@ -395,9 +406,10 @@ def configure_export(config: ExportConfig | None = None) -> None:
                 headers=cfg.otlp_headers,
                 batch_size=cfg.otlp_batch_size,
                 timeout_seconds=cfg.otlp_timeout_seconds,
+                encoding=cfg.otlp_encoding,
             ),
         )
-        logger.info("telemetry exporter 'otlp' -> %s", cfg.otlp_endpoint)
+        logger.info("telemetry exporter 'otlp' -> %s (encoding=%s)", cfg.otlp_endpoint, cfg.otlp_encoding)
 
     if cfg.metrics_summary_enabled:
         from .metrics_export import MetricsSummaryExporter

@@ -351,14 +351,18 @@ class TeachingPlanTool(BaseTool):
 
         teaching = TeachingService()
         action = teaching.decide(path_id)
-        node_title = _node_title(teaching, progress, action.focus_node_id)
-        instruction = action_instruction(action, node_title=node_title)
         try:
             graph = teaching.get_graph(progress.book_id)
         except Exception:
             logger.warning("Failed to load teaching graph for grounding", exc_info=True)
             graph = None
         focus_payload = _node_payload(graph, action.focus_node_id)
+        node_title = _node_title(teaching, progress, action.focus_node_id)
+        instruction = action_instruction(
+            action,
+            node_title=node_title,
+            node_type=focus_payload.get("type", ""),
+        )
         resources = [_node_payload(graph, rid) for rid in action.resource_node_ids]
         misconception = None
         if focus_payload.get("type") == "misconception":

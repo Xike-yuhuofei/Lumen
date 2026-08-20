@@ -16,6 +16,7 @@ from lumen.shared._util.observability import Span
 from lumen.shared._util.observability.otlp import (
     OtlpSpanExporter,
     build_trace_request,
+    build_trace_request_protobuf,
     convert_span,
 )
 
@@ -213,6 +214,93 @@ def test_exporter_posts_otlp_json_via_http():
         assert len(spans) == 2
         assert exporter.spans_sent == 2
         assert exporter.failed_flushes == 0
+    finally:
+        exporter.shutdown()
+
+
+# ── protobuf encoding (Phoenix-compatible wire format) ─────────────────────
+
+
+def test_build_trace_request_protobuf_serializes_spans():
+    """protobuf encoding must serialize the same converted spans and be
+    decodable back to the standard OTLP protobuf model (round-trip)."""
+    out = build_trace_request_protobuf(
+        [
+            convert_span(
+                _span(
+                    name="llm_call",
+                    kind="llm",
+                    attrs={"model": "gpt-4", "prompt_tokens": 10, "completion_tokens": 5},
+                ),
+                end_ns=1_000_000_000,
+            )
+        ]
+    )
+    if out is None:
+        pytest.skip("opentelemetry-proto not installed")
+
+    from opentelemetry.proto.collector.trace.v1.trace_service_pb2 import (
+        ExportTraceServiceRequest,
+    )
+
+    request = ExportTraceServiceRequest()
+    request.ParseFromString(out)
+    assert len(request.resource_spans) == 1
+    resource = request.resource_spans[0]
+    assert resource.resource.attributes[0].key == "service.name"
+    assert resource.resource.attributes[0].value.string_value == "lumen"
+    scope = resource.scope_spans[0]
+    assert scope.scope.name == "lumen.observability"
+    assert len(scope.spans) == 1
+    span = scope.spans[0]
+    assert span.name == "llm_call"
+    assert span.kind == 3  # CLIENT
+    attrs = {a.key: a.value for a in span.attributes}
+    assert attrs["openinference.span.kind"].string_value == "LLM"
+    assert attrs["llm.model_name"].string_value == "gpt-4"
+    assert attrs["llm.token_count.prompt"].int_value == 10
+    assert attrs["llm.token_count.completion"].int_value == 5
+
+
+def test_exporter_posts_otlp_protobuf_via_http():
+    captured: dict = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["url"] = str(request.url)
+        captured["content_type"] = request.headers.get("content-type")
+        captured["body"] = request.read()
+        return httpx.Response(200, json={})
+
+    client = httpx.Client(transport=httpx.MockTransport(handler))
+    exporter = OtlpSpanExporter(
+        endpoint="http://localhost:4318/v1/traces",
+        batch_size=1,
+        http_client=client,
+        encoding="protobuf",
+    )
+    try:
+        assert exporter.export_span(_span()) is True
+        assert captured, "no HTTP request was made"
+        assert captured["url"] == "http://localhost:4318/v1/traces"
+        assert captured["content_type"] == "application/x-protobuf"
+        assert isinstance(captured["body"], bytes)
+        assert len(captured["body"]) > 0
+        assert exporter.spans_sent == 1
+        assert exporter.failed_flushes == 0
+    finally:
+        exporter.shutdown()
+
+
+def test_exporter_defaults_to_json_encoding():
+    exporter = OtlpSpanExporter(
+        batch_size=1,
+        http_client=httpx.Client(
+            transport=httpx.MockTransport(lambda r: httpx.Response(200, json={}))
+        ),
+    )
+    try:
+        assert exporter._encoding == "json"
+        assert exporter._headers["Content-Type"] == "application/json"
     finally:
         exporter.shutdown()
 

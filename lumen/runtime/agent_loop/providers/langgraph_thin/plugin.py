@@ -53,6 +53,7 @@ from lumen.runtime.contract import AgentLoopService, LLMService, ToolService
 from lumen.runtime.stream.events import StreamEvent, StreamEventType
 from lumen.runtime.stream.trace import build_trace_metadata, new_call_id
 from lumen.shared._util.llm import get_llm_config
+from lumen.shared._util.runtime_paths import get_path_service
 
 logger = logging.getLogger(__name__)
 
@@ -419,6 +420,14 @@ class _LangGraphThinAgentLoopAdapter(AgentLoopService):
     The adapter never imports ``lumen.modes`` / ``learning`` / ``teaching_core``.
     """
 
+    #: Advertises the durable execution-identity seam (``execution_generation`` /
+    #: ``execution_operation`` / ``resume_input`` + durable checkpointer and the
+    #: ``exec_*`` termination report-back).  ``mode.learn`` uses this duck-typed
+    #: marker (never an import) to engage its Teaching Session lifecycle only
+    #: when the runtime actually owns durable resume — so the Legacy/other
+    #: providers keep their exact previous behaviour.
+    supports_durable_execution = True
+
     def __init__(
         self,
         llm_service: LLMService,
@@ -426,6 +435,32 @@ class _LangGraphThinAgentLoopAdapter(AgentLoopService):
     ) -> None:
         self._llm_service = llm_service
         self._tool_service = tool_service
+        # C1: durable checkpointer is created lazily on first run and cached, so
+        # booting the kernel never opens a SQLite connection or writes to disk.
+        # It can be overridden per-run through ``config["checkpointer"]``.
+        self._checkpointer: Any = None
+
+    def _checkpointer_for(self, config: dict[str, Any]):
+        """Return a durable LangGraph checkpointer for this execution.
+
+        ``config["checkpointer"]`` wins when provided.  Otherwise a lazily
+        created :class:`LumenSqliteCheckpointer` (durable across process
+        restarts) is used, rooted under the runtime workspace.  Returning
+        ``None`` degrades gracefully to a non-durable (in-memory) run.
+        """
+        explicit = config.get("checkpointer")
+        if explicit is not None:
+            return explicit
+        if self._checkpointer is None:
+            db = config.get("checkpoint_db_path")
+            if db is None:
+                root = get_path_service().get_workspace_dir()
+                (root / "runtime").mkdir(parents=True, exist_ok=True)
+                db = root / "runtime" / "agent_loop_langgraph_thin.db"
+            from lumen.evolution.providers.sqlite_checkpoint import LumenSqliteCheckpointer
+
+            self._checkpointer = LumenSqliteCheckpointer(str(db))
+        return self._checkpointer
 
     # ---- mode.learn wiring (injected via config, never imported) ----------
 
@@ -512,7 +547,22 @@ class _LangGraphThinAgentLoopAdapter(AgentLoopService):
         step_budget = int(
             config.get("step_budget") or config.get("max_rounds") or DEFAULT_STEP_BUDGET
         )
-        gen = turn_id or f"turn-{new_call_id('p1')}"
+        # C2: execution identity / lifecycle.  ``execution_generation`` is the
+        # durable LangGraph thread (survives crash/resume); it is DISTINCT from
+        # the per-turn ``turn_id`` and from any teaching-domain lineage key.
+        # Default (no execution_generation) keeps the previous turn-id identity.
+        operation = str(
+            config.get("execution_operation")
+            or ("resume" if config.get("resume") else "start")
+        ).strip().lower() or "start"
+        gen = str(config.get("execution_generation") or turn_id or f"turn-{new_call_id('p1')}")
+        provider_config: dict[str, Any] = {"step_budget": step_budget}
+        if operation in ("start", "resume", "retry"):
+            provider_config["execution_operation"] = operation
+        if operation == "resume":
+            provider_config["resume"] = True
+            if config.get("resume_input") is not None:
+                provider_config["resume_input"] = config.get("resume_input")
         request = ProviderRequest(
             input=TurnInput(
                 user_message=user_message,
@@ -525,11 +575,15 @@ class _LangGraphThinAgentLoopAdapter(AgentLoopService):
             model=model,
             tools=tools,
             teaching=teaching,
-            config={"step_budget": step_budget},
+            config=provider_config,
         )
 
-        # ── 3. Run the unmodified P1 provider ──────────────────────────────
-        provider = LangGraphThinProvider(max_steps=step_budget, emit_trace=True)
+        # ── 3. Run the unmodified P1 provider with a durable checkpointer ──
+        provider = LangGraphThinProvider(
+            max_steps=step_budget,
+            emit_trace=True,
+            checkpointer=self._checkpointer_for(config),
+        )
         completed = False
         final_text = ""
         try:
@@ -576,9 +630,17 @@ class _LangGraphThinAgentLoopAdapter(AgentLoopService):
                     stage=stage,
                     metadata={"trace_kind": "warning", "termination": reason_name},
                 )
-            elif getattr(termination, "error", None) is not None:
+            elif getattr(result, "error", None) is not None:
+                # C1/F2: a generic error termination carries the failure in the
+                # ProviderResult's ``error`` (TurnError) — NOT on ``Termination``
+                # (which has no ``error`` field). Emit a terminal ERROR event so
+                # the turn's persisted ``error`` is populated and the turn-span
+                # status / ``turn.failed`` counter stay aligned with the durable
+                # state. Without this the stream only carried a ``result`` with
+                # ``termination: error`` and the persisted error was empty.
+                error_message = getattr(result.error, "message", "") or detail or reason_name
                 await stream.error(
-                    detail or reason_name,
+                    str(error_message),
                     source="agent_loop.langgraph_thin",
                     stage=stage,
                     metadata={"turn_terminal": True, "status": "failed"},
@@ -598,6 +660,22 @@ class _LangGraphThinAgentLoopAdapter(AgentLoopService):
         if mastery_mode:
             result_payload["mastery_mode"] = True
             result_payload["mastery_path_id"] = str(metadata.get("mastery_path_id", ""))
+
+        # ── 6. Execution identity / termination report-back ────────────────
+        # Generic, mode-agnostic keys the caller (mode.learn) reads to drive
+        # its Teaching Session ↔ execution lifecycle.  No learner domain state
+        # is written here — only the execution identity + how it ended.
+        #
+        # ``request.state.snapshot`` is MUTATED by the provider: for ``retry``
+        # it forges a brand-new isolated identity (the supplied one is dropped),
+        # and for ``start``/``resume`` it keeps the caller's.  We always report
+        # the ACTUAL resolved generation so the caller records the real thread.
+        actual_gen = str(request.state.snapshot.get("execution_generation") or gen)
+        metadata["execution_operation"] = operation
+        metadata["execution_generation"] = actual_gen
+        metadata["exec_termination"] = reason_name
+        metadata["exec_completed"] = completed
+        result_payload["execution_generation"] = actual_gen
 
         await stream.result(result_payload, source="agent_loop.langgraph_thin")
         await stream.emit(

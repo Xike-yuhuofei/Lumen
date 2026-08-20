@@ -298,6 +298,19 @@ class LearnerDomainRepository:
         ).fetchone()
         return row["decision_hash"] if row else None
 
+    def get_policy_decision(self, decision_id: str) -> sqlite3.Row | None:
+        """Read an immutable, committed decision verbatim (Decision Replay).
+
+        Never re-runs the policy: this is a pure read of the authoritative
+        ``policy_decisions`` ledger so a historical decision can be reused /
+        audited without touching the learner authority.
+        """
+        return self._conn.execute(
+            "SELECT decision_json, decision_hash, policy_version, "
+            "input_learner_version FROM policy_decisions WHERE decision_id = ?",
+            (decision_id,),
+        ).fetchone()
+
     def insert_policy_decision_event(self, cols: dict) -> None:
         self._conn.execute(
             """

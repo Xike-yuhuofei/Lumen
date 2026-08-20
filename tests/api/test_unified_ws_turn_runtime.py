@@ -9,6 +9,24 @@ from lumen.runtime.session.turn_runtime import TurnRuntimeManager
 from lumen.runtime.stream.events import StreamEvent, StreamEventType
 
 
+@pytest.fixture(autouse=True)
+def _pin_legacy_agent_loop(monkeypatch):
+    """Pin the Legacy agent loop for on-demand kernel boots.
+
+    These turn-runtime tests drive the stubbed ``AgenticChatPipeline``
+    directly, so their on-demand production boot must resolve the Legacy
+    provider (``runtime.agent_loop``) rather than the new P1 default, which
+    would hit a live LLM.  Detach any cached broadcast so the env takes
+    effect for each test's lazy boot.
+    """
+    from lumen.bootstrap import detach_bootstrap
+
+    detach_bootstrap()
+    monkeypatch.setenv("LUMEN_AGENT_LOOP_PROVIDER", "legacy")
+    yield
+    detach_bootstrap()
+
+
 async def _noop_async(*_args, **_kwargs):
     return None
 
