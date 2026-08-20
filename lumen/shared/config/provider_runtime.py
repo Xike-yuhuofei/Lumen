@@ -439,9 +439,13 @@ def _collect_provider_pool(catalog: dict[str, Any]) -> dict[str, NormalizedProvi
             providers[spec.name] = NormalizedProviderConfig(
                 name=spec.name,
                 api_key=get_provider_api_key(spec.name, service_type="llm"),
-                api_base=None, api_version=None, extra_headers=None,
+                api_base=None,
+                api_version=None,
+                extra_headers=None,
             )
     return providers
+
+
 def _choose_resolved_provider(
     *,
     hint: str | None,
@@ -511,7 +515,7 @@ def resolve_llm_runtime_config(
     binding_hint_raw = _as_str((profile or {}).get("binding"))
     binding_hint = canonical_provider_name(binding_hint_raw)
 
-    active_api_key = get_provider_api_key(binding_hint, service_type='llm')
+    active_api_key = get_provider_api_key(binding_hint, service_type="llm")
     active_api_base = _as_str((profile or {}).get("base_url"))
     active_api_version = _as_str((profile or {}).get("api_version"))
     reasoning_effort = _as_str((model or {}).get("reasoning_effort")) or None
@@ -530,7 +534,7 @@ def resolve_llm_runtime_config(
     )
 
     mapped = provider_pool.get(spec.name)
-    api_key = get_provider_api_key(spec.name, service_type='llm')
+    api_key = get_provider_api_key(spec.name, service_type="llm")
     api_base = active_api_base or ((mapped.api_base or "") if mapped else "")
     api_version = active_api_version or ((mapped.api_version or "") if mapped else "")
     if not api_base and spec.default_api_base:
@@ -592,9 +596,13 @@ def _collect_embedding_provider_pool(
             providers[provider_name] = NormalizedProviderConfig(
                 name=provider_name,
                 api_key=get_provider_api_key(provider_name, service_type="embedding"),
-                api_base=None, api_version=None, extra_headers=None,
+                api_base=None,
+                api_version=None,
+                extra_headers=None,
             )
     return providers
+
+
 def _resolve_embedding_dimension(value: Any, default: int = 0) -> int:
     """Parse the dimension value. Returns 0 when unknown/unparseable.
 
@@ -696,7 +704,7 @@ def resolve_embedding_runtime_config(
     binding_hint_raw = _as_str((profile or {}).get("binding"))
     binding_hint = _canonical_embedding_provider_name(binding_hint_raw)
 
-    active_api_key = get_provider_api_key(binding_hint, service_type='embedding')
+    active_api_key = get_provider_api_key(binding_hint, service_type="embedding")
     active_api_base = _as_str((profile or {}).get("base_url"))
     active_api_version = _as_str((profile or {}).get("api_version"))
     active_extra_headers = _to_headers((profile or {}).get("extra_headers"))
@@ -718,7 +726,7 @@ def resolve_embedding_runtime_config(
     spec = EMBEDDING_PROVIDERS[provider_name]
     mapped = provider_pool.get(provider_name)
 
-    api_key = get_provider_api_key(provider_name, service_type='embedding')
+    api_key = get_provider_api_key(provider_name, service_type="embedding")
     api_base = active_api_base or ((mapped.api_base or "") if mapped else "")
     if not api_base:
         if provider_name == "gemini":
@@ -829,7 +837,9 @@ def search_provider_credentials(
     active = catalog_service.get_active_profile(loaded, "search") or {}
     for profile in (active, *_search_profiles(loaded)):
         if _as_str(profile.get("provider")).lower() == name:
-            return get_provider_api_key(name, service_type="search"), _as_str(profile.get("base_url"))
+            return get_provider_api_key(name, service_type="search"), _as_str(
+                profile.get("base_url")
+            )
     return "", ""
 
 
@@ -869,7 +879,9 @@ def search_fallback_candidates(
         if spec is None or provider in {"none", name} or provider in candidates:
             continue
         if search_missing_credential(
-            provider, get_provider_api_key(provider, service_type="search"), _as_str(profile.get("base_url"))
+            provider,
+            get_provider_api_key(provider, service_type="search"),
+            _as_str(profile.get("base_url")),
         ):
             continue
         candidates.append(provider)

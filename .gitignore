@@ -315,3 +315,6 @@ celerybeat.pid
 *.wav
 *.ogg
 !demo/*.mp4
+
+# TraeCode local agent scaffolding
+.trae/

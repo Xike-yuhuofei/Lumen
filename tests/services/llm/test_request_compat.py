@@ -62,6 +62,7 @@ def test_is_transient_provider_error_matches_flat_body() -> None:
 
 def test_is_transient_provider_error_ignores_client_errors() -> None:
     """Non-transient 4xx / unrelated errors must never be retried as transient."""
+
     class _SDK400(Exception):
         status_code = 400
         body = "{'error': {'code': 'bad request', 'message': 'bad'}}"

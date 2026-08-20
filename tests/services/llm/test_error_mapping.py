@@ -45,7 +45,10 @@ def test_map_error_falls_back_to_api_error() -> None:
 def test_map_error_token_expired_clean_message() -> None:
     """An expired upstream token must yield an actionable message, not raw JSON."""
     mapped = map_error(
-        DummyError('OpenAI API error: {"error":{"code":"token_expired","message":"token has expired"}}', status_code=401),
+        DummyError(
+            'OpenAI API error: {"error":{"code":"token_expired","message":"token has expired"}}',
+            status_code=401,
+        ),
         provider="gitee",
     )
     assert isinstance(mapped, LLMAuthenticationError)

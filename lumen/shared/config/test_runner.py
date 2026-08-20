@@ -122,7 +122,9 @@ class ConfigTestRunner:
                         "base_url": profile.get("base_url", ""),
                         "binding": binding,
                         # Keys are env-sourced; redacted for the test trace.
-                        "api_key": _redact(get_provider_api_key(binding, service_type=service_type)),
+                        "api_key": _redact(
+                            get_provider_api_key(binding, service_type=service_type)
+                        ),
                         "api_version": profile.get("api_version", ""),
                     },
                     model=model,

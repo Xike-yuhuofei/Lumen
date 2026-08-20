@@ -516,9 +516,7 @@ class TestRegenerateTurnAtIndex:
             asyncio.run(runtime.regenerate_turn_at_index(sid, 99))
         assert str(exc.value) == "nothing_to_regenerate"
 
-    def test_negative_index_raises_nothing_to_regenerate(
-        self, store: SQLiteSessionStore
-    ) -> None:
+    def test_negative_index_raises_nothing_to_regenerate(self, store: SQLiteSessionStore) -> None:
         sid, _ = _seed_turns(store)
         runtime = TurnRuntimeManager(store=store)
         with pytest.raises(RuntimeError) as exc:

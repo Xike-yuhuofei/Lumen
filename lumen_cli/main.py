@@ -122,8 +122,7 @@ def serve(
         import uvicorn
     except ImportError:
         console.print(
-            "[bold red]Error:[/] API server dependencies not installed.\n"
-            "Run: pip install -U lumen"
+            "[bold red]Error:[/] API server dependencies not installed.\nRun: pip install -U lumen"
         )
         raise typer.Exit(code=1)
 
