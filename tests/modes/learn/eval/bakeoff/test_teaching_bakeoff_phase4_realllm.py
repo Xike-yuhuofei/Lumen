@@ -17,8 +17,6 @@ Candidate B.
 
 from __future__ import annotations
 
-import os
-
 import pytest
 
 from .phase4_realllm import RealContentAgent, _Budget
@@ -52,16 +50,17 @@ async def test_real_content_agent_budget_is_never_exceeded():
 def test_real_llm_gate_skips_without_credential():
     """The real-LLM gate is skip-gated on credential presence, so CI without a
     live key never performs (or requires) a network model call."""
-    has_key = bool(os.environ.get("CODEXMANAGER_API_KEY", "").strip())
-    # The trial runner refuses to claim real-LLM evidence when no key is set.
+    # The trial runner refuses to claim real-LLM evidence when the verdict is
+    # data-driven off zero real calls (independent of any env credential).
     from .phase4_realllm import decide_realllm
 
     verdict, reason = decide_realllm(
         {"outcome_equal": True, "real_calls_made": 0, "call_budget": 12,
          "approx_tokens_requested": 0, "material": "zhongcao", "learner": "weak"}
     )
+    # ``decide_realllm`` is data-driven off ``real_calls_made`` (0 here), so it
+    # must always refuse to claim real-LLM evidence regardless of whether a key
+    # happens to be set in the environment.  Credential presence only governs
+    # whether a live network call is attempted at runtime, not this verdict.
     assert verdict == "CONTINUE EXPERIMENT"
-    if not has_key:
-        assert "could not make any real call" in reason
-    else:
-        assert "could not make any real call" not in reason
+    assert "could not make any real call" in reason

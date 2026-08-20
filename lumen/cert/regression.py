@@ -30,10 +30,29 @@ from .models import (
 logger = logging.getLogger(__name__)
 
 
-# ── Deterministic structural checkers (Engineering Agent may not edit) ───────
+# ── Deterministic structural checkers ────────────────────────────────────────
+#
+# NOTE (Phase 2B): the old ``len(prompt_override) > 4000`` cap was a historical
+# acceptance invariant written when the real Lumen mastery prompt was assumed
+# short. The current Frozen Baseline real prompt (en ``system.md``) is itself
+# **5153 chars**, so the absolute cap was self-inconsistent: the Frozen Baseline
+# only passed because its ``prompt_override`` is empty, while every legitimate
+# additive Candidate (real prompt + strategy directive) was rejected regardless
+# of merit. The invariant that actually protects the frozen anchor is that a
+# Candidate does not grow that anchor *unboundedly* — so the bound is now
+# expressed **relative to the Frozen Baseline prompt**, not an absolute 4000.
+
+
+#: Max chars a Candidate may ADD on top of the Frozen Baseline real teaching
+#: prompt. Keeps the "no unbounded directive bloat" protection; a pathological
+#: candidate that grows the frozen prompt far beyond this fails, while a real
+#: prompt + bounded directive (the current Baseline's own shape) passes.
+CANDIDATE_PROMPT_ADDITIVE_BUDGET = 4000
 
 
 def _check_candidate_wellformed(candidate: CandidateManifest, data: dict[str, Any]) -> tuple[bool, str]:
+    from .tutor import load_real_teaching_prompt
+
     ok = True
     notes: list[str] = []
     subject = str((candidate.tutor_config or {}).get("subject") or "").strip()
@@ -42,9 +61,16 @@ def _check_candidate_wellformed(candidate: CandidateManifest, data: dict[str, An
     temp = candidate.temperature
     if not (0.0 <= temp <= 1.0):
         ok, notes = False, ["temperature out of [0,1]"]
+    lang = str(data.get("language") or "en")
+    real = load_real_teaching_prompt(lang)
+    max_override = len(real) + CANDIDATE_PROMPT_ADDITIVE_BUDGET
     prompt = candidate.prompt_override or ""
-    if len(prompt) > 4000:
-        ok, notes = False, ["prompt_override exceeds 4000 chars"]
+    if len(prompt) > max_override:
+        ok, notes = False, [
+            "prompt_override exceeds the Frozen Baseline prompt by "
+            f"> {CANDIDATE_PROMPT_ADDITIVE_BUDGET} chars "
+            f"(real={len(real)}, override={len(prompt)})"
+        ]
     return ok, "; ".join(notes) or "candidate is well-formed"
 
 

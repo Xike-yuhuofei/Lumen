@@ -107,12 +107,26 @@ class LumenTutor:
 
     # -- prompt assembly ------------------------------------------------------
 
-    def _system_prompt(self) -> str:
-        base = (
-            self._candidate.prompt_override
-            if (self._candidate.prompt_override or "").strip()
-            else load_real_teaching_prompt(self._language)
-        )
+    def _system_prompt(self, *, strategy_directive: str | None = None) -> str:
+        """Compose the system prompt.
+
+        ``strategy_directive`` is a per-turn override. When it is *not* ``None``
+        (i.e. an adaptive caller supplied it for this turn), the base is always
+        the **real Lumen teaching prompt** plus that directive, so the candidate's
+        ``prompt_override`` is deliberately bypassed for a precisely-selected turn.
+        When it *is* ``None`` (fixed-strategy behaviour), the existing rule holds:
+        use ``prompt_override`` when set, otherwise the real prompt.
+        """
+        if strategy_directive is not None:
+            base = load_real_teaching_prompt(self._language)
+            directive = (strategy_directive or "").strip()
+            base = (base + "\n\n" + directive) if directive else base
+        else:
+            base = (
+                self._candidate.prompt_override
+                if (self._candidate.prompt_override or "").strip()
+                else load_real_teaching_prompt(self._language)
+            )
         scenario_lines = [
             f"Teaching scenario: {self._scenario['subject']}.",
         ]
@@ -134,11 +148,12 @@ class LumenTutor:
         prior_conversation: list[dict[str, Any]],
         learner_utterance: str,
         turn_index: int,
+        strategy_directive: str | None = None,
     ) -> list[dict[str, Any]]:
         policy_hint = ""
         if self._scenario["path_id"]:
             policy_hint = load_teaching_policy_hint(self._scenario["path_id"])
-        messages: list[dict[str, Any]] = [{"role": "system", "content": self._system_prompt()}]
+        messages: list[dict[str, Any]] = [{"role": "system", "content": self._system_prompt(strategy_directive=strategy_directive)}]
         if policy_hint:
             messages.append({"role": "system", "content": policy_hint})
         for msg in prior_conversation[-MAX_CONVERSATION_TURNS:]:
@@ -157,16 +172,19 @@ class LumenTutor:
         turn_index: int,
         prior_conversation: list[dict[str, Any]],
         learner_utterance: str,
+        strategy_directive: str | None = None,
     ) -> str:
         """Produce one Lumen Teaching Action for the given learner utterance.
 
         Returns the tutor's utterance text (feedback / explanation / scaffold /
-        question / next teaching action).
+        question / next teaching action). ``strategy_directive`` optionally
+        overrides the candidate's prompt for this single turn (adaptive selection).
         """
         messages = self._build_messages(
             prior_conversation=prior_conversation,
             learner_utterance=learner_utterance,
             turn_index=turn_index,
+            strategy_directive=strategy_directive,
         )
         system_prompt = messages[0]["content"]
         user_prompt = "\n\n".join(

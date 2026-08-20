@@ -157,6 +157,64 @@ def test_no_path_terminates_immediately(tmp_path):
     assert out.node == TeachingNode.TERMINATE
 
 
+def test_empty_modules_delegates_plan_build_and_continues(tmp_path):
+    """A goal created without modules gets one delegated plan-build pass; when it
+    produces modules the graph falls through into the normal teaching loop
+    instead of terminating with no content (fix for empty-assistant replies)."""
+    store = LearningStore(tmp_path)
+    # Create an empty goal (mirrors POST /goals) — no modules at SNAPSHOT time.
+    store.save(LearningProgress(book_id="empty-goal"))
+
+    class _BuildAgent(_FakeAgentLoop):
+        async def run(self, *, context, stream, language="en", **config):
+            self.runs += 1
+            self.calls.append(config)
+            # The tutor designed the path via mastery_build -> write modules.
+            progress, _kp = _make_progress("empty-goal", kp_desc="built during pass")
+            store.save(progress)
+            context.metadata["exec_completed"] = True
+            context.metadata["exec_termination"] = "completed"
+
+    agent = _BuildAgent()
+    stream = _FakeStream()
+    graph = _graph(tmp_path, store)
+    out = _run_graph(graph, path_id="empty-goal", stream=stream, agent=agent)
+
+    # The plan-build pass ran without disabling mastery tools, and the graph
+    # then proceeded into a real decision instead of terminating at SNAPSHOT.
+    # (run 1 = plan-build pass; a subsequent content pass may follow once the
+    # built modules drive an EXPLAIN action.)
+    assert agent.calls[0]["graph_directive"]["action"] == "build_plan"
+    assert agent.calls[0].get("disable_mastery_flow", False) is False
+    assert out.node != TeachingNode.TERMINATE
+    assert out.decision.policy_version == "teaching-engine:v1"
+
+
+def test_empty_modules_build_failure_still_terminates_with_feedback(tmp_path):
+    """When the delegated plan-build pass does not produce modules, the graph
+    terminates with a readable reason rather than silently producing no reply."""
+    store = LearningStore(tmp_path)
+    store.save(LearningProgress(book_id="empty-goal-2"))
+
+    class _NoopAgent(_FakeAgentLoop):
+        async def run(self, *, context, stream, language="en", **config):
+            self.runs += 1
+            self.calls.append(config)
+            context.metadata["exec_completed"] = True
+            context.metadata["exec_termination"] = "completed"
+
+    agent = _NoopAgent()
+    out = _run_graph(
+        graph=_graph(tmp_path, store),
+        path_id="empty-goal-2",
+        stream=_FakeStream(),
+        agent=agent,
+    )
+    assert out.is_terminal is True
+    assert out.node == TeachingNode.TERMINATE
+    assert out.feedback  # surfaced to the chat by the plugin
+
+
 def test_content_action_delegates_to_agent_loop_not_reimplemented(tmp_path):
     store = LearningStore(tmp_path)
     progress, _kp = _make_progress("p1", kp_desc="photosynthesis converts light to chemical energy")

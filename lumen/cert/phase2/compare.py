@@ -25,6 +25,7 @@ the Teaching plane.
 from __future__ import annotations
 
 import logging
+import re
 from typing import Any
 import uuid
 
@@ -47,6 +48,26 @@ from ..tutor import LumenTutor
 from .scenarios import EVAL_CONFIG
 
 logger = logging.getLogger(__name__)
+
+
+_TOOL_FENCE = re.compile(r"```(tool|json)\b.*?```", re.DOTALL)
+
+
+def strip_tool_io(text: str) -> str:
+    """Remove Lumen tool-IO fenced blocks (`````tool`` / ````json```) from a
+    tutor action before evaluation.
+
+    The real Lumen mastery prompt instructs the tutor to drive its tools
+    (teaching_plan / rag / mastery_build / ...), which the certification tutor
+    renders inline as protocol JSON. These blocks are **not** learner-facing
+    teaching behaviour, but they dominate the raw action text and would swamp any
+    strategy signal (every arm, including the Frozen Baseline, emits them). This
+    is a measurement-fidelity preprocessing applied **identically** to every
+    strategy — it does not touch the Rubric / Evaluators / Simulator and cannot
+    manufacture an advantage for any arm. The raw action is still persisted in the
+    trace; only the input handed to the read-only Evaluators is cleaned.
+    """
+    return _TOOL_FENCE.sub("", text).strip()
 
 
 def _final_status(results: list[Any]) -> FinalTurnStatus:
@@ -102,9 +123,18 @@ async def run_episode(
     max_turns: int = 10,
     language: str = "en",
     episode_id: str | None = None,
+    clean_tool_io: bool = False,
+    tutor: Any | None = None,
 ) -> dict[str, Any]:
     """Run a single strategy candidate across an N-turn Episode and return a
-    structured, persisted comparison report."""
+    structured, persisted comparison report.
+
+    ``tutor`` optionally provides a pre-built tutor to use instead of the
+    standard fixed-strategy ``LumenTutor`` (e.g. an adaptive tutor that selects a
+    strategy per turn). When provided it must expose ``run_turn(turn_index,
+    prior_conversation, learner_utterance)``; any per-turn strategy decisions it
+    recorded are surfaced in the report under ``strategy_decisions``.
+    """
     context_scenario = {"subject": scenario["tutor_config"]["subject"]}
     contexts = build_contexts(scenario=context_scenario, evaluation_config=EVAL_CONFIG)
     store.put_candidate(candidate)
@@ -120,8 +150,10 @@ async def run_episode(
         )
     )
 
+    if tutor is None:
+        tutor = LumenTutor(gateway, candidate=candidate, language=language)
     plane = TeachingPlane(
-        tutor=LumenTutor(gateway, candidate=candidate, language=language),
+        tutor=tutor,
         simulator=LearnerSimulator(gateway, candidate=candidate),
     )
     eval_plane = EvaluationPlane(build_evaluator_suite(gateway))
@@ -156,7 +188,7 @@ async def run_episode(
             episode_id=rid,
             turn_index=turn,
             learner_utterance=learner,
-            tutor_action=tutor_action,
+            tutor_action=(strip_tool_io(tutor_action) if clean_tool_io else tutor_action),
             prior=public_history,
         )
         for r in results:
@@ -193,6 +225,7 @@ async def run_episode(
     agg = _aggregate(per_turn)
     store.finish_episode(rid, EpisodeEnd(agg["episode_status"]), max_turns)
 
+    adaptive_decisions = list(getattr(tutor, "strategy_decisions", None) or [])
     return {
         "scenario_id": scenario["id"],
         "strategy_id": candidate_prompt_tag(candidate),
@@ -205,6 +238,7 @@ async def run_episode(
         "language": language,
         **agg,
         "per_turn": per_turn,
+        "strategy_decisions": adaptive_decisions,
     }
 
 
@@ -219,4 +253,4 @@ def candidate_prompt_tag(candidate: CandidateManifest) -> str:
     return rest[2] if len(rest) >= 3 else candidate.effective_candidate_id
 
 
-__all__ = ["run_episode", "_final_status", "_aggregate"]
+__all__ = ["run_episode", "_final_status", "_aggregate", "strip_tool_io"]
