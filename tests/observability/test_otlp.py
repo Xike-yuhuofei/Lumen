@@ -95,6 +95,26 @@ def test_llm_span_gets_openinference_attrs():
     assert attrs["llm.token_count.completion"] == {"intValue": 5}
 
 
+def test_llm_kind_alias_maps_to_llm_and_client():
+    """LLM spans opened with ``kind="llm"`` (engine-client seam + provider
+    core) must render as OpenInference ``LLM`` nodes with ``CLIENT`` OTEL
+    kind, matching the ``llm_call`` spelling (C2/F1 kind alignment)."""
+    out = convert_span(
+        _span(
+            name="llm_call",
+            kind="llm",
+            attrs={"model": "gpt-4", "prompt_tokens": 10, "completion_tokens": 5},
+        ),
+        end_ns=1_000_000_000,
+    )
+    assert out["kind"] == 3  # CLIENT (LLM calls are outbound)
+    attrs = _attr_map(out)
+    assert attrs["openinference.span.kind"] == {"stringValue": "LLM"}
+    assert attrs["llm.model_name"] == {"stringValue": "gpt-4"}
+    assert attrs["llm.token_count.prompt"] == {"intValue": 10}
+    assert attrs["llm.token_count.completion"] == {"intValue": 5}
+
+
 def test_tool_and_retrieval_and_agent_kinds():
     tool = _attr_map(
         convert_span(

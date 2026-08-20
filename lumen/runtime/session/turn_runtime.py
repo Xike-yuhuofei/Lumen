@@ -2054,6 +2054,13 @@ class TurnRuntimeManager:
                 pending_done_event,
             )
             await self.store.update_turn_status(turn_id, turn_status, turn_error)
+            # Telemetry alignment (C1/F2): the agent loop may resolve a
+            # failure internally (emitting a terminal ERROR+DONE without
+            # raising into ``_run_turn``), so drive the turn-span status and
+            # the ``turn.{outcome}`` counter from the SAME status that was
+            # persisted. Otherwise turn-level SLI would over-count
+            # ``completed`` and never count ``failed`` for those turns.
+            turn_outcome = turn_status
             if pending_done_event is None:
                 pending_done_event = StreamEvent(
                     type=StreamEventType.DONE,
