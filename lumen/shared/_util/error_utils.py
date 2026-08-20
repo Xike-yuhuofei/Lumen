@@ -2,7 +2,7 @@
 Error Utilities - Error formatting and handling utilities.
 
 Shared util owned by ``lumen/shared/_util`` (migrated from
-``deeptutor/utils/error_utils``).
+``lumen/utils/error_utils``).
 """
 
 import json

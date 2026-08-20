@@ -66,7 +66,7 @@ class MarkItDownParser:
             return ReadinessReport(
                 ready=False,
                 reason="not_configured",
-                message="markitdown isn't installed (pip install deeptutor[parse-markitdown]).",
+                message="markitdown isn't installed (pip install lumen[parse-markitdown]).",
             )
         return ReadinessReport(ready=True)
 

@@ -1343,6 +1343,51 @@ html, body {
   white-space: pre-wrap;
 }
 
+/* Assistant pending / processing indicator (shown while a turn is waiting
+   for its first visible reply blocks; covers chat / learn / tool turns). */
+.agent-processing {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+  color: var(--text-text-secondary);
+  font-size: var(--font-size-sm, 13px);
+}
+.agent-processing__dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.agent-processing__dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-text-tertiary);
+  animation: agent-processing-bounce-A6zKXz 1.2s ease-in-out infinite;
+}
+.agent-processing__dots i:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.agent-processing__dots i:nth-child(3) {
+  animation-delay: 0.4s;
+}
+@keyframes agent-processing-bounce-A6zKXz {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .agent-processing__dots i {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
 /* Assistant action bar */
 .latest-assistant-bar {
   align-items: center;
@@ -3617,6 +3662,75 @@ body.dragging-resize * {
   white-space: nowrap;
 }
 .footerDownloadChip { margin-left: 8px; }
+.accountMenuItemWrapper-Wm6vmI {
+  position: relative;
+}
+.accountSubmenuPanel-I8ScWr {
+  left: 100%;
+  opacity: 0;
+  padding-left: 8px;
+  position: absolute;
+  top: -6px;
+  transition: visibility 0s 0.15s, opacity 0.15s ease;
+  visibility: hidden;
+  z-index: 100;
+}
+.accountMenuItemWrapper-Wm6vmI:hover .accountSubmenuPanel-I8ScWr,
+.accountSubmenuPanel-I8ScWr:hover {
+  opacity: 1;
+  transition-delay: 0s;
+  visibility: visible;
+}
+.accountSubmenuPanel-I8ScWr[data-submenu-align='bottom'] {
+  bottom: -6px;
+  top: auto;
+}
+.accountSubmenu-Hv7amr {
+  background: var(--bg-bg-menu, var(--bg-bg-tooltip));
+  border: 1px solid var(--border-border-neutral-l1, rgba(229, 229, 229, 0.1));
+  border-radius: 12px;
+  box-shadow: var(--shadow-elevation-200-menu-panel, 0 6px 24px -1px rgba(0, 0, 0, 0.25));
+  display: flex;
+  flex-direction: column;
+  min-width: 172px;
+  padding: 6px;
+}
+.accountOptionItem-MUTW3Q {
+  align-items: center;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: var(--text-text-default);
+  cursor: pointer;
+  display: flex;
+  font-size: 13px;
+  gap: 8px;
+  justify-content: space-between;
+  padding: 6px 8px;
+  text-align: left;
+  width: 100%;
+}
+.accountOptionItem-MUTW3Q:hover {
+  background: var(--bg-bg-overlay-l1, rgba(0, 0, 0, 0.04));
+}
+.accountOptionLabel-C5rP_Q {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.accountOptionTrailing-rK4ZF7 {
+  align-items: center;
+  color: var(--icon-icon-default);
+  display: inline-flex;
+  flex-shrink: 0;
+  height: 16px;
+  justify-content: center;
+  width: 16px;
+}
+.accountOptionTrailing-rK4ZF7 .trae-icon-check {
+  height: 16px;
+  width: 16px;
+}
 .headerTaskMenu { position: absolute; right: 0; top: 28px; z-index: 40; }
 .moreBtn-h2uOKe { cursor: pointer; position: relative; }
 .fileTreePane-trae {
@@ -3755,7 +3869,7 @@ body.dragging-resize * {
 .designCardDesc { color: var(--text-text-tertiary); font-size: 12px; padding: 4px 12px 12px; }
 .headerRight-QHfr9M { align-items: center; display: flex; justify-content: flex-end; }
 
-/* ---- DeepTutor settings (Mac TraeWork 通用 format) ---- */
+/* ---- Lumen settings (Mac TraeWork 通用 format) ---- */
 .dtSettingsMask {
   align-items: center;
   background: rgba(24, 24, 24, 0.36);

@@ -14,12 +14,15 @@ Supported client message ``type`` values:
 - ``cancel_turn`` — cancel a running turn.
 - ``submit_user_reply`` — deliver the user's reply for an ``ask_user``
   paused turn so the agentic loop can resume on the same turn.
-- ``regenerate`` — re-run the last user message in the given session as a
-  brand-new turn. Replaces the trailing assistant message (if any) and
-  reuses the session's stored capability/tools/preferences. Optional
-  ``overrides`` field accepts ``capability``, ``tools``, ``knowledge_bases``,
-  ``language``, ``config``, ``notebook_references``, ``history_references``,
-  ``mastery_path_id``.
+- ``regenerate`` — re-run a user message in the given session as a brand-new
+  turn. With ``message_id``, re-runs the turn that produced that message
+  (rolling back it and everything after it); with ``message_index`` (0-based
+  position in the session's message list), re-runs the turn at that position;
+  without either, re-runs the last user message and replaces the trailing
+  assistant message (if any). Reuses the session's stored
+  capability/tools/preferences. Optional ``overrides`` field accepts
+  ``capability``, ``tools``, ``knowledge_bases``, ``language``, ``config``,
+  ``notebook_references``, ``history_references``, ``mastery_path_id``.
   Errors: ``regenerate_busy`` (another turn is running) and
   ``nothing_to_regenerate`` (no prior user message).
 - ``check_active_turn`` — report whether the session has a live running turn;
@@ -220,7 +223,16 @@ async def unified_websocket(ws: WebSocket) -> None:
                 runtime = get_turn_runtime_manager()
                 cancelled = await runtime.cancel_turn(turn_id)
                 if not cancelled:
-                    await safe_send({"type": "error", "content": f"Turn not found: {turn_id}"})
+                    # cancel_turn returns False both for a genuinely missing
+                    # turn and for a turn that already reached a terminal
+                    # status (completed/failed/cancelled). The latter is a
+                    # benign idempotent no-op (e.g. the frontend's idle-timeout
+                    # fallback firing after DONE was lost); only surface an
+                    # error when the turn truly does not exist, otherwise the
+                    # error text would replace the user's real answer in the UI.
+                    turn = await runtime.store.get_turn(turn_id)
+                    if turn is None:
+                        await safe_send({"type": "error", "content": f"Turn not found: {turn_id}"})
                 continue
 
             if msg_type == "submit_user_reply":
@@ -268,12 +280,27 @@ async def unified_websocket(ws: WebSocket) -> None:
 
                 runtime = get_turn_runtime_manager()
                 overrides = msg.get("overrides") if isinstance(msg.get("overrides"), dict) else None
+                message_id = msg.get("message_id")
+                message_index = msg.get("message_index")
                 try:
-                    _, turn = await runtime.regenerate_last_turn(
-                        session_id,
-                        overrides=overrides,
-                    )
-                except RuntimeError as exc:
+                    if message_id is not None:
+                        _, turn = await runtime.regenerate_turn(
+                            session_id,
+                            int(message_id),
+                            overrides=overrides,
+                        )
+                    elif message_index is not None:
+                        _, turn = await runtime.regenerate_turn_at_index(
+                            session_id,
+                            int(message_index),
+                            overrides=overrides,
+                        )
+                    else:
+                        _, turn = await runtime.regenerate_last_turn(
+                            session_id,
+                            overrides=overrides,
+                        )
+                except (RuntimeError, ValueError) as exc:
                     await safe_send(
                         {
                             "type": "error",

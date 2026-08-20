@@ -1,7 +1,7 @@
 """RAG service exports.
 
 Submodule names resolve on demand so ``from lumen.shared.knowledge.rag import
-X`` (and the legacy deeptutor compatibility facade) reach the canonical
+X`` (and the legacy lumen compatibility facade) reach the canonical
 modules.
 """
 

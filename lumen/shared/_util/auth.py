@@ -2,7 +2,7 @@
 Authentication service for Lumen.
 
 Canonical home: ``lumen/shared/_util/auth`` (migrated from
-``deeptutor/services/auth``).  ``deeptutor.services.auth`` re-exports these
+``lumen/services/auth``).  ``lumen.services.auth`` re-exports these
 for existing importers and tests only.
 
 Disabled by default (auth.enabled=false) so localhost users are unaffected.

@@ -7,9 +7,9 @@ async function openHome(page: Page) {
     if (!sessionStorage.getItem('trae:settings-init')) {
       localStorage.setItem('trae:theme', 'dark')
       localStorage.removeItem('trae:language')
-      localStorage.removeItem('deeptutor:response-language')
-      localStorage.removeItem('deeptutor:chat-timeout')
-      localStorage.removeItem('deeptutor:general-settings')
+      localStorage.removeItem('lumen:response-language')
+      localStorage.removeItem('lumen:chat-timeout')
+      localStorage.removeItem('lumen:general-settings')
       sessionStorage.setItem('trae:settings-init', '1')
     }
     localStorage.setItem('trae:sidebarOpen', '1')
@@ -161,8 +161,8 @@ test.describe('通用设置', () => {
     await expect(page.getByRole('button', { name: '对话等待超时' })).toContainText('5 分钟')
     await expect(page.getByRole('switch', { name: '网页搜索' })).toHaveAttribute('aria-checked', 'false')
 
-    const storedLang = await page.evaluate(() => localStorage.getItem('deeptutor:response-language'))
-    const storedTimeout = await page.evaluate(() => localStorage.getItem('deeptutor:chat-timeout'))
+    const storedLang = await page.evaluate(() => localStorage.getItem('lumen:response-language'))
+    const storedTimeout = await page.evaluate(() => localStorage.getItem('lumen:chat-timeout'))
     expect(storedLang).toBe('en')
     expect(storedTimeout).toBe('300')
 
@@ -185,22 +185,22 @@ test.describe('通用设置', () => {
     await page.locator('.dtSettingsPathBtn').click()
     const pathInput = page.locator('.dtSettingsPathInput')
     await expect(pathInput).toBeVisible()
-    await pathInput.fill('~/Documents/DeepTutor')
+    await pathInput.fill('~/Documents/Lumen')
     await pathInput.press('Enter')
-    await expect(page.locator('.dtSettingsPathValue')).toHaveText('~/Documents/DeepTutor')
+    await expect(page.locator('.dtSettingsPathValue')).toHaveText('~/Documents/Lumen')
 
-    const stored = await page.evaluate(() => localStorage.getItem('deeptutor:general-settings'))
+    const stored = await page.evaluate(() => localStorage.getItem('lumen:general-settings'))
     expect(stored).toBeTruthy()
     const parsed = JSON.parse(stored!)
     expect(parsed.localLinkOpen).toBe('builtin')
-    expect(parsed.artifactPath).toBe('~/Documents/DeepTutor')
+    expect(parsed.artifactPath).toBe('~/Documents/Lumen')
 
     await page.reload()
     await page.waitForSelector('.app-root')
     await page.locator('.accountTrigger-y5IeNi').click()
     await page.locator('.accountMenuItem-NXEKcd').filter({ hasText: '设置' }).click()
     await expect(page.getByRole('button', { name: '本地链接的默认打开方式' })).toContainText('内置浏览器')
-    await expect(page.locator('.dtSettingsPathValue')).toHaveText('~/Documents/DeepTutor')
+    await expect(page.locator('.dtSettingsPathValue')).toHaveText('~/Documents/Lumen')
   })
 
   test('每个下拉和工具开关都完整可见', async ({ page }) => {

@@ -1,14 +1,14 @@
 """The data contract for multiple-choice mastery questions.
 
 Canonical home: ``lumen/modes/learn/assessment/choices`` (migrated from
-``deeptutor/capabilities/mastery/choices``).
+``lumen/capabilities/mastery/choices``).
 
 A choice question crosses four boundaries with different shapes for the same
 data: the model registers option *bodies* through ``mastery_quiz``, the learner
 answers a *label* (``"C"``) on an interactive ``ask_user`` card, deterministic
 grading must compare like with like, and the Question Bank persists the full
 option text. This module owns the translation between those shapes so the tool
-layer (:mod:`deeptutor.capabilities.mastery.tools`) reads as orchestration:
+layer (:mod:`lumen.capabilities.mastery.tools`) reads as orchestration:
 
 * :func:`parse_options` — option strings → a ``{label: body}`` map.
 * :func:`has_option_bodies` — did the model send real bodies, not bare labels?

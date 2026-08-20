@@ -314,7 +314,7 @@ def test_source_production_build_is_reused_until_an_input_changes(
 
 
 def test_packaged_frontend_uses_spa_server(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    packaged = tmp_path / "deeptutor_web"
+    packaged = tmp_path / "lumen_web"
     packaged.mkdir()
     (packaged / "index.html").write_text("<html></html>", encoding="utf-8")
     monkeypatch.setattr(launcher, "_packaged_web_dir", lambda: packaged)
@@ -405,5 +405,5 @@ def test_start_uses_ipv4_loopback_for_frontend_proxy(
     with pytest.raises(RuntimeError, match="captured launch environment"):
         launcher.start(tmp_path)
 
-    assert captured_env["DEEPTUTOR_API_BASE_URL"] == (f"http://127.0.0.1:{resolved_backend_port}")
-    assert captured_env["DEEPTUTOR_SPA_DIR"] == str(tmp_path / "dist")
+    assert captured_env["LUMEN_API_BASE_URL"] == (f"http://127.0.0.1:{resolved_backend_port}")
+    assert captured_env["LUMEN_SPA_DIR"] == str(tmp_path / "dist")

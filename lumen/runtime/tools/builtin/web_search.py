@@ -18,7 +18,7 @@ Configuration:
 
 Available Providers:
     Defined once in ``SEARCH_PROVIDERS``
-    (``deeptutor/services/config/provider_runtime.py``); call
+    (``lumen/services/config/provider_runtime.py``); call
     ``get_providers_info()`` for the live list with its credential requirements.
 """
 

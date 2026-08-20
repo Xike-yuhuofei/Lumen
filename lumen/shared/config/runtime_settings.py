@@ -122,7 +122,7 @@ _DEFAULT_MINERU_ENGINE: dict[str, Any] = {
     "api_token": "",
     # Optional explicit path to a local MinerU executable. Empty = auto-detect
     # from PATH. Lets users install MinerU in an isolated env (uv tool / pipx /
-    # separate conda) so its heavy deps never conflict with DeepTutor's.
+    # separate conda) so its heavy deps never conflict with Lumen's.
     "local_cli_path": "",
     # Where local-mode model weights download from. ``model_download_endpoint``
     # is a custom HuggingFace mirror (HF_ENDPOINT, e.g. https://hf-mirror.com);
@@ -148,7 +148,7 @@ _DEFAULT_DOCLING_ENGINE: dict[str, Any] = {
 }
 
 # markitdown engine slice. Pure-Python, no model downloads. Optionally uses
-# DeepTutor's VLM to describe images.
+# Lumen's VLM to describe images.
 _DEFAULT_MARKITDOWN_ENGINE: dict[str, Any] = {
     "enable_llm_image_description": False,
 }
@@ -175,7 +175,7 @@ _DEFAULT_LITEPARSE_ENGINE: dict[str, Any] = {
 }
 
 # Built-in text-only engine slice. It deliberately has no knobs: it reuses
-# DeepTutor's legacy text extractors for PDF / Office / text-like files.
+# Lumen's legacy text extractors for PDF / Office / text-like files.
 _DEFAULT_TEXT_ONLY_ENGINE: dict[str, Any] = {}
 
 # Legacy flat keys that mark a v1 ``mineru.json`` (these live only at the top
@@ -228,7 +228,7 @@ DEFAULT_LLAMAINDEX_SETTINGS: dict[str, Any] = {
     "chunk_overlap": 50,
 }
 
-IGNORE_PROCESS_OVERRIDES_ENV = "DEEPTUTOR_IGNORE_PROCESS_ENV_OVERRIDES"
+IGNORE_PROCESS_OVERRIDES_ENV = "LUMEN_IGNORE_PROCESS_ENV_OVERRIDES"
 TRUTHY = {"1", "true", "yes", "on"}
 FALSY = {"0", "false", "no", "off"}
 
@@ -452,7 +452,7 @@ class RuntimeSettingsService:
             "CORS_ORIGINS": ",".join(system["cors_origins"]),
             "DISABLE_SSL_VERIFY": _bool_env(system["disable_ssl_verify"]),
             "CHAT_ATTACHMENT_DIR": system["chat_attachment_dir"],
-            "DEEPTUTOR_SANDBOX_ALLOW_SUBPROCESS": _bool_env(system["sandbox_allow_subprocess"]),
+            "LUMEN_SANDBOX_ALLOW_SUBPROCESS": _bool_env(system["sandbox_allow_subprocess"]),
             "AUTH_ENABLED": _bool_env(auth["enabled"]),
             "AUTH_USERNAME": auth["username"],
             "AUTH_PASSWORD_HASH": auth["password_hash"],
@@ -461,9 +461,9 @@ class RuntimeSettingsService:
             "NEXT_PUBLIC_AUTH_ENABLED": _bool_env(auth["enabled"]),
             # Consumed server-side by the SPA server at request time — NOT
             # inlined into the browser bundle. The proxy rewrites /api/* and
-            # /ws/* to DEEPTUTOR_API_BASE_URL. The launcher and the Docker
+            # /ws/* to LUMEN_API_BASE_URL. The launcher and the Docker
             # entrypoint both export these through render_environment, so the
-            # two deployment paths stay in sync. DEEPTUTOR_API_BASE_URL is
+            # two deployment paths stay in sync. LUMEN_API_BASE_URL is
             # the address the frontend *server* uses to reach the backend; the
             # browser itself only ever talks to the frontend origin.
             #
@@ -472,12 +472,12 @@ class RuntimeSettingsService:
             # (IPv4 only), so every rewritten /api/* request fails to connect.
             # The launcher passes the same literal (see runtime/launcher.py), so
             # both deployment paths agree.
-            "DEEPTUTOR_API_BASE_URL": (
+            "LUMEN_API_BASE_URL": (
                 system["next_public_api_base"]
                 or system["next_public_api_base_external"]
                 or f"http://127.0.0.1:{system['backend_port']}"
             ),
-            "DEEPTUTOR_AUTH_ENABLED": _bool_env(auth["enabled"]),
+            "LUMEN_AUTH_ENABLED": _bool_env(auth["enabled"]),
         }
 
     def export_environment(self, *, overwrite: bool = True) -> dict[str, str]:
@@ -564,7 +564,7 @@ class RuntimeSettingsService:
             payload["disable_ssl_verify"] = value
         if value := self._process_env_value("CHAT_ATTACHMENT_DIR"):
             payload["chat_attachment_dir"] = value
-        if value := self._process_env_value("DEEPTUTOR_SANDBOX_ALLOW_SUBPROCESS"):
+        if value := self._process_env_value("LUMEN_SANDBOX_ALLOW_SUBPROCESS"):
             payload["sandbox_allow_subprocess"] = value
         if value := self._process_env_value("CHAT_ATTACHMENT_MAX_FILE_MB"):
             payload["chat_attachment_max_file_mb"] = value
@@ -617,10 +617,10 @@ class RuntimeSettingsService:
 
     def _apply_llamaindex_process_overrides(self, settings: dict[str, Any]) -> dict[str, Any]:
         # Only the retrieval profile had an env override historically
-        # (DEEPTUTOR_RAG_RETRIEVAL_PROFILE / RAG_RETRIEVAL_PROFILE); preserve it.
+        # (LUMEN_RAG_RETRIEVAL_PROFILE / RAG_RETRIEVAL_PROFILE); preserve it.
         payload = dict(settings)
         if value := (
-            self._process_env_value("DEEPTUTOR_RAG_RETRIEVAL_PROFILE")
+            self._process_env_value("LUMEN_RAG_RETRIEVAL_PROFILE")
             or self._process_env_value("RAG_RETRIEVAL_PROFILE")
         ):
             payload["retrieval_profile"] = value

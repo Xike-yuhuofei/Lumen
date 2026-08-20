@@ -6,7 +6,7 @@ Central registry that discovers and manages all tools (built-in and plugin).
 Provides lookup, listing, and OpenAI schema generation.
 
 Canonical home: ``lumen/runtime/tools/registry`` (migrated from
-``deeptutor/runtime/registry/tool_registry``).  The legacy path re-exports
+``lumen/runtime/registry/tool_registry``).  The legacy path re-exports
 these for existing importers and tests only.
 """
 

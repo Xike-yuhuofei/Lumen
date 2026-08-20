@@ -24,7 +24,7 @@ site that dispatches model-authored tool calls can reuse it and the rules
 stay unit-testable on their own.
 
 Canonical home: ``lumen/runtime/agent_loop/engine`` (migrated from
-``deeptutor/core/agentic/tool_arg_guard``).
+``lumen/core/agentic/tool_arg_guard``).
 """
 
 from __future__ import annotations

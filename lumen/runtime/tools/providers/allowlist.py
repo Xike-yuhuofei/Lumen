@@ -14,7 +14,7 @@ This type makes the state explicit so both operations are total: narrowing an
 unrestricted list yields the other list, widening one stays unrestricted.
 
 Canonical home: ``lumen/runtime/tools/providers`` (migrated from
-``deeptutor/runtime/providers/allowlist``).
+``lumen/runtime/providers/allowlist``).
 """
 
 from __future__ import annotations

@@ -349,6 +349,10 @@ def _slugify_goal_title(title: str) -> str:
 class CreateGoalRequest(BaseModel):
     title: str
     description: str = ""
+    # The knowledge space (KB) this goal's material lives in. When a goal is
+    # created from a Library item, the KB that holds the item's file is
+    # recorded here so Learn turns can mount it for the tutor.
+    kb_name: str = ""
 
 
 class RenameGoalRequest(BaseModel):
@@ -375,6 +379,7 @@ async def create_goal(body: CreateGoalRequest):
     progress = service.get_or_create(book_id)
     progress.goal_name = title
     progress.description = (body.description or "").strip()
+    progress.source_kb = (body.kb_name or "").strip()
     progress.updated_at = time.time()
     service.save(progress)
     return {"status": "ok", "book_id": book_id, "goal_name": title}

@@ -68,6 +68,24 @@ _GLOBAL_RULES: list[MappingRule] = [
         classifier=_message_contains("context length", "maximum context"),
         factory=lambda exc, provider: ProviderContextWindowError(str(exc), provider=provider),
     ),
+    # Gitee AI intermittent 503: the account-serving pool has no idle account for
+    # the requested model. Transient — already handled by provider-level retry;
+    # if it still fails after the retry budget, surface an actionable message
+    # with the correct HTTP status instead of a raw upstream body.
+    MappingRule(
+        classifier=_message_contains(
+            "no_available_account",
+            "no available account",
+        ),
+        factory=lambda exc, provider: LLMAPIError(
+            (
+                "模型服务暂不可用：供应商（账号服务池）暂时没有可用账号"
+                f"〔{provider or 'unknown'}〕，通常是瞬时波动，请稍后重试。"
+            ),
+            status_code=503,
+            provider=provider,
+        ),
+    ),
 ]
 
 

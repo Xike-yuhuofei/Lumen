@@ -4,7 +4,7 @@ Since Phase 5 the Lumen application is assembled through the Plugin Kernel:
 
     load profile → Plugin Bootstrap → Runtime + Shared + mode.learn
 
-The legacy deeptutor startup paths are retained only as a compatibility /
+The legacy lumen startup paths are retained only as a compatibility /
 rollback path (deprecated), never as a second formal lifecycle.
 """
 

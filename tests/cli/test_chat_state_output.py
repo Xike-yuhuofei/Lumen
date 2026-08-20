@@ -8,7 +8,7 @@ import pytest
 from rich.console import Console
 from rich.text import Text
 
-from deeptutor_cli import chat
+from lumen_cli import chat
 
 
 def _render(monkeypatch: pytest.MonkeyPatch, render, state: chat.ChatState) -> str:  # noqa: ANN001

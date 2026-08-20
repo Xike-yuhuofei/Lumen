@@ -1,7 +1,7 @@
 """Parsing helpers shared by agents that consume structured model output.
 
 Canonical home: ``lumen/shared/_util/json_output`` (migrated from
-``deeptutor/agents/_shared/json_output``).
+``lumen/agents/_shared/json_output``).
 """
 
 from __future__ import annotations

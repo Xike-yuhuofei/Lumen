@@ -1,4 +1,4 @@
-"""CLI smoke tests for the standalone ``deeptutor-cli`` package."""
+"""CLI smoke tests for the standalone ``lumen-cli`` package."""
 
 from __future__ import annotations
 
@@ -8,8 +8,8 @@ from typing import Any
 import pytest
 from typer.testing import CliRunner
 
-from deeptutor_cli.main import app
-from lumen.app.facade import DeepTutorApp, TurnRequest
+from lumen.app.facade import LumenApp, TurnRequest
+from lumen_cli.main import app
 
 runner = CliRunner()
 
@@ -28,8 +28,8 @@ def _install_fake_runtime(monkeypatch, captured_requests: list[TurnRequest]) -> 
         yield {"type": "result", "metadata": {"response": "response body"}}
         yield {"type": "done"}
 
-    monkeypatch.setattr("lumen.app.facade.DeepTutorApp.start_turn", _start_turn)
-    monkeypatch.setattr("lumen.app.facade.DeepTutorApp.stream_turn", _stream_turn)
+    monkeypatch.setattr("lumen.app.facade.LumenApp.start_turn", _start_turn)
+    monkeypatch.setattr("lumen.app.facade.LumenApp.stream_turn", _stream_turn)
 
 
 def test_run_command_json_mode(monkeypatch) -> None:
@@ -76,7 +76,7 @@ def test_run_command_json_mode(monkeypatch) -> None:
 
 
 def test_builtin_capability_aliases_resolve_to_canonical_names() -> None:
-    runtime = DeepTutorApp()
+    runtime = LumenApp()
 
     # Learn aliases resolve to the canonical ``mode.learn`` id — not the legacy
     # ``mastery_path`` manifest name.
@@ -162,7 +162,7 @@ def test_chat_repl_survives_invalid_utf8_input(monkeypatch) -> None:
             raise value
         return value
 
-    monkeypatch.setattr("deeptutor_cli.chat._read_repl_input", _read_input)
+    monkeypatch.setattr("lumen_cli.chat._read_repl_input", _read_input)
 
     result = runner.invoke(app, ["chat"])
 
@@ -182,7 +182,7 @@ def test_session_list_command_uses_shared_store(monkeypatch) -> None:
             }
         ]
 
-    monkeypatch.setattr("lumen.app.facade.DeepTutorApp.list_sessions", _list_sessions)
+    monkeypatch.setattr("lumen.app.facade.LumenApp.list_sessions", _list_sessions)
 
     result = runner.invoke(app, ["session", "list"])
 

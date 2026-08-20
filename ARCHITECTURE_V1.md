@@ -72,8 +72,8 @@ Lumen/
 │   ├── knowledge/                  ← KB 管理
 │   └── app/facade.py              ← DeepTutorApp（SDK 门面）
 │
-├── deeptutor_cli/                  ← CLI 入口
-├── deeptutor_web/                  ← Web 包标记
+├── lumen_cli/                      ← CLI 入口
+├── lumen_web/                      ← Web 包标记
 └── frontend/                       ← React/Vite 前端
 ```
 

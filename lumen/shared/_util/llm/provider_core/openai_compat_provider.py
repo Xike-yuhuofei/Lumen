@@ -50,7 +50,7 @@ _ALLOWED_MSG_KEYS = frozenset(
 _ALNUM = string.ascii_letters + string.digits
 
 _DEFAULT_OPENROUTER_HEADERS = {
-    "HTTP-Referer": "https://github.com/HKUDS/DeepTutor",
+    "HTTP-Referer": "https://github.com/HKUDS/Lumen",
     "X-OpenRouter-Title": PRODUCT_NAME,
 }
 _RESPONSES_FAILURE_THRESHOLD = 2

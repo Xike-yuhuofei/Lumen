@@ -703,7 +703,7 @@ async def start_document_parsing_model_download(payload: DocumentParsingInstall)
             "ok": False,
             "message": (
                 f"The {engine} model downloader wasn't found. Reinstall the engine "
-                f"(pip install deeptutor[parse-{engine}]) so its CLI is on PATH."
+                f"(pip install lumen[parse-{engine}]) so its CLI is on PATH."
             ),
         }
     return get_background_job_manager().start_model_download(engine=engine, cmd=cmd)
@@ -1143,5 +1143,5 @@ async def complete_tour(payload: TourCompletePayload | None = None):
 async def reopen_tour():
     return {
         "message": "Run the terminal setup guide from the project root to re-open the guided setup.",
-        "command": "deeptutor init",
+        "command": "lumen init",
     }

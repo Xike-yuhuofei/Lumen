@@ -1,7 +1,7 @@
 """Runtime helpers for request-scoped model selection.
 
 This is the canonical home of this module, migrated from
-``deeptutor.services.model_selection.runtime``.
+``lumen.services.model_selection.runtime``.
 """
 
 from __future__ import annotations

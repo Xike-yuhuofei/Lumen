@@ -4,7 +4,7 @@ The KB lifecycle implementation (``manager``, ``manifest``, ``kb_types``,
 ``naming``, ``add_documents``, ``initializer``, ``progress_tracker``) lives
 directly under this package and is exposed lazily below so importing the
 package stays free of the RAG/config import chain. Submodule names resolve on
-demand so ``from lumen.shared.knowledge import manager`` (and the legacy deeptutor
+demand so ``from lumen.shared.knowledge import manager`` (and the legacy lumen
 compatibility facade) reach the canonical modules.
 """
 

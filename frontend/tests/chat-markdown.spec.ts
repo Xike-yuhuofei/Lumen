@@ -62,10 +62,10 @@ test.describe('assistant markdown contract C1–C16', () => {
       localStorage.setItem('trae:sidebarOpen', '1')
       localStorage.setItem('trae:statusOpen', '0')
       localStorage.setItem('trae:theme', 'dark')
-      if (!sessionStorage.getItem('deeptutor:test-ready')) {
-        localStorage.removeItem('deeptutor:sessions')
-        localStorage.removeItem('deeptutor:selectedSession')
-        sessionStorage.setItem('deeptutor:test-ready', '1')
+      if (!sessionStorage.getItem('lumen:test-ready')) {
+        localStorage.removeItem('lumen:sessions')
+        localStorage.removeItem('lumen:selectedSession')
+        sessionStorage.setItem('lumen:test-ready', '1')
         sessionStorage.setItem('trae:view', 'chat')
       }
     })

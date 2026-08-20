@@ -17,8 +17,8 @@ Use this skill when the user wants to:
 ## Prerequisites
 
 - Python 3.11+
-- Lumen installed: `pip install deeptutor` for the full Web app, `pip install deeptutor-cli` for CLI-only, or `pip install -e .` from a source checkout
-- Run `deeptutor init` for first-time interactive setup. It walks a guided wizard (ports → LLM → embedding → search → review) and writes the same settings as the Web Settings page under `data/user/settings`. Add `--cli` to skip the ports step for CLI-only use, or `--home <path>` to target a specific workspace.
+- Lumen installed: `pip install lumen` for the full Web app, `pip install lumen-cli` for CLI-only, or `pip install -e .` from a source checkout
+- Run `lumen init` for first-time interactive setup. It walks a guided wizard (ports → LLM → embedding → search → review) and writes the same settings as the Web Settings page under `data/user/settings`. Add `--cli` to skip the ports step for CLI-only use, or `--home <path>` to target a specific workspace.
 
 ## Commands
 
@@ -26,12 +26,12 @@ Use this skill when the user wants to:
 
 ```bash
 # Interactive REPL
-deeptutor chat
-deeptutor chat --capability mastery_path --kb my-kb --tool rag --tool web_search   # Learn (mode.learn)
+lumen chat
+lumen chat --capability mastery_path --kb my-kb --tool rag --tool web_search   # Learn (mode.learn)
 
 # One-shot capability execution
-deeptutor run chat "Explain Fourier transform"
-deeptutor run mastery_path "Master a topic" --kb my-kb     # Learn (mode.learn)
+lumen run chat "Explain Fourier transform"
+lumen run mastery_path "Master a topic" --kb my-kb     # Learn (mode.learn)
 
 # Capabilities accepted by `run` / `chat -c`:
 #   chat
@@ -49,32 +49,32 @@ deeptutor run mastery_path "Master a topic" --kb my-kb     # Learn (mode.learn)
 #   --format/-f <fmt>      Output format: rich | json (default: rich)
 ```
 
-`deeptutor chat` accepts the same `--session / --tool / --kb / --notebook-ref / --history-ref / --language / --config / --config-json` options, plus `--capability/-c <name>` to set the initial capability.
+`lumen chat` accepts the same `--session / --tool / --kb / --notebook-ref / --history-ref / --language / --config / --config-json` options, plus `--capability/-c <name>` to set the initial capability.
 
 **Tools** for `--tool` / `-t`: user-toggleable tools are `brainstorm`, `web_search`, `reason`. Context-gated tools (`rag`, `code_execution`, `read_source`, `web_fetch`, `github`, `ask_user`, …) auto-mount when their context is present, but can also be force-enabled with `--tool`. The full registered set is shown in the Web UI under **Settings → Tools**.
 
 ### Sessions
 
 ```bash
-deeptutor session list [--limit 20]                 # List sessions
-deeptutor session show <id> [--format rich|json]    # View session messages
-deeptutor session open <id>                         # Resume session in the REPL
-deeptutor session rename <id> --title "..."         # Rename a session
-deeptutor session delete <id>                       # Delete a session
+lumen session list [--limit 20]                 # List sessions
+lumen session show <id> [--format rich|json]    # View session messages
+lumen session open <id>                         # Resume session in the REPL
+lumen session rename <id> --title "..."         # Rename a session
+lumen session delete <id>                       # Delete a session
 ```
 
 ### System
 
 ```bash
-deeptutor config show                               # Print resolved configuration
-deeptutor serve [--host 0.0.0.0] [--port 8001] [--reload]   # Start the API server
-deeptutor start [--home <path>]                     # Launch backend + frontend together
-deeptutor init [--cli] [--home <path>]              # Create/update workspace settings
+lumen config show                               # Print resolved configuration
+lumen serve [--host 0.0.0.0] [--port 8001] [--reload]   # Start the API server
+lumen start [--home <path>]                     # Launch backend + frontend together
+lumen init [--cli] [--home <path>]              # Create/update workspace settings
 ```
 
 ## REPL Slash Commands
 
-Inside `deeptutor chat`, use these:
+Inside `lumen chat`, use these:
 
 | Command | Effect |
 |:---|:---|
@@ -96,27 +96,27 @@ Inside `deeptutor chat`, use these:
 
 **First-time setup:**
 ```bash
-cd DeepTutor
+cd Lumen
 pip install -e .
-deeptutor init        # Interactive guided setup (add --cli for CLI-only)
+lumen init        # Interactive guided setup (add --cli for CLI-only)
 ```
 
 **Daily learning:**
 ```bash
-deeptutor chat --kb textbook --tool rag --tool web_search
+lumen chat --kb textbook --tool rag --tool web_search
 ```
 
 **Build a knowledge base from documents:** create the knowledge base in the Web UI (Settings → Knowledge Bases), then query it from the CLI:
 ```bash
-deeptutor run chat "Explain Newton's third law" --kb physics --tool rag
+lumen run chat "Explain Newton's third law" --kb physics --tool rag
 ```
 
 **Generate quiz questions via Learn (Mastery Path):**
 ```bash
-deeptutor run mastery_path "Thermodynamics" --kb physics
+lumen run mastery_path "Thermodynamics" --kb physics
 ```
 
 **Run the full Web app locally:**
 ```bash
-deeptutor start       # backend + frontend; Ctrl+C to stop
+lumen start       # backend + frontend; Ctrl+C to stop
 ```

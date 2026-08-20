@@ -1,7 +1,7 @@
 """Safe extraction of user-uploaded ZIP archives.
 
 Canonical home: ``lumen/shared/_util/archive_extractor`` (migrated from
-``deeptutor/utils/archive_extractor``).  ``deeptutor.utils.archive_extractor``
+``lumen/utils/archive_extractor``).  ``lumen.utils.archive_extractor``
 re-exports these for existing importers and tests only.
 
 A naive ``ZipFile.extractall`` is unsafe for untrusted uploads: it is

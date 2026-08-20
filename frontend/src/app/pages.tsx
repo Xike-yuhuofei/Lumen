@@ -107,7 +107,6 @@ export function WorkHomePage({ composer, sidebarBar }: { composer: React.ReactNo
         {sidebarBar && <div className="headerLeft-rH3lhm">{sidebarBar}</div>}
         <div className="headerCenter-cba9zB" />
         <div className="headerRight-QHfr9M">
-          <span className="downloadChip-trae">下载桌面端</span>
         </div>
       </header>
       <div className="workspace-sBvxKr" style={{ ['--input-center-offset' as any]: '331px' }}>
@@ -181,7 +180,6 @@ export function DesignHomePage({ composer, sidebarBar }: { composer: React.React
         {sidebarBar && <div className="headerLeft-rH3lhm">{sidebarBar}</div>}
         <div className="headerCenter-cba9zB" />
         <div className="headerRight-QHfr9M">
-          <span className="downloadChip-trae">下载桌面端</span>
         </div>
       </header>
       <div className="workspace-sBvxKr" style={{ ['--input-center-offset' as any]: '331px' }}>
@@ -958,6 +956,8 @@ export function MarketplacePage({ onSelectPlugin, sidebarBar }: MarketplacePageP
   const [activeFilter, setActiveFilter] = useState('全部')
   const [searchText, setSearchText] = useState('')
   const [installedPlugins, setInstalledPlugins] = useState<Set<string>>(new Set(plugins.filter(p => p.state === 'installed').map(p => p.name)))
+  // 本地已更新的插件：更新后不再提示「可更新」（无真实后端，仅本地状态刷新）。
+  const [updatedPlugins, setUpdatedPlugins] = useState<Set<string>>(new Set())
 
   const filteredPlugins = plugins.filter((p) => {
     const matchCategory = activeCategory === '推荐' || activeCategory === '全部' || p.category === activeCategory
@@ -967,18 +967,9 @@ export function MarketplacePage({ onSelectPlugin, sidebarBar }: MarketplacePageP
       activeFilter === '全部' ? true :
       activeFilter === '官方' ? !!p.official :
       activeFilter === '已安装' ? installedPlugins.has(p.name) :
-      activeFilter === '可更新' ? installedPlugins.has(p.name) && !!p.canUpdate : true
+      activeFilter === '可更新' ? installedPlugins.has(p.name) && !!p.canUpdate && !updatedPlugins.has(p.name) : true
     return matchCategory && matchSearch && matchFilter
   })
-
-  const toggleInstall = (name: string) => {
-    setInstalledPlugins(prev => {
-      const next = new Set(prev)
-      if (next.has(name)) next.delete(name)
-      else next.add(name)
-      return next
-    })
-  }
 
   // “推荐”作为精选首屏，未选中具体分类时按能力分类分组展示。
   const shown = activeCategory === '推荐'
@@ -1067,10 +1058,23 @@ export function MarketplacePage({ onSelectPlugin, sidebarBar }: MarketplacePageP
                       <div className="pluginsGrid-u71c96">
                         {section.plugins.map((p) => {
                           const isInstalled = installedPlugins.has(p.name)
-                          const label = !isInstalled ? '安装' : (p.canUpdate ? '更新' : '打开')
+                          const hasUpdate = !!p.canUpdate && !updatedPlugins.has(p.name)
+                          const label = !isInstalled ? '安装' : (hasUpdate ? '更新' : '打开')
                           const actionStyle: React.CSSProperties = isInstalled
                             ? { alignItems: 'center', background: 'transparent', border: '1px solid var(--border-border-neutral-l2)', borderRadius: '4px', color: 'var(--text-text-default)', cursor: 'pointer', display: 'inline-flex', fontSize: '12px', gap: '4px', height: '28px', justifyContent: 'center', lineHeight: '16px', padding: '0 10px' }
                             : { alignItems: 'center', background: 'var(--bg-bg-invert)', border: 'none', borderRadius: '4px', color: 'var(--text-text-onaccent)', cursor: 'pointer', display: 'inline-flex', fontSize: '12px', gap: '4px', height: '28px', justifyContent: 'center', lineHeight: '16px', padding: '0 10px' }
+                          // 语义：安装→新增已安装；更新→保持已安装并刷新本地状态；打开→打开详情弹窗。
+                          // 修复：此前「更新/打开」误调用 toggleInstall，会反过来卸载已安装插件。
+                          const handlePluginAction = (e: React.MouseEvent, target: PluginData) => {
+                            e.stopPropagation()
+                            if (!installedPlugins.has(target.name)) {
+                              setInstalledPlugins(prev => new Set(prev).add(target.name))
+                            } else if (!!target.canUpdate && !updatedPlugins.has(target.name)) {
+                              setUpdatedPlugins(prev => new Set(prev).add(target.name))
+                            } else {
+                              onSelectPlugin(target)
+                            }
+                          }
                           return (
                             <div key={p.name} className="pluginCard-cq4jH5" onClick={() => onSelectPlugin(p)}>
                               <div className="pluginCardHeader-RvwB47">
@@ -1084,7 +1088,7 @@ export function MarketplacePage({ onSelectPlugin, sidebarBar }: MarketplacePageP
                                 <button
                                   type="button"
                                   style={actionStyle}
-                                  onClick={(e) => { e.stopPropagation(); toggleInstall(p.name) }}
+                                  onClick={(e) => handlePluginAction(e, p)}
                                 >
                                   {label}
                                 </button>
@@ -1238,7 +1242,7 @@ export function LibraryPage({ sidebarBar }: LibraryPageProps) {
     setBusyAdding((cur) => new Set(cur).add(it.id))
     setToast(null)
     try {
-      await createLearningGoal(it.name, `围绕「${it.name}」制定学习计划`)
+      await createLearningGoal(it.name, `围绕「${it.name}」制定学习计划`, it.kb)
       setAdded((cur) => new Set(cur).add(it.id))
       setToast({ kind: 'success', text: `「${it.name}」已加入学习空间` })
     } catch (e) {
@@ -1599,13 +1603,22 @@ function ImportMaterialsModal({ files, onClose, onComplete }: ImportMaterialsMod
     setPhase('submitting')
     setError('')
     try {
-      if (targetExists) {
+      // targetExists 在 Mount 时异步解析；用户在解析完成前点击「开始导入」会误判为不存在
+      // 而走 createKnowledgeBase → 若已存在则后端报 “already exists”。提交时刻重新确认，
+      // 消除该竞态：目标库已存在一律走增量上传。
+      let exists = targetExists
+      try {
+        exists = (await listKnowledgeBases()).some((k) => k.name === LIBRARY_KB_NAME)
+      } catch {
+        exists = targetExists
+      }
+      if (exists) {
         await uploadFilesToKb(LIBRARY_KB_NAME, files)
       } else {
         await createKnowledgeBase(LIBRARY_KB_NAME, files)
       }
       setPhase('processing')
-      setProgress({ percent: 0, message: targetExists ? '已上传，正在解析并建立索引…' : '正在创建资料库并建立索引…' })
+      setProgress({ percent: 0, message: exists ? '已上传，正在解析并建立索引…' : '正在创建资料库并建立索引…' })
       startPolling()
     } catch (e) {
       setError(e instanceof Error ? e.message : '导入失败，请稍后重试')

@@ -91,11 +91,11 @@ def test_render_environment_uses_json_backed_runtime_names(monkeypatch, tmp_path
     assert env["AUTH_ENABLED"] == "true"
     assert env["NEXT_PUBLIC_AUTH_ENABLED"] == "true"
     # Server-side proxy contract consumed by the SPA server.
-    # DEEPTUTOR_API_BASE_URL is where the frontend server reaches the backend
+    # LUMEN_API_BASE_URL is where the frontend server reaches the backend
     # (falls back to the IPv4 loopback on <backend_port> when no in-network /
     # external base is configured — see the dedicated test below for why).
-    assert env["DEEPTUTOR_AUTH_ENABLED"] == "true"
-    assert env["DEEPTUTOR_API_BASE_URL"] == "http://127.0.0.1:8010"
+    assert env["LUMEN_AUTH_ENABLED"] == "true"
+    assert env["LUMEN_API_BASE_URL"] == "http://127.0.0.1:8010"
     assert env["AUTH_TOKEN_EXPIRE_HOURS"] == "12"
     assert "AUTH_SECRET" not in env
 
@@ -114,7 +114,7 @@ def test_api_base_url_falls_back_to_ipv4_loopback(monkeypatch, tmp_path: Path) -
 
     env = service.render_environment()
 
-    assert env["DEEPTUTOR_API_BASE_URL"] == "http://127.0.0.1:8042"
+    assert env["LUMEN_API_BASE_URL"] == "http://127.0.0.1:8042"
 
 
 def test_api_base_url_prefers_a_configured_base_over_the_loopback(
@@ -132,7 +132,7 @@ def test_api_base_url_prefers_a_configured_base_over_the_loopback(
 
     env = service.render_environment()
 
-    assert env["DEEPTUTOR_API_BASE_URL"] == "http://backend.internal:9000"
+    assert env["LUMEN_API_BASE_URL"] == "http://backend.internal:9000"
 
 
 def test_system_settings_accept_public_api_base_alias_and_normalize_origins(
@@ -389,7 +389,7 @@ def test_runtime_settings_can_ignore_process_overrides(tmp_path: Path) -> None:
     service = RuntimeSettingsService(
         tmp_path / "settings",
         process_env={
-            "DEEPTUTOR_IGNORE_PROCESS_ENV_OVERRIDES": "1",
+            "LUMEN_IGNORE_PROCESS_ENV_OVERRIDES": "1",
             "BACKEND_PORT": "9901",
             "AUTH_ENABLED": "true",
         },

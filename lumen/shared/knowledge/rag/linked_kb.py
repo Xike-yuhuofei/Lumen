@@ -26,7 +26,7 @@ from typing import Any, Optional
 # restriction, which is correct for the local/self-hosted single-trust-domain
 # deployments this feature targets. Shared servers should set it so a
 # non-admin cannot point a KB at another user's data or system paths.
-LINK_ROOTS_ENV = "DEEPTUTOR_LINKED_FOLDER_ROOTS"
+LINK_ROOTS_ENV = "LUMEN_LINKED_FOLDER_ROOTS"
 
 from lumen.shared.knowledge.rag.factory import (
     DEFAULT_PROVIDER,

@@ -5,8 +5,8 @@ from pathlib import Path
 from lumen.shared._util.path_service import PathService
 
 
-def test_path_service_defaults_to_deeptutor_home(monkeypatch, tmp_path: Path) -> None:
-    monkeypatch.setenv("DEEPTUTOR_HOME", str(tmp_path))
+def test_path_service_defaults_to_lumen_home(monkeypatch, tmp_path: Path) -> None:
+    monkeypatch.setenv("LUMEN_HOME", str(tmp_path))
     PathService.reset_instance()
 
     service = PathService.get_instance()

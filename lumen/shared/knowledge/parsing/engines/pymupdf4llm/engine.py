@@ -64,7 +64,7 @@ class PyMuPDF4LLMParser:
             return ReadinessReport(
                 ready=False,
                 reason="not_configured",
-                message="pymupdf4llm isn't installed (pip install deeptutor[parse-pymupdf4llm]).",
+                message="pymupdf4llm isn't installed (pip install lumen[parse-pymupdf4llm]).",
             )
         return ReadinessReport(ready=True)
 

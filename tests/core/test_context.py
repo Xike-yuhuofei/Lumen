@@ -12,10 +12,10 @@ from lumen.runtime.stream.trace import (
 )
 from lumen.shared._util.errors import (
     ConfigurationError,
-    DeepTutorError,
     EnvironmentConfigError,
     LLMContextError,
     LLMServiceError,
+    LumenError,
     ServiceError,
     ValidationError,
 )
@@ -145,18 +145,18 @@ class TestStreamEvent:
 
 class TestErrors:
     def test_base_error_str_without_details(self) -> None:
-        err = DeepTutorError("boom")
+        err = LumenError("boom")
         assert str(err) == "boom"
         assert err.details == {}
 
     def test_base_error_str_with_details(self) -> None:
-        err = DeepTutorError("boom", details={"key": "val"})
+        err = LumenError("boom", details={"key": "val"})
         assert "key" in str(err)
 
     def test_hierarchy(self) -> None:
-        assert issubclass(ConfigurationError, DeepTutorError)
-        assert issubclass(ValidationError, DeepTutorError)
-        assert issubclass(ServiceError, DeepTutorError)
+        assert issubclass(ConfigurationError, LumenError)
+        assert issubclass(ValidationError, LumenError)
+        assert issubclass(ServiceError, LumenError)
         assert issubclass(LLMServiceError, ServiceError)
         assert issubclass(LLMContextError, LLMServiceError)
         assert issubclass(EnvironmentConfigError, ConfigurationError)

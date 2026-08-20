@@ -1,7 +1,7 @@
 """Localized display metadata for built-in tools and capabilities.
 
 Canonical home: ``lumen/runtime/i18n/metadata_i18n`` (migrated from
-``deeptutor/i18n/metadata_i18n``).  ``deeptutor.i18n`` re-exports these for
+``lumen/i18n/metadata_i18n``).  ``lumen.i18n`` re-exports these for
 existing importers and tests only.
 """
 

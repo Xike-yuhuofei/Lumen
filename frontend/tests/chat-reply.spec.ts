@@ -19,12 +19,12 @@ test.describe('chat reply from Lumen API', () => {
       localStorage.setItem('trae:sidebarOpen', '1')
       localStorage.setItem('trae:statusOpen', '0')
       localStorage.setItem('trae:theme', 'dark')
-      if (!sessionStorage.getItem('deeptutor:test-ready')) {
-        localStorage.removeItem('deeptutor:sessions')
-        localStorage.removeItem('deeptutor:selectedSession')
+      if (!sessionStorage.getItem('lumen:test-ready')) {
+        localStorage.removeItem('lumen:sessions')
+        localStorage.removeItem('lumen:selectedSession')
         localStorage.removeItem('askora:sessions')
         localStorage.removeItem('askora:selectedSession')
-        sessionStorage.setItem('deeptutor:test-ready', '1')
+        sessionStorage.setItem('lumen:test-ready', '1')
         sessionStorage.setItem('trae:view', 'chat')
       }
     })

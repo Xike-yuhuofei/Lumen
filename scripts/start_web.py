@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Compatibility wrapper for ``deeptutor start``."""
+"""Compatibility wrapper for ``lumen start``."""
 
 from __future__ import annotations
 

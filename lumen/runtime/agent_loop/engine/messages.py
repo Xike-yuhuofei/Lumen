@@ -1,7 +1,7 @@
 """Canonical message builders for agentic conversations.
 
 Canonical home: ``lumen/runtime/agent_loop/engine`` (migrated from
-``deeptutor/core/agentic/messages``).
+``lumen/core/agentic/messages``).
 """
 
 from __future__ import annotations

@@ -70,7 +70,7 @@ class LiteParseParser:
             return ReadinessReport(
                 ready=False,
                 reason="not_configured",
-                message="liteparse isn't installed (pip install deeptutor[parse-liteparse]).",
+                message="liteparse isn't installed (pip install lumen[parse-liteparse]).",
             )
         return ReadinessReport(ready=True)
 

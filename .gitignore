@@ -9,8 +9,8 @@
 data/
 /multi-user/
 run_code_workspace/
-deeptutor/agents/question/reference_papers/
-deeptutor/services/rag/eg_only_for_analysis/
+lumen/agents/question/reference_papers/
+lumen/services/rag/eg_only_for_analysis/
 /docs/
 /site/
 .claude
@@ -228,7 +228,7 @@ $RECYCLE.BIN/
 *.swo
 
 # Local scripts
-启动 DeepTutor.bat
+启动 Lumen.bat
 
 # ============================================
 # Testing and Coverage
@@ -315,3 +315,6 @@ celerybeat.pid
 *.wav
 *.ogg
 !demo/*.mp4
+
+# TraeCode local agent scaffolding
+.trae/

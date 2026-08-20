@@ -1,7 +1,7 @@
 """Built-in loop-capability registry.
 
 Canonical home: ``lumen/modes/learn/loop_registry`` (migrated from
-``deeptutor/capabilities/registry``).  The legacy path re-exports these for
+``lumen/capabilities/registry``).  The legacy path re-exports these for
 existing importers and tests only.
 """
 

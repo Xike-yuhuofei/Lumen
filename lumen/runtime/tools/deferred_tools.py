@@ -15,7 +15,7 @@ tool selection on weaker models, while keeping every connected tool one
 cheap call away.
 
 Canonical home: ``lumen/runtime/tools/deferred_tools`` (migrated from
-``deeptutor/runtime/registry/deferred_tools``).  The legacy path re-exports
+``lumen/runtime/registry/deferred_tools``).  The legacy path re-exports
 these for existing importers and tests only.
 """
 

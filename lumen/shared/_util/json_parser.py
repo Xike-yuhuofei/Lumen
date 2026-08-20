@@ -2,7 +2,7 @@
 """
 Robust JSON parsing utilities with automatic repair and markdown extraction.
 
-Owned by ``lumen`` (single real implementation). ``deeptutor.utils.json_parser``
+Owned by ``lumen`` (single real implementation). ``lumen.utils.json_parser``
 re-exports this module for existing importers only.
 """
 

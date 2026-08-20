@@ -19,7 +19,7 @@ already decided per turn by ``tool_composition``. The allowlist here governs
 only *provider* (deferred) tools.
 
 Canonical home: ``lumen/runtime/tools/scoped_registry`` (migrated from
-``deeptutor/runtime/registry/scoped_registry``).  The legacy path re-exports
+``lumen/runtime/registry/scoped_registry``).  The legacy path re-exports
 these for existing importers and tests only.
 """
 

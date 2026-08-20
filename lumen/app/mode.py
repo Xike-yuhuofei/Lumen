@@ -2,7 +2,7 @@
 Run Mode
 ========
 
-Controls whether DeepTutor is running as a CLI application or an API server.
+Controls whether Lumen is running as a CLI application or an API server.
 Modules can check the mode to conditionally import server-only dependencies.
 """
 
@@ -19,7 +19,7 @@ _current_mode: RunMode | None = None
 
 
 def _resolve_mode() -> RunMode:
-    raw = os.environ.get("DEEPTUTOR_MODE", "").strip().lower()
+    raw = os.environ.get("LUMEN_MODE", "").strip().lower()
     if raw == RunMode.SERVER.value:
         return RunMode.SERVER
     return RunMode.CLI
@@ -36,7 +36,7 @@ def set_mode(mode: RunMode) -> None:
     """Explicitly set the run mode (call early in entry points)."""
     global _current_mode
     _current_mode = mode
-    os.environ["DEEPTUTOR_MODE"] = mode.value
+    os.environ["LUMEN_MODE"] = mode.value
 
 
 def is_cli() -> bool:

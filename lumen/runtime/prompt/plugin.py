@@ -1,4 +1,4 @@
-"""Runtime adapter plugin — bridge existing ``deeptutor`` prompt manager
+"""Runtime adapter plugin — bridge existing ``lumen`` prompt manager
 into the Plugin Kernel via :class:`PromptService`."""
 
 from __future__ import annotations
@@ -10,7 +10,7 @@ from lumen.runtime.prompt.contract import PromptService
 
 
 class _PromptServiceAdapter(PromptService):
-    """Wraps ``deeptutor.services.prompt.manager.PromptManager``."""
+    """Wraps ``lumen.services.prompt.manager.PromptManager``."""
 
     def __init__(self) -> None:
         self._manager: Any = None

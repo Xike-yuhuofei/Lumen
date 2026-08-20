@@ -36,7 +36,7 @@ def normalize_provider_name(name: Optional[str] = None) -> str:
 def provider_uses_embedding_versions(provider: Optional[str]) -> bool:
     """Whether this provider's index versions are keyed by embedding signature.
 
-    Only the default LlamaIndex pipeline uses DeepTutor's active embedding
+    Only the default LlamaIndex pipeline uses Lumen's active embedding
     signature to select/read index versions, so it is always keyed by the
     embedding profile.
     """

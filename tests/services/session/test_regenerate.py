@@ -413,3 +413,112 @@ class TestRegenerateLastTurn:
         # Runtime flags must still be set even when overrides supply config.
         assert payload["config"]["_persist_user_message"] is False
         assert payload["config"]["_regenerate"] is True
+
+
+# ---------------------------------------------------------------------------
+# TurnRuntimeManager.regenerate_turn (retry an arbitrary message)
+# ---------------------------------------------------------------------------
+
+
+def _seed_turns(store: SQLiteSessionStore) -> tuple[str, dict[str, int]]:
+    """Seed three user/assistant turns and return (sid, ids_by_label)."""
+    session = asyncio.run(store.create_session())
+    sid = session["id"]
+    asyncio.run(
+        store.update_session_preferences(sid, {"capability": "chat", "tools": [], "language": "en"})
+    )
+    ids: dict[str, int] = {}
+    ids["u1"] = asyncio.run(store.add_message(sid, role="user", content="q1"))
+    ids["a1"] = asyncio.run(store.add_message(sid, role="assistant", content="a1"))
+    ids["u2"] = asyncio.run(store.add_message(sid, role="user", content="q2"))
+    ids["a2"] = asyncio.run(store.add_message(sid, role="assistant", content="a2"))
+    ids["u3"] = asyncio.run(store.add_message(sid, role="user", content="q3"))
+    ids["a3"] = asyncio.run(store.add_message(sid, role="assistant", content="a3"))
+    return sid, ids
+
+
+class TestRegenerateTurn:
+    def test_retry_middle_assistant_rolls_back_after_it(self, store: SQLiteSessionStore) -> None:
+        sid, ids = _seed_turns(store)
+        runtime = TurnRuntimeManager(store=store)
+        recorder = _FakeStartTurnRecorder()
+
+        with patch.object(runtime, "start_turn", new=recorder):
+            asyncio.run(runtime.regenerate_turn(sid, ids["a2"]))
+
+        assert len(recorder.calls) == 1
+        payload = recorder.calls[0]
+        assert payload["content"] == "q2"
+        assert payload["config"]["_regenerate"] is True
+        assert payload["config"]["_persist_user_message"] is False
+        assert payload["config"]["_regenerated_from_message_id"] == ids["u2"]
+
+        remaining = asyncio.run(store.get_messages(sid))
+        assert [m["id"] for m in remaining] == [ids["u1"], ids["a1"], ids["u2"]]
+
+    def test_retry_user_message_targets_itself(self, store: SQLiteSessionStore) -> None:
+        sid, ids = _seed_turns(store)
+        runtime = TurnRuntimeManager(store=store)
+        recorder = _FakeStartTurnRecorder()
+
+        with patch.object(runtime, "start_turn", new=recorder):
+            asyncio.run(runtime.regenerate_turn(sid, ids["u2"]))
+
+        assert len(recorder.calls) == 1
+        assert recorder.calls[0]["content"] == "q2"
+        remaining = asyncio.run(store.get_messages(sid))
+        assert [m["id"] for m in remaining] == [ids["u1"], ids["a1"], ids["u2"]]
+
+    def test_missing_message_raises_nothing_to_regenerate(self, store: SQLiteSessionStore) -> None:
+        sid, _ = _seed_turns(store)
+        runtime = TurnRuntimeManager(store=store)
+        with pytest.raises(RuntimeError) as exc:
+            asyncio.run(runtime.regenerate_turn(sid, 99999))
+        assert str(exc.value) == "nothing_to_regenerate"
+
+    def test_empty_session_raises_nothing_to_regenerate(self, store: SQLiteSessionStore) -> None:
+        session = asyncio.run(store.create_session())
+        runtime = TurnRuntimeManager(store=store)
+        with pytest.raises(RuntimeError) as exc:
+            asyncio.run(runtime.regenerate_turn(session["id"], 1))
+        assert str(exc.value) == "nothing_to_regenerate"
+
+    def test_active_turn_raises_busy(self, store: SQLiteSessionStore) -> None:
+        sid, _ = _seed_turns(store)
+        asyncio.run(store.create_turn(sid, capability="chat"))
+        runtime = TurnRuntimeManager(store=store)
+        with pytest.raises(RuntimeError) as exc:
+            asyncio.run(runtime.regenerate_turn(sid, 1))
+        assert str(exc.value) == "regenerate_busy"
+
+
+class TestRegenerateTurnAtIndex:
+    def test_retry_by_index_rolls_back_after_it(self, store: SQLiteSessionStore) -> None:
+        sid, ids = _seed_turns(store)
+        runtime = TurnRuntimeManager(store=store)
+        recorder = _FakeStartTurnRecorder()
+
+        # Assistant a2 is the 4th message (index 3) of u1,a1,u2,a2,u3,a3.
+        with patch.object(runtime, "start_turn", new=recorder):
+            asyncio.run(runtime.regenerate_turn_at_index(sid, 3))
+
+        assert len(recorder.calls) == 1
+        assert recorder.calls[0]["content"] == "q2"
+        remaining = asyncio.run(store.get_messages(sid))
+        assert [m["id"] for m in remaining] == [ids["u1"], ids["a1"], ids["u2"]]
+
+    def test_index_out_of_range_raises_nothing_to_regenerate(
+        self, store: SQLiteSessionStore
+    ) -> None:
+        sid, _ = _seed_turns(store)
+        runtime = TurnRuntimeManager(store=store)
+        with pytest.raises(RuntimeError) as exc:
+            asyncio.run(runtime.regenerate_turn_at_index(sid, 99))
+        assert str(exc.value) == "nothing_to_regenerate"
+
+    def test_negative_index_raises_nothing_to_regenerate(self, store: SQLiteSessionStore) -> None:
+        sid, _ = _seed_turns(store)
+        runtime = TurnRuntimeManager(store=store)
+        with pytest.raises(RuntimeError) as exc:
+            asyncio.run(runtime.regenerate_turn_at_index(sid, -1))
+        assert str(exc.value) == "nothing_to_regenerate"

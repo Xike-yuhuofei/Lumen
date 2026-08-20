@@ -9,7 +9,7 @@ line per tool in the system prompt, full schemas only after the model calls
 :mod:`~lumen.runtime.tools.providers.authorize`.
 
 Canonical home: ``lumen/runtime/tools/providers`` (migrated from
-``deeptutor/runtime/providers``).  ``deeptutor.runtime.providers`` re-exports
+``lumen/runtime/providers``).  ``lumen.runtime.providers`` re-exports
 these for existing importers and tests only.
 
 Layering — this package sits **below** the tool registry:
@@ -23,7 +23,7 @@ Those four have no dependencies of their own, which is what lets the registry
 import them (``deferred_tools`` sanitises through :mod:`text`).
 
 :mod:`view` composes the registry, so it lives with the registry (still under
-``deeptutor`` until the tool implementations are canonicalized).
+``lumen`` until the tool implementations are canonicalized).
 """
 
 from __future__ import annotations

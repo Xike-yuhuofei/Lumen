@@ -1,7 +1,7 @@
 """Prompt hint loading and rendering helpers for tools.
 
 Canonical home: ``lumen/runtime/tools/prompting`` (migrated from
-``deeptutor/tools/prompting``).  ``deeptutor.tools.prompting`` re-exports
+``lumen/tools/prompting``).  ``lumen.tools.prompting`` re-exports
 these for existing importers and tests only.
 """
 

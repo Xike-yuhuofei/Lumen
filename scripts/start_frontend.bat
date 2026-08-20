@@ -2,7 +2,7 @@
 REM Starts the frontend Vite development server
 REM Prerequisites: Node.js 20+ installed, `cd frontend && npm install`
 
-echo Starting DeepTutor Frontend...
+echo Starting Lumen Frontend...
 echo Frontend will be available at: http://localhost:3782
 echo.
 

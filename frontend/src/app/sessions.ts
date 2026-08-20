@@ -1,6 +1,6 @@
 import { getSession, listSessions, type SessionMessage, type SessionSummary } from '../api/sessions'
 import type { StreamEvent } from '../api/ws'
-import { ChatMessage, MessageBlock, initialMessages, taskList } from '../mock/data'
+import { ChatMessage, MessageBlock, QuizQuestion, initialMessages, taskList } from '../mock/data'
 import { PRODUCT_NAME } from './brand'
 
 export const NEW_SESSION_TITLE = '新对话'
@@ -8,8 +8,8 @@ export const STREAM_CONNECT_ERROR = `无法连接 ${PRODUCT_NAME} 后端，请�
 export const STREAM_FAIL_ERROR = '回复失败，请重试。'
 export const CREATE_SESSION_ERROR = '会话创建失败，请重试。'
 
-const LS_SESSIONS = 'deeptutor:sessions'
-const LS_SELECTED = 'deeptutor:selectedSession'
+const LS_SESSIONS = 'lumen:sessions'
+const LS_SELECTED = 'lumen:selectedSession'
 
 export const CAPABILITIES = [
   { id: 'chat', label: '对话' },
@@ -219,33 +219,121 @@ export function visibleAnswerFromEvents(events: StreamEvent[]): string {
   return cleanThinkingTags(content || result)
 }
 
+/** Extract user-facing quiz questions from ``ask_user`` tool-calls in a turn. */
+export function quizQuestionsFromEvents(events: StreamEvent[] | undefined): QuizQuestion[] {
+  const out: QuizQuestion[] = []
+  for (const event of events ?? []) {
+    if (event.type !== 'tool_call') continue
+    const args = (event.metadata?.args ?? {}) as Record<string, unknown>
+    const questions = args.questions
+    if (!Array.isArray(questions)) continue
+    for (const raw of questions) {
+      const q = (raw ?? {}) as Record<string, unknown>
+      const id = String(q.id ?? '')
+      const prompt = String(q.prompt ?? '')
+      if (!id || !prompt) continue
+      const options = Array.isArray(q.options)
+        ? q.options
+            .filter((o): o is Record<string, unknown> => !!o && typeof o === 'object')
+            .map((o) => ({
+              label: String(o.label ?? ''),
+              description: o.description != null ? String(o.description) : undefined,
+            }))
+            .filter((o) => o.label)
+        : []
+      out.push({ id, prompt, options })
+    }
+  }
+  return out
+}
+
 export function eventsToBlocks(events: StreamEvent[] | undefined, fallback: string): MessageBlock[] {
   const list = events ?? []
+  const blocks: MessageBlock[] = []
+  // Phase 1 – Stream-ordered construction: interleave text fragments with
+  // question cards based on the order their source events actually arrived.
+  // This ensures an ``ask_user`` question that was posed before any content
+  // chunk appears ABOVE the subsequent critique (批改) text.
+  let textBuffer = ''
+  const flushText = () => {
+    const cleaned = cleanThinkingTags(textBuffer)
+    if (cleaned.trim()) blocks.push({ type: 'text', content: cleaned })
+    textBuffer = ''
+  }
+  const narration = collectNarrationCallIds(list)
+  for (const event of list) {
+    if (event.type === 'tool_call') {
+      const args = (event.metadata?.args ?? {}) as Record<string, unknown>
+      const questions = args.questions
+      if (Array.isArray(questions) && questions.length) {
+        flushText()
+        for (const raw of questions) {
+          const q = (raw ?? {}) as Record<string, unknown>
+          const id = String(q.id ?? '')
+          const prompt = String(q.prompt ?? '')
+          if (!id || !prompt) continue
+          const options = Array.isArray(q.options)
+            ? q.options
+                .filter((o): o is Record<string, unknown> => !!o && typeof o === 'object')
+                .map((o) => ({
+                  label: String(o.label ?? ''),
+                  description: o.description != null ? String(o.description) : undefined,
+                }))
+                .filter((o) => o.label)
+            : []
+          blocks.push({ type: 'question', content: prompt, question: { id, prompt, options } })
+        }
+      }
+      continue
+    }
+    if (event.type === 'content' && shouldAppendEventContent(event)) {
+      const callId = eventMeta(event).call_id
+      if (typeof callId === 'string' && callId && narration.has(callId)) continue
+      textBuffer += typeof event.content === 'string' ? event.content : ''
+      continue
+    }
+    if (event.type === 'result') {
+      const text = typeof event.content === 'string' ? event.content : ''
+      if (text) textBuffer += text
+    }
+  }
+  flushText()
+
+  // Phase 2 – Fallback text (e.g. SessionMessage.content) when no content
+  // or result events produced any user-visible text yet.
+  if (!blocks.some((b) => b.type === 'text')) {
+    const fallbackText = cleanThinkingTags(fallback)
+    if (fallbackText) blocks.push({ type: 'text', content: fallbackText })
+  }
+
+  // Phase 3 – Append errors at the END so an arriving ``error`` event never
+  // clobbers text or question blocks the user has already seen.
   const lastError = [...list].reverse().find((event) => event.type === 'error')
   if (lastError) {
     const text = typeof lastError.content === 'string' && lastError.content
       ? lastError.content
       : STREAM_FAIL_ERROR
-    return [{ type: 'status', title: '错误', content: text }]
+    blocks.push({ type: 'status', title: '错误', content: text })
   }
-  const text = visibleAnswerFromEvents(list)
-  if (text) return [{ type: 'text', content: text }]
-  const fallbackText = cleanThinkingTags(fallback)
-  if (fallbackText) return [{ type: 'text', content: fallbackText }]
-  return []
+
+  return blocks
 }
 
 export function studentVisibleBlocks(blocks: MessageBlock[]): MessageBlock[] {
-  const errors = blocks.filter((block) => block.type === 'status' && block.title === '错误')
-  if (errors.length) return errors
-  const texts: MessageBlock[] = []
+  const visible: MessageBlock[] = []
   for (const block of blocks) {
-    if (block.type !== 'text' && block.type !== 'code') continue
-    const content = block.type === 'text' ? cleanThinkingTags(block.content) : block.content
-    if (content.trim()) texts.push({ ...block, content })
+    if (block.type === 'text') {
+      const content = cleanThinkingTags(block.content)
+      if (content.trim()) visible.push({ ...block, content })
+    } else if (block.type === 'code' || block.type === 'question') {
+      if (block.type !== 'question' || block.question) visible.push(block)
+    } else if (block.type === 'status') {
+      // Keep status (error / indicator) blocks – they appear in-stream but
+      // never hide text or questions the user has already been shown.
+      visible.push(block)
+    }
   }
-  if (texts.length) return texts
-  return []
+  return visible
 }
 
 export function sessionMessageToChat(message: SessionMessage): ChatMessage {
@@ -261,6 +349,7 @@ export function sessionMessageToChat(message: SessionMessage): ChatMessage {
       ? [{ type: 'text', content: message.content }]
       : eventsToBlocks(message.events, message.content),
     attachments: attachments.length ? attachments : undefined,
+    serverMessageId: message.id,
   }
 }
 

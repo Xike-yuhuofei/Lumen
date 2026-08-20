@@ -26,7 +26,7 @@ The ``attachment_id`` prefix prevents collisions when the same filename is
 uploaded twice in the same session.
 
 Canonical home: ``lumen/shared/_util/storage`` (migrated from
-``deeptutor/services/storage/attachment_store``).
+``lumen/services/storage/attachment_store``).
 """
 
 from __future__ import annotations

@@ -270,6 +270,134 @@ async def test_handle_turn_sets_mastery_metadata_and_calls_agent_loop():
     assert calls[0][2] == "en"
 
 
+# 6b. A Learn turn mounts the goal's knowledge space so the tutor can teach
+# from the material already imported into it (fix: "没有可用附件文件").
+# The material lives in the KB the goal was created from, not in the chat
+# composer — bind it to ``context.knowledge_bases`` on first-time turns.
+
+
+class TestHandleTurnMountsGoalSource:
+    def _adapter(self, *, store, knowledge_sources=None):
+        from lumen.modes.learn.plugin import _LearnModeServiceAdapter
+
+        calls: list[Any] = []
+
+        class FakeAgentLoop:
+            async def run(self, *, context, stream, language="en", **config):
+                calls.append(context)
+
+        return _LearnModeServiceAdapter(
+            agent_loop=FakeAgentLoop(),
+            store=store,
+            knowledge_sources=knowledge_sources,
+        ), calls
+
+    def _context(self, path_id: str):
+        from lumen.runtime.context import UnifiedContext
+
+        return UnifiedContext(
+            session_id="s1",
+            user_message="继续学习「001.md」",
+            metadata={"mastery_path_id": path_id},
+        )
+
+    @pytest.mark.asyncio
+    async def test_explicit_source_kb_is_mounted(self, tmp_path):
+        from lumen.modes.learn.adapters.storage import LearningStore
+        from lumen.modes.learn.domain.models import LearningProgress
+
+        store = LearningStore(root=tmp_path)
+        progress = LearningProgress(book_id="g1", goal_name="001.md", source_kb="资料库")
+        store.save(progress)
+
+        adapter, _ = self._adapter(store=store)
+        from lumen.runtime.stream.bus import StreamBus
+
+        ctx = self._context("g1")
+        await adapter.handle_turn(ctx, StreamBus())
+        assert ctx.knowledge_bases == ["资料库"]
+
+    @pytest.mark.asyncio
+    async def test_legacy_goal_discovered_by_name(self, tmp_path, monkeypatch):
+        from lumen.modes.learn.adapters.storage import LearningStore
+        from lumen.modes.learn.domain.models import LearningProgress
+
+        store = LearningStore(root=tmp_path)
+        # Pre-binding goals have no source_kb; the fallback matches the goal
+        # name against knowledge-space document names.
+        store.save(LearningProgress(book_id="g2", goal_name="001.md"))
+
+        class FakeSources:
+            def list_knowledge_bases(self):
+                return ["资料库"]
+
+        monkeypatch.setattr(
+            "lumen.shared._util.user.resolve_kb_manifest",
+            lambda kb, **kw: type("M", (), {"matched": 1})(),
+        )
+
+        adapter, _ = self._adapter(store=store, knowledge_sources=FakeSources())
+        from lumen.runtime.stream.bus import StreamBus
+
+        ctx = self._context("g2")
+        await adapter.handle_turn(ctx, StreamBus())
+        assert ctx.knowledge_bases == ["资料库"]
+
+    @pytest.mark.asyncio
+    async def test_no_matching_material_leaves_kbs_unchanged(self, tmp_path, monkeypatch):
+        from lumen.modes.learn.adapters.storage import LearningStore
+        from lumen.modes.learn.domain.models import LearningProgress
+
+        store = LearningStore(root=tmp_path)
+        store.save(LearningProgress(book_id="g3", goal_name="no-such-file"))
+
+        class FakeSources:
+            def list_knowledge_bases(self):
+                return ["资料库"]
+
+        monkeypatch.setattr(
+            "lumen.shared._util.user.resolve_kb_manifest",
+            lambda kb, **kw: type("M", (), {"matched": 0})(),
+        )
+
+        adapter, _ = self._adapter(store=store, knowledge_sources=FakeSources())
+        from lumen.runtime.stream.bus import StreamBus
+
+        ctx = self._context("g3")
+        await adapter.handle_turn(ctx, StreamBus())
+        assert ctx.knowledge_bases == []
+
+    @pytest.mark.asyncio
+    async def test_stale_source_kb_is_not_mounted(self, tmp_path):
+        from lumen.modes.learn.adapters.storage import LearningStore
+        from lumen.modes.learn.domain.models import LearningProgress
+
+        store = LearningStore(root=tmp_path)
+        store.save(LearningProgress(book_id="g4", goal_name="001.md", source_kb="已删除的库"))
+
+        class FakeSources:
+            def list_knowledge_bases(self):
+                return ["资料库"]
+
+        adapter, _ = self._adapter(store=store, knowledge_sources=FakeSources())
+        from lumen.runtime.stream.bus import StreamBus
+
+        ctx = self._context("g4")
+        await adapter.handle_turn(ctx, StreamBus())
+        assert ctx.knowledge_bases == []
+
+    @pytest.mark.asyncio
+    async def test_missing_progress_does_not_break_turn(self, tmp_path):
+        from lumen.modes.learn.adapters.storage import LearningStore
+
+        adapter, _ = self._adapter(store=LearningStore(root=tmp_path))
+        from lumen.runtime.stream.bus import StreamBus
+
+        ctx = self._context("missing")
+        await adapter.handle_turn(ctx, StreamBus())
+        assert ctx.knowledge_bases == []
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 # 7. binding replaceability still holds in the full profile
 # ═══════════════════════════════════════════════════════════════════════════

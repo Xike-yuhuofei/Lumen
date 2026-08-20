@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Safely update a local DeepTutor git checkout.
+"""Safely update a local Lumen git checkout.
 
 The updater is intentionally conservative:
 1. Fetch the remote for the current branch.

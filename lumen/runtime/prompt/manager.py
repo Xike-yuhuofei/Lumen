@@ -42,8 +42,8 @@ class PromptManager:
         "chat",
     ]
 
-    # Modules that are not under deeptutor/agents/ directory
-    # Map module_name → on-disk path component under deeptutor/
+    # Modules that are not under lumen/agents/ directory
+    # Map module_name → on-disk path component under lumen/
     NON_AGENT_MODULES: dict[str, str] = {
         "book": "book",
         "capabilities": "capabilities",

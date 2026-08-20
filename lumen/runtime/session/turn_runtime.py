@@ -908,10 +908,128 @@ class TurnRuntimeManager:
                     break
             await self.store.delete_message(last_message["id"])
 
+        return await self._regenerate_from_user_message(
+            session, last_user, overrides, previous_turn_id
+        )
+
+    async def _require_regenerable_session(self, session_id: str) -> dict[str, Any]:
+        session_id = str(session_id or "").strip()
+        if not session_id:
+            raise RuntimeError("nothing_to_regenerate")
+        session = await self.store.get_session(session_id)
+        if session is None:
+            raise RuntimeError("nothing_to_regenerate")
+        active = await self.store.get_active_turn(session_id)
+        if active is not None:
+            raise RuntimeError("regenerate_busy")
+        return session
+
+    async def _regenerate_target(
+        self,
+        session: dict[str, Any],
+        messages: list[dict[str, Any]],
+        target: dict[str, Any],
+        overrides: dict[str, Any] | None,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        target_id = int(target["id"])
+        role = target.get("role")
+        if role == "user":
+            user_message = target
+        elif role == "assistant":
+            user_message = None
+            for m in reversed(messages):
+                if m.get("role") == "user" and int(m.get("id", 0)) < target_id:
+                    user_message = m
+                    break
+            if user_message is None:
+                raise RuntimeError("nothing_to_regenerate")
+        else:
+            raise RuntimeError("nothing_to_regenerate")
+
+        user_message_id = int(user_message["id"])
+        previous_turn_id: str | None = None
+        for m in messages:
+            if int(m.get("id", 0)) <= user_message_id:
+                continue
+            if previous_turn_id is None and m.get("role") == "assistant":
+                for event in m.get("events") or []:
+                    tid = str((event or {}).get("turn_id") or "")
+                    if tid:
+                        previous_turn_id = tid
+                        break
+            await self.store.delete_message(m["id"])
+
+        return await self._regenerate_from_user_message(
+            session, user_message, overrides, previous_turn_id
+        )
+
+    async def regenerate_turn(
+        self,
+        session_id: str,
+        message_id: int | str,
+        overrides: dict[str, Any] | None = None,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Re-run the turn that produced ``message_id``.
+
+        Locates the user message that started the target turn, deletes every
+        message after it (the target assistant reply and anything that
+        followed), and dispatches a fresh turn for that user message. This is
+        the "retry an arbitrary message" counterpart to
+        :meth:`regenerate_last_turn`: everything from the target turn onward
+        rolls back while the triggering user message stays in place.
+        """
+        session = await self._require_regenerable_session(session_id)
+        session_id = str(session_id or "").strip()
+        try:
+            target_id = int(message_id)
+        except (TypeError, ValueError):
+            raise RuntimeError("nothing_to_regenerate")
+
+        messages = await self.store.get_messages(session_id)
+        target = next((m for m in messages if m.get("id") == target_id), None)
+        if target is None:
+            raise RuntimeError("nothing_to_regenerate")
+
+        return await self._regenerate_target(session, messages, target, overrides)
+
+    async def regenerate_turn_at_index(
+        self,
+        session_id: str,
+        message_index: int | str,
+        overrides: dict[str, Any] | None = None,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Re-run the turn at ``message_index``.
+
+        ``message_index`` is the 0-based position of the target message within
+        the session's ordered message list — the fallback used when the client
+        knows only a position, not a persisted message id.
+        """
+        session = await self._require_regenerable_session(session_id)
+        session_id = str(session_id or "").strip()
+        try:
+            idx = int(message_index)
+        except (TypeError, ValueError):
+            raise RuntimeError("nothing_to_regenerate")
+
+        messages = await self.store.get_messages(session_id)
+        if idx < 0 or idx >= len(messages):
+            raise RuntimeError("nothing_to_regenerate")
+
+        return await self._regenerate_target(session, messages, messages[idx], overrides)
+
+    async def _regenerate_from_user_message(
+        self,
+        session: dict[str, Any],
+        user_message: dict[str, Any],
+        overrides: dict[str, Any] | None,
+        previous_turn_id: str | None,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Build and dispatch a regenerate turn from a stored user message."""
+        session_id = session["id"]
         preferences = session.get("preferences") or {}
         overrides = overrides or {}
         snapshot = {}
-        metadata = last_user.get("metadata") or {}
+        metadata = user_message.get("metadata") or {}
         if isinstance(metadata, dict):
             candidate = metadata.get("request_snapshot") or metadata.get("requestSnapshot")
             if isinstance(candidate, dict):
@@ -919,7 +1037,7 @@ class TurnRuntimeManager:
 
         capability = str(
             overrides.get("capability")
-            or last_user.get("capability")
+            or user_message.get("capability")
             or preferences.get("capability")
             or "chat"
         )
@@ -940,7 +1058,7 @@ class TurnRuntimeManager:
             {
                 "_persist_user_message": False,
                 "_regenerate": True,
-                "_regenerated_from_message_id": int(last_user["id"]),
+                "_regenerated_from_message_id": int(user_message["id"]),
             }
         )
         if previous_turn_id:
@@ -959,11 +1077,11 @@ class TurnRuntimeManager:
         payload: dict[str, Any] = {
             "session_id": session_id,
             "capability": capability,
-            "content": str(last_user.get("content", "") or ""),
+            "content": str(user_message.get("content", "") or ""),
             "tools": tools,
             "knowledge_bases": knowledge_bases,
             "language": language,
-            "attachments": list(last_user.get("attachments") or []),
+            "attachments": list(user_message.get("attachments") or []),
             "notebook_references": list(
                 overrides.get("notebook_references")
                 if overrides.get("notebook_references") is not None

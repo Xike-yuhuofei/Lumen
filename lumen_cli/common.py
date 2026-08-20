@@ -17,15 +17,15 @@ from rich.status import Status
 from rich.table import Table
 from rich.text import Text
 
-from lumen.app.facade import DeepTutorApp, TurnRequest
+from lumen.app.facade import LumenApp, TurnRequest
 
 from ._tool_result import ToolResultBuffer, ToolResultEntry
 
 console = Console()
 
 # Process-wide buffer that backs the ``/show`` REPL command. The buffer
-# lives at module scope so a single ``deeptutor chat`` session shares one
-# ring across turns; ``deeptutor run`` doesn't read it (single-shot mode),
+# lives at module scope so a single ``lumen chat`` session shares one
+# ring across turns; ``lumen run`` doesn't read it (single-shot mode),
 # but populating it is harmless.
 tool_results = ToolResultBuffer()
 
@@ -128,7 +128,7 @@ def parse_notebook_references(items: list[str]) -> list[dict[str, Any]]:
 
 async def run_turn_and_render(
     *,
-    app: DeepTutorApp,
+    app: LumenApp,
     request: TurnRequest,
     fmt: str,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -149,7 +149,7 @@ async def run_turn_and_render(
 
 async def regenerate_and_render(
     *,
-    app: DeepTutorApp,
+    app: LumenApp,
     session_id: str,
     capability: str = "chat",
     fmt: str = "rich",
@@ -182,7 +182,7 @@ async def regenerate_and_render(
     return session, turn
 
 
-async def stream_turn_as_json(*, app: DeepTutorApp, turn_id: str) -> None:
+async def stream_turn_as_json(*, app: LumenApp, turn_id: str) -> None:
     """NDJSON passthrough for ``--format json``.
 
     ``ask_user`` pauses are auto-resolved with an empty reply so headless
@@ -202,7 +202,7 @@ async def stream_turn_as_json(*, app: DeepTutorApp, turn_id: str) -> None:
             await app.submit_user_reply(turn_id, text="")
 
 
-async def render_turn_stream(*, app: DeepTutorApp, turn_id: str) -> str:
+async def render_turn_stream(*, app: LumenApp, turn_id: str) -> str:
     """Render a turn's event stream; returns a ``key=value`` summary suffix
     (rounds / tools / tokens / cost) for the caller's session line.
 
@@ -251,7 +251,7 @@ async def render_turn_stream(*, app: DeepTutorApp, turn_id: str) -> str:
 
 async def _cancel_interrupted_turn(
     *,
-    app: DeepTutorApp,
+    app: LumenApp,
     turn_id: str,
     renderer: "TurnStreamRenderer",
 ) -> None:
@@ -332,7 +332,7 @@ class TurnStreamRenderer:
     def __init__(
         self,
         *,
-        app: DeepTutorApp,
+        app: LumenApp,
         turn_id: str,
         sigint: _SigintInterceptor | None = None,
     ) -> None:

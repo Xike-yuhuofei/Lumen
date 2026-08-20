@@ -128,7 +128,7 @@ class BaseAgent(ABC):
 
         # Initialize logger
         logger_name = f"{module_name.capitalize()}.{agent_name}"
-        self.logger = logging.getLogger(f"deeptutor.{logger_name}")
+        self.logger = logging.getLogger(f"lumen.{logger_name}")
 
         # Load prompts using unified PromptManager
         try:

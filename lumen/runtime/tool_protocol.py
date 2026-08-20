@@ -5,7 +5,7 @@ Tool Protocol
 Base classes for the Tool layer (Level 1).
 Every tool — built-in or contributed via plugin — implements ``BaseTool``.
 
-Canonical home: ``lumen/runtime`` (migrated from ``deeptutor/core/tool_protocol``).
+Canonical home: ``lumen/runtime`` (migrated from ``lumen/core/tool_protocol``).
 """
 
 from __future__ import annotations

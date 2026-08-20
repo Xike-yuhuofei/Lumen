@@ -2,7 +2,7 @@
 
 Since Phase 6B2 (Worker A physical migration) this is the canonical ownership
 for streaming infrastructure (``StreamEvent`` / ``StreamBus``).  The legacy
-path ``deeptutor.core.stream`` / ``lumen.runtime.stream.bus`` re-exports it so
+path ``lumen.core.stream`` / ``lumen.runtime.stream.bus`` re-exports it so
 existing importers keep working.
 """
 

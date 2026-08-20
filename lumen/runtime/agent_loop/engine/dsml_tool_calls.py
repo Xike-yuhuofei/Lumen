@@ -1,7 +1,7 @@
 """Fallback parser for DeepSeek's text-format ("DSML") tool calls.
 
 Canonical home: ``lumen/runtime/agent_loop/engine/dsml_tool_calls`` (migrated
-from ``deeptutor/agents/chat/dsml_tool_calls``).
+from ``lumen/agents/chat/dsml_tool_calls``).
 
 Some DeepSeek deployments (notably local/source setups whose OpenAI-compatible
 endpoint doesn't advertise native function calling) emit tool calls as markup in

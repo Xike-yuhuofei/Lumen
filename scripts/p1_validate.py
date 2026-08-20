@@ -2,7 +2,7 @@
 
 Drives *real* Lumen sessions through the dev Active Provider
 (``agent_loop.langgraph_thin`` = P1, LangGraph Thin) using the real model and
-the real runtime stack (``DeepTutorApp`` facade → ``TurnRuntimeManager`` →
+the real runtime stack (``LumenApp`` facade → ``TurnRuntimeManager`` →
 ``runtime.agent_loop`` → P1 bridge), covering the workload matrix:
 
     single-turn / multi-turn / long-context / teaching (mode.learn) /
@@ -29,7 +29,7 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from lumen.app.facade import DeepTutorApp
+from lumen.app.facade import LumenApp
 from lumen.runtime.stream.events import StreamEventType
 
 # ── helpers ───────────────────────────────────────────────────────────────────
@@ -45,7 +45,7 @@ def _event_fields(event: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-async def _collect(app: DeepTutorApp, turn_id: str) -> list[dict[str, Any]]:
+async def _collect(app: LumenApp, turn_id: str) -> list[dict[str, Any]]:
     """Drain one turn's event stream to a list of plain dicts."""
     out: list[dict[str, Any]] = []
     async for item in app.stream_turn(turn_id):
@@ -78,14 +78,14 @@ def _status(events: list[dict[str, Any]]) -> str:
 class Scenario:
     name = ""
 
-    async def run(self, app: DeepTutorApp) -> dict[str, Any]:
+    async def run(self, app: LumenApp) -> dict[str, Any]:
         raise NotImplementedError
 
 
 class SingleTurnScenario(Scenario):
     name = "single_turn"
 
-    async def run(self, app: DeepTutorApp) -> dict[str, Any]:
+    async def run(self, app: LumenApp) -> dict[str, Any]:
         start = time.perf_counter()
         session, turn = await app.start_turn(
             {"content": "Reply with exactly: P1-SINGLE-OK", "capability": "chat", "language": "en"}
@@ -103,7 +103,7 @@ class SingleTurnScenario(Scenario):
 class MultiTurnScenario(Scenario):
     name = "multi_turn"
 
-    async def run(self, app: DeepTutorApp) -> dict[str, Any]:
+    async def run(self, app: LumenApp) -> dict[str, Any]:
         # Turn 1 establishes context; turn 2 must observe it via conversation history.
         session, turn1 = await app.start_turn(
             {
@@ -137,7 +137,7 @@ class MultiTurnScenario(Scenario):
 class LongContextScenario(Scenario):
     name = "long_context"
 
-    async def run(self, app: DeepTutorApp) -> dict[str, Any]:
+    async def run(self, app: LumenApp) -> dict[str, Any]:
         # A large user message + several turns approximates a long-context session.
         session_id = None
         long_text = " ".join(f"fact_{i}" for i in range(400))
@@ -179,7 +179,7 @@ class LongContextScenario(Scenario):
 class ToolCallScenario(Scenario):
     name = "tool_call"
 
-    async def run(self, app: DeepTutorApp) -> dict[str, Any]:
+    async def run(self, app: LumenApp) -> dict[str, Any]:
         # Enable a real tool (web_search) and ask a question that requires it.
         session, turn = await app.start_turn(
             {
@@ -205,7 +205,7 @@ class ToolCallScenario(Scenario):
 class LearnTurnScenario(Scenario):
     name = "teaching_mode_learn"
 
-    async def run(self, app: DeepTutorApp) -> dict[str, Any]:
+    async def run(self, app: LumenApp) -> dict[str, Any]:
         path_id = "p1-val-path"
         # Reset learner state for a deterministic run.
         try:
@@ -243,7 +243,7 @@ class LearnTurnScenario(Scenario):
 class InterruptResumeScenario(Scenario):
     name = "interrupt_resume"
 
-    async def run(self, app: DeepTutorApp) -> dict[str, Any]:
+    async def run(self, app: LumenApp) -> dict[str, Any]:
         # Drive ask_user pause/resume through the real reply-waiter path.
         # The turn task runs in the background; we iterate the single event
         # stream once and submit the reply as a side-effect the moment the
@@ -285,7 +285,7 @@ class InterruptResumeScenario(Scenario):
 class RegenerateScenario(Scenario):
     name = "retry_replay_regenerate"
 
-    async def run(self, app: DeepTutorApp) -> dict[str, Any]:
+    async def run(self, app: LumenApp) -> dict[str, Any]:
         session, turn1 = await app.start_turn(
             {"content": "Reply with exactly: FIRST-ANSWER", "capability": "chat", "language": "en"}
         )
@@ -307,7 +307,7 @@ class RegenerateScenario(Scenario):
 class CancelScenario(Scenario):
     name = "cancel"
 
-    async def run(self, app: DeepTutorApp) -> dict[str, Any]:
+    async def run(self, app: LumenApp) -> dict[str, Any]:
         session, turn = await app.start_turn(
             {
                 "content": "Write a very long essay about the history of the internet (keep going for a while).",
@@ -330,7 +330,7 @@ class CancelScenario(Scenario):
 class ToolErrorScenario(Scenario):
     name = "tool_error_recovery"
 
-    async def run(self, app: DeepTutorApp) -> dict[str, Any]:
+    async def run(self, app: LumenApp) -> dict[str, Any]:
         # Trigger a failing tool path: ask for a nonexistent KB via rag.
         session, turn = await app.start_turn(
             {
@@ -352,7 +352,7 @@ class ToolErrorScenario(Scenario):
 class LongRunningScenario(Scenario):
     name = "long_running"
 
-    async def run(self, app: DeepTutorApp) -> dict[str, Any]:
+    async def run(self, app: LumenApp) -> dict[str, Any]:
         # A multi-step task that forces several tool rounds (research-style):
         # exercises the loop over many agent ⇄ tools rounds without hanging.
         start = time.perf_counter()
@@ -383,7 +383,7 @@ class LongRunningScenario(Scenario):
 class TimeoutScenario(Scenario):
     name = "timeout_recovery"
 
-    async def run(self, app: DeepTutorApp) -> dict[str, Any]:
+    async def run(self, app: LumenApp) -> dict[str, Any]:
         # Timeout the turn's stream: if P1 hangs past a bounded wait, the
         # turn must still reconcile to a terminal status (not stay "running").
         session, turn = await app.start_turn(
@@ -445,7 +445,7 @@ async def run_all(summary_only: bool, only: set[str] | None = None) -> list[dict
     provider_id = profile.bindings.get("runtime.agent_loop", "legacy")
     print(f"ActiveProvider: {provider_id}  (profile bindings={profile.bindings})", flush=True)
 
-    app = DeepTutorApp()
+    app = LumenApp()
     results: list[dict[str, Any]] = []
     for name, cls in SCENARIOS.items():
         if only and name not in only:

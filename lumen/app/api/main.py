@@ -220,7 +220,7 @@ app = FastAPI(
     # Disable automatic trailing slash redirects to prevent protocol downgrade issues
     # when deployed behind HTTPS reverse proxies (e.g., nginx).
     # Without this, FastAPI's 307 redirects may change HTTPS to HTTP.
-    # See: https://github.com/HKUDS/DeepTutor/issues/112
+    # See: https://github.com/HKUDS/Lumen/issues/112
     redirect_slashes=False,
 )
 
@@ -231,17 +231,17 @@ app = FastAPI(
 # etc. — never reach the logs. Only non-200s are surfaced, since those are the
 # ones worth seeing.
 #
-# The `deeptutor.access` logger gets its own INFO stdout handler rather than
+# The `lumen.access` logger gets its own INFO stdout handler rather than
 # leaning on the root handlers: the root console handler runs at the global log
 # level (WARNING by default), which would swallow these INFO access lines.
 # propagate=False keeps them from also printing through root if the global
 # level is ever lowered to INFO/DEBUG.
-_access_logger = logging.getLogger("deeptutor.access")
-if not any(getattr(h, "_deeptutor_access_handler", False) for h in _access_logger.handlers):
+_access_logger = logging.getLogger("lumen.access")
+if not any(getattr(h, "_lumen_access_handler", False) for h in _access_logger.handlers):
     _access_handler = logging.StreamHandler(sys.stdout)
     _access_handler.setLevel(logging.INFO)
     _access_handler.setFormatter(logging.Formatter("%(message)s"))
-    _access_handler._deeptutor_access_handler = True  # type: ignore[attr-defined]
+    _access_handler._lumen_access_handler = True  # type: ignore[attr-defined]
     _access_logger.addHandler(_access_handler)
     _access_logger.setLevel(logging.INFO)
     _access_logger.propagate = False

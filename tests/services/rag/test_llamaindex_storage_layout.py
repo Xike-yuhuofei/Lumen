@@ -209,7 +209,7 @@ def test_bm25_persistence_drops_stale_sidecar_on_rebuild_failure(
 def test_retrieval_config_reads_profile_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
     from lumen.shared.knowledge.rag.pipelines.llamaindex import config as config_module
 
-    monkeypatch.setenv("DEEPTUTOR_RAG_RETRIEVAL_PROFILE", " vector ")
+    monkeypatch.setenv("LUMEN_RAG_RETRIEVAL_PROFILE", " vector ")
 
     config = config_module.retrieval_config_from_env()
 

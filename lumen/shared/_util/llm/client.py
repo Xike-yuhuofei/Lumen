@@ -2,7 +2,7 @@
 LLM Client
 ==========
 
-Unified LLM client for all DeepTutor services.
+Unified LLM client for all Lumen services.
 
 Note: This is a legacy interface. Prefer using the factory functions directly:
     from lumen.shared._util.llm import complete, stream

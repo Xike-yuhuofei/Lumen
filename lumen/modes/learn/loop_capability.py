@@ -1,7 +1,7 @@
 """Mastery path loop-capability hooks.
 
 Canonical home: ``lumen/modes/learn/loop_capability`` (migrated from
-``deeptutor/capabilities/mastery/loop``).  The legacy path re-exports these
+``lumen/capabilities/mastery/loop``).  The legacy path re-exports these
 for existing importers and tests only.
 """
 

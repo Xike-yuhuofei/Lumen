@@ -6,7 +6,7 @@ Async event channel that tools / capabilities emit into and consumers
 (CLI renderer, WebSocket pusher, JSON writer) read from.
 
 Owned by ``lumen/runtime/stream`` since Phase 6B2 (Worker A physical
-migration). The legacy ``deeptutor.core.stream_bus`` facade has been removed.
+migration). The legacy ``lumen.core.stream_bus`` facade has been removed.
 
 Usage::
 
@@ -37,7 +37,7 @@ def _merge_trace_metadata(
     """Shallow-merge trace metadata.
 
     Deferred import to avoid a potential import-time cycle when the
-    legacy ``deeptutor.core`` package is still being initialised.
+    legacy ``lumen.core`` package is still being initialised.
     """
     from .trace import merge_trace_metadata
 

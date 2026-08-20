@@ -1,4 +1,4 @@
-"""Branded banner + localized labels for ``deeptutor start`` / ``deeptutor init``.
+"""Branded banner + localized labels for ``lumen start`` / ``lumen init``.
 
 Both commands read the user's language preference from
 ``data/user/settings/interface.json`` (default ``en``) so their startup
@@ -85,7 +85,7 @@ LABELS: dict[str, dict[str, str]] = {
         "init.review_ports_value": "backend {backend}, frontend {frontend}",
         "init.confirm_save": "Save these settings?",
         "init.saved": "Settings saved. You can edit them later in the Web Settings page or data/user/settings/.",
-        "init.next_step": f"Run `deeptutor start` to launch {PRODUCT_NAME}.",
+        "init.next_step": f"Run `lumen start` to launch {PRODUCT_NAME}.",
         "init.choice": "Choice",
         "init.choice_invalid": "Invalid choice. Try again.",
         # start (launcher)
@@ -104,7 +104,7 @@ LABELS: dict[str, dict[str, str]] = {
         ),
         "start.frontend_restart_failed": (
             "Existing frontend at {url} is not responding and could not be stopped automatically. "
-            "Stop PID {pid} and run `deeptutor start` again."
+            "Stop PID {pid} and run `lumen start` again."
         ),
         "start.waiting_for": "Waiting for {name} at {url} ...",
         "start.ready": "{name} is ready.",
@@ -191,7 +191,7 @@ LABELS: dict[str, dict[str, str]] = {
         "init.review_ports_value": "后端 {backend},前端 {frontend}",
         "init.confirm_save": "确认保存以上配置?",
         "init.saved": "配置已保存。后续可在 Web 设置页或 data/user/settings/ 中修改。",
-        "init.next_step": f"运行 `deeptutor start` 启动 {PRODUCT_NAME}。",
+        "init.next_step": f"运行 `lumen start` 启动 {PRODUCT_NAME}。",
         "init.choice": "请选择",
         "init.choice_invalid": "无效选项,请重新输入。",
         # start (launcher)
@@ -208,7 +208,7 @@ LABELS: dict[str, dict[str, str]] = {
         "start.restarting_frontend": "已运行的前端 {url} 无响应,正在重启 (PID {pid})。",
         "start.frontend_restart_failed": (
             "已运行的前端 {url} 无响应,且无法自动停止。"
-            "请先停止 PID {pid},然后重新运行 `deeptutor start`。"
+            "请先停止 PID {pid},然后重新运行 `lumen start`。"
         ),
         "start.waiting_for": "正在等待 {name} ({url}) ...",
         "start.ready": "{name} 已就绪。",

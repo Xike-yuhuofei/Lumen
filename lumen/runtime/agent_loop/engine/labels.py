@@ -10,7 +10,7 @@ Label sets are caller-supplied: chat uses ``(FINISH, TOOL, THINK)``, a solve
 step uses ``(THINK, TOOL, FINISH, REPLAN)``, plan uses ``(PLAN,)``, etc.
 
 Canonical home: ``lumen/runtime/agent_loop/engine`` (migrated from
-``deeptutor/core/agentic/labels``).
+``lumen/core/agentic/labels``).
 """
 
 from __future__ import annotations

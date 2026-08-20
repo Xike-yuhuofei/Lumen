@@ -233,6 +233,11 @@ class LearningProgress(BaseModel):
     # goal creation and shown in the learning-space list, never used by the
     # teaching policy).
     description: str = ""
+    # The knowledge space (KB) that supplies this goal's learning material,
+    # set when the goal is created from a Library / knowledge-space item.
+    # Learn turns mount this KB so the tutor can teach from the material
+    # without the learner re-attaching the file. Empty → discover at turn time.
+    source_kb: str = ""
     current_module_id: str = ""
     current_stage: LearningStage = LearningStage.DIAGNOSTIC
     current_kp_index: int = 0

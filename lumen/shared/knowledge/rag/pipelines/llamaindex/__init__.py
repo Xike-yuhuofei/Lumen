@@ -1,6 +1,6 @@
 """LlamaIndex RAG pipeline implementation package.
 
-Submodule names resolve on demand so the legacy deeptutor
+Submodule names resolve on demand so the legacy lumen
 ``services.rag.pipelines.llamaindex`` compatibility facade reaches the
 canonical modules.
 """

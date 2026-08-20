@@ -6,7 +6,7 @@ Loads user-authored PERSONA.md files from ``data/user/workspace/personas/``.
 
 A persona is a behaviour/voice preset ("teacher", "peer", …) the user picks
 for a conversation. Unlike capability skills (see
-:mod:`deeptutor.services.skill`), a persona must shape the model's voice from
+:mod:`lumen.services.skill`), a persona must shape the model's voice from
 the very first token, so the selected persona's body is injected verbatim
 into the system prompt — eagerly, never on demand. Exactly one persona can
 be active per turn.

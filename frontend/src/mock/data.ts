@@ -47,11 +47,24 @@ export const taskTree: TaskNode[] = [
   },
 ]
 
+export interface QuizOption {
+  label: string
+  description?: string
+}
+
+export interface QuizQuestion {
+  id: string
+  prompt: string
+  options: QuizOption[]
+}
+
 export interface MessageBlock {
-  type: 'text' | 'code' | 'tool' | 'status'
+  type: 'text' | 'code' | 'tool' | 'status' | 'question'
   content: string
   lang?: string
   title?: string
+  /** Structured payload for ``question`` blocks (an ``ask_user`` quiz). */
+  question?: QuizQuestion
 }
 
 export interface ChatMessage {
@@ -61,6 +74,9 @@ export interface ChatMessage {
   time: string
   blocks: MessageBlock[]
   attachments?: string[]
+  /** Backend message row id, populated for persisted messages. Used to target
+   *  a specific turn when retrying (regenerating) an assistant reply. */
+  serverMessageId?: number
 }
 
 export const initialMessages: ChatMessage[] = [

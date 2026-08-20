@@ -1,6 +1,6 @@
 """Trace helpers for rendering structured execution timelines in the UI.
 
-Canonical implementation — ``deeptutor.core.trace`` re-exports this module
+Canonical implementation — ``lumen.core.trace`` re-exports this module
 for legacy importers.
 """
 
