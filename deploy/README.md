@@ -61,10 +61,14 @@ pip install -e ".[server]"
 python3 -m venv .venv
 source .venv/bin/activate
 pip install dist/lumen-2.0.0-py3-none-any.whl
+# Optional: enable OTLP protobuf export to Phoenix / OTel Collector
+pip install "lumen[otel]"
 ```
 
 > The wheel is built with the packaged frontend (`lumen_web`), so no Node.js is
-> needed at runtime.
+> needed at runtime. `langgraph`/`langchain-core` are runtime deps (production
+> default P1 agent loop). `opentelemetry-proto` is optional via `lumen[otel]` —
+> required only when `LUMEN_OTEL_ENCODING=protobuf`.
 
 ---
 
