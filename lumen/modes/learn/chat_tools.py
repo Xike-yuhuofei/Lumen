@@ -296,9 +296,15 @@ def _json_result(payload: dict[str, Any], *, meta_key: str, success: bool = True
 
 
 def _no_path_result() -> ToolResult:
+    """Designed business failure: a mastery tool invoked with no active path.
+
+    Marked ``expected_failure`` so these normal outcomes in general
+    conversations never pollute the Tool SLI (which tracks real faults).
+    """
     return ToolResult(
         content="No mastery path is active on this turn; mastery tools are unavailable.",
         success=False,
+        expected_failure=True,
     )
 
 
@@ -530,19 +536,21 @@ class MasteryQuizTool(BaseTool):
             return ToolResult(
                 content="mastery_quiz needs knowledge_point_id, question, and expected_answer.",
                 success=False,
+                expected_failure=True,
             )
         try:
             q_type, options, expected = _normalize_quiz_contract(
                 kwargs.get("question_type"), kwargs.get("options"), expected
             )
         except ValueError as exc:
-            return ToolResult(content=str(exc), success=False)
+            return ToolResult(content=str(exc), success=False, expected_failure=True)
         question_kind = str(kwargs.get("question_kind") or "recall").strip().lower()
         if question_kind not in _QUESTION_KINDS:
             allowed = ", ".join(_QUESTION_KINDS)
             return ToolResult(
                 content=f"mastery_quiz.question_kind must be one of: {allowed}.",
                 success=False,
+                expected_failure=True,
             )
 
         service = _new_service()
@@ -552,6 +560,7 @@ class MasteryQuizTool(BaseTool):
             return ToolResult(
                 content=f"Unknown objective {kp_id!r}; call mastery_status for valid ids.",
                 success=False,
+                expected_failure=True,
             )
         pending = PendingQuestion(
             question_id=uuid.uuid4().hex,
@@ -642,6 +651,7 @@ class MasteryGradeTool(BaseTool):
             return ToolResult(
                 content="No question is awaiting an answer. Pose one with mastery_quiz first.",
                 success=False,
+                expected_failure=True,
             )
         submitted_question_id = str(kwargs.get("question_id") or "").strip()
         if submitted_question_id and submitted_question_id != pending.question_id:
@@ -651,6 +661,7 @@ class MasteryGradeTool(BaseTool):
                     f"call mastery_status and answer {pending.question_id!r}."
                 ),
                 success=False,
+                expected_failure=True,
             )
         choice_options: dict[str, str] = {}
         expected_answer = pending.expected_answer
@@ -755,7 +766,11 @@ class MasteryAssessTool(BaseTool):
             return _no_path_result()
         kp_id = str(kwargs.get("knowledge_point_id") or "").strip()
         if not kp_id:
-            return ToolResult(content="mastery_assess needs a knowledge_point_id.", success=False)
+            return ToolResult(
+                content="mastery_assess needs a knowledge_point_id.",
+                success=False,
+                expected_failure=True,
+            )
         passed = bool(kwargs.get("passed"))
         feedback = str(kwargs.get("feedback") or "").strip()
 
@@ -766,6 +781,7 @@ class MasteryAssessTool(BaseTool):
             return ToolResult(
                 content=f"Unknown objective {kp_id!r}; call mastery_status for valid ids.",
                 success=False,
+                expected_failure=True,
             )
         if kp.type not in QUALITATIVE_TYPES:
             return ToolResult(
@@ -774,6 +790,7 @@ class MasteryAssessTool(BaseTool):
                     "mastery_quiz + mastery_grade, not mastery_assess."
                 ),
                 success=False,
+                expected_failure=True,
             )
         from lumen.modes.learn.policy.scheduler import SpacedRepetitionScheduler
 
@@ -882,7 +899,7 @@ class MasteryBuildTool(BaseTool):
         offset = len(progress.modules) if mode == "append" else 0
         new_modules, error = _parse_modules(kwargs.get("modules"), path_id, offset)
         if error:
-            return ToolResult(content=error, success=False)
+            return ToolResult(content=error, success=False, expected_failure=True)
 
         combined = (list(progress.modules) + new_modules) if mode == "append" else new_modules
         service.replace_modules(progress, combined)
@@ -1044,6 +1061,7 @@ class MasteryGoalTool(BaseTool):
                     return ToolResult(
                         content="mastery_goal.scope_kp_ids must be an array of objective ids.",
                         success=False,
+                        expected_failure=True,
                     )
                 scope = [kp_id.strip() for kp_id in raw_scope if kp_id.strip() in known]
                 dropped = len(raw_scope) - len(scope)

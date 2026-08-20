@@ -152,8 +152,12 @@ class ScopedToolRegistry:
                 else:
                     result = await overlay_tool.execute(**kwargs)
                 if getattr(result, "success", True) is False:
-                    sp.attrs["status"] = "error"
-                    increment("tool.errors")
+                    if getattr(result, "expected_failure", False):
+                        sp.attrs["status"] = "business_failure"
+                        increment("tool.expected_errors")
+                    else:
+                        sp.attrs["status"] = "error"
+                        increment("tool.errors")
                 return result
 
         # Shared path: resolve through the base registry so tool aliases keep

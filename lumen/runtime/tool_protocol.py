@@ -132,6 +132,13 @@ class ToolResult:
             for chip rendering).
         success: ``False`` marks an explicit failure path; the LLM is
             still allowed to read ``content`` (often an error message).
+        expected_failure: ``True`` (only meaningful with ``success=False``)
+            marks a *designed business outcome* — the tool executed its
+            logic and determined the request does not apply to the current
+            business state (e.g. a mastery tool invoked when no mastery path
+            is active). Expected failures are counted separately
+            (``tool.expected_errors``) and never against the Tool SLO; only
+            real faults (exceptions / unexpected ``success=False``) are.
         terminate_turn: When ``True`` the agentic chat loop must stop
             iterating after dispatching this tool, treating the tool's
             output as the assistant's final turn artefact. Reserved for
@@ -151,6 +158,7 @@ class ToolResult:
     sources: list[dict[str, Any]] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
     success: bool = True
+    expected_failure: bool = False
     terminate_turn: bool = False
     pause_for_user: dict[str, Any] | None = None
 

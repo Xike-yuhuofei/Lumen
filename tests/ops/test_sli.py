@@ -59,9 +59,29 @@ def test_compute_sli_llm_tool_retrieval() -> None:
     assert abs(computed["llm"]["error_rate"] - 0.03) < 1e-9
     assert computed["llm"]["p95_s"] == 1.2
     assert abs(computed["tool"]["error_rate"] - 0.10) < 1e-9
+    assert computed["tool"]["expected"] == 0
     assert abs(computed["retrieval"]["error_rate"] - 0.10) < 1e-9
     # no telemetry exporters -> no errors
     assert computed["telemetry"]["export_errors"] == 0
+
+
+def test_compute_sli_tool_expected_failures_are_separate() -> None:
+    """Designed business failures never pollute the Tool error rate."""
+    snap = _snap(
+        {
+            "tool.total": 50,
+            "tool.errors": 2,
+            "tool.expected_errors": 30,
+        },
+        {"tool.latency": _p95_hist(0.8)},
+    )
+    tool = compute_sli(snap)["tool"]
+    assert tool["errors"] == 2
+    assert tool["expected"] == 30
+    assert abs(tool["error_rate"] - 2 / 50) < 1e-9  # real faults / all executions
+    slo = SLOConfig(tool_error_max=0.10, warn_factor=0.5)
+    # real-fault rate 0.04 is comfortably ok despite 60% expected failures
+    assert evaluate_sli("tool", tool, slo)["status"] == SLI_STATUS_OK
 
 
 def test_compute_sli_telemetry_export_errors() -> None:

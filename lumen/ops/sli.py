@@ -189,6 +189,10 @@ def compute_sli(snapshot: MetricsSnapshot) -> dict[str, Any]:
         "tool": {
             "total": counters.get("tool.total", 0),
             "errors": counters.get("tool.errors", 0),
+            # Designed business outcomes (e.g. a mastery tool invoked without
+            # an active path) are reported for transparency but never counted
+            # against the Tool SLO — only real faults drive ``error_rate``.
+            "expected": counters.get("tool.expected_errors", 0),
             "error_rate": _rate(counters.get("tool.errors", 0), counters.get("tool.total", 0)),
             "p95_s": _p95(histograms.get("tool.latency")),
         },

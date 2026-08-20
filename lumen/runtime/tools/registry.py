@@ -149,8 +149,16 @@ class ToolRegistry:
         ) as sp:
             result = await tool.execute(**resolved_kwargs)
             if getattr(result, "success", True) is False:
-                sp.attrs["status"] = "error"
-                increment("tool.errors")
+                if getattr(result, "expected_failure", False):
+                    # Designed business outcome (e.g. mastery tool invoked
+                    # without an active path): a real fault, but not an
+                    # infrastructure error — tracked separately, never against
+                    # the Tool SLO.
+                    sp.attrs["status"] = "business_failure"
+                    increment("tool.expected_errors")
+                else:
+                    sp.attrs["status"] = "error"
+                    increment("tool.errors")
         return result
 
 

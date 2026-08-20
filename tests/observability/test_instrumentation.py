@@ -70,15 +70,18 @@ def test_agentic_client_llm_seam_is_idempotent():
 
 
 class _DummyTool(BaseTool):
-    def __init__(self, name: str, success: bool = True) -> None:
+    def __init__(self, name: str, success: bool = True, expected_failure: bool = False) -> None:
         self._name = name
         self._success = success
+        self._expected_failure = expected_failure
 
     def get_definition(self) -> ToolDefinition:
         return ToolDefinition(name=self._name, description="dummy")
 
     async def execute(self, **kwargs) -> ToolResult:
-        return ToolResult(content="ok", success=self._success)
+        return ToolResult(
+            content="ok", success=self._success, expected_failure=self._expected_failure
+        )
 
 
 def test_tool_execution_records_span_and_metrics():
@@ -101,6 +104,25 @@ def test_tool_failure_records_error_metric():
     assert result.success is False
     snap = get_metrics().snapshot()
     assert snap.counters.get("tool.errors", 0) >= 1
+
+
+def test_tool_expected_failure_counts_separately_not_as_error():
+    """Designed business failures never pollute the Tool error metric."""
+    from lumen.runtime.tools.registry import ToolRegistry
+
+    registry = ToolRegistry()
+    registry.register(_DummyTool("no_path", success=False, expected_failure=True))
+    registry.register(_DummyTool("real_fault", success=False))
+    result = asyncio.run(registry.execute("no_path"))
+    assert result.success is False and result.expected_failure is True
+    asyncio.run(registry.execute("real_fault"))
+    snap = get_metrics().snapshot()
+    # the expected business outcome is tracked separately; only the real fault
+    # increments ``tool.errors``.
+    assert snap.counters.get("tool.expected_errors", 0) >= 1
+    assert snap.counters.get("tool.errors", 0) >= 1
+    assert snap.counters["tool.expected_errors"] == 1
+    assert snap.counters["tool.errors"] == 1
 
 
 def test_tool_exception_propagates_and_counts_error():
