@@ -30,3 +30,8 @@ croniter>=6.0.0,<7.0.0
 # Process-tree memory readings behind /api/v1/system/memory. Imported lazily
 # with a /proc fallback, so it is soft rather than required.
 psutil>=5.9.0,<8.0.0
+
+# --- Optional OTLP protobuf encoding (Phoenix / OTel Collector) ---
+# Required only when LUMEN_OTEL_ENCODING=protobuf is used. Default (json) is
+# zero-dependency.
+# opentelemetry-proto>=1.25,<2.0

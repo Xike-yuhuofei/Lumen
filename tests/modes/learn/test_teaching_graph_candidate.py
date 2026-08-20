@@ -95,7 +95,9 @@ def _ctx(mastery=True):
     return ctx
 
 
-def _run_graph(graph, *, path_id, stream, agent, resume_input=None, execute_gen="exec-1", op="start"):
+def _run_graph(
+    graph, *, path_id, stream, agent, resume_input=None, execute_gen="exec-1", op="start"
+):
     ctx = _ctx()
     return asyncio.run(
         graph.run_turn(
@@ -236,7 +238,9 @@ def test_evidence_decision_id_rides_the_pose_decision_lineage(tmp_path):
     )
     store.save(progress)
     graph = _graph(tmp_path, store)
-    _run_graph(graph, path_id="p3", stream=_FakeStream(), agent=_FakeAgentLoop(), resume_input="yes")
+    _run_graph(
+        graph, path_id="p3", stream=_FakeStream(), agent=_FakeAgentLoop(), resume_input="yes"
+    )
 
     # Inspect the authoritative evidence ledger directly.
     ledger = []
@@ -289,7 +293,11 @@ def test_crash_after_grade_replays_idempotently_no_dup_effect(tmp_path):
         expected_learner_version=store.current_version("p4"),
         proposed_state=state,
         evidence=[ev],
-        decision={"decision_id": "dec-1", "policy_version": "teaching-engine:v1", "action": "assess"},
+        decision={
+            "decision_id": "dec-1",
+            "policy_version": "teaching-engine:v1",
+            "action": "assess",
+        },
         decision_id="dec-1",
     )
     svc = DomainCommitService(store._repo)
@@ -318,7 +326,9 @@ def test_pose_represents_open_pending_question_and_parks(tmp_path):
     # A pending question with no incoming answer stays on the graph's quest
     # node (RESOLVE_PENDING) and is presented again — a parked continuation.
     store = LearningStore(tmp_path)
-    progress, kp = _make_progress("p5", kp_desc="photosynthesis converts light into chemical energy")
+    progress, kp = _make_progress(
+        "p5", kp_desc="photosynthesis converts light into chemical energy"
+    )
     progress.pending_question = PendingQuestion(
         question_id="pending-1",
         knowledge_point_id=kp.id,

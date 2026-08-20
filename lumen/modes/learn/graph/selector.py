@@ -30,9 +30,9 @@ def route_learn_turn(*, context) -> str:
     turns return ``"hook"`` (a no-op route kept for the generic path's contract;
     it is never selected for Learn turns).
     """
-    is_learn = bool(getattr(getattr(context, "metadata", None), "get", lambda *a: False)(
-        "mastery_mode", False
-    ))
+    is_learn = bool(
+        getattr(getattr(context, "metadata", None), "get", lambda *a: False)("mastery_mode", False)
+    )
     return "graph" if is_learn else "hook"
 
 
