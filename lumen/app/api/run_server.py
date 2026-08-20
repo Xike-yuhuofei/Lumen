@@ -36,10 +36,12 @@ def main() -> None:
     from lumen.app.mode import RunMode, set_mode
     from lumen.app.setup import get_backend_port
     from lumen.shared._util.logging import configure_logging
+    from lumen.shared._util.observability import configure as configure_observability
     from lumen.shared.config import HTTP_KEEP_ALIVE_TIMEOUT, get_ws_max_size
 
     set_mode(RunMode.SERVER)
     configure_logging()
+    configure_observability()
     backend_port = get_backend_port(project_root)
 
     # Configure reload_excludes to skip directories that shouldn't trigger reloads

@@ -10,10 +10,11 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 import json
 import logging
 from pathlib import Path
+import time
 from typing import Any, Iterator
 
 from lumen.shared.memory.ids import new_trace_id
@@ -23,6 +24,12 @@ logger = logging.getLogger(__name__)
 
 _locks: dict[str, asyncio.Lock] = {}
 
+#: Default retention for L1 trace files (days). Old files are pruned once per
+#: day during ``append``; pruned files are never resurrected.
+RETENTION_DAYS = 30
+_prune_lock = asyncio.Lock()
+_prune_date: date | None = None
+
 
 def _lock_for(surface: Surface) -> asyncio.Lock:
     lock = _locks.get(surface)
@@ -30,6 +37,33 @@ def _lock_for(surface: Surface) -> asyncio.Lock:
         lock = asyncio.Lock()
         _locks[surface] = lock
     return lock
+
+
+async def _prune_if_due() -> None:
+    """Delete per-surface trace files older than :data:`RETENTION_DAYS`.
+
+    Runs at most once per UTC day, guarded by an asyncio lock. Best-effort —
+    a failure must never break the producing surface.
+    """
+    global _prune_date
+    today = date.today()
+    if _prune_date == today:
+        return
+    async with _prune_lock:
+        if _prune_date == today:
+            return
+        _prune_date = today
+        cutoff = time.time() - RETENTION_DAYS * 86400
+        for surface in SURFACES:
+            try:
+                for path in trace_dir(surface).glob("*.jsonl"):
+                    try:
+                        if path.stat().st_mtime < cutoff:
+                            path.unlink(missing_ok=True)
+                    except OSError:
+                        continue
+            except OSError:
+                continue
 
 
 @dataclass
@@ -66,6 +100,7 @@ class TraceEvent:
 async def append(event: TraceEvent) -> None:
     """Append one event to today's surface trace file. Never raises."""
     try:
+        await _prune_if_due()
         path = trace_file(event.surface, datetime.now(tz=timezone.utc).date())
         line = json.dumps(asdict(event), ensure_ascii=False, separators=(",", ":"))
         async with _lock_for(event.surface):

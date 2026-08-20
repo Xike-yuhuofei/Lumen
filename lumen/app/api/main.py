@@ -7,6 +7,13 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from lumen.shared._util.brand import PRODUCT_NAME
 from lumen.shared._util.logging import configure_logging
+from lumen.shared._util.observability import (
+    begin_request,
+    end_request,
+)
+from lumen.shared._util.observability import (
+    configure as configure_observability,
+)
 from lumen.shared._util.path_service import get_path_service
 from lumen.shared.config import (
     ensure_runtime_settings_files,
@@ -19,6 +26,9 @@ from lumen.shared.config.origins import normalize_origins
 ensure_runtime_settings_files()
 export_runtime_settings_to_env(overwrite=True)
 configure_logging()
+# Local telemetry backend (span JSONL + retention). No-op when disabled —
+# telemetry must never become a hard dependency of the server.
+configure_observability()
 logger = logging.getLogger(__name__)
 
 
@@ -259,6 +269,25 @@ async def selective_access_log(request, call_next):
             request.scope.get("http_version", "1.1"),
             response.status_code,
         )
+    return response
+
+
+@app.middleware("http")
+async def request_id_context(request, call_next):
+    """Bind one request_id per HTTP request and echo it on the response.
+
+    The id is pinned into the telemetry + logging context for the whole
+    request, so REST logs (including the selective access log above) can be
+    correlated back to a single request. Turns started inside this scope
+    (WS/CLI/SDK) inherit the request_id via contextvars copy.
+    """
+    request_id = request.headers.get("X-Request-ID") or None
+    token = begin_request(request_id)
+    try:
+        response = await call_next(request)
+    finally:
+        end_request(token)
+    response.headers.setdefault("X-Request-ID", request_id or "")
     return response
 
 

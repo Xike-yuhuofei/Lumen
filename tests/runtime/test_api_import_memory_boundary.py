@@ -40,4 +40,9 @@ print(json.dumps(loaded))
         text=True,
     )
 
-    assert json.loads(result.stdout) == []
+    # With the production default log level at INFO, the module-import console
+    # logger may print INFO lines (e.g. "CORS configured: …") before the JSON
+    # payload. Parse the last stdout line — the probe's JSON array — so the
+    # assertion stays about cold-loaded heavy deps, not stdout purity.
+    payload = json.loads(result.stdout.strip().splitlines()[-1])
+    assert payload == []

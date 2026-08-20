@@ -21,6 +21,12 @@ from lumen.runtime.session.protocol import SessionStoreProtocol
 from lumen.runtime.stream.bus import StreamBus, register_bus, unregister_bus
 from lumen.runtime.stream.events import StreamEvent, StreamEventType
 from lumen.shared._util.llm.utils import clean_thinking_tags
+from lumen.shared._util.observability import (
+    begin_span,
+    finish_span,
+    new_trace_id,
+    trace_span,
+)
 from lumen.shared._util.path_service import get_path_service
 
 if TYPE_CHECKING:
@@ -1421,7 +1427,19 @@ class TurnRuntimeManager:
         async def _run() -> None:
             status = "completed"
             try:
-                await agent_loop.run(context=context, stream=bus, language=context.language)
+                # Provider-agnostic agent-loop root span: wraps the
+                # ``runtime.agent_loop`` contract so the same span shape is
+                # produced regardless of the active provider (P0 legacy / P1
+                # langgraph_thin). Nests under the turn span opened in
+                # ``_run_turn`` (see Observability Architecture v1).
+                with trace_span(
+                    "agent_loop",
+                    kind="agent_loop",
+                    bind={"capability": str(context.active_capability or "chat")},
+                ):
+                    await agent_loop.run(
+                        context=context, stream=bus, language=context.language
+                    )
             except asyncio.CancelledError:
                 raise
             except Exception as exc:
@@ -1486,6 +1504,12 @@ class TurnRuntimeManager:
         stream_done_sent = False
         llm_scope_token: Token[LLMConfig | None] | None = None
         reset_active_llm_selection: Callable[[Token[LLMConfig | None] | None], None] | None = None
+        # Observability: one telemetry turn-span per turn. begin_span pins
+        # trace_id / span_id / turn_id / session_id into the logging context
+        # for the whole turn, so every log record inside it correlates back to
+        # the same trace (see Observability Architecture v1).
+        telemetry_span: Any = None
+        telemetry_token: Any = None
         # One queue per turn for ``ask_user`` style pause-resume.
         # Created here (BEFORE the agent loop runs) so the pipeline can
         # await on the awaitable we publish into ``context.metadata``.
@@ -1497,6 +1521,16 @@ class TurnRuntimeManager:
             return await reply_queue.get()
 
         try:
+            telemetry_span, telemetry_token = begin_span(
+                "turn",
+                kind="turn",
+                trace_id=new_trace_id(),
+                bind={
+                    "turn_id": turn_id,
+                    "session_id": session_id,
+                    "capability": capability_name,
+                },
+            )
             from lumen.runtime.agents.notebook import NotebookAnalysisAgent
             from lumen.runtime.context import Attachment, UnifiedContext
             from lumen.runtime.session.context_builder import ContextBuilder
@@ -2138,6 +2172,11 @@ class TurnRuntimeManager:
                     await self._flush_buffered_events(execution)
                 await self.store.update_turn_status(turn_id, "failed", str(exc))
         finally:
+            # Close the telemetry turn-span (records duration + restores the
+            # pre-turn logging context). Safe on every exit path, including
+            # cancellation and exceptions.
+            if telemetry_span is not None:
+                finish_span(telemetry_span, telemetry_token)
             if llm_scope_token is not None and reset_active_llm_selection is not None:
                 reset_active_llm_selection(llm_scope_token)
             # Drop the reply queue first — any in-flight ``submit_user_reply``

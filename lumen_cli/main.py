@@ -9,6 +9,7 @@ import typer
 from lumen.app.mode import RunMode, set_mode
 from lumen.shared._util.brand import PRODUCT_NAME
 from lumen.shared._util.logging import configure_logging
+from lumen.shared._util.observability import configure as configure_observability
 
 from .chat import register as register_chat
 from .common import build_turn_request, console, maybe_run
@@ -18,6 +19,7 @@ from .session_cmd import register as register_session
 
 set_mode(RunMode.CLI)
 configure_logging()
+configure_observability()
 
 app = typer.Typer(
     name="lumen",

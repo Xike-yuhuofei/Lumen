@@ -41,6 +41,8 @@ from typing import Any
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
+from lumen.shared._util.observability import begin_request, end_request
+
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
@@ -55,6 +57,10 @@ async def unified_websocket(ws: WebSocket) -> None:
         return
 
     await ws.accept()
+    # One request_id per WS connection. Contextvars copy into the turn task at
+    # ``start_turn``'s ``create_task`` (Python >= 3.11), so the turn span and
+    # every log record under it carry this request_id.
+    req_token = begin_request()
     closed = False
     subscription_tasks: dict[str, asyncio.Task[None]] = {}
 
@@ -348,5 +354,6 @@ async def unified_websocket(ws: WebSocket) -> None:
         closed = True
         for key in list(subscription_tasks.keys()):
             await stop_subscription(key)
+        end_request(req_token)
         if user_token is not None:
             reset_current_user(user_token)
