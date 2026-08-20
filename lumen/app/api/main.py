@@ -438,6 +438,51 @@ async def health():
     }
 
 
+@app.get("/api/v1/health/detailed")
+async def health_detailed():
+    """Unauthenticated SLI/SLO + capacity monitoring probe (Production Ops).
+
+    Extends the basic probe with the Production Operations health report: the
+    aggregated SLIs for the Turn / LLM / Tool / Retrieval / Persistence /
+    Telemetry links, the SLO thresholds applied, the local telemetry pipeline
+    freshness, and the runtime data-tree capacity & retention status.
+
+    This endpoint exposes only aggregated counters, rates, thresholds and
+    directory sizes — never user content, prompts, responses or credentials.
+    It is the primary data source for continuous health monitoring and
+    incident discovery.
+    """
+    from lumen.__version__ import __version__
+    from lumen.ops.monitor import build_health_report
+    from lumen.shared._util.observability import get_metrics
+    from lumen.shared._util.path_service import get_path_service
+
+    persistence_ok = False
+    try:
+        from lumen.runtime.session.sqlite_store import get_sqlite_session_store
+
+        store = get_sqlite_session_store()
+        if store is not None:
+            persistence_ok = bool(await store.ping())
+    except Exception:
+        persistence_ok = False
+
+    path_service = None
+    try:
+        path_service = get_path_service()
+    except Exception:
+        path_service = None
+
+    report = build_health_report(
+        snapshot=get_metrics().snapshot(),
+        persistence_ok=persistence_ok,
+        path_service=path_service,
+    )
+    report["service"] = PRODUCT_NAME
+    report["version"] = __version__
+    return report
+
+
 if __name__ == "__main__":
     from lumen.app.api.run_server import main as run_server_main
 

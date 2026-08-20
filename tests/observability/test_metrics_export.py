@@ -67,6 +67,29 @@ def test_summary_exporter_ignores_spans(tmp_path):
     assert list(tmp_path.glob("*.jsonl")) == []
 
 
+def test_summary_exporter_prunes_stale_files(tmp_path):
+    """Metrics summaries older than the retention window are pruned once/day,
+    so the local metrics output stays bounded (documented 7-day lifecycle)."""
+    import os
+    import time as _time
+
+    exporter = MetricsSummaryExporter(out_dir=tmp_path, retention_days=7)
+    stale = tmp_path / "old-stale.jsonl"
+    stale.write_text("old")
+    old = _time.time() - 8 * 86400
+    os.utime(stale, (old, old))
+    # a fresh file is also present and must survive
+    fresh = tmp_path / "keep.jsonl"
+    fresh.write_text("new")
+
+    assert exporter.export_metrics(get_metrics().snapshot()) is True
+    assert not stale.exists(), "stale metrics summary should be pruned"
+    assert fresh.exists(), "fresh file must survive pruning"
+    assert (
+        exporter.export_metrics(get_metrics().snapshot()) is True
+    )  # idempotent, no re-prune error
+
+
 def test_background_flusher_ticks(tmp_path):
     """Periodic flusher drains span batches + metrics summaries on schedule."""
     from lumen.shared._util.observability import ExportConfig, configure_export

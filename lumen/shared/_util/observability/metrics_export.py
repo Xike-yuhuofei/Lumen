@@ -17,8 +17,10 @@ from datetime import date, datetime, timezone
 import json
 from pathlib import Path
 import threading
+import time
 from typing import Any
 
+from .backend import DEFAULT_TELEMETRY_RETENTION_DAYS
 from .exporter import TelemetryExporter
 from .metrics import MetricsSnapshot
 
@@ -32,11 +34,21 @@ class MetricsSummaryExporter(TelemetryExporter):
     ``out_dir`` defaults to the path service logs directory (``telemetry/
     metrics``). All I/O is best-effort — failures return ``False`` and are
     counted by the dispatcher, never raised into the producer.
+
+    Retention: summary files older than ``retention_days`` are pruned once per
+    day (same policy as the local span backend), so the local metrics output
+    stays bounded.
     """
 
-    def __init__(self, out_dir: str | Path | None = None) -> None:
+    def __init__(
+        self,
+        out_dir: str | Path | None = None,
+        retention_days: int = DEFAULT_TELEMETRY_RETENTION_DAYS,
+    ) -> None:
         self._out_dir: str | Path | None = out_dir
+        self._retention_days = max(1, int(retention_days))
         self._lock = threading.Lock()
+        self._prune_date: date | None = None
 
     def _resolve_dir(self) -> Path | None:
         if self._out_dir is not None:
@@ -48,12 +60,29 @@ class MetricsSummaryExporter(TelemetryExporter):
         except Exception:  # pragma: no cover - environment dependent
             return None
 
+    def _prune_if_due(self, base: Path) -> None:
+        today = date.today()
+        if self._prune_date == today:
+            return
+        with self._lock:
+            if self._prune_date == today:
+                return
+            self._prune_date = today
+            cutoff = time.time() - self._retention_days * 86400
+            try:
+                for path in base.glob("*.jsonl"):
+                    if path.stat().st_mtime < cutoff:
+                        path.unlink(missing_ok=True)
+            except OSError:
+                pass
+
     def export_metrics(self, snapshot: MetricsSnapshot) -> bool:
         base = self._resolve_dir()
         if base is None:
             return False
         try:
             base.mkdir(parents=True, exist_ok=True)
+            self._prune_if_due(base)
             payload: dict[str, Any] = {
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "counters": snapshot.counters,

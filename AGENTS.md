@@ -29,6 +29,19 @@ A/B parity 证据保留在 `tests/modes/learn/eval/bakeoff/out_phase*/` 归档�
 效果 parity 仍稳定（A/B 逐字相等）。重新评估此决策需新证据（见
 `ARCHITECTURE_V1.md` §6）。
 
+**Production Operations — 决策冻结 (2026-08-20)：PRODUCTION OPERATIONS BASELINE。**
+Lumen 2.0.0（commit `4b553e33`，tag `v2.0.0` = `production-release-v1`）的生产
+运维状态已冻结为 **Production Operations Baseline**。新增运维能力：
+- **SLI/SLO 监测**：`lumen/ops/`（`sli.py`/`capacity.py`/`monitor.py`）+ 无鉴权
+  `GET /api/v1/health/detailed`（Turn/LLM/Tool/Retrieval/Persistence/Telemetry
+  六链路 SLI + 容量/保留），阈值经 `LUMEN_SLO_*` 环境变量配置。
+- **运维 CLI**：`lumenctl sli`、`lumenctl health --detailed`。
+- **备份/恢复**：`deploy/lumen-backup`（SQLite 在线一致性快照 + sha256 manifest +
+  轮换）、`deploy/lumen-restore`（manifest 校验 + 恢复前安全备份）。
+- **生命周期**：metrics 摘要 7 天保留落地执行（`MetricsSummaryExporter` 裁剪）。
+- 事故处置 Runbook、已知限制与验证证据：`docs/validation/lumen-production-operations-baseline-v1.md`。
+- 全量回归 **2690 passed / 8 skipped / 0 failed**（干净环境；Provider key 需 unset）。
+
 详细基线见 `ARCHITECTURE_V1.md`.
 
 ## Overview

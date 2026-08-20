@@ -31,10 +31,15 @@ Assets in this directory:
 
 | File | Purpose |
 |---|---|
-| `lumenctl` | start / stop / restart / status / health / logs control script |
+| `lumenctl` | start / stop / restart / status / health / sli / logs control script |
 | `lumen.service` | systemd unit template (Linux) |
 | `com.lumen.server.plist` | launchd plist template (macOS) |
 | `.env.production.example` | production environment template (no secrets) |
+| `lumen-backup` | consistent data backup (SQLite online snapshot + tree + sha256 manifest + rotation) |
+| `lumen-restore` | manifest-verified data restore |
+
+Production Operations baseline, monitoring, incident response and validation
+evidence: `docs/validation/lumen-production-operations-baseline-v1.md`.
 
 ---
 
@@ -167,6 +172,44 @@ See `com.lumen.server.plist`. `KeepAlive=true` restarts on failure;
 Local telemetry (span JSONL under `data/user/logs/telemetry/`) is always
 written, so diagnosis is preserved even when external exporters are down.
 
+## 5.1 Monitoring (SLI/SLO + capacity)
+
+The detailed probe `GET /api/v1/health/detailed` (unauthenticated, no secrets)
+reports the service-level indicators for the Turn / LLM / Tool / Retrieval /
+Persistence / Telemetry links, the SLO thresholds applied, local telemetry
+pipeline freshness, and data-tree capacity & retention:
+
+```bash
+./deploy/lumenctl sli                  # compact SLI/SLO summary (exit 1 if unhealthy)
+./deploy/lumenctl health --detailed    # full detailed health JSON
+```
+
+SLI/SLO thresholds and the capacity boundary are configurable via
+`LUMEN_SLO_*` and `LUMEN_CAPACITY_SOFT_MAX_BYTES` (see `.env.production.example`).
+Continuous monitoring = poll the endpoint from a supervisor/cron; incident
+discovery/diagnosis/severity/response are covered by §5.2 and the ops baseline
+report.
+
+## 5.2 Backup & Restore
+
+Backup the runtime data tree (SQLite is snapshotted consistently via the
+online backup API — no need to stop the service):
+
+```bash
+LUMEN_HOME=/srv/lumen/data ./deploy/lumen-backup
+# rotation: LUMEN_BACKUP_KEEP=7 (default), backup root: LUMEN_BACKUP_ROOT
+```
+
+Restore (stop the service first; the script warns if it is running):
+
+```bash
+./deploy/lumen-restore /srv/lumen/backups/lumen-backup-<timestamp> /srv/lumen/data
+```
+
+Restore verifies the sha256 manifest, preserves the current state as a
+`.pre-restore-*` safety copy, then restores. Disaster recovery = restore a
+backup into a fresh host + start the service (all state is file-backed).
+
 ---
 
 ## 6. Data, logs, and telemetry lifecycle
@@ -229,8 +272,12 @@ rollback target in this line.
 ## 9. Verification checklist after deployment
 
 - [ ] `lumenctl health` → `200`, `status: "ok"`
+- [ ] `lumenctl sli` → all SLIs `ok`, exit code 0
 - [ ] One WS turn completes (`start_turn` → `done`, `status=completed`)
 - [ ] Session/turn persisted in `data/user/chat_history.db`
 - [ ] Telemetry spans appear in `data/user/logs/telemetry/<date>.jsonl`
+- [ ] Metrics summaries appear in `data/user/logs/telemetry/metrics/` (when `metrics_summary` enabled)
 - [ ] If OTLP configured: spans appear in Phoenix / Collector
 - [ ] `lumen.log` shows no unhandled tracebacks
+- [ ] Backup: `LUMEN_HOME=… ./deploy/lumen-backup` succeeds + manifest present
+- [ ] Restore dry-run: `lumen-restore <backup> <data>` verifies manifest

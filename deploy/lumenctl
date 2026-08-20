@@ -10,7 +10,8 @@
 #   lumenctl stop
 #   lumenctl restart
 #   lumenctl status
-#   lumenctl health
+#   lumenctl health [--detailed]
+#   lumenctl sli
 #   lumenctl logs
 #
 # Environment:
@@ -109,12 +110,61 @@ _status() {
 }
 
 _health() {
+  local detailed="${1:-}"
+  local url="$health_url"
+  if [[ "$detailed" == "--detailed" ]]; then
+    url="http://${LUMEN_BIND_HOST}:${LUMEN_BIND_PORT}/api/v1/health/detailed"
+  fi
   local code body
-  code="$(curl -s -m 5 -o /tmp/lumen-health.$$ -w '%{http_code}' "$health_url" 2>/dev/null || echo 000)"
+  code="$(curl -s -m 5 -o /tmp/lumen-health.$$ -w '%{http_code}' "$url" 2>/dev/null || echo 000)"
   body="$(cat /tmp/lumen-health.$$ 2>/dev/null || true)"
   rm -f /tmp/lumen-health.$$
-  echo "health ($health_url): HTTP $code $body"
+  echo "health ($url): HTTP $code"
+  echo "$body" | python3 -m json.tool 2>/dev/null || echo "$body"
   [[ "$code" == "200" ]]
+}
+
+_sli() {
+  # Compact SLI/SLO summary from the detailed health probe (Turn/LLM/Tool/
+  # Retrieval/Persistence/Telemetry + capacity). Exit code 1 when unhealthy.
+  local code body
+  code="$(curl -s -m 5 -o /tmp/lumen-sli.$$ -w '%{http_code}' "http://${LUMEN_BIND_HOST}:${LUMEN_BIND_PORT}/api/v1/health/detailed" 2>/dev/null || echo 000)"
+  body="$(cat /tmp/lumen-sli.$$ 2>/dev/null || true)"
+  rm -f /tmp/lumen-sli.$$
+  if [[ "$code" != "200" ]]; then
+    echo "sli: health probe failed (HTTP $code)" >&2
+    return 1
+  fi
+  echo "$body" | python3 -c '
+import json, sys
+r = json.load(sys.stdin)
+def g(d, k, dflt=0):
+    v = d.get(k, dflt)
+    return v if v is not None else dflt
+print("service={} version={} status={} healthy={}".format(
+    g(r, "service", "?"), g(r, "version", "?"), g(r, "status", "?"), g(r, "healthy", False)))
+print("reported_at={}".format(g(r, "reported_at", "-")))
+slis = r.get("sli", {}).get("slis", {})
+for name in ("turn", "llm", "tool", "retrieval", "persistence", "telemetry"):
+    sli = slis.get(name, {})
+    st = g(sli, "status", "?")
+    if name == "turn":
+        print("  {:<12} {:<9} total={} success={:.3f} p95={:.1f}s".format(
+            name, st, g(sli, "total"), g(sli, "success_rate", 1.0), g(sli, "p95_s")))
+    elif name == "persistence":
+        print("  {:<12} {:<9} ok={}".format(name, st, g(sli, "ok")))
+    elif name == "telemetry":
+        print("  {:<12} {:<9} export_errors={}".format(name, st, g(sli, "export_errors")))
+    else:
+        print("  {:<12} {:<9} total={} errors={} err_rate={:.3f} p95={:.1f}s".format(
+            name, st, g(sli, "total"), g(sli, "errors"), g(sli, "error_rate"), g(sli, "p95_s")))
+tel = r.get("telemetry", {})
+print("telemetry_pipeline ok={} files={}".format(g(tel, "ok"), g(tel, "files")))
+cap = r.get("capacity", {})
+print("capacity data_bytes={} within={} soft_max={}".format(
+    g(cap.get("bytes", {}), "data_total"), g(cap, "within_capacity"), g(cap, "soft_max_bytes")))
+' 2>/dev/null
+  [[ "$(echo "$body" | python3 -c 'import json,sys; print("true" if json.load(sys.stdin).get("healthy") else "false")' 2>/dev/null)" == "true" ]]
 }
 
 case "${1:-}" in
@@ -123,7 +173,8 @@ case "${1:-}" in
   stop) _stop ;;
   restart) _stop; _start ;;
   status) _status ;;
-  health) _health ;;
+  health) _health "${2:-}" ;;
+  sli) _sli ;;
   logs)
     if [[ -f "$LUMEN_LOGFILE" ]]; then
       tail -n 100 -f "$LUMEN_LOGFILE"
@@ -133,7 +184,7 @@ case "${1:-}" in
     fi
     ;;
   *)
-    echo "usage: $0 {start|start-foreground|stop|restart|status|health|logs}" >&2
+    echo "usage: $0 {start|start-foreground|stop|restart|status|health [--detailed]|sli|logs}" >&2
     exit 2
     ;;
 esac

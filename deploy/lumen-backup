@@ -1,0 +1,111 @@
+#!/usr/bin/env bash
+# ============================================================
+# lumen-backup — Lumen 2.0.0 production data backup
+# ============================================================
+# Consistent snapshot of the runtime data tree (SQLite + files) into a
+# timestamped directory under a backup root, with a sha256 manifest and
+# rotation (keep the newest N backups).
+#
+# SQLite is snapshotted with the sqlite3 online backup API so the backup is
+# consistent even while the server is running (no need to stop the service).
+#
+# Usage:
+#   LUMEN_HOME=/srv/lumen/data ./deploy/lumen-backup
+#   LUMEN_BACKUP_ROOT=/backups ./deploy/lumen-backup
+#   LUMEN_BACKUP_KEEP=14 ./deploy/lumen-backup
+#
+# Environment:
+#   LUMEN_HOME          runtime workspace root that owns <LUMEN_HOME>/data
+#                       (default: repo root, i.e. repo/data)
+#   LUMEN_BACKUP_ROOT   backup root (default: <parent of LUMEN_HOME>/backups)
+#   LUMEN_BACKUP_KEEP   number of newest backups to keep (default 7)
+# ============================================================
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+: "${LUMEN_HOME:=$(cd "$SCRIPT_DIR/.." && pwd)}"
+DATA_ROOT="$LUMEN_HOME/data"
+: "${LUMEN_BACKUP_ROOT:=$(dirname "$LUMEN_HOME")/backups}"
+: "${LUMEN_BACKUP_KEEP:=7}"
+
+if [[ ! -d "$DATA_ROOT" ]]; then
+  echo "error: data root not found at $DATA_ROOT (set LUMEN_HOME)" >&2
+  exit 1
+fi
+
+STAMP="$(date +%Y%m%dT%H%M%S)"
+DEST="$LUMEN_BACKUP_ROOT/lumen-backup-$STAMP"
+mkdir -p "$DEST/data/user"
+echo "lumen-backup: $DATA_ROOT -> $DEST"
+
+# 1) Consistent SQLite snapshot (online backup API). Safe while running.
+if [[ -f "$DATA_ROOT/user/chat_history.db" ]]; then
+  echo "lumen-backup: snapshotting SQLite (online backup)"
+  python3 - "$DATA_ROOT/user/chat_history.db" "$DEST/data/user/chat_history.db" <<'PYEOF'
+import sqlite3
+import sys
+src_path, dst_path = sys.argv[1], sys.argv[2]
+src = sqlite3.connect(src_path)
+try:
+    dst = sqlite3.connect(dst_path)
+    try:
+        src.backup(dst)
+    finally:
+        dst.close()
+finally:
+    src.close()
+print("sqlite snapshot ok")
+PYEOF
+fi
+
+# 2) Copy the rest of the data tree (skip the SQLite we already snapshotted).
+if command -v rsync >/dev/null 2>&1; then
+  rsync -a --exclude 'user/chat_history.db' "$DATA_ROOT/" "$DEST/data/"
+else
+  cp -a "$DATA_ROOT/." "$DEST/data/"
+  rm -f "$DEST/data/user/chat_history.db"
+fi
+
+# 3) Metadata + sha256 manifest.
+cat > "$DEST/backup.meta.json" <<META
+{
+  "tool": "lumen-backup",
+  "version": "2.0.0",
+  "created_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "source": "$DATA_ROOT",
+  "files": "$(find "$DEST/data" -type f | wc -l | tr -d ' ')"
+}
+META
+(cd "$DEST" && find data -type f -print0 | sort -z | xargs -0 shasum -a 256 > MANIFEST.sha256)
+echo "lumen-backup: wrote $(wc -l < "$DEST/MANIFEST.sha256") entries to MANIFEST.sha256"
+
+# 4) Verify the snapshot is readable and consistent (restore dry-run check).
+python3 - "$DEST/data/user/chat_history.db" <<'PYEOF' || true
+import sqlite3, sys, os
+path = sys.argv[1]
+if not os.path.exists(path):
+    print("no sqlite to verify")
+    sys.exit(0)
+conn = sqlite3.connect(path)
+try:
+    cur = conn.execute("PRAGMA integrity_check")
+    result = cur.fetchone()
+    assert result and result[0] == "ok", result
+    tables = [r[0] for r in conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")]
+    print("sqlite integrity ok; tables=%d" % len(tables))
+finally:
+    conn.close()
+PYEOF
+
+# 5) Rotation — keep the newest LUMEN_BACKUP_KEEP backups (bash-3.2 safe).
+old_backups="$(ls -1d "$LUMEN_BACKUP_ROOT"/lumen-backup-* 2>/dev/null | sort -r | tail -n +$((LUMEN_BACKUP_KEEP + 1)) || true)"
+if [[ -n "$old_backups" ]]; then
+  echo "lumen-backup: pruning old backup(s)"
+  while IFS= read -r d; do
+    [[ -n "$d" ]] && rm -rf "$d"
+  done <<< "$old_backups"
+fi
+
+echo "lumen-backup: DONE -> $DEST"
+echo "lumen-backup: restore with: $SCRIPT_DIR/lumen-restore $DEST $DATA_ROOT"

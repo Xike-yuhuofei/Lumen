@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+# ============================================================
+# lumen-restore — Lumen 2.0.0 production data restore
+# ============================================================
+# Restore a backup created by deploy/lumen-backup into the runtime data
+# directory. By default the service should be stopped before restore; the
+# script warns if the server appears to be running.
+#
+# Usage:
+#   ./deploy/lumen-restore <backup_dir> [data_root]
+#
+#   <backup_dir>  the lumen-backup-<timestamp> directory (required)
+#   [data_root]   target data root (default: <repo root>/data)
+#
+# Example:
+#   ./deploy/lumen-restore /backups/lumen-backup-20260820T000000 /srv/lumen/data
+# ============================================================
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+: "${LUMEN_HOME:=$(cd "$SCRIPT_DIR/.." && pwd)}"
+DATA_ROOT="${2:-$LUMEN_HOME/data}"
+BACKUP_DIR="${1:-}"
+
+if [[ -z "$BACKUP_DIR" ]]; then
+  echo "usage: $0 <backup_dir> [data_root]" >&2
+  echo "  <backup_dir>  the lumen-backup-<timestamp> directory" >&2
+  echo "  [data_root]   target data root (default: $DATA_ROOT)" >&2
+  exit 1
+fi
+
+if [[ ! -d "$BACKUP_DIR" ]]; then
+  echo "error: backup directory not found: $BACKUP_DIR" >&2
+  exit 1
+fi
+
+if [[ ! -f "$BACKUP_DIR/MANIFEST.sha256" ]]; then
+  echo "error: not a valid lumen-backup (no MANIFEST.sha256): $BACKUP_DIR" >&2
+  exit 1
+fi
+
+# Warn if the service appears to be running.
+if [[ -f "$LUMEN_HOME/lumen.pid" ]]; then
+  pid="$(cat "$LUMEN_HOME/lumen.pid" 2>/dev/null || true)"
+  if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
+    echo "WARNING: lumen appears to be running (pid $pid). Stop it first for a consistent restore." >&2
+    echo "  Continue in 5 seconds (Ctrl+C to abort)..." >&2
+    sleep 5
+  fi
+fi
+
+if [[ ! -d "$BACKUP_DIR/data" ]]; then
+  echo "error: backup has no data/ directory: $BACKUP_DIR" >&2
+  exit 1
+fi
+
+# Verify the backup manifest.
+echo "lumen-restore: verifying manifest..."
+(cd "$BACKUP_DIR" && shasum -a 256 -c MANIFEST.sha256)
+echo "lumen-restore: manifest OK"
+
+# Back up the current state (just in case).
+PREVIOUS_BACKUP="${DATA_ROOT}.pre-restore-$(date +%Y%m%dT%H%M%S)"
+echo "lumen-restore: backing up current state to $PREVIOUS_BACKUP"
+cp -a "$DATA_ROOT" "$PREVIOUS_BACKUP"
+
+# Restore.
+echo "lumen-restore: restoring $BACKUP_DIR/data -> $DATA_ROOT"
+mkdir -p "$DATA_ROOT"
+if command -v rsync >/dev/null 2>&1; then
+  rsync -a --delete "$BACKUP_DIR/data/" "$DATA_ROOT/"
+else
+  rm -rf "$DATA_ROOT"
+  cp -a "$BACKUP_DIR/data" "$(dirname "$DATA_ROOT")/"
+fi
+
+echo "lumen-restore: DONE ($BACKUP_DIR -> $DATA_ROOT)"
+echo "lumen-restore: previous state preserved at $PREVIOUS_BACKUP"
+echo "lumen-restore: verify with: ls -la $DATA_ROOT/user/chat_history.db"
