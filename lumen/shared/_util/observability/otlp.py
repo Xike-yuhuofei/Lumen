@@ -53,7 +53,11 @@ _OI_AGENT = "AGENT"
 _OI_CHAIN = "CHAIN"
 
 #: Lumen span ``kind`` → OpenInference span kind (None = plain span).
+#: The LLM spans opened by the engine-client seam and the LLM provider core
+#: use ``kind="llm"`` (span name ``llm_call``), so both spellings must map to
+#: the same OpenInference ``LLM`` kind (C2/F1: kind alignment).
 _OPENINFERENCE_KIND = {
+    "llm": _OI_LLM,
     "llm_call": _OI_LLM,
     "tool": _OI_TOOL,
     "retrieval": _OI_RETRIEVER,
@@ -66,7 +70,7 @@ _OPENINFERENCE_KIND = {
 
 def _otel_kind(kind: str) -> int:
     """Map a Lumen span kind to an OpenTelemetry SpanKind."""
-    if kind == "llm_call":
+    if kind in ("llm", "llm_call"):
         # LLM calls are outbound client calls.
         return _SPAN_KIND_CLIENT
     return _SPAN_KIND_INTERNAL
@@ -81,7 +85,7 @@ def _openinference_attrs(span: Span, attrs: dict[str, Any]) -> dict[str, Any]:
     oi_kind = _openinference_kind(span.kind)
     if oi_kind is not None:
         attrs["openinference.span.kind"] = oi_kind
-    if span.kind == "llm_call":
+    if span.kind in ("llm", "llm_call"):
         if "model" in attrs:
             attrs["llm.model_name"] = attrs["model"]
         for src, dst in (
