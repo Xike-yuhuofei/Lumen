@@ -404,7 +404,57 @@ class _LearnTeachingPlugin:
             prompts=self._prompts,
         )
         content = (getattr(block, "content", "") or "").strip()
+        kb_note = self._kb_system_note()
+        if kb_note:
+            content = f"{content}\n\n{kb_note}" if content else kb_note
         return content or ""
+
+    def _kb_system_note(self) -> str:
+        """Tell the tutor which knowledge bases are mounted this turn and what
+        they contain, mirroring the legacy pipeline's ``_kb_system_note``.
+
+        The P1 provider builds its Learn system prompt solely from this
+        scaffold, so without this note the tutor cannot see that the goal's
+        material already lives in an attached KB — it wrongly asks the learner
+        to upload the file again. Fails soft: an unreadable KB costs the
+        note's manifest line, never the turn.
+        """
+        context = self._context
+        kbs = [
+            str(name).strip()
+            for name in (getattr(context, "knowledge_bases", None) or [])
+            if str(name).strip()
+        ]
+        if not kbs:
+            return ""
+        lang = "zh" if str(self._language or "en").lower().startswith("zh") else "en"
+        joined = ", ".join(kbs)
+        parts: list[str] = [
+            (
+                f"用户已挂载知识库：{joined}。调用 rag 时，kb_name 必须从其中选一个。"
+                if lang == "zh"
+                else (
+                    f"Attached knowledge bases: {joined}. When calling rag, kb_name "
+                    "must be one of these names."
+                )
+            )
+        ]
+        from lumen.shared._util.user import resolve_kb_manifest
+        from lumen.shared.knowledge.manifest import render_manifest_note
+
+        manifests = []
+        for kb in kbs:
+            try:
+                manifest = resolve_kb_manifest(kb)
+            except Exception:
+                logger.debug("KB manifest resolution skipped for %r", kb, exc_info=True)
+                continue
+            if manifest is not None:
+                manifests.append(manifest)
+        note = render_manifest_note(manifests, language=self._language)
+        if note:
+            parts.append(note)
+        return "\n\n".join(parts)
 
     def assess(self, decision: Any, output: Any) -> dict[str, Any]:
         return {}
